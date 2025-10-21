@@ -77,6 +77,11 @@ const Analysis = () => {
   const CustomizedContent = (props: any) => {
     const { root, depth, x, y, width, height, index, name, changePercent, value } = props;
     
+    // Check if changePercent is defined before using it
+    if (changePercent === undefined || changePercent === null) {
+      return null;
+    }
+    
     // Color based on change percent (green for positive, red for negative)
     const color = changePercent >= 0 ? "#4ade80" : "#f87171";
     const cellValue = changePercent >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
