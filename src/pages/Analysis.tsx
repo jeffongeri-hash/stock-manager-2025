@@ -1,12 +1,21 @@
-
 import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Treemap, LineChart, Line } from 'recharts';
 import { mockStocks, mockCryptos, generatePriceHistory, formatNumber } from '@/utils/stocksApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bitcoin, TrendingUp, TrendingDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Bitcoin, TrendingUp, TrendingDown, Sparkles, RefreshCw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useStockData } from '@/hooks/useStockData';
+import { toast } from 'sonner';
 
 const Analysis = () => {
+  const [aiAnalysis, setAiAnalysis] = useState<string>('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  // Fetch live stock data
+  const watchlistSymbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX'];
+  const { stocks: liveStocks, loading: stocksLoading } = useStockData(watchlistSymbols);
   // Mock data for sector performance
   const sectorPerformance = [
     { name: 'Technology', value: 8.2 },
@@ -34,14 +43,40 @@ const Analysis = () => {
     { name: 'Small Cap', value: 15 },
   ];
   
+  // Use live stocks if available, otherwise fall back to mock data
+  const displayStocks = liveStocks.length > 0 ? liveStocks : mockStocks;
+  
   // Format stock data for the heatmap (treemap)
-  const stockGrowthData = mockStocks
+  const stockGrowthData = displayStocks
     .map(stock => ({
       name: stock.symbol,
       value: Math.abs(stock.changePercent),
       changePercent: stock.changePercent
     }))
     .sort((a, b) => b.changePercent - a.changePercent);
+
+  const getAIAnalysis = async (type: string) => {
+    setIsAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-stocks', {
+        body: {
+          stockData: displayStocks,
+          analysisType: type
+        }
+      });
+
+      if (error) throw error;
+
+      if (data && data.analysis) {
+        setAiAnalysis(data.analysis);
+      }
+    } catch (err) {
+      console.error('Error getting AI analysis:', err);
+      toast.error('Failed to generate AI analysis');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
   
   // Format cryptocurrency data for analysis
   const cryptoData = mockCryptos
@@ -129,6 +164,56 @@ const Analysis = () => {
   
   return (
     <PageLayout title="Market Analysis">
+      <div className="mb-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                AI Market Analysis
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => getAIAnalysis('overview')}
+                  disabled={isAnalyzing || stocksLoading}
+                  variant="outline"
+                  size="sm"
+                >
+                  {isAnalyzing ? <RefreshCw className="h-4 w-4 animate-spin" /> : 'Market Overview'}
+                </Button>
+                <Button
+                  onClick={() => getAIAnalysis('recommendations')}
+                  disabled={isAnalyzing || stocksLoading}
+                  variant="outline"
+                  size="sm"
+                >
+                  Recommendations
+                </Button>
+                <Button
+                  onClick={() => getAIAnalysis('risk-assessment')}
+                  disabled={isAnalyzing || stocksLoading}
+                  variant="outline"
+                  size="sm"
+                >
+                  Risk Assessment
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {aiAnalysis ? (
+              <div className="prose prose-sm max-w-none">
+                <p className="whitespace-pre-wrap">{aiAnalysis}</p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Click a button above to generate AI-powered market analysis based on live stock data.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card rounded-lg p-6 shadow">
           <h2 className="text-xl font-semibold mb-4">Sector Performance (YTD)</h2>
