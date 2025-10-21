@@ -1,83 +1,67 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RefreshCw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useStockData } from '@/hooks/useStockData';
+import { toast } from 'sonner';
 
 export default function OptionsPremium() {
-  const [iv, setIv] = useState('');
-  const [hv, setHv] = useState('');
-  const [ivRank, setIvRank] = useState('');
-  const [recommendation, setRecommendation] = useState('');
-  const [recommendationType, setRecommendationType] = useState('');
+  const [symbol, setSymbol] = useState('AAPL');
+  const [strikePrice, setStrikePrice] = useState('');
+  const [daysToExpiry, setDaysToExpiry] = useState('30');
+  const [optionType, setOptionType] = useState<'call' | 'put'>('call');
+  const [volatility, setVolatility] = useState('0.25');
+  const [optionsData, setOptionsData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  
+  const { stocks } = useStockData([symbol]);
+  const stockPrice = stocks[0]?.price || 0;
+  
+  const fetchOptionsData = async () => {
+    if (!stockPrice || !strikePrice || !daysToExpiry) {
+      toast.error('Please fill in all fields');
+      return;
+    }
 
-  const premiumDecision = (iv: number, hv: number, ivRank: number) => {
-    if (iv > hv) {
-      if (ivRank > 50) {
-        return "SELL premium (options expensive, high POP for sellers)";
-      } else if (ivRank >= 30 && ivRank <= 50) {
-        return "SELL premium cautiously (moderate IV rank)";
-      } else {
-        return "Consider waiting or small SELL premium positions";
-      }
-    } else if (iv < hv) {
-      if (ivRank < 30) {
-        return "BUY premium (options cheap, potential large move)";
-      } else if (ivRank >= 30 && ivRank <= 50) {
-        return "BUY premium cautiously (moderate IV)";
-      } else {
-        return "Neutral / monitor market";
-      }
-    } else {
-      return "Neutral / small premium trades or directional bets";
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-options-data', {
+        body: {
+          symbol,
+          stockPrice,
+          strikePrice: parseFloat(strikePrice),
+          daysToExpiry: parseInt(daysToExpiry),
+          volatility: parseFloat(volatility),
+          optionType
+        }
+      });
+
+      if (error) throw error;
+      setOptionsData(data);
+    } catch (err) {
+      console.error('Error fetching options data:', err);
+      toast.error('Failed to fetch options data');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getRecommendationType = (recommendation: string) => {
-    if (recommendation.includes('SELL')) return 'sell';
-    if (recommendation.includes('BUY')) return 'buy';
-    if (recommendation.includes('Neutral')) return 'neutral';
-    return 'caution';
-  };
-
-  const updateCalculation = () => {
-    const ivVal = parseFloat(iv);
-    const hvVal = parseFloat(hv);
-    const ivRankVal = parseFloat(ivRank);
-
-    if (!isNaN(ivVal) && !isNaN(hvVal) && !isNaN(ivRankVal) && ivRankVal >= 0 && ivRankVal <= 100) {
-      const rec = premiumDecision(ivVal, hvVal, ivRankVal);
-      setRecommendation(rec);
-      setRecommendationType(getRecommendationType(rec));
+  useEffect(() => {
+    if (stockPrice && !strikePrice) {
+      setStrikePrice(stockPrice.toString());
     }
-  };
+  }, [stockPrice]);
 
-  const getIcon = () => {
-    switch (recommendationType) {
-      case 'sell':
-        return <TrendingDown className="h-6 w-6" />;
-      case 'buy':
-        return <TrendingUp className="h-6 w-6" />;
-      case 'neutral':
-        return <Minus className="h-6 w-6" />;
-      default:
-        return <AlertCircle className="h-6 w-6" />;
+  useEffect(() => {
+    if (stockPrice && strikePrice && daysToExpiry) {
+      fetchOptionsData();
     }
-  };
-
-  const getCardColor = () => {
-    switch (recommendationType) {
-      case 'sell':
-        return 'border-danger/50 bg-danger/5';
-      case 'buy':
-        return 'border-success/50 bg-success/5';
-      case 'neutral':
-        return 'border-warning/50 bg-warning/5';
-      default:
-        return 'border-primary/50 bg-primary/5';
-    }
-  };
+  }, [symbol, stockPrice]);
 
   return (
     <PageLayout title="Options Premium Calculator">
@@ -85,115 +69,163 @@ export default function OptionsPremium() {
         <Card>
           <CardHeader>
             <CardTitle>Option Parameters</CardTitle>
-            <CardDescription>Enter volatility metrics to get a recommendation</CardDescription>
+            <CardDescription>Configure options parameters with live stock data</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="iv">Implied Volatility (IV) %</Label>
+              <Label htmlFor="symbol">Stock Symbol</Label>
               <Input
-                id="iv"
-                type="number"
-                placeholder="e.g., 25.5"
-                step="0.1"
-                value={iv}
-                onChange={(e) => {
-                  setIv(e.target.value);
-                  setTimeout(updateCalculation, 0);
-                }}
+                id="symbol"
+                type="text"
+                placeholder="AAPL"
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                onBlur={fetchOptionsData}
               />
+              {stockPrice > 0 && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Current Price: ${stockPrice.toFixed(2)}
+                </p>
+              )}
             </div>
+
             <div>
-              <Label htmlFor="hv">Historical Volatility (HV) %</Label>
-              <Input
-                id="hv"
-                type="number"
-                placeholder="e.g., 20.3"
-                step="0.1"
-                value={hv}
-                onChange={(e) => {
-                  setHv(e.target.value);
-                  setTimeout(updateCalculation, 0);
-                }}
-              />
+              <Label htmlFor="optionType">Option Type</Label>
+              <Select value={optionType} onValueChange={(value: 'call' | 'put') => setOptionType(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="call">Call</SelectItem>
+                  <SelectItem value="put">Put</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
             <div>
-              <Label htmlFor="ivrank">IV Rank %</Label>
+              <Label htmlFor="strike">Strike Price</Label>
               <Input
-                id="ivrank"
+                id="strike"
                 type="number"
-                placeholder="e.g., 75"
-                step="1"
-                min="0"
-                max="100"
-                value={ivRank}
-                onChange={(e) => {
-                  setIvRank(e.target.value);
-                  setTimeout(updateCalculation, 0);
-                }}
+                step="0.01"
+                placeholder="150.00"
+                value={strikePrice}
+                onChange={(e) => setStrikePrice(e.target.value)}
               />
             </div>
+
+            <div>
+              <Label htmlFor="dte">Days to Expiration</Label>
+              <Input
+                id="dte"
+                type="number"
+                placeholder="30"
+                value={daysToExpiry}
+                onChange={(e) => setDaysToExpiry(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="vol">Implied Volatility (decimal)</Label>
+              <Input
+                id="vol"
+                type="number"
+                step="0.01"
+                placeholder="0.25"
+                value={volatility}
+                onChange={(e) => setVolatility(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Example: 0.25 = 25% volatility
+              </p>
+            </div>
+
+            <Button onClick={fetchOptionsData} className="w-full" disabled={loading}>
+              {loading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
+              Calculate
+            </Button>
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          {recommendation && (
-            <Card className={getCardColor()}>
-              <CardHeader>
-                <div className="flex items-start gap-3">
-                  <div className={`mt-1 ${
-                    recommendationType === 'sell' ? 'text-danger' :
-                    recommendationType === 'buy' ? 'text-success' :
-                    recommendationType === 'neutral' ? 'text-warning' :
-                    'text-primary'
-                  }`}>
-                    {getIcon()}
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">Recommendation</CardTitle>
-                    <p className="text-sm mt-2">{recommendation}</p>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          )}
-
-          {recommendation && (
+        {optionsData && (
+          <>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Analysis Summary</CardTitle>
+                <CardTitle>Option Pricing</CardTitle>
+                <CardDescription>Theoretical price and Greeks</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="text-sm text-muted-foreground">
-                  <strong>IV vs HV:</strong> {
-                    parseFloat(iv) > parseFloat(hv) ? 'IV > HV (expensive options)' :
-                    parseFloat(iv) < parseFloat(hv) ? 'IV < HV (cheap options)' :
-                    'IV ≈ HV (fairly priced)'
-                  }
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-primary/10 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Theoretical Price</p>
+                  <p className="text-3xl font-bold">${optionsData.greeks.price}</p>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  <strong>IV Rank:</strong> {ivRank}% - {
-                    parseFloat(ivRank) > 50 ? 'High' :
-                    parseFloat(ivRank) < 30 ? 'Low' : 'Moderate'
-                  }
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium">Delta</p>
+                    <p className="text-xl">{optionsData.greeks.delta}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Gamma</p>
+                    <p className="text-xl">{optionsData.greeks.gamma}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Theta</p>
+                    <p className="text-xl">{optionsData.greeks.theta}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Vega</p>
+                    <p className="text-xl">{optionsData.greeks.vega}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          <Card className="bg-muted/50">
-            <CardHeader>
-              <CardTitle className="text-base">How it works</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• IV &gt; HV: Options may be expensive, consider selling premium</li>
-                <li>• IV &lt; HV: Options may be cheap, consider buying premium</li>
-                <li>• IV Rank shows current IV relative to 1-year range</li>
-                <li>• Higher IV Rank (&gt;50%) favors selling, lower (&lt;30%) favors buying</li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>Expected Move</CardTitle>
+                <CardDescription>Projected price movement based on volatility</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-card rounded-lg border">
+                    <p className="text-sm text-muted-foreground">Expected Move</p>
+                    <p className="text-2xl font-bold">±${optionsData.expectedMove.amount}</p>
+                    <p className="text-sm text-muted-foreground">±{optionsData.expectedMove.percent}%</p>
+                  </div>
+                  <div className="p-4 bg-card rounded-lg border">
+                    <p className="text-sm text-muted-foreground">Upper Bound</p>
+                    <p className="text-2xl font-bold text-green-500">${optionsData.expectedMove.upperBound}</p>
+                  </div>
+                  <div className="p-4 bg-card rounded-lg border">
+                    <p className="text-sm text-muted-foreground">Lower Bound</p>
+                    <p className="text-2xl font-bold text-red-500">${optionsData.expectedMove.lowerBound}</p>
+                  </div>
+                  <div className="p-4 bg-card rounded-lg border">
+                    <p className="text-sm text-muted-foreground">Current Price</p>
+                    <p className="text-2xl font-bold">${stockPrice.toFixed(2)}</p>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <p className="text-sm font-medium mb-2">Suggested Strike Prices</p>
+                  <div className="flex flex-wrap gap-2">
+                    {optionsData.suggestedStrikes.map((strike: number) => (
+                      <Button
+                        key={strike}
+                        variant={strike === parseFloat(strikePrice) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setStrikePrice(strike.toString())}
+                      >
+                        ${strike}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </PageLayout>
   );
