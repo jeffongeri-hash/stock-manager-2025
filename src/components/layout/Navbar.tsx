@@ -1,16 +1,27 @@
-
 import React from 'react';
-import { Search, Bell, User } from 'lucide-react';
+import { Search, Bell, User, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface NavbarProps {
   className?: string;
 }
 
 export function Navbar({ className }: NavbarProps) {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Signed out successfully');
+    navigate('/auth');
+  };
+
   return (
     <header className={cn("bg-background/95 backdrop-blur-sm sticky top-0 z-30 border-b", className)}>
       <div className="container flex items-center justify-between h-16 px-4">
@@ -37,11 +48,22 @@ export function Navbar({ className }: NavbarProps) {
             <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary animate-pulse" />
           </Button>
           
-          <Avatar className="h-9 w-9 transition-transform duration-200 hover:scale-105">
-            <AvatarFallback className="bg-primary/10 text-primary">
-              <User className="h-5 w-5" />
-            </AvatarFallback>
-          </Avatar>
+          {user ? (
+            <>
+              <Avatar className="h-9 w-9 transition-transform duration-200 hover:scale-105">
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  <User className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
+              <Button variant="ghost" size="icon" onClick={handleSignOut} className="h-9 w-9">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </>
+          ) : (
+            <Button variant="ghost" onClick={() => navigate('/auth')}>
+              Sign In
+            </Button>
+          )}
         </div>
       </div>
     </header>

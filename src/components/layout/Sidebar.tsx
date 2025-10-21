@@ -37,21 +37,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/stocks',
     },
     {
-      title: 'Markets',
-      icon: BarChart3,
-      href: '/markets',
-    },
-    {
-      title: 'Currencies',
-      icon: DollarSign,
-      href: '/currencies',
-    },
-    {
-      title: 'Global',
-      icon: Globe,
-      href: '/global',
-    },
-    {
       title: 'Portfolio',
       icon: Wallet,
       href: '/portfolio',
@@ -65,6 +50,11 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Analysis',
       icon: PieChart,
       href: '/analysis',
+    },
+    {
+      title: 'Trading Toolkit',
+      icon: Calculator,
+      href: '/trading-toolkit',
     },
     {
       title: 'Options Premium',

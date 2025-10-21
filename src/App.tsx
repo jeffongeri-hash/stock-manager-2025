@@ -7,9 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Stocks from "./pages/Stocks";
-import Markets from "./pages/Markets";
-import Currencies from "./pages/Currencies";
-import Global from "./pages/Global";
 import Portfolio from "./pages/Portfolio";
 import Performance from "./pages/Performance";
 import Analysis from "./pages/Analysis";
@@ -19,6 +16,8 @@ import ExpectedMove from "./pages/ExpectedMove";
 import OptionsPortfolio from "./pages/OptionsPortfolio";
 import OptionsRisk from "./pages/OptionsRisk";
 import ZeroDTE from "./pages/ZeroDTE";
+import Auth from "./pages/Auth";
+import TradingToolkit from "./pages/TradingToolkit";
 
 const queryClient = new QueryClient();
 
@@ -30,14 +29,13 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/stocks" element={<Stocks />} />
-          <Route path="/markets" element={<Markets />} />
-          <Route path="/currencies" element={<Currencies />} />
-          <Route path="/global" element={<Global />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/performance" element={<Performance />} />
           <Route path="/analysis" element={<Analysis />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/trading-toolkit" element={<TradingToolkit />} />
           <Route path="/options-premium" element={<OptionsPremium />} />
           <Route path="/expected-move" element={<ExpectedMove />} />
           <Route path="/options-portfolio" element={<OptionsPortfolio />} />

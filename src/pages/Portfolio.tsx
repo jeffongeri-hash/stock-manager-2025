@@ -1,138 +1,347 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
-import { useStockData, mockStocks } from '@/utils/stocksApi';
-import { PieChart, Cell, Pie, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { PlusCircle, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+
+interface Trade {
+  id: string;
+  symbol: string;
+  type: string;
+  action: string;
+  strike: number;
+  expiration: string;
+  premium: number;
+  quantity: number;
+  date: string;
+  strategy: string;
+  total_value: number;
+}
 
 const Portfolio = () => {
-  const stocks = useStockData(mockStocks);
-  
-  // Mock portfolio data
-  const portfolio = [
-    { symbol: 'AAPL', shares: 15, costBasis: 150.75 },
-    { symbol: 'MSFT', shares: 8, costBasis: 380.25 },
-    { symbol: 'NVDA', shares: 5, costBasis: 820.50 },
-    { symbol: 'GOOGL', shares: 10, costBasis: 145.30 },
-  ];
-  
-  // Calculate portfolio values
-  const portfolioItems = portfolio.map(item => {
-    const stock = stocks.find(s => s.symbol === item.symbol);
-    if (!stock) return null;
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [currentTrade, setCurrentTrade] = useState({
+    symbol: '',
+    type: 'call',
+    action: 'buy',
+    strike: '',
+    expiration: '',
+    premium: '',
+    quantity: '',
+    date: new Date().toISOString().split('T')[0],
+    strategy: ''
+  });
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      fetchTrades();
+    }
+  }, [user]);
+
+  const fetchTrades = async () => {
+    const { data, error } = await supabase
+      .from('trades')
+      .select('*')
+      .order('date', { ascending: false });
     
-    const currentValue = stock.price * item.shares;
-    const costBasis = item.costBasis * item.shares;
-    const gain = currentValue - costBasis;
-    const gainPercent = (gain / costBasis) * 100;
+    if (error) {
+      toast.error('Failed to fetch trades');
+    } else {
+      setTrades(data || []);
+    }
+  };
+
+  const addTrade = async () => {
+    if (!currentTrade.symbol || !currentTrade.strike || !currentTrade.premium || !currentTrade.quantity) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const strike = parseFloat(currentTrade.strike);
+    const premium = parseFloat(currentTrade.premium);
+    const quantity = parseInt(currentTrade.quantity);
+    const totalValue = premium * quantity * 100;
+
+    const { error } = await supabase
+      .from('trades')
+      .insert([{
+        user_id: user?.id,
+        symbol: currentTrade.symbol,
+        type: currentTrade.type,
+        action: currentTrade.action,
+        strike,
+        expiration: currentTrade.expiration,
+        premium,
+        quantity,
+        date: currentTrade.date,
+        strategy: currentTrade.strategy,
+        total_value: totalValue
+      }]);
+
+    if (error) {
+      toast.error('Failed to add trade');
+    } else {
+      toast.success('Trade added successfully');
+      setCurrentTrade({
+        symbol: '',
+        type: 'call',
+        action: 'buy',
+        strike: '',
+        expiration: '',
+        premium: '',
+        quantity: '',
+        date: new Date().toISOString().split('T')[0],
+        strategy: ''
+      });
+      fetchTrades();
+    }
+  };
+
+  const deleteTrade = async (id: string) => {
+    const { error } = await supabase
+      .from('trades')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Failed to delete trade');
+    } else {
+      toast.success('Trade deleted');
+      fetchTrades();
+    }
+  };
+
+  const calculatePnL = () => {
+    const buyTrades = trades.filter(t => t.action === 'buy');
+    const sellTrades = trades.filter(t => t.action === 'sell');
+    
+    const totalBought = buyTrades.reduce((sum, trade) => sum + trade.total_value, 0);
+    const totalSold = sellTrades.reduce((sum, trade) => sum + trade.total_value, 0);
     
     return {
-      ...item,
-      name: stock.name,
-      currentPrice: stock.price,
-      currentValue,
-      costBasis,
-      gain,
-      gainPercent
+      totalBought,
+      totalSold,
+      netPnL: totalSold - totalBought,
+      totalTrades: trades.length
     };
-  }).filter(Boolean);
-  
-  const totalValue = portfolioItems.reduce((sum, item) => sum + item.currentValue, 0);
-  const totalCost = portfolioItems.reduce((sum, item) => sum + item.costBasis, 0);
-  const totalGain = totalValue - totalCost;
-  const totalGainPercent = (totalGain / totalCost) * 100;
-  
-  // Data for pie chart
-  const pieData = portfolioItems.map(item => ({
-    name: item.symbol,
-    value: item.currentValue
-  }));
-  
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  };
+
+  if (loading) {
+    return <PageLayout title="Portfolio"><div>Loading...</div></PageLayout>;
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  const pnl = calculatePnL();
   
   return (
     <PageLayout title="Portfolio">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <div className="bg-card rounded-lg p-6 shadow">
-            <h2 className="text-xl font-semibold mb-4">Portfolio Summary</h2>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Value</p>
-                <p className="text-2xl font-bold">${totalValue.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Gain/Loss</p>
-                <div className="flex items-center">
-                  <p className={`text-xl font-bold ${totalGain >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    ${totalGain.toFixed(2)}
-                  </p>
-                  <p className={`ml-2 ${totalGain >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    ({totalGain >= 0 ? '+' : ''}{totalGainPercent.toFixed(2)}%)
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-6 h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Value']} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-        
-        <div className="lg:col-span-2">
-          <div className="bg-card rounded-lg p-6 shadow">
-            <h2 className="text-xl font-semibold mb-4">Holdings</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-4">Symbol</th>
-                    <th className="text-left py-2 px-4">Name</th>
-                    <th className="text-right py-2 px-4">Shares</th>
-                    <th className="text-right py-2 px-4">Price</th>
-                    <th className="text-right py-2 px-4">Value</th>
-                    <th className="text-right py-2 px-4">Gain/Loss</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {portfolioItems.map((item) => (
-                    <tr key={item.symbol} className="border-b">
-                      <td className="py-3 px-4 font-medium">{item.symbol}</td>
-                      <td className="py-3 px-4">{item.name}</td>
-                      <td className="py-3 px-4 text-right">{item.shares}</td>
-                      <td className="py-3 px-4 text-right">${item.currentPrice.toFixed(2)}</td>
-                      <td className="py-3 px-4 text-right">${item.currentValue.toFixed(2)}</td>
-                      <td className="py-3 px-4 text-right">
-                        <div className={item.gain >= 0 ? 'text-green-500' : 'text-red-500'}>
-                          ${item.gain.toFixed(2)} ({item.gain >= 0 ? '+' : ''}{item.gainPercent.toFixed(2)}%)
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Bought</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">${pnl.totalBought.toFixed(2)}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Sold</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">${pnl.totalSold.toFixed(2)}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Net P&L</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className={`text-2xl font-bold ${pnl.netPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              ${pnl.netPnL.toFixed(2)}
+            </p>
+          </CardContent>
+        </Card>
       </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Add New Trade</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Symbol</Label>
+              <Input
+                value={currentTrade.symbol}
+                onChange={(e) => setCurrentTrade({...currentTrade, symbol: e.target.value.toUpperCase()})}
+                placeholder="AAPL"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select value={currentTrade.type} onValueChange={(value) => setCurrentTrade({...currentTrade, type: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="call">Call</SelectItem>
+                  <SelectItem value="put">Put</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Action</Label>
+              <Select value={currentTrade.action} onValueChange={(value) => setCurrentTrade({...currentTrade, action: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="buy">Buy</SelectItem>
+                  <SelectItem value="sell">Sell</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Strike Price</Label>
+              <Input
+                type="number"
+                value={currentTrade.strike}
+                onChange={(e) => setCurrentTrade({...currentTrade, strike: e.target.value})}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Expiration</Label>
+              <Input
+                type="date"
+                value={currentTrade.expiration}
+                onChange={(e) => setCurrentTrade({...currentTrade, expiration: e.target.value})}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Premium</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={currentTrade.premium}
+                onChange={(e) => setCurrentTrade({...currentTrade, premium: e.target.value})}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Quantity</Label>
+              <Input
+                type="number"
+                value={currentTrade.quantity}
+                onChange={(e) => setCurrentTrade({...currentTrade, quantity: e.target.value})}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input
+                type="date"
+                value={currentTrade.date}
+                onChange={(e) => setCurrentTrade({...currentTrade, date: e.target.value})}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Strategy</Label>
+              <Input
+                value={currentTrade.strategy}
+                onChange={(e) => setCurrentTrade({...currentTrade, strategy: e.target.value})}
+                placeholder="Bull Put Spread"
+              />
+            </div>
+          </div>
+
+          <Button onClick={addTrade} className="mt-4">
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Add Trade
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Trades History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-4">Symbol</th>
+                  <th className="text-left py-2 px-4">Type</th>
+                  <th className="text-left py-2 px-4">Action</th>
+                  <th className="text-right py-2 px-4">Strike</th>
+                  <th className="text-right py-2 px-4">Premium</th>
+                  <th className="text-right py-2 px-4">Quantity</th>
+                  <th className="text-right py-2 px-4">Total Value</th>
+                  <th className="text-left py-2 px-4">Date</th>
+                  <th className="text-center py-2 px-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {trades.map((trade) => (
+                  <tr key={trade.id} className="border-b">
+                    <td className="py-3 px-4 font-medium">{trade.symbol}</td>
+                    <td className="py-3 px-4">{trade.type}</td>
+                    <td className="py-3 px-4">
+                      <span className={trade.action === 'buy' ? 'text-green-500' : 'text-red-500'}>
+                        {trade.action}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">${trade.strike}</td>
+                    <td className="py-3 px-4 text-right">${trade.premium}</td>
+                    <td className="py-3 px-4 text-right">{trade.quantity}</td>
+                    <td className="py-3 px-4 text-right">${trade.total_value.toFixed(2)}</td>
+                    <td className="py-3 px-4">{new Date(trade.date).toLocaleDateString()}</td>
+                    <td className="py-3 px-4 text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteTrade(trade.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {trades.length === 0 && (
+              <p className="text-center text-muted-foreground py-8">No trades yet. Add your first trade above.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </PageLayout>
   );
 };
