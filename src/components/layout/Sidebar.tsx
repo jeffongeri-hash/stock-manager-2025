@@ -2,7 +2,8 @@
 import React from 'react';
 import { 
   BarChart, PieChart, BarChart3, Wallet, LineChart, Globe, 
-  DollarSign, Settings, ChevronRight, ChevronLeft, Home
+  DollarSign, Settings, ChevronRight, ChevronLeft, Home, Calculator,
+  TrendingUp, FolderKanban, AlertTriangle, Zap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,31 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Analysis',
       icon: PieChart,
       href: '/analysis',
+    },
+    {
+      title: 'Options Premium',
+      icon: Calculator,
+      href: '/options-premium',
+    },
+    {
+      title: 'Expected Move',
+      icon: TrendingUp,
+      href: '/expected-move',
+    },
+    {
+      title: 'Options Portfolio',
+      icon: FolderKanban,
+      href: '/options-portfolio',
+    },
+    {
+      title: 'Options Risk',
+      icon: AlertTriangle,
+      href: '/options-risk',
+    },
+    {
+      title: '0 DTE Calculator',
+      icon: Zap,
+      href: '/zero-dte',
     },
     {
       title: 'Settings',

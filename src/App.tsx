@@ -14,6 +14,11 @@ import Portfolio from "./pages/Portfolio";
 import Performance from "./pages/Performance";
 import Analysis from "./pages/Analysis";
 import Settings from "./pages/Settings";
+import OptionsPremium from "./pages/OptionsPremium";
+import ExpectedMove from "./pages/ExpectedMove";
+import OptionsPortfolio from "./pages/OptionsPortfolio";
+import OptionsRisk from "./pages/OptionsRisk";
+import ZeroDTE from "./pages/ZeroDTE";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +38,11 @@ const App = () => (
           <Route path="/performance" element={<Performance />} />
           <Route path="/analysis" element={<Analysis />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/options-premium" element={<OptionsPremium />} />
+          <Route path="/expected-move" element={<ExpectedMove />} />
+          <Route path="/options-portfolio" element={<OptionsPortfolio />} />
+          <Route path="/options-risk" element={<OptionsRisk />} />
+          <Route path="/zero-dte" element={<ZeroDTE />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
