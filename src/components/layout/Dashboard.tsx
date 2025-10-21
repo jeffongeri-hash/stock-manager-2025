@@ -50,27 +50,30 @@ export function Dashboard() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 flex">
-        <Sidebar isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
+      <div className="flex-1 flex relative">
+        {/* Sidebar - hidden on mobile by default */}
+        <div className="hidden lg:block">
+          <Sidebar isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
+        </div>
         
-        <main className="flex-1 transition-all duration-300">
-          <div className="container max-w-full p-4 lg:p-6 animate-fade-in">
-            <h1 className="text-2xl font-bold mb-6">Market Dashboard</h1>
+        <main className="flex-1 transition-all duration-300 w-full">
+          <div className="container max-w-full p-3 sm:p-4 lg:p-6 animate-fade-in">
+            <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Market Dashboard</h1>
             
             {/* Stats Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-slide-up" style={{ '--delay': '100ms' } as React.CSSProperties}>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6 animate-slide-up" style={{ '--delay': '100ms' } as React.CSSProperties}>
               <StatsCard 
                 title="Market Cap" 
                 value="$13.42T"
                 trend={0.47}
-                icon={<Wallet2 />}
+                icon={<Wallet2 className="h-4 w-4 sm:h-5 sm:w-5" />}
                 className="bg-primary/5"
               />
               <StatsCard 
                 title="Trading Volume" 
                 value="487.32M"
                 description="Today's volume"
-                icon={<BarChart3 />}
+                icon={<BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />}
                 className="bg-primary/5"
               />
               <StatsCard 
@@ -78,7 +81,7 @@ export function Dashboard() {
                 value={topGainer.symbol}
                 trend={topGainer.changePercent}
                 trendLabel={topGainer.name}
-                icon={<TrendingUp />}
+                icon={<TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />}
                 className="bg-success/5"
               />
               <StatsCard 
@@ -86,17 +89,17 @@ export function Dashboard() {
                 value={topLoser.symbol}
                 trend={topLoser.changePercent}
                 trendLabel={topLoser.name}
-                icon={<TrendingDown />}
+                icon={<TrendingDown className="h-4 w-4 sm:h-5 sm:w-5" />}
                 className="bg-danger/5"
               />
             </div>
             
             {/* Main Content Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Left column - Stock list */}
-              <div className="lg:col-span-1 space-y-4 animate-slide-up" style={{ '--delay': '200ms' } as React.CSSProperties}>
-                <h2 className="text-xl font-semibold">Watchlist</h2>
-                <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4 animate-slide-up" style={{ '--delay': '200ms' } as React.CSSProperties}>
+                <h2 className="text-lg sm:text-xl font-semibold">Watchlist</h2>
+                <div className="space-y-3 sm:space-y-4">
                   {stocksWithHistory.slice(0, 5).map((stock) => (
                     <StockCard 
                       key={stock.symbol} 
@@ -110,7 +113,7 @@ export function Dashboard() {
               </div>
               
               {/* Right column - Chart */}
-              <div className="lg:col-span-1 space-y-4 animate-slide-up" style={{ '--delay': '300ms' } as React.CSSProperties}>
+              <div className="space-y-3 sm:space-y-4 animate-slide-up" style={{ '--delay': '300ms' } as React.CSSProperties}>
                 <StockChart 
                   symbol={selectedStock.symbol} 
                   name={selectedStock.name} 
@@ -121,9 +124,9 @@ export function Dashboard() {
             </div>
             
             {/* Trading Tools Section */}
-            <div className="mt-8">
-              <h2 className="text-2xl font-bold mb-6">Trading Tools</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-slide-up" style={{ '--delay': '500ms' } as React.CSSProperties}>
+            <div className="mt-6 sm:mt-8">
+              <h2 className="text-lg sm:text-2xl font-bold mb-4 sm:mb-6">Trading Tools</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 animate-slide-up" style={{ '--delay': '500ms' } as React.CSSProperties}>
                 <Link to="/trading-toolkit">
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                     <CardHeader>
