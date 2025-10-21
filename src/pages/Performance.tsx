@@ -165,6 +165,74 @@ const Performance = () => {
 
   const performanceData = generatePerformanceData();
   
+  // Generate monthly P&L breakdown
+  const generateMonthlyBreakdown = () => {
+    const monthlyData: { [key: string]: { pnl: number, trades: number } } = {};
+
+    trades.forEach(trade => {
+      if (trade.exit_price && trade.exit_date) {
+        const monthKey = new Date(trade.exit_date).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'short' 
+        });
+        
+        const entryValue = trade.entry_price * trade.quantity;
+        const exitValue = trade.exit_price * trade.quantity;
+        const pnl = exitValue - entryValue;
+
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { pnl: 0, trades: 0 };
+        }
+        monthlyData[monthKey].pnl += pnl;
+        monthlyData[monthKey].trades += 1;
+      }
+    });
+
+    return Object.entries(monthlyData)
+      .map(([month, data]) => ({
+        month,
+        pnl: parseFloat(data.pnl.toFixed(2)),
+        trades: data.trades
+      }))
+      .sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime());
+  };
+
+  const monthlyBreakdown = generateMonthlyBreakdown();
+
+  // Generate enhanced performance chart data
+  const generateEnhancedPerformanceData = () => {
+    if (trades.length === 0) return [];
+
+    const sortedTrades = [...trades].sort((a, b) => 
+      new Date(a.entry_date).getTime() - new Date(b.entry_date).getTime()
+    );
+
+    let cumPnL = 0;
+    const chartData: any[] = [{ date: 'Start', pnl: 0 }];
+
+    sortedTrades.forEach(trade => {
+      if (trade.exit_price && trade.exit_date) {
+        const entryValue = trade.entry_price * trade.quantity;
+        const exitValue = trade.exit_price * trade.quantity;
+        const pnl = exitValue - entryValue;
+        cumPnL += pnl;
+        
+        chartData.push({
+          date: new Date(trade.exit_date).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: '2-digit'
+          }),
+          pnl: parseFloat(cumPnL.toFixed(2))
+        });
+      }
+    });
+
+    return chartData;
+  };
+
+  const enhancedPerformanceData = generateEnhancedPerformanceData();
+
   return (
     <PageLayout title="Performance">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -204,32 +272,130 @@ const Performance = () => {
         </Card>
 
         {/* Performance Chart */}
-        {performanceData.length > 0 && (
+        {enhancedPerformanceData.length > 1 && (
           <div className="lg:col-span-3">
             <Card>
               <CardHeader>
-                <CardTitle>Cumulative P&L</CardTitle>
+                <CardTitle>Cumulative P&L Over Time</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={performanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => [`$${typeof value === 'number' ? value.toFixed(2) : value}`, 'P&L']} />
+                    <LineChart data={enhancedPerformanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="date" 
+                        className="text-xs"
+                      />
+                      <YAxis 
+                        className="text-xs"
+                      />
+                      <Tooltip 
+                        formatter={(value) => [`$${typeof value === 'number' ? value.toFixed(2) : value}`, 'P&L']}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
                       <Legend />
                       <Line 
                         type="monotone" 
                         dataKey="pnl" 
                         name="Cumulative P&L" 
                         stroke="hsl(var(--primary))" 
-                        strokeWidth={2} 
-                        dot={false} 
-                        activeDot={{ r: 8 }} 
+                        strokeWidth={3} 
+                        dot={{ fill: 'hsl(var(--primary))', r: 4 }} 
+                        activeDot={{ r: 6 }} 
                       />
                     </LineChart>
                   </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Monthly P&L Breakdown */}
+        {monthlyBreakdown.length > 0 && (
+          <div className="lg:col-span-3">
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly P&L Breakdown</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={monthlyBreakdown} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="month" 
+                        className="text-xs"
+                      />
+                      <YAxis 
+                        className="text-xs"
+                      />
+                      <Tooltip 
+                        formatter={(value, name) => {
+                          if (name === 'pnl') return [`$${typeof value === 'number' ? value.toFixed(2) : value}`, 'Monthly P&L'];
+                          return [value, 'Trades'];
+                        }}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="pnl" 
+                        name="Monthly P&L" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={3} 
+                        dot={{ fill: 'hsl(var(--primary))', r: 5 }} 
+                        activeDot={{ r: 7 }} 
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                {/* Monthly breakdown table */}
+                <div className="mt-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Month</TableHead>
+                        <TableHead>P&L</TableHead>
+                        <TableHead># of Trades</TableHead>
+                        <TableHead>Avg P&L per Trade</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {monthlyBreakdown.map((month) => (
+                        <TableRow key={month.month}>
+                          <TableCell className="font-medium">{month.month}</TableCell>
+                          <TableCell className={month.pnl >= 0 ? 'text-green-500 font-semibold' : 'text-red-500 font-semibold'}>
+                            {month.pnl >= 0 ? '+' : ''}${month.pnl.toFixed(2)}
+                          </TableCell>
+                          <TableCell>{month.trades}</TableCell>
+                          <TableCell className={month.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
+                            ${(month.pnl / month.trades).toFixed(2)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="font-bold border-t-2">
+                        <TableCell>Total</TableCell>
+                        <TableCell className={metrics.closedPnL >= 0 ? 'text-green-500' : 'text-red-500'}>
+                          {metrics.closedPnL >= 0 ? '+' : ''}${metrics.closedPnL.toFixed(2)}
+                        </TableCell>
+                        <TableCell>{monthlyBreakdown.reduce((sum, m) => sum + m.trades, 0)}</TableCell>
+                        <TableCell className={metrics.closedPnL >= 0 ? 'text-green-500' : 'text-red-500'}>
+                          ${(metrics.closedPnL / monthlyBreakdown.reduce((sum, m) => sum + m.trades, 0)).toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
                 </div>
               </CardContent>
             </Card>
