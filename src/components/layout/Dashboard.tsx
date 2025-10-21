@@ -1,19 +1,19 @@
-
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { 
-  useStockData, useMarketIndices, useCurrencyPairs, 
-  mockStocks, mockIndices, mockCurrencies, mockNews,
+  useStockData, 
+  mockStocks, mockNews,
   generatePriceHistory 
 } from '@/utils/stocksApi';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { StockCard } from '@/components/stocks/StockCard';
 import { StockChart } from '@/components/stocks/StockChart';
-import { MarketOverview } from '@/components/markets/MarketOverview';
-import { CurrencyExchange } from '@/components/currencies/CurrencyExchange';
 import { NewsCard } from '@/components/news/NewsCard';
 import { StatsCard } from '@/components/ui/StatsCard';
-import { BarChart3, TrendingDown, TrendingUp, Wallet2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { BarChart3, TrendingDown, TrendingUp, Wallet2, Calculator, Target, Shield, DollarSign, TrendingUpIcon, Activity } from 'lucide-react';
 
 export function Dashboard() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -21,8 +21,6 @@ export function Dashboard() {
   
   // Use our hooks to get real-time mock data
   const stocks = useStockData(mockStocks);
-  const indices = useMarketIndices(mockIndices);
-  const currencies = useCurrencyPairs(mockCurrencies);
   
   // Generate chart data for the selected stock
   const selectedStockHistory = generatePriceHistory(30, selectedStock.price, 2);
@@ -95,7 +93,7 @@ export function Dashboard() {
             </div>
             
             {/* Main Content Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left column - Stock list */}
               <div className="lg:col-span-1 space-y-4 animate-slide-up" style={{ '--delay': '200ms' } as React.CSSProperties}>
                 <h2 className="text-xl font-semibold">Watchlist</h2>
@@ -122,11 +120,89 @@ export function Dashboard() {
                 />
                 <NewsCard news={mockNews} className="mt-6" />
               </div>
-              
-              {/* Right column - Markets and currencies */}
-              <div className="lg:col-span-1 space-y-4 animate-slide-up" style={{ '--delay': '400ms' } as React.CSSProperties}>
-                <MarketOverview indices={indices} />
-                <CurrencyExchange currencies={currencies} />
+            </div>
+            
+            {/* Trading Tools Section */}
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold mb-6">Trading Tools</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-slide-up" style={{ '--delay': '500ms' } as React.CSSProperties}>
+                <Link to="/trading-toolkit">
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardHeader>
+                      <Calculator className="h-8 w-8 text-primary mb-2" />
+                      <CardTitle>Trading Toolkit</CardTitle>
+                      <CardDescription>Position sizing, risk management, and profit calculators</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="outline" className="w-full">Open Toolkit</Button>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link to="/options-premium">
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardHeader>
+                      <DollarSign className="h-8 w-8 text-primary mb-2" />
+                      <CardTitle>Options Premium</CardTitle>
+                      <CardDescription>Calculate theoretical prices and Greeks for options</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="outline" className="w-full">Calculate Premium</Button>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link to="/expected-move">
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardHeader>
+                      <Target className="h-8 w-8 text-primary mb-2" />
+                      <CardTitle>Expected Move</CardTitle>
+                      <CardDescription>Predict stock price movements and ranges</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="outline" className="w-full">View Expected Move</Button>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link to="/options-risk">
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardHeader>
+                      <Shield className="h-8 w-8 text-primary mb-2" />
+                      <CardTitle>Options Risk</CardTitle>
+                      <CardDescription>Monitor and analyze options position risk</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="outline" className="w-full">Check Risk</Button>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link to="/portfolio">
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardHeader>
+                      <Activity className="h-8 w-8 text-primary mb-2" />
+                      <CardTitle>Options Portfolio</CardTitle>
+                      <CardDescription>Track and manage your options trades</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="outline" className="w-full">View Portfolio</Button>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link to="/performance">
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardHeader>
+                      <TrendingUpIcon className="h-8 w-8 text-primary mb-2" />
+                      <CardTitle>Performance</CardTitle>
+                      <CardDescription>Analyze your trading performance and P&L</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="outline" className="w-full">View Performance</Button>
+                    </CardContent>
+                  </Card>
+                </Link>
               </div>
             </div>
           </div>
