@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   useStockData, 
-  mockStocks, mockNews,
+  mockStocks,
   generatePriceHistory 
 } from '@/utils/stocksApi';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { StockCard } from '@/components/stocks/StockCard';
 import { StockChart } from '@/components/stocks/StockChart';
-import { NewsCard } from '@/components/news/NewsCard';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,7 +92,7 @@ export function Dashboard() {
             </div>
             
             {/* Main Content Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left column - Stock list */}
               <div className="lg:col-span-1 space-y-4 animate-slide-up" style={{ '--delay': '200ms' } as React.CSSProperties}>
                 <h2 className="text-xl font-semibold">Watchlist</h2>
@@ -110,15 +109,14 @@ export function Dashboard() {
                 </div>
               </div>
               
-              {/* Middle column - Chart and news */}
-              <div className="lg:col-span-2 space-y-4 animate-slide-up" style={{ '--delay': '300ms' } as React.CSSProperties}>
+              {/* Right column - Chart */}
+              <div className="lg:col-span-1 space-y-4 animate-slide-up" style={{ '--delay': '300ms' } as React.CSSProperties}>
                 <StockChart 
                   symbol={selectedStock.symbol} 
                   name={selectedStock.name} 
                   currentPrice={selectedStock.price}
                   volatility={2.5}
                 />
-                <NewsCard news={mockNews} className="mt-6" />
               </div>
             </div>
             
