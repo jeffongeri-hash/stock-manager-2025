@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,62 +7,33 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Trash2, Plus } from 'lucide-react';
+import { useStockData } from '@/hooks/useStockData';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface Position {
+  id: string;
   ticker: string;
   type: string;
   strike: number;
   expiration: string;
   stockPrice: number;
-  iv: number;
-  hv: number;
+  expectedMove: number;
+  probITM: number;
+  riskFlag: string;
 }
 
 export default function OptionsRisk() {
   const [portfolio, setPortfolio] = useState<Position[]>([]);
-  const [ticker, setTicker] = useState('');
-  const [type, setType] = useState('');
+  const [ticker, setTicker] = useState('AAPL');
+  const [type, setType] = useState('call');
   const [strike, setStrike] = useState('');
   const [expiration, setExpiration] = useState('');
-  const [stockPrice, setStockPrice] = useState('');
-  const [iv, setIv] = useState('');
-  const [hv, setHv] = useState('');
+  const [volatility, setVolatility] = useState('0.25');
 
-  const erf = (x: number): number => {
-    const a1 = 0.254829592;
-    const a2 = -0.284496736;
-    const a3 = 1.421413741;
-    const a4 = -1.453152027;
-    const a5 = 1.061405429;
-    const p = 0.3275911;
-
-    const sign = x < 0 ? -1 : 1;
-    x = Math.abs(x);
-
-    const t = 1.0 / (1.0 + p * x);
-    const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-
-    return sign * y;
-  };
-
-  const expectedMove = (stockPrice: number, ivPercent: number, days: number) => {
-    const ivVal = ivPercent / 100;
-    return stockPrice * ivVal * Math.sqrt(days / 365);
-  };
-
-  const probITM = (S: number, K: number, IV: number, tDays: number, optionType: string) => {
-    const T = Math.max(tDays / 365, 0.0001);
-    const sigma = IV / 100;
-    const expectedMoveVal = S * sigma * Math.sqrt(T);
-    const d = (S - K) / expectedMoveVal;
-    const N = 0.5 * (1 + erf(d / Math.sqrt(2)));
-
-    if (optionType.toLowerCase() === 'call') {
-      return N;
-    } else {
-      return 1 - N;
-    }
-  };
+  const { stocks } = useStockData([ticker]);
+  const stockPrice = stocks[0]?.price || 0;
 
   const daysToExpiration = (expirationDate: string) => {
     const today = new Date();
@@ -72,115 +43,151 @@ export default function OptionsRisk() {
     return Math.max(diffDays, 0);
   };
 
-  const getRiskFlag = (iv: number, hv: number, probItm: number) => {
-    if (iv > hv && probItm < 0.3) {
-      return 'Safe';
-    } else if (iv < hv && probItm > 0.7) {
-      return 'Risky';
-    } else {
-      return 'Neutral';
-    }
-  };
-
-  const addPosition = () => {
-    if (!ticker || !type || !strike || !expiration || !stockPrice || !iv || !hv) {
-      alert('Please fill in all fields');
+  const addPosition = async () => {
+    if (!ticker || !type || !strike || !expiration || !stockPrice) {
+      toast.error('Please fill in all fields');
       return;
     }
 
-    const position: Position = {
-      ticker: ticker.toUpperCase(),
-      type,
-      strike: parseFloat(strike),
-      expiration,
-      stockPrice: parseFloat(stockPrice),
-      iv: parseFloat(iv),
-      hv: parseFloat(hv)
-    };
+    const days = daysToExpiration(expiration);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-options-data', {
+        body: {
+          symbol: ticker,
+          stockPrice,
+          strikePrice: parseFloat(strike),
+          daysToExpiry: days,
+          volatility: parseFloat(volatility),
+          optionType: type
+        }
+      });
 
-    setPortfolio([...portfolio, position]);
-    clearForm();
-  };
+      if (error) throw error;
 
-  const clearForm = () => {
-    setTicker('');
-    setType('');
-    setStrike('');
-    setExpiration('');
-    setStockPrice('');
-    setIv('');
-    setHv('');
-  };
-
-  const loadSampleData = () => {
-    const sampleData: Position[] = [
-      {
-        ticker: 'AAPL',
-        type: 'call',
-        strike: 150,
-        expiration: '2025-10-15',
-        stockPrice: 155,
-        iv: 28,
-        hv: 22
-      },
-      {
-        ticker: 'MSFT',
-        type: 'put',
-        strike: 300,
-        expiration: '2025-11-20',
-        stockPrice: 295,
-        iv: 18,
-        hv: 25
-      },
-      {
-        ticker: 'TSLA',
-        type: 'call',
-        strike: 220,
-        expiration: '2025-09-30',
-        stockPrice: 215,
-        iv: 52,
-        hv: 48
+      // Calculate probability ITM based on delta
+      const probITM = Math.abs(data.greeks.delta);
+      
+      // Determine risk flag
+      let riskFlag = 'Neutral';
+      if (type === 'call' && stockPrice < parseFloat(strike) && probITM < 0.3) {
+        riskFlag = 'Safe';
+      } else if (type === 'put' && stockPrice > parseFloat(strike) && probITM < 0.3) {
+        riskFlag = 'Safe';
+      } else if (probITM > 0.7) {
+        riskFlag = 'Risky';
       }
-    ];
-    setPortfolio(sampleData);
+
+      const position: Position = {
+        id: Date.now().toString(),
+        ticker: ticker.toUpperCase(),
+        type,
+        strike: parseFloat(strike),
+        expiration,
+        stockPrice,
+        expectedMove: data.expectedMove.amount,
+        probITM: probITM * 100,
+        riskFlag
+      };
+
+      setPortfolio([...portfolio, position]);
+      toast.success('Position added successfully');
+      
+      // Reset form
+      setStrike('');
+      setExpiration('');
+    } catch (err) {
+      console.error('Error adding position:', err);
+      toast.error('Failed to add position');
+    }
   };
 
-  const clearPortfolio = () => {
-    setPortfolio([]);
+  const removePosition = (id: string) => {
+    setPortfolio(portfolio.filter(p => p.id !== id));
+    toast.success('Position removed');
   };
 
-  const riskCounts = portfolio.reduce((acc, position) => {
-    const daysToExp = daysToExpiration(position.expiration);
-    const probItm = probITM(position.stockPrice, position.strike, position.iv, daysToExp, position.type);
-    const risk = getRiskFlag(position.iv, position.hv, probItm);
-    acc[risk.toLowerCase()]++;
-    return acc;
-  }, { safe: 0, risky: 0, neutral: 0 });
+  const getRiskColor = (flag: string) => {
+    switch (flag) {
+      case 'Safe':
+        return 'bg-green-500/10 text-green-500 border-green-500/50';
+      case 'Risky':
+        return 'bg-red-500/10 text-red-500 border-red-500/50';
+      default:
+        return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/50';
+    }
+  };
+
+  const totalRisk = portfolio.filter(p => p.riskFlag === 'Risky').length;
+  const totalSafe = portfolio.filter(p => p.riskFlag === 'Safe').length;
+  const avgProbITM = portfolio.length > 0 
+    ? portfolio.reduce((sum, p) => sum + p.probITM, 0) / portfolio.length 
+    : 0;
+
+  useEffect(() => {
+    if (stockPrice && !strike) {
+      setStrike(stockPrice.toString());
+    }
+  }, [stockPrice]);
 
   return (
     <PageLayout title="Options Risk Tracker">
-      <div className="space-y-6">
+      <div className="grid gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Total Positions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{portfolio.length}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Safe Positions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-green-500">{totalSafe}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Risky Positions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-red-500">{totalRisk}</p>
+            </CardContent>
+          </Card>
+        </div>
+
         <Card>
           <CardHeader>
-            <CardTitle>Add Option Position</CardTitle>
-            <CardDescription>Analyze volatility relationships and assess option risk using IV vs HV comparisons</CardDescription>
+            <CardTitle>Add New Position</CardTitle>
+            <CardDescription>Track risk for your options positions with live data</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-4">
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div>
-                <Label htmlFor="ticker">Ticker Symbol</Label>
+                <Label>Ticker</Label>
                 <Input
-                  id="ticker"
-                  placeholder="e.g., AAPL"
                   value={ticker}
-                  onChange={(e) => setTicker(e.target.value)}
+                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                  placeholder="AAPL"
                 />
+                {stockPrice > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    ${stockPrice.toFixed(2)}
+                  </p>
+                )}
               </div>
+
               <div>
-                <Label htmlFor="type">Option Type</Label>
+                <Label>Type</Label>
                 <Select value={type} onValueChange={setType}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Type" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="call">Call</SelectItem>
@@ -188,147 +195,114 @@ export default function OptionsRisk() {
                   </SelectContent>
                 </Select>
               </div>
+
               <div>
-                <Label htmlFor="strike">Strike Price</Label>
+                <Label>Strike</Label>
                 <Input
-                  id="strike"
                   type="number"
-                  placeholder="150.00"
-                  step="0.01"
                   value={strike}
                   onChange={(e) => setStrike(e.target.value)}
+                  placeholder="150"
                 />
               </div>
+
               <div>
-                <Label htmlFor="expiration">Expiration Date</Label>
+                <Label>Expiration</Label>
                 <Input
-                  id="expiration"
                   type="date"
                   value={expiration}
                   onChange={(e) => setExpiration(e.target.value)}
                 />
               </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
+
               <div>
-                <Label htmlFor="stockPrice">Current Stock Price</Label>
+                <Label>IV</Label>
                 <Input
-                  id="stockPrice"
                   type="number"
-                  placeholder="155.00"
                   step="0.01"
-                  value={stockPrice}
-                  onChange={(e) => setStockPrice(e.target.value)}
+                  value={volatility}
+                  onChange={(e) => setVolatility(e.target.value)}
+                  placeholder="0.25"
                 />
               </div>
-              <div>
-                <Label htmlFor="iv">Implied Volatility (%)</Label>
-                <Input
-                  id="iv"
-                  type="number"
-                  placeholder="25.0"
-                  step="0.1"
-                  value={iv}
-                  onChange={(e) => setIv(e.target.value)}
-                />
+
+              <div className="flex items-end">
+                <Button onClick={addPosition} className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add
+                </Button>
               </div>
-              <div>
-                <Label htmlFor="hv">Historical Volatility (%)</Label>
-                <Input
-                  id="hv"
-                  type="number"
-                  placeholder="22.0"
-                  step="0.1"
-                  value={hv}
-                  onChange={(e) => setHv(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={addPosition}>Add Position</Button>
-              <Button onClick={loadSampleData} variant="secondary">Load Sample Data</Button>
-              <Button onClick={clearPortfolio} variant="outline">Clear All</Button>
             </div>
           </CardContent>
         </Card>
 
         {portfolio.length > 0 && (
-          <>
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card className="border-success/50 bg-success/5">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-3xl font-bold text-success">{riskCounts.safe}</CardTitle>
-                  <CardDescription>Safe Positions</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card className="border-danger/50 bg-danger/5">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-3xl font-bold text-danger">{riskCounts.risky}</CardTitle>
-                  <CardDescription>Risky Positions</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card className="border-warning/50 bg-warning/5">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-3xl font-bold text-warning">{riskCounts.neutral}</CardTitle>
-                  <CardDescription>Neutral Positions</CardDescription>
-                </CardHeader>
-              </Card>
-            </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Portfolio Risk Analysis</CardTitle>
+              <CardDescription>
+                Average Probability ITM: {avgProbITM.toFixed(1)}%
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ticker</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Strike</TableHead>
+                    <TableHead>Stock Price</TableHead>
+                    <TableHead>Expected Move</TableHead>
+                    <TableHead>Prob ITM</TableHead>
+                    <TableHead>DTE</TableHead>
+                    <TableHead>Risk</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {portfolio.map((position) => (
+                    <TableRow key={position.id}>
+                      <TableCell className="font-medium">{position.ticker}</TableCell>
+                      <TableCell>
+                        <Badge variant={position.type === 'call' ? 'default' : 'secondary'}>
+                          {position.type.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>${position.strike}</TableCell>
+                      <TableCell>${position.stockPrice.toFixed(2)}</TableCell>
+                      <TableCell>±${position.expectedMove.toFixed(2)}</TableCell>
+                      <TableCell>{position.probITM.toFixed(1)}%</TableCell>
+                      <TableCell>{daysToExpiration(position.expiration)}d</TableCell>
+                      <TableCell>
+                        <Badge className={getRiskColor(position.riskFlag)}>
+                          {position.riskFlag}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removePosition(position.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
 
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Ticker</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Strike</TableHead>
-                        <TableHead>Days to Exp</TableHead>
-                        <TableHead>Stock Price</TableHead>
-                        <TableHead>IV (%)</TableHead>
-                        <TableHead>HV (%)</TableHead>
-                        <TableHead>Expected Move ±</TableHead>
-                        <TableHead>Prob ITM (%)</TableHead>
-                        <TableHead>Risk Flag</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {portfolio.map((position, index) => {
-                        const daysToExp = daysToExpiration(position.expiration);
-                        const move = expectedMove(position.stockPrice, position.iv, daysToExp);
-                        const probItm = probITM(position.stockPrice, position.strike, position.iv, daysToExp, position.type);
-                        const risk = getRiskFlag(position.iv, position.hv, probItm);
-
-                        return (
-                          <TableRow key={index}>
-                            <TableCell className="font-bold">{position.ticker}</TableCell>
-                            <TableCell className="uppercase">{position.type}</TableCell>
-                            <TableCell>${position.strike}</TableCell>
-                            <TableCell>{daysToExp}</TableCell>
-                            <TableCell>${position.stockPrice}</TableCell>
-                            <TableCell>{position.iv}%</TableCell>
-                            <TableCell>{position.hv}%</TableCell>
-                            <TableCell>${move.toFixed(2)}</TableCell>
-                            <TableCell>{(probItm * 100).toFixed(1)}%</TableCell>
-                            <TableCell>
-                              <Badge variant={
-                                risk === 'Safe' ? 'default' :
-                                risk === 'Risky' ? 'destructive' :
-                                'secondary'
-                              }>
-                                {risk}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </>
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                <h3 className="font-semibold mb-2">Risk Indicators:</h3>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  <li>• <span className="text-green-500 font-medium">Safe:</span> Low probability of ending in-the-money, good for premium sellers</li>
+                  <li>• <span className="text-yellow-500 font-medium">Neutral:</span> Moderate risk, watch closely</li>
+                  <li>• <span className="text-red-500 font-medium">Risky:</span> High probability ITM, potential for loss if short</li>
+                  <li>• Expected Move shows one standard deviation (68% probability range)</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </PageLayout>

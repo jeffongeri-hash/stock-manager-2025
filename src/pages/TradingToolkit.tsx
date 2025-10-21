@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,17 +6,32 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useStockData } from '@/hooks/useStockData';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const TradingToolkit = () => {
+  const [symbol, setSymbol] = useState('AAPL');
+  const { stocks, loading } = useStockData([symbol]);
+  const currentPrice = stocks[0]?.price || 0;
+  
   const [positionData, setPositionData] = useState({
     accountSize: 10000,
     riskPercentage: 2,
-    entryPrice: 150,
-    stopLoss: 145,
+    entryPrice: currentPrice || 150,
+    stopLoss: (currentPrice || 150) * 0.97,
     confidence: 7
   });
+
+  useEffect(() => {
+    if (currentPrice && !positionData.entryPrice) {
+      setPositionData(prev => ({
+        ...prev,
+        entryPrice: currentPrice,
+        stopLoss: currentPrice * 0.97
+      }));
+    }
+  }, [currentPrice]);
 
   const [tradingRules, setTradingRules] = useState([
     { id: 1, rule: "Market trend aligns with trade direction", checked: false, weight: 10 },
@@ -77,9 +92,24 @@ const TradingToolkit = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Position Size Calculator</CardTitle>
-                <CardDescription>Calculate optimal position size based on risk parameters</CardDescription>
+                <CardDescription>Calculate optimal position size based on live stock data</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Stock Symbol</Label>
+                  <Input
+                    type="text"
+                    value={symbol}
+                    onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                    placeholder="AAPL"
+                  />
+                  {currentPrice > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Current Price: ${currentPrice.toFixed(2)}
+                    </p>
+                  )}
+                </div>
+                
                 <div className="space-y-2">
                   <Label>Account Size: ${positionData.accountSize.toLocaleString()}</Label>
                   <Input

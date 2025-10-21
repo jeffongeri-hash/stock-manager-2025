@@ -1,288 +1,202 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatCurrency, formatPercentage } from '@/utils/stocksApi';
-
-interface MoveResults {
-  expectedMove: number;
-  lowerBound: number;
-  upperBound: number;
-}
-
-interface PopResults {
-  expectedMove: number;
-  probITM: number;
-  pop: number;
-  thetaDecayImpact: number;
-  days: number;
-}
+import { RefreshCw } from 'lucide-react';
+import { useStockData } from '@/hooks/useStockData';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function ExpectedMove() {
-  const [stockPrice1, setStockPrice1] = useState('100');
-  const [iv1, setIv1] = useState('20');
-  const [days1, setDays1] = useState('30');
-  const [results1, setResults1] = useState<MoveResults | null>(null);
+  const [symbol, setSymbol] = useState('AAPL');
+  const [daysToExpiry, setDaysToExpiry] = useState('30');
+  const [volatility, setVolatility] = useState('0.25');
+  const [optionsData, setOptionsData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  const [stockPrice2, setStockPrice2] = useState('100');
-  const [strikePrice, setStrikePrice] = useState('105');
-  const [iv2, setIv2] = useState('20');
-  const [days2, setDays2] = useState('30');
-  const [optionType, setOptionType] = useState('call');
-  const [theta, setTheta] = useState('0.05');
-  const [results2, setResults2] = useState<PopResults | null>(null);
+  const { stocks } = useStockData([symbol]);
+  const stockPrice = stocks[0]?.price || 0;
 
-  const expectedMove = (stockPrice: number, ivPercent: number, days: number) => {
-    const iv = ivPercent / 100;
-    const move = stockPrice * iv * Math.sqrt(days / 365);
-    const lower = stockPrice - move;
-    const upper = stockPrice + move;
-
-    return {
-      expectedMove: parseFloat(move.toFixed(2)),
-      lowerBound: parseFloat(lower.toFixed(2)),
-      upperBound: parseFloat(upper.toFixed(2))
-    };
-  };
-
-  const erf = (x: number): number => {
-    const a1 = 0.254829592;
-    const a2 = -0.284496736;
-    const a3 = 1.421413741;
-    const a4 = -1.453152027;
-    const a5 = 1.061405429;
-    const p = 0.3275911;
-
-    const sign = x >= 0 ? 1 : -1;
-    x = Math.abs(x);
-
-    const t = 1.0 / (1.0 + p * x);
-    const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-
-    return sign * y;
-  };
-
-  const optionPopTheta = (S: number, K: number, IV: number, T: number, optionType: string, thetaPerDay: number) => {
-    const T_years = T / 365;
-    const expected_move = S * IV * Math.sqrt(T_years);
-
-    const d1 = (Math.log(S / K) + (0.5 * IV * IV) * T_years) / (IV * Math.sqrt(T_years));
-    const N = 0.5 * (1 + erf(d1 / Math.sqrt(2)));
-
-    let prob_ITM;
-    if (optionType === 'call') {
-      prob_ITM = 1 - N;
-    } else {
-      prob_ITM = N;
+  const fetchExpectedMove = async () => {
+    if (!stockPrice || !daysToExpiry) {
+      toast.error('Please fill in all fields');
+      return;
     }
 
-    const pop = (1 - prob_ITM) * 100;
-    const breakeven_shift = thetaPerDay * T;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-options-data', {
+        body: {
+          symbol,
+          stockPrice,
+          strikePrice: stockPrice, // Use ATM for expected move
+          daysToExpiry: parseInt(daysToExpiry),
+          volatility: parseFloat(volatility),
+          optionType: 'call'
+        }
+      });
 
-    return {
-      expectedMove: parseFloat(expected_move.toFixed(2)),
-      probITM: parseFloat((prob_ITM * 100).toFixed(1)),
-      pop: parseFloat(pop.toFixed(1)),
-      thetaDecayImpact: parseFloat(breakeven_shift.toFixed(2)),
-      days: T
-    };
-  };
-
-  const handleCalculate1 = () => {
-    const price = parseFloat(stockPrice1);
-    const volatility = parseFloat(iv1);
-    const daysVal = parseInt(days1);
-
-    if (price && volatility && daysVal) {
-      setResults1(expectedMove(price, volatility, daysVal));
+      if (error) throw error;
+      setOptionsData(data);
+    } catch (err) {
+      console.error('Error fetching expected move:', err);
+      toast.error('Failed to calculate expected move');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleCalculate2 = () => {
-    const S = parseFloat(stockPrice2);
-    const K = parseFloat(strikePrice);
-    const volatility = parseFloat(iv2) / 100;
-    const daysVal = parseInt(days2);
-    const thetaVal = parseFloat(theta);
-
-    if (S && K && volatility && daysVal) {
-      setResults2(optionPopTheta(S, K, volatility, daysVal, optionType, thetaVal));
+  useEffect(() => {
+    if (stockPrice && daysToExpiry) {
+      fetchExpectedMove();
     }
-  };
+  }, [symbol, stockPrice]);
 
   return (
     <PageLayout title="Expected Move Calculator">
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Expected Move Calculator</CardTitle>
-            <CardDescription>Calculate expected price movements based on implied volatility</CardDescription>
+            <CardTitle>Calculate Expected Stock Movement</CardTitle>
+            <CardDescription>Based on implied volatility and time to expiration</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="stockPrice1">Current Stock Price</Label>
-              <Input
-                id="stockPrice1"
-                type="number"
-                placeholder="100.00"
-                step="0.01"
-                value={stockPrice1}
-                onChange={(e) => setStockPrice1(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="iv1">Implied Volatility (%)</Label>
-              <Input
-                id="iv1"
-                type="number"
-                placeholder="20.0"
-                step="0.1"
-                value={iv1}
-                onChange={(e) => setIv1(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="days1">Days to Expiration</Label>
-              <Input
-                id="days1"
-                type="number"
-                placeholder="30"
-                min="1"
-                value={days1}
-                onChange={(e) => setDays1(e.target.value)}
-              />
-            </div>
-            <Button onClick={handleCalculate1} className="w-full">
-              Calculate Expected Move
-            </Button>
-            
-            {results1 && (
-              <div className="space-y-3 pt-4 border-t">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Expected Move (±)</span>
-                  <span className="text-lg font-bold text-primary">{formatCurrency(results1.expectedMove)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Lower Bound</span>
-                  <span className="text-lg font-bold text-danger">{formatCurrency(results1.lowerBound)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Upper Bound</span>
-                  <span className="text-lg font-bold text-success">{formatCurrency(results1.upperBound)}</span>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="symbol">Stock Symbol</Label>
+                <Input
+                  id="symbol"
+                  type="text"
+                  placeholder="AAPL"
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                  onBlur={fetchExpectedMove}
+                />
+                {stockPrice > 0 && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Current: ${stockPrice.toFixed(2)}
+                  </p>
+                )}
               </div>
-            )}
+
+              <div>
+                <Label htmlFor="days">Days to Expiration</Label>
+                <Input
+                  id="days"
+                  type="number"
+                  placeholder="30"
+                  value={daysToExpiry}
+                  onChange={(e) => setDaysToExpiry(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="vol">Implied Volatility</Label>
+                <Input
+                  id="vol"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.25"
+                  value={volatility}
+                  onChange={(e) => setVolatility(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">0.25 = 25%</p>
+              </div>
+            </div>
+
+            <Button onClick={fetchExpectedMove} disabled={loading}>
+              {loading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
+              Calculate
+            </Button>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Option POP & Theta Calculator</CardTitle>
-            <CardDescription>Analyze probability of profit and theta decay impact</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="stockPrice2">Stock Price</Label>
-                <Input
-                  id="stockPrice2"
-                  type="number"
-                  placeholder="100.00"
-                  step="0.01"
-                  value={stockPrice2}
-                  onChange={(e) => setStockPrice2(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="strikePrice">Strike Price</Label>
-                <Input
-                  id="strikePrice"
-                  type="number"
-                  placeholder="105.00"
-                  step="0.01"
-                  value={strikePrice}
-                  onChange={(e) => setStrikePrice(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="iv2">Implied Volatility (%)</Label>
-                <Input
-                  id="iv2"
-                  type="number"
-                  placeholder="20.0"
-                  step="0.1"
-                  value={iv2}
-                  onChange={(e) => setIv2(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="days2">Days to Expiration</Label>
-                <Input
-                  id="days2"
-                  type="number"
-                  placeholder="30"
-                  min="1"
-                  value={days2}
-                  onChange={(e) => setDays2(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="optionType">Option Type</Label>
-                <Select value={optionType} onValueChange={setOptionType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="call">Call</SelectItem>
-                    <SelectItem value="put">Put</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="theta">Theta per Day</Label>
-                <Input
-                  id="theta"
-                  type="number"
-                  placeholder="0.05"
-                  step="0.01"
-                  value={theta}
-                  onChange={(e) => setTheta(e.target.value)}
-                />
-              </div>
-            </div>
-            <Button onClick={handleCalculate2} className="w-full">
-              Calculate POP & Theta
-            </Button>
-            
-            {results2 && (
-              <div className="space-y-3 pt-4 border-t">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Expected Move (±)</span>
-                  <span className="text-base font-bold">{formatCurrency(results2.expectedMove)}</span>
+        {optionsData && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Expected Price Movement for {symbol}</CardTitle>
+              <CardDescription>One standard deviation move (68% probability)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-6 bg-card rounded-lg border text-center">
+                  <p className="text-sm text-muted-foreground mb-2">Current Price</p>
+                  <p className="text-3xl font-bold">${stockPrice.toFixed(2)}</p>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Prob ITM</span>
-                  <span className="text-base font-bold">{results2.probITM}%</span>
+
+                <div className="p-6 bg-green-500/10 border-green-500/50 rounded-lg border text-center">
+                  <p className="text-sm text-muted-foreground mb-2">Upper Bound</p>
+                  <p className="text-3xl font-bold text-green-500">
+                    ${optionsData.expectedMove.upperBound}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    +{((optionsData.expectedMove.upperBound - stockPrice) / stockPrice * 100).toFixed(2)}%
+                  </p>
                 </div>
-                <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
-                  <div className="text-xs text-center text-muted-foreground mb-1">Probability of Profit</div>
-                  <div className="text-2xl font-bold text-center text-primary">{results2.pop}%</div>
+
+                <div className="p-6 bg-red-500/10 border-red-500/50 rounded-lg border text-center">
+                  <p className="text-sm text-muted-foreground mb-2">Lower Bound</p>
+                  <p className="text-3xl font-bold text-red-500">
+                    ${optionsData.expectedMove.lowerBound}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {((optionsData.expectedMove.lowerBound - stockPrice) / stockPrice * 100).toFixed(2)}%
+                  </p>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Theta Decay Impact</span>
-                  <span className="text-base font-bold text-warning">{formatCurrency(results2.thetaDecayImpact)} over {results2.days}d</span>
+
+                <div className="p-6 bg-primary/10 border-primary/50 rounded-lg border text-center">
+                  <p className="text-sm text-muted-foreground mb-2">Expected Move</p>
+                  <p className="text-3xl font-bold">±${optionsData.expectedMove.amount}</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    ±{optionsData.expectedMove.percent}%
+                  </p>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                <h3 className="font-semibold mb-2">What This Means:</h3>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  <li>• There's a 68% probability the stock will stay between ${optionsData.expectedMove.lowerBound} and ${optionsData.expectedMove.upperBound}</li>
+                  <li>• Based on {(parseFloat(volatility) * 100).toFixed(0)}% implied volatility over {daysToExpiry} days</li>
+                  <li>• Use this to size option positions and set strike prices</li>
+                  <li>• Higher volatility = larger expected moves</li>
+                </ul>
+              </div>
+
+              <div className="mt-6">
+                <h3 className="font-semibold mb-3">Suggested Trading Strategies</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-card rounded-lg border">
+                    <h4 className="font-medium text-green-600 mb-2">Bullish Outlook</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Consider selling put spreads below ${optionsData.expectedMove.lowerBound} or buying calls near the money
+                    </p>
+                  </div>
+                  <div className="p-4 bg-card rounded-lg border">
+                    <h4 className="font-medium text-red-600 mb-2">Bearish Outlook</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Consider selling call spreads above ${optionsData.expectedMove.upperBound} or buying puts near the money
+                    </p>
+                  </div>
+                  <div className="p-4 bg-card rounded-lg border">
+                    <h4 className="font-medium text-blue-600 mb-2">Neutral/Range Bound</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Consider iron condors with short strikes outside the expected move range
+                    </p>
+                  </div>
+                  <div className="p-4 bg-card rounded-lg border">
+                    <h4 className="font-medium text-purple-600 mb-2">High Volatility Play</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Consider straddles/strangles if you expect movement beyond ±{optionsData.expectedMove.percent}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </PageLayout>
   );
