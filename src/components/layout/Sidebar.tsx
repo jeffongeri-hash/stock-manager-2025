@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  BarChart, PieChart, BarChart3, Wallet, LineChart, Globe, 
+  BarChart, PieChart, Wallet, LineChart, 
   DollarSign, Settings, ChevronRight, ChevronLeft, Home, Calculator,
-  TrendingUp, FolderKanban, AlertTriangle, Zap
+  TrendingUp, FolderKanban, AlertTriangle, Zap, BookOpen, Activity,
+  Shapes, Bell, TestTube, Users, Radar, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -138,6 +139,46 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: '0 DTE Calculator',
       icon: Zap,
       href: '/zero-dte',
+    },
+    {
+      title: 'Trade Journal',
+      icon: BookOpen,
+      href: '/trade-journal',
+    },
+    {
+      title: 'IV Tracker',
+      icon: Activity,
+      href: '/iv-tracker',
+    },
+    {
+      title: 'Strategy Visualizer',
+      icon: Shapes,
+      href: '/strategy-visualizer',
+    },
+    {
+      title: 'Alerts',
+      icon: Bell,
+      href: '/alerts',
+    },
+    {
+      title: 'Backtesting',
+      icon: TestTube,
+      href: '/backtesting',
+    },
+    {
+      title: 'Trade Ideas',
+      icon: Users,
+      href: '/trade-ideas',
+    },
+    {
+      title: 'Market Scanner',
+      icon: Radar,
+      href: '/market-scanner',
+    },
+    {
+      title: 'Reports',
+      icon: FileText,
+      href: '/reports',
     },
     {
       title: 'Settings',

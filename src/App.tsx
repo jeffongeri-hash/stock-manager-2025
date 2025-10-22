@@ -18,6 +18,14 @@ import OptionsRisk from "./pages/OptionsRisk";
 import ZeroDTE from "./pages/ZeroDTE";
 import Auth from "./pages/Auth";
 import TradingToolkit from "./pages/TradingToolkit";
+import TradeJournal from "./pages/TradeJournal";
+import IVTracker from "./pages/IVTracker";
+import StrategyVisualizer from "./pages/StrategyVisualizer";
+import Alerts from "./pages/Alerts";
+import Backtesting from "./pages/Backtesting";
+import TradeIdeas from "./pages/TradeIdeas";
+import MarketScanner from "./pages/MarketScanner";
+import Reports from "./pages/Reports";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +49,14 @@ const App = () => (
           <Route path="/options-portfolio" element={<OptionsPortfolio />} />
           <Route path="/options-risk" element={<OptionsRisk />} />
           <Route path="/zero-dte" element={<ZeroDTE />} />
+          <Route path="/trade-journal" element={<TradeJournal />} />
+          <Route path="/iv-tracker" element={<IVTracker />} />
+          <Route path="/strategy-visualizer" element={<StrategyVisualizer />} />
+          <Route path="/alerts" element={<Alerts />} />
+          <Route path="/backtesting" element={<Backtesting />} />
+          <Route path="/trade-ideas" element={<TradeIdeas />} />
+          <Route path="/market-scanner" element={<MarketScanner />} />
+          <Route path="/reports" element={<Reports />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

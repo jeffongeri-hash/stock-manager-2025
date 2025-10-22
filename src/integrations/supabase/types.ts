@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          alert_type: string
+          condition: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          symbol: string
+          target_value: number
+          triggered_at: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          condition: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          symbol: string
+          target_value: number
+          triggered_at?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          condition?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          symbol?: string
+          target_value?: number
+          triggered_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      backtest_results: {
+        Row: {
+          created_at: string
+          end_date: string
+          final_capital: number
+          id: string
+          initial_capital: number
+          parameters: Json | null
+          results_data: Json | null
+          start_date: string
+          strategy_name: string
+          symbol: string
+          total_trades: number
+          user_id: string
+          win_rate: number | null
+          winning_trades: number
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          final_capital: number
+          id?: string
+          initial_capital: number
+          parameters?: Json | null
+          results_data?: Json | null
+          start_date: string
+          strategy_name: string
+          symbol: string
+          total_trades: number
+          user_id: string
+          win_rate?: number | null
+          winning_trades: number
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          final_capital?: number
+          id?: string
+          initial_capital?: number
+          parameters?: Json | null
+          results_data?: Json | null
+          start_date?: string
+          strategy_name?: string
+          symbol?: string
+          total_trades?: number
+          user_id?: string
+          win_rate?: number | null
+          winning_trades?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -29,6 +116,42 @@ export type Database = {
           created_at?: string
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      report_settings: {
+        Row: {
+          created_at: string
+          daily_report: boolean | null
+          email_address: string | null
+          id: string
+          monthly_report: boolean | null
+          updated_at: string
+          user_id: string
+          weekly_report: boolean | null
+          zapier_webhook: string | null
+        }
+        Insert: {
+          created_at?: string
+          daily_report?: boolean | null
+          email_address?: string | null
+          id?: string
+          monthly_report?: boolean | null
+          updated_at?: string
+          user_id: string
+          weekly_report?: boolean | null
+          zapier_webhook?: string | null
+        }
+        Update: {
+          created_at?: string
+          daily_report?: boolean | null
+          email_address?: string | null
+          id?: string
+          monthly_report?: boolean | null
+          updated_at?: string
+          user_id?: string
+          weekly_report?: boolean | null
+          zapier_webhook?: string | null
         }
         Relationships: []
       }
@@ -66,6 +189,134 @@ export type Database = {
           id?: string
           quantity?: number
           symbol?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trade_idea_likes: {
+        Row: {
+          created_at: string
+          id: string
+          trade_idea_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          trade_idea_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          trade_idea_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_idea_likes_trade_idea_id_fkey"
+            columns: ["trade_idea_id"]
+            isOneToOne: false
+            referencedRelation: "trade_ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trade_ideas: {
+        Row: {
+          created_at: string
+          description: string
+          entry_price: number | null
+          id: string
+          idea_type: string
+          likes_count: number | null
+          stop_loss: number | null
+          symbol: string
+          tags: string[] | null
+          target_price: number | null
+          timeframe: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          entry_price?: number | null
+          id?: string
+          idea_type: string
+          likes_count?: number | null
+          stop_loss?: number | null
+          symbol: string
+          tags?: string[] | null
+          target_price?: number | null
+          timeframe?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          entry_price?: number | null
+          id?: string
+          idea_type?: string
+          likes_count?: number | null
+          stop_loss?: number | null
+          symbol?: string
+          tags?: string[] | null
+          target_price?: number | null
+          timeframe?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trade_journal: {
+        Row: {
+          created_at: string
+          emotions: string | null
+          entry_date: string
+          exit_date: string | null
+          id: string
+          lessons_learned: string | null
+          notes: string | null
+          profit_loss: number | null
+          screenshot_url: string | null
+          strategy: string | null
+          symbol: string
+          tags: string[] | null
+          trade_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emotions?: string | null
+          entry_date: string
+          exit_date?: string | null
+          id?: string
+          lessons_learned?: string | null
+          notes?: string | null
+          profit_loss?: number | null
+          screenshot_url?: string | null
+          strategy?: string | null
+          symbol: string
+          tags?: string[] | null
+          trade_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emotions?: string | null
+          entry_date?: string
+          exit_date?: string | null
+          id?: string
+          lessons_learned?: string | null
+          notes?: string | null
+          profit_loss?: number | null
+          screenshot_url?: string | null
+          strategy?: string | null
+          symbol?: string
+          tags?: string[] | null
+          trade_id?: string | null
           updated_at?: string
           user_id?: string
         }
