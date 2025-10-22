@@ -33,12 +33,81 @@ export function Dashboard() {
   const [selectedStock, setSelectedStock] = useState<StockData | null>(null);
   const [newSymbol, setNewSymbol] = useState('');
   const [loading, setLoading] = useState(false);
+  const [tradeStats, setTradeStats] = useState({
+    totalPnL: 0,
+    openPositions: 0,
+    winRate: 0,
+    totalTrades: 0
+  });
 
   useEffect(() => {
     if (user) {
       fetchWatchlist();
+      fetchTradeStats();
     }
   }, [user]);
+
+  const fetchTradeStats = async () => {
+    try {
+      // Fetch stock trades for P&L
+      const { data: stockTrades, error: stockError } = await supabase
+        .from('stock_trades')
+        .select('*');
+
+      // Fetch options trades
+      const { data: optionsTrades, error: optionsError } = await supabase
+        .from('trades')
+        .select('*');
+
+      if (stockError) throw stockError;
+
+      let totalPnL = 0;
+      let openPositions = 0;
+      let closedTrades = 0;
+      let winningTrades = 0;
+
+      // Calculate stock trades P&L
+      if (stockTrades) {
+        stockTrades.forEach(trade => {
+          if (trade.exit_price) {
+            const pnl = (trade.exit_price - trade.entry_price) * trade.quantity;
+            totalPnL += pnl;
+            closedTrades++;
+            if (pnl > 0) winningTrades++;
+          } else {
+            openPositions++;
+          }
+        });
+      }
+
+      // Calculate options trades P&L
+      if (optionsTrades) {
+        optionsTrades.forEach(trade => {
+          const value = trade.total_value || 0;
+          if (trade.action === 'buy') {
+            totalPnL -= value;
+          } else {
+            totalPnL += value;
+          }
+          closedTrades++;
+          if ((trade.action === 'sell' && value > 0) || (trade.action === 'buy' && value < 0)) {
+            winningTrades++;
+          }
+        });
+      }
+
+      const winRate = closedTrades > 0 ? (winningTrades / closedTrades) * 100 : 0;
+
+      setTradeStats({
+        totalPnL,
+        openPositions,
+        winRate,
+        totalTrades: closedTrades + openPositions
+      });
+    } catch (error) {
+      console.error('Error fetching trade stats:', error);
+    }
+  };
 
   const fetchWatchlist = async () => {
     setLoading(true);
@@ -161,19 +230,9 @@ export function Dashboard() {
     }
   };
   
-  // Calculate market statistics
+  // Calculate market statistics (kept for potential future use, but removed from stats)
   const gainers = stocks.filter(stock => stock.changePercent > 0);
   const losers = stocks.filter(stock => stock.changePercent < 0);
-  
-  const topGainer = stocks.length > 0 
-    ? [...stocks].sort((a, b) => b.changePercent - a.changePercent)[0]
-    : { symbol: 'N/A', name: 'N/A', changePercent: 0 };
-  const topLoser = stocks.length > 0
-    ? [...stocks].sort((a, b) => a.changePercent - b.changePercent)[0]
-    : { symbol: 'N/A', name: 'N/A', changePercent: 0 };
-  
-  const totalMarketCap = stocks.reduce((sum, stock) => sum + stock.marketCap, 0);
-  const totalVolume = stocks.reduce((sum, stock) => sum + stock.volume, 0);
   
   const toggleSidebar = () => {
     setIsSidebarCollapsed(prev => !prev);
@@ -193,37 +252,35 @@ export function Dashboard() {
           <div className="container max-w-full p-3 sm:p-4 lg:p-6 animate-fade-in">
             <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Market Dashboard</h1>
             
-            {/* Stats Row */}
+            {/* Stats Row - Trading Performance */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6 animate-slide-up" style={{ '--delay': '100ms' } as React.CSSProperties}>
               <StatsCard 
-                title="Market Cap" 
-                value="$13.42T"
-                trend={0.47}
-                icon={<Wallet2 className="h-4 w-4 sm:h-5 sm:w-5" />}
+                title="Total P&L" 
+                value={`$${tradeStats.totalPnL.toFixed(2)}`}
+                trend={tradeStats.totalPnL >= 0 ? Math.abs(tradeStats.totalPnL) : -Math.abs(tradeStats.totalPnL)}
+                icon={<DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />}
+                className={tradeStats.totalPnL >= 0 ? "bg-green-500/10" : "bg-red-500/10"}
+              />
+              <StatsCard 
+                title="Open Positions" 
+                value={tradeStats.openPositions.toString()}
+                description="Active trades"
+                icon={<Activity className="h-4 w-4 sm:h-5 sm:w-5" />}
                 className="bg-primary/5"
               />
               <StatsCard 
-                title="Trading Volume" 
-                value="487.32M"
-                description="Today's volume"
+                title="Win Rate" 
+                value={`${tradeStats.winRate.toFixed(1)}%`}
+                description="Success rate"
+                icon={<Target className="h-4 w-4 sm:h-5 sm:w-5" />}
+                className="bg-primary/5"
+              />
+              <StatsCard 
+                title="Total Trades" 
+                value={tradeStats.totalTrades.toString()}
+                description="All time"
                 icon={<BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />}
                 className="bg-primary/5"
-              />
-              <StatsCard 
-                title="Top Gainer" 
-                value={topGainer.symbol}
-                trend={topGainer.changePercent}
-                trendLabel={topGainer.name}
-                icon={<TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />}
-                className="bg-success/5"
-              />
-              <StatsCard 
-                title="Top Loser" 
-                value={topLoser.symbol}
-                trend={topLoser.changePercent}
-                trendLabel={topLoser.name}
-                icon={<TrendingDown className="h-4 w-4 sm:h-5 sm:w-5" />}
-                className="bg-danger/5"
               />
             </div>
             
