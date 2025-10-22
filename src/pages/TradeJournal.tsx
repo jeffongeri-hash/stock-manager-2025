@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { Plus, Trash2, GraduationCap, Sparkles } from 'lucide-react';
 
 interface JournalEntry {
   id: string;
@@ -22,12 +24,17 @@ interface JournalEntry {
   lessons_learned: string | null;
   tags: string[] | null;
   profit_loss: number | null;
+  ai_grade?: string | null;
 }
 
 const TradeJournal = () => {
   const { user } = useAuth();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isAddingEntry, setIsAddingEntry] = useState(false);
+  const [selectedEntries, setSelectedEntries] = useState<Set<string>>(new Set());
+  const [grading, setGrading] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const [newEntry, setNewEntry] = useState({
     symbol: '',
     entry_date: new Date().toISOString().split('T')[0],
@@ -116,16 +123,78 @@ const TradeJournal = () => {
     fetchEntries();
   };
 
+  const toggleSelectEntry = (id: string) => {
+    const newSelected = new Set(selectedEntries);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedEntries(newSelected);
+  };
+
+  const gradeTrades = async (tradeIds: string[]) => {
+    const tradesToGrade = entries.filter(e => tradeIds.includes(e.id));
+    
+    if (tradesToGrade.length === 0) {
+      toast.error('Please select trades to grade');
+      return;
+    }
+
+    setGrading(true);
+    toast.info('AI is analyzing your trades...');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('grade-trades', {
+        body: { trades: tradesToGrade }
+      });
+
+      if (error) {
+        if (error.message?.includes('429')) {
+          toast.error('Rate limit exceeded. Please try again later.');
+        } else if (error.message?.includes('402')) {
+          toast.error('AI credits depleted. Please add credits.');
+        } else {
+          toast.error('Failed to grade trades');
+        }
+        console.error('Error grading trades:', error);
+        setGrading(false);
+        return;
+      }
+
+      setAiAnalysis(data.analysis);
+      setShowAnalysis(true);
+      toast.success('Trade analysis complete!');
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to grade trades');
+    } finally {
+      setGrading(false);
+    }
+  };
+
   return (
     <PageLayout title="Trade Journal">
       <div className="space-y-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Journal Entries</CardTitle>
-            <Button onClick={() => setIsAddingEntry(!isAddingEntry)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Entry
-            </Button>
+            <div className="flex gap-2">
+              {selectedEntries.size > 0 && (
+                <Button 
+                  onClick={() => gradeTrades(Array.from(selectedEntries))} 
+                  disabled={grading}
+                  variant="secondary"
+                >
+                  <GraduationCap className="h-4 w-4 mr-2" />
+                  {grading ? 'Grading...' : `Grade ${selectedEntries.size} Trade${selectedEntries.size > 1 ? 's' : ''}`}
+                </Button>
+              )}
+              <Button onClick={() => setIsAddingEntry(!isAddingEntry)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Entry
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {isAddingEntry && (
@@ -222,6 +291,7 @@ const TradeJournal = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12"></TableHead>
                     <TableHead>Symbol</TableHead>
                     <TableHead>Entry Date</TableHead>
                     <TableHead>Exit Date</TableHead>
@@ -234,6 +304,12 @@ const TradeJournal = () => {
                 <TableBody>
                   {entries.map((entry) => (
                     <TableRow key={entry.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedEntries.has(entry.id)}
+                          onCheckedChange={() => toggleSelectEntry(entry.id)}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{entry.symbol}</TableCell>
                       <TableCell>{new Date(entry.entry_date).toLocaleDateString()}</TableCell>
                       <TableCell>{entry.exit_date ? new Date(entry.exit_date).toLocaleDateString() : '-'}</TableCell>
@@ -249,9 +325,19 @@ const TradeJournal = () => {
                         ))}
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => deleteEntry(entry.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => gradeTrades([entry.id])}
+                            disabled={grading}
+                          >
+                            <Sparkles className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => deleteEntry(entry.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -260,6 +346,26 @@ const TradeJournal = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* AI Analysis Dialog */}
+        <Dialog open={showAnalysis} onOpenChange={setShowAnalysis}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5" />
+                AI Trade Analysis
+              </DialogTitle>
+              <DialogDescription>
+                Expert feedback on your trading performance
+              </DialogDescription>
+            </DialogHeader>
+            <div className="prose dark:prose-invert max-w-none">
+              <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg">
+                {aiAnalysis}
+              </pre>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </PageLayout>
   );
