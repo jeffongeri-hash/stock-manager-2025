@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BarChart, PieChart, BarChart3, Wallet, LineChart, Globe, 
   DollarSign, Settings, ChevronRight, ChevronLeft, Home, Calculator,
@@ -24,6 +23,65 @@ interface NavItem {
 
 export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
   const location = useLocation();
+  const [marketStatus, setMarketStatus] = useState({ isOpen: false, message: '' });
+  
+  useEffect(() => {
+    const updateMarketStatus = () => {
+      // Get current time in EST/EDT (UTC-5 or UTC-4)
+      const now = new Date();
+      const estTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      
+      const day = estTime.getDay(); // 0 = Sunday, 6 = Saturday
+      const hours = estTime.getHours();
+      const minutes = estTime.getMinutes();
+      
+      // Market is closed on weekends
+      if (day === 0 || day === 6) {
+        const daysUntilMonday = day === 0 ? 1 : 2;
+        setMarketStatus({ 
+          isOpen: false, 
+          message: `Closed - Opens Monday 9:30 AM EST`
+        });
+        return;
+      }
+      
+      // Convert current time to minutes since midnight
+      const currentMinutes = hours * 60 + minutes;
+      const marketOpen = 9 * 60 + 30; // 9:30 AM
+      const marketClose = 16 * 60; // 4:00 PM
+      
+      if (currentMinutes < marketOpen) {
+        // Before market opens
+        const minutesUntilOpen = marketOpen - currentMinutes;
+        const hoursUntil = Math.floor(minutesUntilOpen / 60);
+        const minsUntil = minutesUntilOpen % 60;
+        setMarketStatus({ 
+          isOpen: false, 
+          message: `Opens in ${hoursUntil}h ${minsUntil}m`
+        });
+      } else if (currentMinutes >= marketOpen && currentMinutes < marketClose) {
+        // Market is open
+        const minutesUntilClose = marketClose - currentMinutes;
+        const hoursUntil = Math.floor(minutesUntilClose / 60);
+        const minsUntil = minutesUntilClose % 60;
+        setMarketStatus({ 
+          isOpen: true, 
+          message: `Closes in ${hoursUntil}h ${minsUntil}m`
+        });
+      } else {
+        // After market closes
+        setMarketStatus({ 
+          isOpen: false, 
+          message: `Closed - Opens tomorrow 9:30 AM EST`
+        });
+      }
+    };
+    
+    updateMarketStatus();
+    const interval = setInterval(updateMarketStatus, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, []);
   
   const navItems = [
     {
@@ -144,12 +202,13 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       
       <div className="p-4 border-t border-sidebar-border">
         <div className={cn(
-          "transition-opacity duration-200 rounded-md bg-sidebar-accent/50 p-2 text-xs text-sidebar-accent-foreground",
-          isCollapsed ? "opacity-0" : "opacity-100"
+          "transition-opacity duration-200 rounded-md p-2 text-xs",
+          isCollapsed ? "opacity-0" : "opacity-100",
+          marketStatus.isOpen ? "bg-green-500/20 text-green-700 dark:text-green-400" : "bg-red-500/20 text-red-700 dark:text-red-400"
         )}>
           <p className="font-medium">Market Status</p>
-          <p>Markets are open</p>
-          <p className="text-[10px]">Closes in 3h 45m</p>
+          <p className="font-semibold">{marketStatus.isOpen ? 'Markets are open' : 'Markets are closed'}</p>
+          <p className="text-[10px] mt-1">{marketStatus.message}</p>
         </div>
       </div>
     </aside>
