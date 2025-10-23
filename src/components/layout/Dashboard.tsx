@@ -141,30 +141,33 @@ export function Dashboard() {
 
   const fetchStockData = async (symbols: string[]) => {
     try {
-      const stockPromises = symbols.map(async (symbol) => {
-        const { data, error } = await supabase.functions.invoke('fetch-stock-data', {
-          body: { symbol }
-        });
-
-        if (error || !data) {
-          console.error(`Error fetching ${symbol}:`, error);
-          return null;
-        }
-
-        return {
-          symbol: data.symbol,
-          name: data.name || symbol,
-          price: data.currentPrice || 0,
-          change: data.change || 0,
-          changePercent: data.changePercent || 0,
-          volume: data.volume || 0,
-          marketCap: data.marketCap || 0,
-          priceHistory: generatePriceHistory(30, data.currentPrice || 100, 2),
-          lastUpdated: new Date()
-        };
+      const { data, error } = await supabase.functions.invoke('fetch-stock-data', {
+        body: { symbols }
       });
 
-      const stockData = (await Promise.all(stockPromises)).filter(Boolean) as StockData[];
+      if (error) {
+        console.error('Error fetching stock data:', error);
+        toast.error('Failed to fetch stock data');
+        return;
+      }
+
+      if (!data || !data.stocks) {
+        console.error('No stock data returned');
+        return;
+      }
+
+      const stockData = data.stocks.map((stock: any) => ({
+        symbol: stock.symbol,
+        name: stock.name || stock.symbol,
+        price: stock.price || 0,
+        change: stock.change || 0,
+        changePercent: stock.changePercent || 0,
+        volume: stock.volume || 0,
+        marketCap: stock.marketCap || 0,
+        priceHistory: generatePriceHistory(30, stock.price || 100, 2),
+        lastUpdated: new Date()
+      }));
+
       setStocks(stockData);
       
       if (stockData.length > 0 && !selectedStock) {

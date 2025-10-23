@@ -116,6 +116,37 @@ const Portfolio = () => {
     }
   };
 
+  const exitPosition = async (symbol: string, currentPrice: number) => {
+    // Find all active trades for this symbol
+    const activeTrades = stockTrades.filter(t => t.symbol === symbol && !t.exit_date);
+    
+    if (activeTrades.length === 0) {
+      toast.error('No active positions found');
+      return;
+    }
+
+    // Update all active trades with exit info
+    const exitDate = new Date().toISOString().split('T')[0];
+    
+    for (const trade of activeTrades) {
+      const { error } = await supabase
+        .from('stock_trades')
+        .update({
+          exit_price: currentPrice,
+          exit_date: exitDate
+        })
+        .eq('id', trade.id);
+
+      if (error) {
+        toast.error(`Failed to exit position for ${trade.symbol}`);
+        return;
+      }
+    }
+
+    toast.success(`Exited all positions in ${symbol}`);
+    fetchTrades();
+  };
+
   // Calculate portfolio metrics
   const portfolioMetrics = useMemo(() => {
     let totalCostBasis = 0;
@@ -330,6 +361,7 @@ const Portfolio = () => {
                   <th className="text-right py-2 px-4">Market Value</th>
                   <th className="text-right py-2 px-4">P&L</th>
                   <th className="text-right py-2 px-4">P&L %</th>
+                  <th className="text-center py-2 px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -346,6 +378,15 @@ const Portfolio = () => {
                     </td>
                     <td className={`py-3 px-4 text-right ${position.pnlPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                       {position.pnlPercent >= 0 ? '+' : ''}{position.pnlPercent.toFixed(2)}%
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => exitPosition(position.symbol, position.currentPrice)}
+                      >
+                        Exit Position
+                      </Button>
                     </td>
                   </tr>
                 ))}

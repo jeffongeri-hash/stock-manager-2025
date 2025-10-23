@@ -10,12 +10,12 @@ import { RefreshCw, TrendingUp, Activity } from 'lucide-react';
 
 interface UnusualActivity {
   symbol: string;
-  currentPrice: number;
+  price: number;
   volumeRatio: number;
   optionsVolume: number;
   callPutRatio: number;
   ivChange: number;
-  timestamp: string;
+  detectedAt: string;
 }
 
 const MarketScanner = () => {
@@ -28,25 +28,73 @@ const MarketScanner = () => {
 
   const scanMarket = async () => {
     setScanning(true);
-    toast.info('Scanning for unusual options activity...');
+    try {
+      // Comprehensive list of stocks to scan including small/mid caps
+      const stocksToScan = [
+        // Mega caps
+        'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'BRK.B',
+        // Large caps
+        'JPM', 'V', 'WMT', 'JNJ', 'PG', 'UNH', 'MA', 'HD', 'DIS', 'BAC',
+        // Tech
+        'AMD', 'INTC', 'NFLX', 'ADBE', 'CRM', 'ORCL', 'CSCO', 'AVGO',
+        // Finance
+        'GS', 'MS', 'C', 'WFC', 'AXP', 'SCHW',
+        // Consumer
+        'NKE', 'SBUX', 'MCD', 'TGT', 'COST', 'LOW',
+        // Healthcare
+        'PFE', 'ABBV', 'TMO', 'LLY', 'MRK', 'UNH',
+        // Energy
+        'XOM', 'CVX', 'COP', 'SLB', 'EOG', 'PSX',
+        // Mid caps with high options activity
+        'PLTR', 'SOFI', 'COIN', 'RIOT', 'MARA', 'AFRM', 'UPST', 'HOOD',
+        'NET', 'SNOW', 'DDOG', 'CRWD', 'ZS', 'OKTA',
+        // Small caps
+        'LCID', 'RIVN', 'PLUG', 'WISH', 'CLOV', 'AMC', 'GME', 'BB',
+        // ETFs
+        'SPY', 'QQQ', 'IWM', 'DIA', 'VXX', 'UVXY'
+      ];
 
-    // Simulate market scanning (in production, this would query real market data)
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const symbols = ['AAPL', 'TSLA', 'NVDA', 'SPY', 'QQQ', 'META', 'AMZN', 'GOOGL', 'MSFT'];
-    const mockActivities: UnusualActivity[] = symbols.map(symbol => ({
-      symbol,
-      currentPrice: 100 + Math.random() * 200,
-      volumeRatio: 1 + Math.random() * 4, // 1x to 5x normal volume
-      optionsVolume: Math.floor(Math.random() * 50000) + 10000,
-      callPutRatio: Math.random() * 3, // 0 to 3
-      ivChange: (Math.random() * 60) - 30, // -30% to +30%
-      timestamp: new Date().toISOString()
-    })).filter(activity => activity.volumeRatio > 2 || Math.abs(activity.ivChange) > 15); // Only show significant activity
-
-    setActivities(mockActivities.sort((a, b) => b.volumeRatio - a.volumeRatio));
-    setScanning(false);
-    toast.success(`Found ${mockActivities.length} stocks with unusual activity`);
+      // Simulate fetching unusual activity data
+      // In production, this would call a real options data API
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const mockActivities: UnusualActivity[] = stocksToScan
+        .map(symbol => {
+          const volumeRatio = 1 + Math.random() * 5;
+          const callPutRatio = 0.3 + Math.random() * 2.5;
+          const ivChange = (Math.random() * 40) - 20;
+          const price = 10 + Math.random() * 500;
+          const optionsVolume = Math.floor(50000 + Math.random() * 500000);
+          
+          return {
+            symbol,
+            price,
+            volumeRatio,
+            optionsVolume,
+            callPutRatio,
+            ivChange,
+            detectedAt: new Date().toLocaleTimeString()
+          };
+        })
+        .filter(a => 
+          // Filter for truly unusual activity
+          a.volumeRatio > 2.5 || 
+          Math.abs(a.ivChange) > 12 || 
+          a.callPutRatio > 2.0 || 
+          a.callPutRatio < 0.5 ||
+          a.optionsVolume > 300000
+        )
+        .sort((a, b) => b.volumeRatio - a.volumeRatio)
+        .slice(0, 25); // Show top 25
+      
+      setActivities(mockActivities);
+      toast.success(`Found ${mockActivities.length} stocks with unusual activity`);
+    } catch (error) {
+      console.error('Error scanning market:', error);
+      toast.error('Failed to scan market');
+    } finally {
+      setScanning(false);
+    }
   };
 
   const getSignificanceColor = (volumeRatio: number) => {
@@ -100,7 +148,7 @@ const MarketScanner = () => {
                     return (
                       <TableRow key={index}>
                         <TableCell className="font-bold">{activity.symbol}</TableCell>
-                        <TableCell>${activity.currentPrice.toFixed(2)}</TableCell>
+                        <TableCell>${activity.price.toFixed(2)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Badge className={getSignificanceColor(activity.volumeRatio)}>
@@ -117,7 +165,7 @@ const MarketScanner = () => {
                           {activity.ivChange >= 0 ? '+' : ''}{activity.ivChange.toFixed(1)}%
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {new Date(activity.timestamp).toLocaleTimeString()}
+                          {activity.detectedAt}
                         </TableCell>
                       </TableRow>
                     );

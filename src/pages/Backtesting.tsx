@@ -153,7 +153,17 @@ const Backtesting = () => {
                   <SelectItem value="iron_condor">Iron Condor</SelectItem>
                   <SelectItem value="vertical_spread">Vertical Spread</SelectItem>
                   <SelectItem value="straddle">Straddle</SelectItem>
+                  <SelectItem value="strangle">Strangle</SelectItem>
+                  <SelectItem value="butterfly">Butterfly Spread</SelectItem>
                   <SelectItem value="covered_call">Covered Call</SelectItem>
+                  <SelectItem value="covered_put">Covered Put</SelectItem>
+                  <SelectItem value="bull_call_spread">Bull Call Spread</SelectItem>
+                  <SelectItem value="bear_put_spread">Bear Put Spread</SelectItem>
+                  <SelectItem value="calendar_spread">Calendar Spread</SelectItem>
+                  <SelectItem value="bollinger_bands">Bollinger Bands</SelectItem>
+                  <SelectItem value="ma_crossover">Moving Average Crossover</SelectItem>
+                  <SelectItem value="macd">MACD Divergence</SelectItem>
+                  <SelectItem value="rsi">RSI Divergence</SelectItem>
                 </SelectContent>
               </Select>
             </div>

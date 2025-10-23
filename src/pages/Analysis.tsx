@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { mockStocks, mockCryptos, generatePriceHistory, formatNumber } from '@/utils/stocksApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Bitcoin, TrendingUp, TrendingDown, Sparkles, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStockData } from '@/hooks/useStockData';
@@ -12,9 +13,11 @@ import { toast } from 'sonner';
 const Analysis = () => {
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [customSymbols, setCustomSymbols] = useState<string>('');
   
   // Fetch live stock data
-  const watchlistSymbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX'];
+  const defaultSymbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX'];
+  const [watchlistSymbols, setWatchlistSymbols] = useState<string[]>(defaultSymbols);
   const { stocks: liveStocks, loading: stocksLoading } = useStockData(watchlistSymbols);
   // Mock data for sector performance
   const sectorPerformance = [
@@ -75,6 +78,16 @@ const Analysis = () => {
       toast.error('Failed to generate AI analysis');
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleCustomSymbols = () => {
+    const symbols = customSymbols.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+    if (symbols.length > 0) {
+      setWatchlistSymbols(symbols);
+      toast.success(`Analyzing ${symbols.length} stock(s)`);
+    } else {
+      toast.error('Please enter at least one stock symbol');
     }
   };
   
@@ -164,7 +177,32 @@ const Analysis = () => {
   
   return (
     <PageLayout title="Market Analysis">
-      <div className="mb-6">
+      <div className="mb-6 space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Custom Stock Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter stock symbols (e.g., AAPL, TSLA, NVDA)"
+                value={customSymbols}
+                onChange={(e) => setCustomSymbols(e.target.value)}
+                className="flex-1"
+              />
+              <Button onClick={handleCustomSymbols} disabled={stocksLoading}>
+                Analyze
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Current symbols: {watchlistSymbols.join(', ')}
+            </p>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -207,7 +245,7 @@ const Analysis = () => {
               </div>
             ) : (
               <p className="text-muted-foreground text-sm">
-                Click a button above to generate AI-powered market analysis based on live stock data.
+                Click a button above to generate AI-powered market analysis based on live stock data from Finnhub.
               </p>
             )}
           </CardContent>

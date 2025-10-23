@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Plus, ThumbsUp, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Plus, ThumbsUp, TrendingUp, TrendingDown, Minus, Sparkles, RefreshCw } from 'lucide-react';
 
 interface TradeIdea {
   id: string;
@@ -31,6 +31,7 @@ const TradeIdeas = () => {
   const { user } = useAuth();
   const [ideas, setIdeas] = useState<TradeIdea[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
   const [newIdea, setNewIdea] = useState({
     symbol: '',
     idea_type: 'bullish',
@@ -153,6 +154,62 @@ const TradeIdeas = () => {
     }
   };
 
+  const generateAIIdeas = async () => {
+    setGeneratingAI(true);
+    try {
+      // Fetch current market data (top stocks)
+      const { data: marketData, error: marketError } = await supabase.functions.invoke('fetch-stock-data', {
+        body: { symbols: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'SPY', 'QQQ', 'IWM'] }
+      });
+
+      if (marketError) throw marketError;
+
+      // Generate AI trade ideas
+      const { data, error } = await supabase.functions.invoke('generate-trade-ideas', {
+        body: { marketData: marketData?.stocks || [] }
+      });
+
+      if (error) throw error;
+
+      if (!data || !data.ideas) {
+        throw new Error('No ideas generated');
+      }
+
+      // Insert AI-generated ideas into database
+      const ideaInserts = data.ideas.map((idea: any) => ({
+        user_id: user?.id,
+        symbol: idea.symbol,
+        idea_type: idea.idea_type,
+        description: idea.description,
+        entry_price: idea.entry_price,
+        target_price: idea.target_price,
+        stop_loss: idea.stop_loss,
+        timeframe: idea.timeframe,
+        tags: idea.tags
+      }));
+
+      const { error: insertError } = await supabase
+        .from('trade_ideas')
+        .insert(ideaInserts);
+
+      if (insertError) throw insertError;
+
+      toast.success(`Generated ${data.ideas.length} AI trade ideas!`);
+      fetchIdeas();
+    } catch (err: any) {
+      console.error('Error generating AI ideas:', err);
+      if (err.message?.includes('429') || err.message?.includes('rate limit')) {
+        toast.error('Rate limit exceeded. Please try again later.');
+      } else if (err.message?.includes('402') || err.message?.includes('credits')) {
+        toast.error('AI credits depleted. Please add credits to continue.');
+      } else {
+        toast.error('Failed to generate AI trade ideas');
+      }
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
   return (
     <PageLayout title="Trade Ideas Feed">
       <div className="space-y-6">
@@ -162,10 +219,20 @@ const TradeIdeas = () => {
               <CardTitle>Community Trade Ideas</CardTitle>
               <CardDescription>Share and discover trading setups from the community</CardDescription>
             </div>
-            <Button onClick={() => setShowForm(!showForm)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Post Idea
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={generateAIIdeas} disabled={generatingAI} variant="outline">
+                {generatingAI ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4 mr-2" />
+                )}
+                {generatingAI ? 'Generating...' : 'AI Generate'}
+              </Button>
+              <Button onClick={() => setShowForm(!showForm)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Post Idea
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {showForm && (
