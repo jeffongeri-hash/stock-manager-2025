@@ -91,11 +91,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/',
     },
     {
-      title: 'Stocks',
-      icon: BarChart,
-      href: '/stocks',
-    },
-    {
       title: 'Portfolio',
       icon: Wallet,
       href: '/portfolio',
