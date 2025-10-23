@@ -280,6 +280,7 @@ const Alerts = () => {
                   <SelectItem value="price">Price</SelectItem>
                   <SelectItem value="volatility">Implied Volatility</SelectItem>
                   <SelectItem value="volume">Volume</SelectItem>
+                  <SelectItem value="backtesting">Backtesting Strategy</SelectItem>
                 </SelectContent>
               </Select>
             </div>

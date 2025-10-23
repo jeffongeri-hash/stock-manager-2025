@@ -340,19 +340,44 @@ export function Dashboard() {
                 )}
               </div>
               
-              {/* Right column - Chart */}
+              {/* Right column - Stock Details */}
               <div className="space-y-3 sm:space-y-4 animate-slide-up" style={{ '--delay': '300ms' } as React.CSSProperties}>
                 {selectedStock ? (
-                  <StockChart 
-                    symbol={selectedStock.symbol} 
-                    name={selectedStock.name} 
-                    currentPrice={selectedStock.price}
-                    volatility={2.5}
-                  />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>{selectedStock.symbol}</CardTitle>
+                      <CardDescription>{selectedStock.name}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Current Price</p>
+                          <p className="text-2xl font-bold">${selectedStock.price.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Change</p>
+                          <p className={`text-2xl font-bold ${selectedStock.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {selectedStock.change >= 0 ? '+' : ''}{selectedStock.changePercent.toFixed(2)}%
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Volume</p>
+                          <p className="text-lg font-medium">{(selectedStock.volume / 1000000).toFixed(2)}M</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Market Cap</p>
+                          <p className="text-lg font-medium">${(selectedStock.marketCap / 1000000000).toFixed(2)}B</p>
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t">
+                        <p className="text-xs text-muted-foreground">Last updated: {selectedStock.lastUpdated.toLocaleTimeString()}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ) : (
                   <Card>
                     <CardContent className="flex items-center justify-center h-96">
-                      <p className="text-muted-foreground">Select a stock to view chart</p>
+                      <p className="text-muted-foreground">Select a stock to view details</p>
                     </CardContent>
                   </Card>
                 )}

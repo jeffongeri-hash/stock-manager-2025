@@ -18,13 +18,13 @@ const TradingToolkit = () => {
   const [positionData, setPositionData] = useState({
     accountSize: 10000,
     riskPercentage: 2,
-    entryPrice: currentPrice || 150,
-    stopLoss: (currentPrice || 150) * 0.97,
+    entryPrice: 0,
+    stopLoss: 0,
     confidence: 7
   });
 
   useEffect(() => {
-    if (currentPrice && !positionData.entryPrice) {
+    if (currentPrice) {
       setPositionData(prev => ({
         ...prev,
         entryPrice: currentPrice,

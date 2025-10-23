@@ -116,7 +116,16 @@ const Portfolio = () => {
     }
   };
 
-  const exitPosition = async (symbol: string, currentPrice: number) => {
+  const [exitPriceInput, setExitPriceInput] = useState<{ [key: string]: string }>({});
+
+  const exitPosition = async (symbol: string) => {
+    const exitPrice = parseFloat(exitPriceInput[symbol]);
+    
+    if (!exitPrice || exitPrice <= 0) {
+      toast.error('Please enter a valid exit price');
+      return;
+    }
+
     // Find all active trades for this symbol
     const activeTrades = stockTrades.filter(t => t.symbol === symbol && !t.exit_date);
     
@@ -132,7 +141,7 @@ const Portfolio = () => {
       const { error } = await supabase
         .from('stock_trades')
         .update({
-          exit_price: currentPrice,
+          exit_price: exitPrice,
           exit_date: exitDate
         })
         .eq('id', trade.id);
@@ -143,7 +152,8 @@ const Portfolio = () => {
       }
     }
 
-    toast.success(`Exited all positions in ${symbol}`);
+    toast.success(`Exited all positions in ${symbol} at $${exitPrice}`);
+    setExitPriceInput({ ...exitPriceInput, [symbol]: '' });
     fetchTrades();
   };
 
@@ -361,6 +371,7 @@ const Portfolio = () => {
                   <th className="text-right py-2 px-4">Market Value</th>
                   <th className="text-right py-2 px-4">P&L</th>
                   <th className="text-right py-2 px-4">P&L %</th>
+                  <th className="text-right py-2 px-4">Exit Price</th>
                   <th className="text-center py-2 px-4">Actions</th>
                 </tr>
               </thead>
@@ -379,11 +390,21 @@ const Portfolio = () => {
                     <td className={`py-3 px-4 text-right ${position.pnlPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                       {position.pnlPercent >= 0 ? '+' : ''}{position.pnlPercent.toFixed(2)}%
                     </td>
+                    <td className="py-3 px-4 text-right">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Exit price"
+                        value={exitPriceInput[position.symbol] || ''}
+                        onChange={(e) => setExitPriceInput({ ...exitPriceInput, [position.symbol]: e.target.value })}
+                        className="w-28"
+                      />
+                    </td>
                     <td className="py-3 px-4 text-center">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => exitPosition(position.symbol, position.currentPrice)}
+                        onClick={() => exitPosition(position.symbol)}
                       >
                         Exit Position
                       </Button>

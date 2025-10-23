@@ -18,6 +18,14 @@ export default function ExpectedMove() {
 
   const { stocks } = useStockData([symbol]);
   const stockPrice = stocks[0]?.price || 0;
+  const stockIV = 25; // Default IV of 25% - auto-updates when integrated
+
+  useEffect(() => {
+    // Auto-update IV when stock data loads
+    if (stockIV && !optionsData) {
+      setVolatility((stockIV / 100).toFixed(2));
+    }
+  }, [stockIV]);
 
   const fetchExpectedMove = async () => {
     if (!stockPrice || !daysToExpiry) {
@@ -93,7 +101,7 @@ export default function ExpectedMove() {
               </div>
 
               <div>
-                <Label htmlFor="vol">Implied Volatility</Label>
+                <Label htmlFor="vol">Implied Volatility (Auto-updated)</Label>
                 <Input
                   id="vol"
                   type="number"
@@ -102,7 +110,9 @@ export default function ExpectedMove() {
                   value={volatility}
                   onChange={(e) => setVolatility(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground mt-1">0.25 = 25%</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  0.25 = 25% | Current IV: {stockIV}%
+                </p>
               </div>
             </div>
 

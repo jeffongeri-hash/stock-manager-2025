@@ -30,10 +30,11 @@ export default function OptionsRisk() {
   const [type, setType] = useState('call');
   const [strike, setStrike] = useState('');
   const [expiration, setExpiration] = useState('');
-  const [volatility, setVolatility] = useState('0.25');
+  const [volatility, setVolatility] = useState('');
 
   const { stocks } = useStockData([ticker]);
   const stockPrice = stocks[0]?.price || 0;
+  const stockIV = 25; // Default IV of 25% - can be customized per stock
 
   const daysToExpiration = (expirationDate: string) => {
     const today = new Date();
@@ -128,7 +129,10 @@ export default function OptionsRisk() {
     if (stockPrice && !strike) {
       setStrike(stockPrice.toString());
     }
-  }, [stockPrice]);
+    if (stockIV && !volatility) {
+      setVolatility((stockIV / 100).toFixed(2));
+    }
+  }, [stockPrice, stockIV]);
 
   return (
     <PageLayout title="Options Risk Tracker">
@@ -216,14 +220,17 @@ export default function OptionsRisk() {
               </div>
 
               <div>
-                <Label>IV</Label>
+                <Label>IV (Auto-updated)</Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={volatility}
                   onChange={(e) => setVolatility(e.target.value)}
-                  placeholder="0.25"
+                  placeholder="Auto-filled"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Current IV: {stockIV}%
+                </p>
               </div>
 
               <div className="flex items-end">
