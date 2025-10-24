@@ -5,6 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/utils/stocksApi';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Search } from 'lucide-react';
 
 interface Results {
   stockPrice: number;
@@ -23,12 +26,14 @@ interface Results {
 }
 
 export default function ZeroDTE() {
+  const [symbol, setSymbol] = useState('');
   const [stockPrice, setStockPrice] = useState('100');
   const [strikePrice, setStrikePrice] = useState('101');
   const [impliedVol, setImpliedVol] = useState('0.25');
   const [premium, setPremium] = useState('0.8');
   const [thetaPerHour, setThetaPerHour] = useState('0.1');
   const [results, setResults] = useState<Results | null>(null);
+  const [loadingPrice, setLoadingPrice] = useState(false);
 
   const erf = (x: number): number => {
     const a1 = 0.254829592;
@@ -112,6 +117,33 @@ export default function ZeroDTE() {
     calculateAndVisualize();
   }, []);
 
+  const fetchStockPrice = async () => {
+    if (!symbol.trim()) {
+      toast.error('Please enter a stock symbol');
+      return;
+    }
+
+    setLoadingPrice(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-stock-data', {
+        body: { symbols: [symbol.toUpperCase()] }
+      });
+
+      if (error) throw error;
+
+      if (data?.stocks && data.stocks.length > 0) {
+        const stock = data.stocks[0];
+        setStockPrice(stock.price.toString());
+        toast.success(`Updated price for ${stock.name}: $${stock.price}`);
+      }
+    } catch (err) {
+      console.error('Error fetching stock price:', err);
+      toast.error('Failed to fetch stock price');
+    } finally {
+      setLoadingPrice(false);
+    }
+  };
+
   const getRiskLevel = () => {
     if (!results) return 'medium';
     if (results.POPBuyer > 60) return 'low';
@@ -131,6 +163,21 @@ export default function ZeroDTE() {
               <CardDescription>Analyze same-day expiring call options</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="symbol">Stock Symbol</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="symbol"
+                    type="text"
+                    placeholder="e.g., AAPL"
+                    value={symbol}
+                    onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                  />
+                  <Button onClick={fetchStockPrice} disabled={loadingPrice} size="icon">
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
               <div>
                 <Label htmlFor="stockPrice">Stock Price ($)</Label>
                 <Input

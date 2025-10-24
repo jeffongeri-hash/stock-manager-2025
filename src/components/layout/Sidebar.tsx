@@ -3,7 +3,7 @@ import {
   PieChart, Wallet, LineChart, 
   Settings, ChevronRight, ChevronLeft, Home, Calculator,
   TrendingUp, FolderKanban, Zap, BookOpen, Activity,
-  TestTube, Users, Radar, FileText
+  TestTube, Users, Radar, FileText, BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -124,6 +124,11 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: '0 DTE Calculator',
       icon: Zap,
       href: '/zero-dte',
+    },
+    {
+      title: 'Fundamentals',
+      icon: BarChart3,
+      href: '/fundamentals',
     },
     {
       title: 'Trade Journal',

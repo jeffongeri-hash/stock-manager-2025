@@ -13,6 +13,7 @@ import Settings from "./pages/Settings";
 import ExpectedMove from "./pages/ExpectedMove";
 import OptionsPortfolio from "./pages/OptionsPortfolio";
 import ZeroDTE from "./pages/ZeroDTE";
+import Fundamentals from "./pages/Fundamentals";
 import Auth from "./pages/Auth";
 import TradingToolkit from "./pages/TradingToolkit";
 import TradeJournal from "./pages/TradeJournal";
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/expected-move" element={<ExpectedMove />} />
           <Route path="/options-portfolio" element={<OptionsPortfolio />} />
           <Route path="/zero-dte" element={<ZeroDTE />} />
+          <Route path="/fundamentals" element={<Fundamentals />} />
           <Route path="/trade-journal" element={<TradeJournal />} />
           <Route path="/backtesting" element={<Backtesting />} />
           <Route path="/trade-ideas" element={<TradeIdeas />} />

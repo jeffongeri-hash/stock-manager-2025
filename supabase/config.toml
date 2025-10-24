@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.analyze-stocks]
 verify_jwt = false
+
+[functions.fetch-fundamentals]
+verify_jwt = false
+
+[functions.analyze-fundamentals]
+verify_jwt = false
