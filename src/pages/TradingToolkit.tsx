@@ -9,6 +9,8 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useStockData } from '@/hooks/useStockData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const TradingToolkit = () => {
   const [symbol, setSymbol] = useState('AAPL');
@@ -23,12 +25,50 @@ const TradingToolkit = () => {
     confidence: 7
   });
 
+  // Greeks calculator state
+  const [greeksData, setGreeksData] = useState({
+    symbol: 'AAPL',
+    optionType: 'call',
+    strikePrice: 0,
+    daysToExpiration: 30,
+    impliedVolatility: 25
+  });
+
+  const [greeksResults, setGreeksResults] = useState({
+    delta: 0,
+    gamma: 0,
+    theta: 0,
+    vega: 0
+  });
+
+  // Exit strategy state
+  const [exitStrategy, setExitStrategy] = useState({
+    symbol: 'AAPL',
+    entryPrice: 0,
+    target1Percent: 25,
+    target1Gain: 10,
+    target2Percent: 50,
+    target2Gain: 20,
+    finalTargetGain: 50,
+    stopLossPercent: 5,
+    timeBasedExit: 30,
+    trailingStopPercent: 10
+  });
+
   useEffect(() => {
-    if (currentPrice) {
+    if (currentPrice > 0) {
       setPositionData(prev => ({
         ...prev,
         entryPrice: currentPrice,
-        stopLoss: currentPrice * 0.97
+        stopLoss: Number((currentPrice * 0.97).toFixed(2))
+      }));
+      setGreeksData(prev => ({
+        ...prev,
+        strikePrice: currentPrice
+      }));
+      setExitStrategy(prev => ({
+        ...prev,
+        entryPrice: currentPrice
       }));
     }
   }, [currentPrice]);
@@ -47,18 +87,63 @@ const TradingToolkit = () => {
   const calculatePositionSize = () => {
     const riskAmount = (positionData.accountSize * positionData.riskPercentage) / 100;
     const riskPerShare = Math.abs(positionData.entryPrice - positionData.stopLoss);
+    
+    if (riskPerShare === 0) {
+      return {
+        riskAmount: 0,
+        riskPerShare: 0,
+        baseShares: 0,
+        adjustedShares: 0,
+        totalCost: 0,
+        maxLoss: 0
+      };
+    }
+    
     const baseShares = Math.floor(riskAmount / riskPerShare);
     const confidenceMultiplier = positionData.confidence / 10;
     const adjustedShares = Math.floor(baseShares * confidenceMultiplier);
     
     return {
-      riskAmount,
-      riskPerShare,
+      riskAmount: Number(riskAmount.toFixed(2)),
+      riskPerShare: Number(riskPerShare.toFixed(2)),
       baseShares,
       adjustedShares,
-      totalCost: adjustedShares * positionData.entryPrice,
-      maxLoss: adjustedShares * riskPerShare
+      totalCost: Number((adjustedShares * positionData.entryPrice).toFixed(2)),
+      maxLoss: Number((adjustedShares * riskPerShare).toFixed(2))
     };
+  };
+
+  const calculateGreeks = () => {
+    const S = currentPrice || greeksData.strikePrice;
+    const K = greeksData.strikePrice;
+    const T = greeksData.daysToExpiration / 365;
+    const sigma = greeksData.impliedVolatility / 100;
+    const r = 0.05;
+    
+    const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+    const d2 = d1 - sigma * Math.sqrt(T);
+    
+    const delta = greeksData.optionType === 'call' 
+      ? normCDF(d1) 
+      : normCDF(d1) - 1;
+    
+    const gamma = Math.exp(-d1 * d1 / 2) / (S * sigma * Math.sqrt(2 * Math.PI * T));
+    const theta = -(S * sigma * Math.exp(-d1 * d1 / 2)) / (2 * Math.sqrt(2 * Math.PI * T)) / 365;
+    const vega = S * Math.sqrt(T) * Math.exp(-d1 * d1 / 2) / Math.sqrt(2 * Math.PI) / 100;
+    
+    setGreeksResults({
+      delta: Number(delta.toFixed(4)),
+      gamma: Number(gamma.toFixed(4)),
+      theta: Number(theta.toFixed(4)),
+      vega: Number(vega.toFixed(4))
+    });
+  };
+
+  const normCDF = (x: number) => {
+    const t = 1 / (1 + 0.2316419 * Math.abs(x));
+    const d = 0.3989423 * Math.exp(-x * x / 2);
+    const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+    return x > 0 ? 1 - p : p;
   };
 
   const calculateRulesScore = () => {
@@ -200,7 +285,7 @@ const TradingToolkit = () => {
           <Card>
             <CardHeader>
               <CardTitle>Pre-Trade Checklist</CardTitle>
-              <CardDescription>Score: {rulesScore}%</CardDescription>
+              <CardDescription>Ensure all criteria are met before entering a trade</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -212,21 +297,54 @@ const TradingToolkit = () => {
                     />
                     <div className="flex-1">
                       <p className="font-medium">{rule.rule}</p>
-                      <p className="text-sm text-muted-foreground">Weight: {rule.weight}</p>
+                      <p className="text-sm text-muted-foreground">Weight: {rule.weight}/10</p>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-6">
-                <div className="h-4 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary transition-all"
-                    style={{ width: `${rulesScore}%` }}
-                  />
+              
+              <div className="mt-6 space-y-4">
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold">Trade Readiness Score:</span>
+                    <span className="text-2xl font-bold">{rulesScore}%</span>
+                  </div>
+                  <div className="h-4 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${
+                        rulesScore >= 80 ? 'bg-green-500' : rulesScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${rulesScore}%` }}
+                    />
+                  </div>
                 </div>
-                <p className="text-center mt-2 text-sm text-muted-foreground">
-                  {rulesScore >= 80 ? 'Good to trade' : rulesScore >= 60 ? 'Proceed with caution' : 'Consider waiting'}
-                </p>
+
+                {rulesScore >= 80 && (
+                  <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800 dark:text-green-200">
+                      <strong>Good to Trade!</strong> You've met {rulesScore}% of the criteria. Your setup looks solid with proper risk management and market alignment. You're ready to execute this trade.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {rulesScore >= 60 && rulesScore < 80 && (
+                  <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+                    <AlertCircle className="h-4 w-4 text-yellow-600" />
+                    <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+                      <strong>Proceed with Caution.</strong> You've met {rulesScore}% of the criteria. Consider reviewing the unchecked items. While this trade might work, you could improve your odds by addressing missing criteria.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {rulesScore < 60 && (
+                  <Alert className="border-red-500 bg-red-50 dark:bg-red-950">
+                    <XCircle className="h-4 w-4 text-red-600" />
+                    <AlertDescription className="text-red-800 dark:text-red-200">
+                      <strong>Consider Waiting.</strong> Only {rulesScore}% of criteria are met. This trade has significant gaps in your preparation. Missing key criteria like risk management or technical confirmation could lead to losses. Wait for a better setup.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -237,27 +355,31 @@ const TradingToolkit = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Greeks Calculator</CardTitle>
-                <CardDescription>Calculate option Greeks for your positions</CardDescription>
+                <CardDescription>Calculate real-time option Greeks for your positions</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Stock Symbol</Label>
                   <Input
                     type="text"
-                    value={symbol}
-                    onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                    value={greeksData.symbol}
+                    onChange={(e) => setGreeksData({...greeksData, symbol: e.target.value.toUpperCase()})}
+                    onBlur={() => setSymbol(greeksData.symbol)}
                     placeholder="AAPL"
                   />
                   {currentPrice > 0 && (
                     <p className="text-sm text-muted-foreground">
-                      Current Price: ${currentPrice.toFixed(2)}
+                      Current Stock Price: ${currentPrice.toFixed(2)}
                     </p>
                   )}
                 </div>
                 
                 <div className="space-y-2">
                   <Label>Option Type</Label>
-                  <Select defaultValue="call">
+                  <Select 
+                    value={greeksData.optionType}
+                    onValueChange={(value) => setGreeksData({...greeksData, optionType: value})}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -272,7 +394,8 @@ const TradingToolkit = () => {
                   <Label>Strike Price</Label>
                   <Input
                     type="number"
-                    defaultValue={currentPrice || 150}
+                    value={greeksData.strikePrice}
+                    onChange={(e) => setGreeksData({...greeksData, strikePrice: Number(e.target.value)})}
                     placeholder="150.00"
                   />
                 </div>
@@ -281,7 +404,8 @@ const TradingToolkit = () => {
                   <Label>Days to Expiration</Label>
                   <Input
                     type="number"
-                    defaultValue={30}
+                    value={greeksData.daysToExpiration}
+                    onChange={(e) => setGreeksData({...greeksData, daysToExpiration: Number(e.target.value)})}
                     placeholder="30"
                   />
                 </div>
@@ -290,50 +414,51 @@ const TradingToolkit = () => {
                   <Label>Implied Volatility (%)</Label>
                   <Input
                     type="number"
-                    defaultValue={25}
+                    value={greeksData.impliedVolatility}
+                    onChange={(e) => setGreeksData({...greeksData, impliedVolatility: Number(e.target.value)})}
                     placeholder="25"
                   />
                 </div>
 
-                <Button className="w-full">Calculate Greeks</Button>
+                <Button className="w-full" onClick={calculateGreeks}>Calculate Greeks</Button>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
                 <CardTitle>Greeks Results</CardTitle>
-                <CardDescription>Option sensitivity metrics</CardDescription>
+                <CardDescription>Live option sensitivity metrics</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 border rounded-lg">
                     <p className="text-sm text-muted-foreground">Delta</p>
-                    <p className="text-2xl font-bold">0.65</p>
+                    <p className="text-2xl font-bold">{greeksResults.delta.toFixed(4)}</p>
                     <p className="text-xs text-muted-foreground mt-1">Price sensitivity</p>
                   </div>
                   <div className="p-4 border rounded-lg">
                     <p className="text-sm text-muted-foreground">Gamma</p>
-                    <p className="text-2xl font-bold">0.03</p>
+                    <p className="text-2xl font-bold">{greeksResults.gamma.toFixed(4)}</p>
                     <p className="text-xs text-muted-foreground mt-1">Delta change rate</p>
                   </div>
                   <div className="p-4 border rounded-lg">
                     <p className="text-sm text-muted-foreground">Theta</p>
-                    <p className="text-2xl font-bold text-red-500">-0.05</p>
+                    <p className="text-2xl font-bold text-red-500">{greeksResults.theta.toFixed(4)}</p>
                     <p className="text-xs text-muted-foreground mt-1">Time decay per day</p>
                   </div>
                   <div className="p-4 border rounded-lg">
                     <p className="text-sm text-muted-foreground">Vega</p>
-                    <p className="text-2xl font-bold">0.12</p>
+                    <p className="text-2xl font-bold">{greeksResults.vega.toFixed(4)}</p>
                     <p className="text-xs text-muted-foreground mt-1">IV sensitivity</p>
                   </div>
                 </div>
                 <div className="p-4 bg-muted/50 rounded-lg">
                   <h4 className="font-semibold mb-2">What These Mean:</h4>
                   <ul className="text-sm space-y-1 text-muted-foreground">
-                    <li>• <strong>Delta:</strong> For every $1 move in stock, option moves $0.65</li>
-                    <li>• <strong>Gamma:</strong> Delta changes by 0.03 for each $1 stock move</li>
-                    <li>• <strong>Theta:</strong> Option loses $0.05 in value each day</li>
-                    <li>• <strong>Vega:</strong> Option value changes $0.12 for each 1% IV change</li>
+                    <li>• <strong>Delta ({greeksResults.delta.toFixed(2)}):</strong> For every $1 move in stock, option moves ${Math.abs(greeksResults.delta).toFixed(2)}</li>
+                    <li>• <strong>Gamma ({greeksResults.gamma.toFixed(4)}):</strong> Delta changes by {greeksResults.gamma.toFixed(4)} for each $1 stock move</li>
+                    <li>• <strong>Theta ({greeksResults.theta.toFixed(2)}):</strong> Option loses ${Math.abs(greeksResults.theta).toFixed(2)} in value each day</li>
+                    <li>• <strong>Vega ({greeksResults.vega.toFixed(2)}):</strong> Option value changes ${greeksResults.vega.toFixed(2)} for each 1% IV change</li>
                   </ul>
                 </div>
               </CardContent>
@@ -348,32 +473,91 @@ const TradingToolkit = () => {
               <CardDescription>Define your exit criteria before entering the trade</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Stock Symbol</Label>
+                  <Input
+                    type="text"
+                    value={exitStrategy.symbol}
+                    onChange={(e) => setExitStrategy({...exitStrategy, symbol: e.target.value.toUpperCase()})}
+                    onBlur={() => setSymbol(exitStrategy.symbol)}
+                    placeholder="AAPL"
+                  />
+                  {currentPrice > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Current Price: ${currentPrice.toFixed(2)}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Entry Price</Label>
+                  <Input
+                    type="number"
+                    value={exitStrategy.entryPrice}
+                    onChange={(e) => setExitStrategy({...exitStrategy, entryPrice: Number(e.target.value)})}
+                    placeholder="150.00"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <h3 className="font-semibold">Profit Targets</h3>
                   
                   <div className="space-y-2">
-                    <Label>Target 1 (Partial Exit %)</Label>
+                    <Label>Target 1 (Exit % at % Gain)</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      <Input type="number" placeholder="25" />
-                      <Input type="number" placeholder="% gain" />
+                      <Input 
+                        type="number" 
+                        placeholder="25"
+                        value={exitStrategy.target1Percent}
+                        onChange={(e) => setExitStrategy({...exitStrategy, target1Percent: Number(e.target.value)})}
+                      />
+                      <Input 
+                        type="number" 
+                        placeholder="10"
+                        value={exitStrategy.target1Gain}
+                        onChange={(e) => setExitStrategy({...exitStrategy, target1Gain: Number(e.target.value)})}
+                      />
                     </div>
-                    <p className="text-xs text-muted-foreground">Exit 25% of position at X% gain</p>
+                    <p className="text-xs text-muted-foreground">
+                      Price: ${(exitStrategy.entryPrice * (1 + exitStrategy.target1Gain / 100)).toFixed(2)}
+                    </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Target 2 (Partial Exit %)</Label>
+                    <Label>Target 2 (Exit % at % Gain)</Label>
                     <div className="grid grid-cols-2 gap-2">
-                      <Input type="number" placeholder="50" />
-                      <Input type="number" placeholder="% gain" />
+                      <Input 
+                        type="number" 
+                        placeholder="50"
+                        value={exitStrategy.target2Percent}
+                        onChange={(e) => setExitStrategy({...exitStrategy, target2Percent: Number(e.target.value)})}
+                      />
+                      <Input 
+                        type="number" 
+                        placeholder="20"
+                        value={exitStrategy.target2Gain}
+                        onChange={(e) => setExitStrategy({...exitStrategy, target2Gain: Number(e.target.value)})}
+                      />
                     </div>
-                    <p className="text-xs text-muted-foreground">Exit 50% of remaining at X% gain</p>
+                    <p className="text-xs text-muted-foreground">
+                      Price: ${(exitStrategy.entryPrice * (1 + exitStrategy.target2Gain / 100)).toFixed(2)}
+                    </p>
                   </div>
 
                   <div className="space-y-2">
                     <Label>Final Target (% Gain)</Label>
-                    <Input type="number" placeholder="100" />
-                    <p className="text-xs text-muted-foreground">Exit remaining position at X% gain</p>
+                    <Input 
+                      type="number" 
+                      placeholder="50"
+                      value={exitStrategy.finalTargetGain}
+                      onChange={(e) => setExitStrategy({...exitStrategy, finalTargetGain: Number(e.target.value)})}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Price: ${(exitStrategy.entryPrice * (1 + exitStrategy.finalTargetGain / 100)).toFixed(2)}
+                    </p>
                   </div>
                 </div>
 
@@ -382,20 +566,35 @@ const TradingToolkit = () => {
                   
                   <div className="space-y-2">
                     <Label>Stop Loss (% Loss)</Label>
-                    <Input type="number" placeholder="20" />
-                    <p className="text-xs text-muted-foreground">Exit entire position at -X% loss</p>
+                    <Input 
+                      type="number" 
+                      placeholder="5"
+                      value={exitStrategy.stopLossPercent}
+                      onChange={(e) => setExitStrategy({...exitStrategy, stopLossPercent: Number(e.target.value)})}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Price: ${(exitStrategy.entryPrice * (1 - exitStrategy.stopLossPercent / 100)).toFixed(2)}
+                    </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Time-Based Exit</Label>
-                    <Input type="number" placeholder="30" />
-                    <p className="text-xs text-muted-foreground">Days until forced exit</p>
+                    <Label>Time-Based Exit (Days)</Label>
+                    <Input 
+                      type="number" 
+                      placeholder="30"
+                      value={exitStrategy.timeBasedExit}
+                      onChange={(e) => setExitStrategy({...exitStrategy, timeBasedExit: Number(e.target.value)})}
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Trailing Stop (%)</Label>
-                    <Input type="number" placeholder="10" />
-                    <p className="text-xs text-muted-foreground">Trail stop X% below high</p>
+                    <Input 
+                      type="number" 
+                      placeholder="10"
+                      value={exitStrategy.trailingStopPercent}
+                      onChange={(e) => setExitStrategy({...exitStrategy, trailingStopPercent: Number(e.target.value)})}
+                    />
                   </div>
                 </div>
               </div>
@@ -403,15 +602,14 @@ const TradingToolkit = () => {
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                 <h4 className="font-semibold mb-2">Exit Strategy Summary</h4>
                 <ul className="text-sm space-y-1">
-                  <li>• Exit 25% at 50% gain</li>
-                  <li>• Exit 50% more at 100% gain</li>
-                  <li>• Exit remaining at 200% gain or 30 days</li>
-                  <li>• Stop loss: -20%</li>
-                  <li>• Trailing stop: 10% from peak</li>
+                  <li>• Exit {exitStrategy.target1Percent}% at ${(exitStrategy.entryPrice * (1 + exitStrategy.target1Gain / 100)).toFixed(2)} (+{exitStrategy.target1Gain}%)</li>
+                  <li>• Exit {exitStrategy.target2Percent}% more at ${(exitStrategy.entryPrice * (1 + exitStrategy.target2Gain / 100)).toFixed(2)} (+{exitStrategy.target2Gain}%)</li>
+                  <li>• Final exit at ${(exitStrategy.entryPrice * (1 + exitStrategy.finalTargetGain / 100)).toFixed(2)} (+{exitStrategy.finalTargetGain}%)</li>
+                  <li className="text-red-600">• Stop loss at ${(exitStrategy.entryPrice * (1 - exitStrategy.stopLossPercent / 100)).toFixed(2)} (-{exitStrategy.stopLossPercent}%)</li>
+                  <li>• Trail stop {exitStrategy.trailingStopPercent}% below high</li>
+                  <li>• Force exit after {exitStrategy.timeBasedExit} days if targets not hit</li>
                 </ul>
               </div>
-
-              <Button className="w-full">Save Exit Strategy</Button>
             </CardContent>
           </Card>
         </TabsContent>
