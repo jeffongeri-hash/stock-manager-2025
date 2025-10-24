@@ -150,54 +150,67 @@ const IVTracker = () => {
 
             {loading ? (
               <p className="text-center text-muted-foreground py-8">Loading IV data...</p>
-            ) : ivData.length === 0 ? (
+            ) : watchlist.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">Add symbols to track their IV metrics</p>
+            ) : ivData.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Fetching data for {watchlist.join(', ')}...</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {ivData.map((data) => (
                   <Card key={data.symbol} className="hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between">
-                        <span>{data.symbol}</span>
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-5 w-5 text-primary" />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeSymbol(data.symbol)}
-                            className="h-6 w-6 p-0"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <span className="text-xl">{data.symbol}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSymbol(data.symbol)}
+                          className="h-8 w-8 p-0 hover:bg-destructive/10"
+                        >
+                          <X className="h-4 w-4 text-destructive" />
+                        </Button>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Current IV</span>
-                        <span className="font-semibold">{data.iv}%</span>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b">
+                          <span className="text-sm font-medium text-muted-foreground">Implied Volatility</span>
+                          <span className="text-lg font-bold text-primary">{data.iv}%</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b">
+                          <span className="text-sm font-medium text-muted-foreground">IV Rank</span>
+                          <span className={`text-lg font-bold ${getIVRankColor(data.ivRank)}`}>
+                            {data.ivRank}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b">
+                          <span className="text-sm font-medium text-muted-foreground">IV Percentile</span>
+                          <span className={`text-lg font-bold ${getIVRankColor(data.ivPercentile)}`}>
+                            {data.ivPercentile}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">IV Rank</span>
-                        <span className={getIVRankColor(data.ivRank)}>{data.ivRank}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">IV Percentile</span>
-                        <span className={getIVRankColor(data.ivPercentile)}>{data.ivPercentile}</span>
-                      </div>
-                      <div className="pt-2 border-t">
-                        <p className="text-xs text-muted-foreground">
+                      
+                      <div className="pt-2">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <TrendingUp className="h-3 w-3" />
                           Updated: {new Date(data.lastUpdated).toLocaleTimeString()}
                         </p>
                       </div>
+                      
                       {data.ivRank >= 75 && (
-                        <div className="bg-red-500/10 text-red-700 dark:text-red-400 p-2 rounded text-xs">
-                          High IV - Good for selling premium
+                        <div className="bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-400 p-3 rounded-lg text-xs font-medium">
+                          🔴 High IV - Good for selling premium
                         </div>
                       )}
                       {data.ivRank <= 25 && (
-                        <div className="bg-green-500/10 text-green-700 dark:text-green-400 p-2 rounded text-xs">
-                          Low IV - Good for buying options
+                        <div className="bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400 p-3 rounded-lg text-xs font-medium">
+                          🟢 Low IV - Good for buying options
+                        </div>
+                      )}
+                      {data.ivRank > 25 && data.ivRank < 75 && (
+                        <div className="bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-400 p-3 rounded-lg text-xs font-medium">
+                          🔵 Neutral IV - Use directional strategies
                         </div>
                       )}
                     </CardContent>

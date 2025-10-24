@@ -268,17 +268,6 @@ const Settings = () => {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Dark Mode</p>
-                      <p className="text-sm text-muted-foreground">Switch between light and dark theme</p>
-                    </div>
-                    <Switch 
-                      checked={formData.darkMode}
-                      onCheckedChange={(checked) => setFormData({...formData, darkMode: checked})}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
                       <p className="font-medium">Compact View</p>
                       <p className="text-sm text-muted-foreground">Show more data with less spacing</p>
                     </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, User, LogOut, Menu } from 'lucide-react';
+import { Search, User, LogOut, Menu, Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Sidebar } from './Sidebar';
+import { useTheme } from 'next-themes';
 
 interface NavbarProps {
   className?: string;
@@ -17,6 +18,7 @@ interface NavbarProps {
 export function Navbar({ className }: NavbarProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
 
   const handleSignOut = async () => {
     await signOut();
@@ -53,13 +55,31 @@ export function Navbar({ className }: NavbarProps) {
         </div>
         
         <div className="flex items-center gap-2 sm:gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="h-8 w-8 sm:h-9 sm:w-9"
+          >
+            <Sun className="h-4 w-4 sm:h-5 sm:w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-4 w-4 sm:h-5 sm:w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+          
           {user ? (
             <>
-              <Avatar className="h-8 w-8 sm:h-9 sm:w-9 transition-transform duration-200 hover:scale-105">
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  <User className="h-4 w-4 sm:h-5 sm:w-5" />
-                </AvatarFallback>
-              </Avatar>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/settings')}
+                className="h-8 w-8 sm:h-9 sm:w-9"
+              >
+                <Avatar className="h-8 w-8 sm:h-9 sm:w-9 transition-transform duration-200 hover:scale-105">
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
               <Button variant="ghost" size="icon" onClick={handleSignOut} className="h-8 w-8 sm:h-9 sm:w-9">
                 <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
