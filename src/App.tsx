@@ -10,17 +10,13 @@ import Portfolio from "./pages/Portfolio";
 import Performance from "./pages/Performance";
 import Analysis from "./pages/Analysis";
 import Settings from "./pages/Settings";
-import OptionsPremium from "./pages/OptionsPremium";
 import ExpectedMove from "./pages/ExpectedMove";
 import OptionsPortfolio from "./pages/OptionsPortfolio";
-import OptionsRisk from "./pages/OptionsRisk";
 import ZeroDTE from "./pages/ZeroDTE";
 import Auth from "./pages/Auth";
 import TradingToolkit from "./pages/TradingToolkit";
 import TradeJournal from "./pages/TradeJournal";
 import IVTracker from "./pages/IVTracker";
-import StrategyVisualizer from "./pages/StrategyVisualizer";
-import Alerts from "./pages/Alerts";
 import Backtesting from "./pages/Backtesting";
 import TradeIdeas from "./pages/TradeIdeas";
 import MarketScanner from "./pages/MarketScanner";
@@ -42,15 +38,11 @@ const App = () => (
           <Route path="/analysis" element={<Analysis />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/trading-toolkit" element={<TradingToolkit />} />
-          <Route path="/options-premium" element={<OptionsPremium />} />
           <Route path="/expected-move" element={<ExpectedMove />} />
           <Route path="/options-portfolio" element={<OptionsPortfolio />} />
-          <Route path="/options-risk" element={<OptionsRisk />} />
           <Route path="/zero-dte" element={<ZeroDTE />} />
           <Route path="/trade-journal" element={<TradeJournal />} />
           <Route path="/iv-tracker" element={<IVTracker />} />
-          <Route path="/strategy-visualizer" element={<StrategyVisualizer />} />
-          <Route path="/alerts" element={<Alerts />} />
           <Route path="/backtesting" element={<Backtesting />} />
           <Route path="/trade-ideas" element={<TradeIdeas />} />
           <Route path="/market-scanner" element={<MarketScanner />} />

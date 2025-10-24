@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  BarChart, PieChart, Wallet, LineChart, 
-  DollarSign, Settings, ChevronRight, ChevronLeft, Home, Calculator,
-  TrendingUp, FolderKanban, AlertTriangle, Zap, BookOpen, Activity,
-  Shapes, Bell, TestTube, Users, Radar, FileText
+  PieChart, Wallet, LineChart, 
+  Settings, ChevronRight, ChevronLeft, Home, Calculator,
+  TrendingUp, FolderKanban, Zap, BookOpen, Activity,
+  TestTube, Users, Radar, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -111,11 +111,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/trading-toolkit',
     },
     {
-      title: 'Options Premium',
-      icon: Calculator,
-      href: '/options-premium',
-    },
-    {
       title: 'Expected Move',
       icon: TrendingUp,
       href: '/expected-move',
@@ -124,11 +119,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Options Portfolio',
       icon: FolderKanban,
       href: '/options-portfolio',
-    },
-    {
-      title: 'Options Risk',
-      icon: AlertTriangle,
-      href: '/options-risk',
     },
     {
       title: '0 DTE Calculator',
@@ -144,16 +134,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'IV Tracker',
       icon: Activity,
       href: '/iv-tracker',
-    },
-    {
-      title: 'Strategy Visualizer',
-      icon: Shapes,
-      href: '/strategy-visualizer',
-    },
-    {
-      title: 'Alerts',
-      icon: Bell,
-      href: '/alerts',
     },
     {
       title: 'Backtesting',

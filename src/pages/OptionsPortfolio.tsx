@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,9 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Trash2, Plus } from 'lucide-react';
+import { useStockData } from '@/hooks/useStockData';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { formatCurrency } from '@/utils/stocksApi';
 
 interface Trade {
+  id: string;
   ticker: string;
   type: string;
   strike: number;
@@ -18,19 +24,30 @@ interface Trade {
   entryPrice: number;
   buySell: string;
   contracts: number;
+  riskFlag?: string;
+  expectedMove?: number;
+  probITM?: number;
 }
 
 export default function OptionsPortfolio() {
   const [portfolio, setPortfolio] = useState<Trade[]>([]);
-  const [ticker, setTicker] = useState('');
-  const [type, setType] = useState('');
+  const [ticker, setTicker] = useState('AAPL');
+  const [type, setType] = useState('call');
   const [strike, setStrike] = useState('');
   const [expiration, setExpiration] = useState('');
-  const [currentPrice, setCurrentPrice] = useState('');
-  const [iv, setIv] = useState('');
   const [entryPrice, setEntryPrice] = useState('');
-  const [buySell, setBuySell] = useState('');
+  const [buySell, setBuySell] = useState('buy');
   const [contracts, setContracts] = useState('');
+
+  const { stocks } = useStockData([ticker]);
+  const currentPrice = stocks[0]?.price || 0;
+  const stockIV = 25; // Default IV - can be customized
+
+  useEffect(() => {
+    if (currentPrice && !strike) {
+      setStrike(currentPrice.toString());
+    }
+  }, [currentPrice]);
 
   const erf = (x: number): number => {
     const a1 = 0.254829592;
@@ -76,81 +93,91 @@ export default function OptionsPortfolio() {
     return Math.max(diffDays, 0);
   };
 
-  const addTrade = () => {
-    if (!ticker || !type || !strike || !expiration || !currentPrice || !iv || !entryPrice || !buySell || !contracts) {
-      alert('Please fill in all fields');
+  const addTrade = async () => {
+    if (!ticker || !type || !strike || !expiration || !currentPrice || !entryPrice || !buySell || !contracts) {
+      toast.error('Please fill in all fields');
       return;
     }
 
-    const trade: Trade = {
-      ticker: ticker.toUpperCase(),
-      type,
-      strike: parseFloat(strike),
-      expiration,
-      currentPrice: parseFloat(currentPrice),
-      iv: parseFloat(iv),
-      entryPrice: parseFloat(entryPrice),
-      buySell,
-      contracts: parseInt(contracts)
-    };
+    const days = daysToExpiration(expiration);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-options-data', {
+        body: {
+          symbol: ticker,
+          stockPrice: currentPrice,
+          strikePrice: parseFloat(strike),
+          daysToExpiry: days,
+          volatility: stockIV / 100,
+          optionType: type
+        }
+      });
 
-    setPortfolio([...portfolio, trade]);
-    clearForm();
+      if (error) throw error;
+
+      const probITM = Math.abs(data.greeks.delta);
+      
+      let riskFlag = 'Neutral';
+      if (type === 'call' && currentPrice < parseFloat(strike) && probITM < 0.3) {
+        riskFlag = 'Safe';
+      } else if (type === 'put' && currentPrice > parseFloat(strike) && probITM < 0.3) {
+        riskFlag = 'Safe';
+      } else if (probITM > 0.7) {
+        riskFlag = 'Risky';
+      }
+
+      const trade: Trade = {
+        id: Date.now().toString(),
+        ticker: ticker.toUpperCase(),
+        type,
+        strike: parseFloat(strike),
+        expiration,
+        currentPrice,
+        iv: stockIV,
+        entryPrice: parseFloat(entryPrice),
+        buySell,
+        contracts: parseInt(contracts),
+        expectedMove: data.expectedMove.amount,
+        probITM: probITM * 100,
+        riskFlag
+      };
+
+      setPortfolio([...portfolio, trade]);
+      toast.success('Position added successfully');
+      
+      clearForm();
+    } catch (err) {
+      console.error('Error adding trade:', err);
+      toast.error('Failed to add position');
+    }
   };
 
   const clearForm = () => {
-    setTicker('');
-    setType('');
     setStrike('');
     setExpiration('');
-    setCurrentPrice('');
-    setIv('');
     setEntryPrice('');
-    setBuySell('');
     setContracts('');
   };
 
-  const loadSampleData = () => {
-    const sampleData: Trade[] = [
-      {
-        ticker: 'AAPL',
-        type: 'call',
-        strike: 150,
-        expiration: '2025-10-15',
-        currentPrice: 155,
-        iv: 25,
-        entryPrice: 3.50,
-        buySell: 'buy',
-        contracts: 2
-      },
-      {
-        ticker: 'MSFT',
-        type: 'put',
-        strike: 300,
-        expiration: '2025-11-20',
-        currentPrice: 295,
-        iv: 30,
-        entryPrice: 2.75,
-        buySell: 'sell',
-        contracts: 1
-      },
-      {
-        ticker: 'TSLA',
-        type: 'call',
-        strike: 220,
-        expiration: '2025-09-30',
-        currentPrice: 215,
-        iv: 45,
-        entryPrice: 4.20,
-        buySell: 'buy',
-        contracts: 3
-      }
-    ];
-    setPortfolio(sampleData);
+  const removePosition = (id: string) => {
+    setPortfolio(portfolio.filter(p => p.id !== id));
+    toast.success('Position removed');
   };
+
 
   const clearPortfolio = () => {
     setPortfolio([]);
+  };
+
+  const getRiskColor = (flag: string) => {
+    switch (flag) {
+      case 'Safe':
+        return 'bg-green-500/10 text-green-500 border-green-500/50';
+      case 'Risky':
+        return 'bg-red-500/10 text-red-500 border-red-500/50';
+      default:
+        return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/50';
+    }
   };
 
   const totalPL = portfolio.reduce((sum, trade) => {
@@ -164,30 +191,78 @@ export default function OptionsPortfolio() {
     return sum + pl;
   }, 0);
 
+  const totalRisk = portfolio.filter(p => p.riskFlag === 'Risky').length;
+  const totalSafe = portfolio.filter(p => p.riskFlag === 'Safe').length;
+
   return (
-    <PageLayout title="Options Portfolio Analyzer">
+    <PageLayout title="Options Portfolio & Risk Analyzer">
       <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Total P&L</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className={`text-3xl font-bold ${totalPL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {formatCurrency(totalPL)}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Total Positions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{portfolio.length}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Safe Positions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-green-500">{totalSafe}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Risky Positions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-red-500">{totalRisk}</p>
+            </CardContent>
+          </Card>
+        </div>
+
         <Card>
           <CardHeader>
-            <CardTitle>Add New Trade</CardTitle>
-            <CardDescription>Track your options trades with real-time P&L and probability calculations</CardDescription>
+            <CardTitle>Add New Position</CardTitle>
+            <CardDescription>Track your options positions with live P&L, risk analysis, and probability calculations</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div>
-                <Label htmlFor="ticker">Ticker</Label>
+                <Label>Ticker</Label>
                 <Input
-                  id="ticker"
-                  placeholder="e.g., AAPL"
                   value={ticker}
-                  onChange={(e) => setTicker(e.target.value)}
+                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                  placeholder="AAPL"
                 />
+                {currentPrice > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    ${currentPrice.toFixed(2)} | IV: {stockIV}%
+                  </p>
+                )}
               </div>
+
               <div>
-                <Label htmlFor="type">Type</Label>
+                <Label>Type</Label>
                 <Select value={type} onValueChange={setType}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Type" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="call">Call</SelectItem>
@@ -195,66 +270,42 @@ export default function OptionsPortfolio() {
                   </SelectContent>
                 </Select>
               </div>
+
               <div>
-                <Label htmlFor="strike">Strike Price</Label>
+                <Label>Strike</Label>
                 <Input
-                  id="strike"
                   type="number"
-                  placeholder="150.00"
-                  step="0.01"
                   value={strike}
                   onChange={(e) => setStrike(e.target.value)}
+                  placeholder="150"
                 />
               </div>
+
               <div>
-                <Label htmlFor="expiration">Expiration</Label>
+                <Label>Expiration</Label>
                 <Input
-                  id="expiration"
                   type="date"
                   value={expiration}
                   onChange={(e) => setExpiration(e.target.value)}
                 />
               </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-5">
+
               <div>
-                <Label htmlFor="currentPrice">Current Stock Price</Label>
+                <Label>Entry Price</Label>
                 <Input
-                  id="currentPrice"
                   type="number"
-                  placeholder="155.00"
-                  step="0.01"
-                  value={currentPrice}
-                  onChange={(e) => setCurrentPrice(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="iv">IV (%)</Label>
-                <Input
-                  id="iv"
-                  type="number"
-                  placeholder="25.0"
-                  step="0.1"
-                  value={iv}
-                  onChange={(e) => setIv(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="entryPrice">Entry Price</Label>
-                <Input
-                  id="entryPrice"
-                  type="number"
-                  placeholder="3.50"
                   step="0.01"
                   value={entryPrice}
                   onChange={(e) => setEntryPrice(e.target.value)}
+                  placeholder="3.50"
                 />
               </div>
+
               <div>
-                <Label htmlFor="buySell">Buy/Sell</Label>
+                <Label>Buy/Sell</Label>
                 <Select value={buySell} onValueChange={setBuySell}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Buy/Sell" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="buy">Buy</SelectItem>
@@ -262,89 +313,118 @@ export default function OptionsPortfolio() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="contracts">Contracts</Label>
+                <Label>Contracts</Label>
                 <Input
-                  id="contracts"
                   type="number"
-                  placeholder="1"
-                  min="1"
                   value={contracts}
                   onChange={(e) => setContracts(e.target.value)}
+                  placeholder="1"
+                  min="1"
                 />
               </div>
+
+              <div className="flex items-end">
+                <Button onClick={addTrade} className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Position
+                </Button>
+              </div>
             </div>
+
             <div className="flex gap-2">
-              <Button onClick={addTrade}>Add Trade</Button>
-              <Button onClick={loadSampleData} variant="secondary">Load Sample Data</Button>
               <Button onClick={clearPortfolio} variant="outline">Clear All</Button>
             </div>
           </CardContent>
         </Card>
 
         {portfolio.length > 0 && (
-          <>
-            <Card className={totalPL >= 0 ? 'border-success/50 bg-success/5' : 'border-danger/50 bg-danger/5'}>
-              <CardHeader>
-                <CardTitle>Portfolio Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className={`text-4xl font-bold ${totalPL >= 0 ? 'text-success' : 'text-danger'}`}>
-                  {formatCurrency(totalPL)}
-                </div>
-              </CardContent>
-            </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Portfolio Positions</CardTitle>
+              <CardDescription>
+                Real-time P&L tracking with risk analysis and probability metrics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ticker</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Strike</TableHead>
+                    <TableHead>Stock Price</TableHead>
+                    <TableHead>Expected Move</TableHead>
+                    <TableHead>Prob ITM</TableHead>
+                    <TableHead>DTE</TableHead>
+                    <TableHead>P&L</TableHead>
+                    <TableHead>Position</TableHead>
+                    <TableHead>Risk</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {portfolio.map((trade) => {
+                    const daysToExp = daysToExpiration(trade.expiration);
+                    const multiplier = 100 * trade.contracts;
+                    let pl;
+                    if (trade.buySell.toLowerCase() === 'buy') {
+                      pl = (trade.currentPrice - trade.entryPrice) * multiplier;
+                    } else {
+                      pl = (trade.entryPrice - trade.currentPrice) * multiplier;
+                    }
 
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Ticker</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Strike</TableHead>
-                        <TableHead>Days to Exp</TableHead>
-                        <TableHead>Expected Move ±</TableHead>
-                        <TableHead>Prob ITM (%)</TableHead>
-                        <TableHead>Current P&L</TableHead>
-                        <TableHead>Position</TableHead>
+                    return (
+                      <TableRow key={trade.id}>
+                        <TableCell className="font-medium">{trade.ticker}</TableCell>
+                        <TableCell>
+                          <Badge variant={trade.type === 'call' ? 'default' : 'secondary'}>
+                            {trade.type.toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>${trade.strike}</TableCell>
+                        <TableCell>${trade.currentPrice.toFixed(2)}</TableCell>
+                        <TableCell>±${trade.expectedMove?.toFixed(2)}</TableCell>
+                        <TableCell>{trade.probITM?.toFixed(1)}%</TableCell>
+                        <TableCell>{daysToExp}d</TableCell>
+                        <TableCell className={pl >= 0 ? 'text-green-500 font-bold' : 'text-red-500 font-bold'}>
+                          {formatCurrency(pl)}
+                        </TableCell>
+                        <TableCell className="uppercase">{trade.buySell} {trade.contracts}</TableCell>
+                        <TableCell>
+                          <Badge className={getRiskColor(trade.riskFlag || 'Neutral')}>
+                            {trade.riskFlag}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removePosition(trade.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {portfolio.map((trade, index) => {
-                        const daysToExp = daysToExpiration(trade.expiration);
-                        const move = expectedMove(trade.currentPrice, trade.iv, daysToExp);
-                        const probItm = probITM(trade.currentPrice, trade.strike, trade.iv, daysToExp, trade.type);
-                        const multiplier = 100 * trade.contracts;
-                        let pl;
-                        if (trade.buySell.toLowerCase() === 'buy') {
-                          pl = (trade.currentPrice - trade.entryPrice) * multiplier;
-                        } else {
-                          pl = (trade.entryPrice - trade.currentPrice) * multiplier;
-                        }
+                    );
+                  })}
+                </TableBody>
+              </Table>
 
-                        return (
-                          <TableRow key={index}>
-                            <TableCell className="font-bold">{trade.ticker}</TableCell>
-                            <TableCell className="uppercase">{trade.type}</TableCell>
-                            <TableCell>${trade.strike}</TableCell>
-                            <TableCell>{daysToExp}</TableCell>
-                            <TableCell>${move.toFixed(2)}</TableCell>
-                            <TableCell>{(probItm * 100).toFixed(1)}%</TableCell>
-                            <TableCell className={pl >= 0 ? 'text-success font-bold' : 'text-danger font-bold'}>
-                              {formatCurrency(pl)}
-                            </TableCell>
-                            <TableCell className="uppercase">{trade.buySell} {trade.contracts}</TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </>
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                <h3 className="font-semibold mb-2">Risk Indicators:</h3>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  <li>• <span className="text-green-500 font-medium">Safe:</span> Low probability of ending in-the-money, good for premium sellers</li>
+                  <li>• <span className="text-yellow-500 font-medium">Neutral:</span> Moderate risk, watch closely</li>
+                  <li>• <span className="text-red-500 font-medium">Risky:</span> High probability ITM, potential for loss if short</li>
+                  <li>• Expected Move shows one standard deviation (68% probability range)</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </PageLayout>

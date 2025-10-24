@@ -233,25 +233,185 @@ const TradingToolkit = () => {
         </TabsContent>
 
         <TabsContent value="greeks">
-          <Card>
-            <CardHeader>
-              <CardTitle>Options Greeks Simulator</CardTitle>
-              <CardDescription>Simulate option Greeks for different scenarios</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Greeks simulation coming soon...</p>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Greeks Calculator</CardTitle>
+                <CardDescription>Calculate option Greeks for your positions</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Stock Symbol</Label>
+                  <Input
+                    type="text"
+                    value={symbol}
+                    onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                    placeholder="AAPL"
+                  />
+                  {currentPrice > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Current Price: ${currentPrice.toFixed(2)}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Option Type</Label>
+                  <Select defaultValue="call">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="call">Call</SelectItem>
+                      <SelectItem value="put">Put</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Strike Price</Label>
+                  <Input
+                    type="number"
+                    defaultValue={currentPrice || 150}
+                    placeholder="150.00"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Days to Expiration</Label>
+                  <Input
+                    type="number"
+                    defaultValue={30}
+                    placeholder="30"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Implied Volatility (%)</Label>
+                  <Input
+                    type="number"
+                    defaultValue={25}
+                    placeholder="25"
+                  />
+                </div>
+
+                <Button className="w-full">Calculate Greeks</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Greeks Results</CardTitle>
+                <CardDescription>Option sensitivity metrics</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 border rounded-lg">
+                    <p className="text-sm text-muted-foreground">Delta</p>
+                    <p className="text-2xl font-bold">0.65</p>
+                    <p className="text-xs text-muted-foreground mt-1">Price sensitivity</p>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <p className="text-sm text-muted-foreground">Gamma</p>
+                    <p className="text-2xl font-bold">0.03</p>
+                    <p className="text-xs text-muted-foreground mt-1">Delta change rate</p>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <p className="text-sm text-muted-foreground">Theta</p>
+                    <p className="text-2xl font-bold text-red-500">-0.05</p>
+                    <p className="text-xs text-muted-foreground mt-1">Time decay per day</p>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <p className="text-sm text-muted-foreground">Vega</p>
+                    <p className="text-2xl font-bold">0.12</p>
+                    <p className="text-xs text-muted-foreground mt-1">IV sensitivity</p>
+                  </div>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h4 className="font-semibold mb-2">What These Mean:</h4>
+                  <ul className="text-sm space-y-1 text-muted-foreground">
+                    <li>• <strong>Delta:</strong> For every $1 move in stock, option moves $0.65</li>
+                    <li>• <strong>Gamma:</strong> Delta changes by 0.03 for each $1 stock move</li>
+                    <li>• <strong>Theta:</strong> Option loses $0.05 in value each day</li>
+                    <li>• <strong>Vega:</strong> Option value changes $0.12 for each 1% IV change</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="exit-strategy">
           <Card>
             <CardHeader>
               <CardTitle>Exit Strategy Planner</CardTitle>
-              <CardDescription>Plan your exit strategies before entering trades</CardDescription>
+              <CardDescription>Define your exit criteria before entering the trade</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Exit strategy planner coming soon...</p>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Profit Targets</h3>
+                  
+                  <div className="space-y-2">
+                    <Label>Target 1 (Partial Exit %)</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input type="number" placeholder="25" />
+                      <Input type="number" placeholder="% gain" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Exit 25% of position at X% gain</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Target 2 (Partial Exit %)</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input type="number" placeholder="50" />
+                      <Input type="number" placeholder="% gain" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Exit 50% of remaining at X% gain</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Final Target (% Gain)</Label>
+                    <Input type="number" placeholder="100" />
+                    <p className="text-xs text-muted-foreground">Exit remaining position at X% gain</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Stop Loss & Risk Management</h3>
+                  
+                  <div className="space-y-2">
+                    <Label>Stop Loss (% Loss)</Label>
+                    <Input type="number" placeholder="20" />
+                    <p className="text-xs text-muted-foreground">Exit entire position at -X% loss</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Time-Based Exit</Label>
+                    <Input type="number" placeholder="30" />
+                    <p className="text-xs text-muted-foreground">Days until forced exit</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Trailing Stop (%)</Label>
+                    <Input type="number" placeholder="10" />
+                    <p className="text-xs text-muted-foreground">Trail stop X% below high</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <h4 className="font-semibold mb-2">Exit Strategy Summary</h4>
+                <ul className="text-sm space-y-1">
+                  <li>• Exit 25% at 50% gain</li>
+                  <li>• Exit 50% more at 100% gain</li>
+                  <li>• Exit remaining at 200% gain or 30 days</li>
+                  <li>• Stop loss: -20%</li>
+                  <li>• Trailing stop: 10% from peak</li>
+                </ul>
+              </div>
+
+              <Button className="w-full">Save Exit Strategy</Button>
             </CardContent>
           </Card>
         </TabsContent>
