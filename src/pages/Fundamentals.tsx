@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Search, TrendingUp, TrendingDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import ReactMarkdown from 'react-markdown';
 
 interface FundamentalsData {
   symbol: string;
@@ -321,7 +322,7 @@ export default function Fundamentals() {
                 {analysis && !analyzing && (
                   <div className="space-y-4">
                     <div className="prose prose-sm max-w-none dark:prose-invert">
-                      <p className="whitespace-pre-wrap">{analysis}</p>
+                      <ReactMarkdown>{analysis}</ReactMarkdown>
                     </div>
                     
                     <div className={`mt-6 p-6 rounded-lg border-2 ${

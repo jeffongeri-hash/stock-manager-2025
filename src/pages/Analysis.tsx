@@ -8,6 +8,7 @@ import { Sparkles, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStockData } from '@/hooks/useStockData';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
 
 const Analysis = () => {
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
@@ -132,8 +133,8 @@ const Analysis = () => {
           </CardHeader>
           <CardContent>
             {aiAnalysis ? (
-              <div className="prose prose-sm max-w-none">
-                <p className="whitespace-pre-wrap">{aiAnalysis}</p>
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
               </div>
             ) : (
               <p className="text-muted-foreground text-sm">
