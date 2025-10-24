@@ -20,6 +20,14 @@ interface FundamentalsData {
   peers: string[];
   spxChange: number;
   profile: any;
+  insiderTransactions: any[];
+  recentNews: any[];
+  earnings: any[];
+  rankings: {
+    peRatio: { rank: number | string; total: number | string };
+    roe: { rank: number | string; total: number | string };
+    roa: { rank: number | string; total: number | string };
+  };
 }
 
 export default function Fundamentals() {
@@ -28,6 +36,7 @@ export default function Fundamentals() {
   const [analyzing, setAnalyzing] = useState(false);
   const [fundamentals, setFundamentals] = useState<FundamentalsData | null>(null);
   const [analysis, setAnalysis] = useState('');
+  const [sentiment, setSentiment] = useState<'BULLISH' | 'BEARISH' | 'NEUTRAL'>('NEUTRAL');
 
   const handleSearch = async () => {
     if (!symbol.trim()) {
@@ -64,6 +73,7 @@ export default function Fundamentals() {
 
         if (analysisData?.analysis) {
           setAnalysis(analysisData.analysis);
+          setSentiment(analysisData.sentiment || 'NEUTRAL');
         }
         setAnalyzing(false);
       }
@@ -179,7 +189,14 @@ export default function Fundamentals() {
                     <div className="mt-2 space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm">P/E Ratio:</span>
-                        <span className="font-medium">{getRatioValue('peBasicExclExtraTTM')}</span>
+                        <div className="text-right">
+                          <span className="font-medium">{getRatioValue('peBasicExclExtraTTM')}</span>
+                          {fundamentals.rankings?.peRatio && (
+                            <p className="text-xs text-muted-foreground">
+                              Rank {fundamentals.rankings.peRatio.rank}/{fundamentals.rankings.peRatio.total}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm">P/B Ratio:</span>
@@ -197,11 +214,25 @@ export default function Fundamentals() {
                     <div className="mt-2 space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm">ROE:</span>
-                        <span className="font-medium">{getRatioValue('roeRfy')}%</span>
+                        <div className="text-right">
+                          <span className="font-medium">{getRatioValue('roeRfy')}%</span>
+                          {fundamentals.rankings?.roe && (
+                            <p className="text-xs text-muted-foreground">
+                              Rank {fundamentals.rankings.roe.rank}/{fundamentals.rankings.roe.total}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm">ROA:</span>
-                        <span className="font-medium">{getRatioValue('roaRfy')}%</span>
+                        <div className="text-right">
+                          <span className="font-medium">{getRatioValue('roaRfy')}%</span>
+                          {fundamentals.rankings?.roa && (
+                            <p className="text-xs text-muted-foreground">
+                              Rank {fundamentals.rankings.roa.rank}/{fundamentals.rankings.roa.total}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm">Net Margin:</span>
@@ -224,6 +255,36 @@ export default function Fundamentals() {
                       <div className="flex justify-between">
                         <span className="text-sm">Debt/Equity:</span>
                         <span className="font-medium">{getRatioValue('totalDebt2TotalEquityAnnual')}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Growth Metrics</p>
+                    <div className="mt-2 space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Revenue Growth (1Y):</span>
+                        <span className="font-medium">{getRatioValue('revenueGrowthTTMYoy')}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Revenue Growth (3Y):</span>
+                        <span className="font-medium">{getRatioValue('revenueGrowth3Y')}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Revenue Growth (5Y):</span>
+                        <span className="font-medium">{getRatioValue('revenueGrowth5Y')}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">EPS Growth (1Y):</span>
+                        <span className="font-medium">{getRatioValue('epsGrowthTTMYoy')}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">EPS Growth (3Y):</span>
+                        <span className="font-medium">{getRatioValue('epsGrowth3Y')}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">EPS Growth (5Y):</span>
+                        <span className="font-medium">{getRatioValue('epsGrowth5Y')}%</span>
                       </div>
                     </div>
                   </div>
@@ -258,8 +319,49 @@ export default function Fundamentals() {
                   </div>
                 )}
                 {analysis && !analyzing && (
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <p className="whitespace-pre-wrap">{analysis}</p>
+                  <div className="space-y-4">
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <p className="whitespace-pre-wrap">{analysis}</p>
+                    </div>
+                    
+                    <div className={`mt-6 p-6 rounded-lg border-2 ${
+                      sentiment === 'BULLISH' 
+                        ? 'bg-green-500/10 border-green-500/30' 
+                        : sentiment === 'BEARISH' 
+                        ? 'bg-red-500/10 border-red-500/30' 
+                        : 'bg-muted border-border'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">Market Sentiment</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Based on fundamentals, insider activity, and market conditions
+                          </p>
+                        </div>
+                        <div className={`text-4xl font-bold ${
+                          sentiment === 'BULLISH' 
+                            ? 'text-green-500' 
+                            : sentiment === 'BEARISH' 
+                            ? 'text-red-500' 
+                            : 'text-muted-foreground'
+                        }`}>
+                          {sentiment === 'BULLISH' && '📈'}
+                          {sentiment === 'BEARISH' && '📉'}
+                          {sentiment === 'NEUTRAL' && '➡️'}
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <p className={`text-2xl font-bold ${
+                          sentiment === 'BULLISH' 
+                            ? 'text-green-500' 
+                            : sentiment === 'BEARISH' 
+                            ? 'text-red-500' 
+                            : 'text-muted-foreground'
+                        }`}>
+                          {sentiment}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </CardContent>

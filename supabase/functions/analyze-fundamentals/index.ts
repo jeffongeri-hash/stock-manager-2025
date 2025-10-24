@@ -27,14 +27,44 @@ serve(async (req) => {
 
     console.log('Analyzing fundamentals for:', fundamentals.symbol);
 
-    const systemPrompt = `You are a financial analyst expert. Analyze the provided stock fundamentals and provide clear, actionable insights. 
+    const systemPrompt = `You are a financial analyst expert. Analyze the provided stock fundamentals and provide comprehensive, actionable insights. 
+    
 Focus on:
-1. Key financial ratios and what they indicate about the company's health
-2. How the company compares to its sector/industry
-3. The company's price movement relative to the S&P 500
-4. Overall investment outlook based on fundamentals
+1. Valuation metrics and what they indicate
+2. Profitability and efficiency
+3. Financial health and liquidity
+4. Growth trends in sales and earnings
+5. Comparison with sector/industry peers (including rankings)
+6. Relative performance vs S&P 500
+7. Insider trading activity implications
+8. Recent news sentiment
+9. Overall market sentiment (bullish, bearish, or neutral)
+10. Key strengths and concerns
 
-Keep explanations clear and accessible to both novice and experienced investors.`;
+Keep explanations clear and accessible to both novice and experienced investors.
+
+At the end, provide a clear sentiment classification: BULLISH, BEARISH, or NEUTRAL based on:
+- Fundamental strength (ratios, growth, profitability)
+- Insider activity (buying = positive, selling = negative)
+- Recent news sentiment
+- Market position vs peers
+
+Format your response with the sentiment on the last line as: "SENTIMENT: [BULLISH/BEARISH/NEUTRAL]"`;
+
+    // Calculate growth metrics
+    const salesGrowth1Y = fundamentals.metrics.revenueGrowthTTMYoy || 'N/A';
+    const salesGrowth3Y = fundamentals.metrics.revenueGrowth3Y || 'N/A';
+    const salesGrowth5Y = fundamentals.metrics.revenueGrowth5Y || 'N/A';
+    const epsGrowth1Y = fundamentals.metrics.epsGrowthTTMYoy || 'N/A';
+    const epsGrowth3Y = fundamentals.metrics.epsGrowth3Y || 'N/A';
+    const epsGrowth5Y = fundamentals.metrics.epsGrowth5Y || 'N/A';
+
+    // Analyze insider transactions
+    const insiderSummary = fundamentals.insiderTransactions?.slice(0, 10).reduce((acc: any, t: any) => {
+      if (t.transactionCode === 'P') acc.buys++;
+      if (t.transactionCode === 'S') acc.sells++;
+      return acc;
+    }, { buys: 0, sells: 0 }) || { buys: 0, sells: 0 };
 
     const userPrompt = `Analyze the fundamentals for ${fundamentals.name} (${fundamentals.symbol}):
 
@@ -44,21 +74,37 @@ Market Cap: $${fundamentals.marketCap}M
 Industry: ${fundamentals.industry}
 
 Key Ratios:
-- P/E Ratio: ${fundamentals.metrics.peBasicExclExtraTTM || 'N/A'}
+- P/E Ratio: ${fundamentals.metrics.peBasicExclExtraTTM || 'N/A'} (Rank: ${fundamentals.rankings?.peRatio?.rank || 'N/A'}/${fundamentals.rankings?.peRatio?.total || 'N/A'} in peer group)
 - P/B Ratio: ${fundamentals.metrics.pbAnnual || 'N/A'}
-- ROE: ${fundamentals.metrics.roeRfy || 'N/A'}%
-- ROA: ${fundamentals.metrics.roaRfy || 'N/A'}%
-- Debt/Equity: ${fundamentals.metrics.totalDebt2TotalEquityAnnual || 'N/A'}
+- P/S Ratio: ${fundamentals.metrics.psAnnual || 'N/A'}
+- ROE: ${fundamentals.metrics.roeRfy || 'N/A'}% (Rank: ${fundamentals.rankings?.roe?.rank || 'N/A'}/${fundamentals.rankings?.roe?.total || 'N/A'} in peer group)
+- ROA: ${fundamentals.metrics.roaRfy || 'N/A'}% (Rank: ${fundamentals.rankings?.roa?.rank || 'N/A'}/${fundamentals.rankings?.roa?.total || 'N/A'} in peer group)
+- Net Margin: ${fundamentals.metrics.netProfitMarginAnnual || 'N/A'}%
 - Current Ratio: ${fundamentals.metrics.currentRatioAnnual || 'N/A'}
 - Quick Ratio: ${fundamentals.metrics.quickRatioAnnual || 'N/A'}
-- Profit Margin: ${fundamentals.metrics.netProfitMarginAnnual || 'N/A'}%
-- Operating Margin: ${fundamentals.metrics.operatingMarginAnnual || 'N/A'}%
+- Debt/Equity: ${fundamentals.metrics.totalDebt2TotalEquityAnnual || 'N/A'}
+
+Growth Metrics:
+- Revenue Growth (1Y): ${salesGrowth1Y}%
+- Revenue Growth (3Y): ${salesGrowth3Y}%
+- Revenue Growth (5Y): ${salesGrowth5Y}%
+- EPS Growth (1Y): ${epsGrowth1Y}%
+- EPS Growth (3Y): ${epsGrowth3Y}%
+- EPS Growth (5Y): ${epsGrowth5Y}%
 
 Stock vs S&P 500: ${fundamentals.symbol} is ${fundamentals.priceChangePercent > fundamentals.spxChange ? 'outperforming' : 'underperforming'} the S&P 500 (${fundamentals.spxChange}%)
 
 Peer Companies: ${fundamentals.peers.join(', ')}
 
-Provide a comprehensive analysis with specific insights and recommendations.`;
+Recent Insider Activity (Last 10 transactions):
+- Insider Buys: ${insiderSummary.buys}
+- Insider Sells: ${insiderSummary.sells}
+${insiderSummary.buys > insiderSummary.sells ? '(Positive signal - insiders are buying)' : insiderSummary.sells > insiderSummary.buys ? '(Negative signal - insiders are selling)' : '(Neutral)'}
+
+Recent News Headlines (Last 7 days):
+${fundamentals.recentNews?.slice(0, 5).map((n: any) => `- ${n.headline}`).join('\n') || 'No recent news available'}
+
+Provide a detailed analysis of this stock's fundamentals, growth trajectory, peer comparison, and investment potential. End with a clear sentiment.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -99,10 +145,17 @@ Provide a comprehensive analysis with specific insights and recommendations.`;
     const aiResponse = await response.json();
     const analysis = aiResponse.choices[0].message.content;
 
-    console.log('Successfully analyzed fundamentals');
+    // Extract sentiment from analysis
+    let sentiment = 'NEUTRAL';
+    const sentimentMatch = analysis.match(/SENTIMENT:\s*(BULLISH|BEARISH|NEUTRAL)/i);
+    if (sentimentMatch) {
+      sentiment = sentimentMatch[1].toUpperCase();
+    }
+
+    console.log('Successfully analyzed fundamentals with sentiment:', sentiment);
 
     return new Response(
-      JSON.stringify({ analysis }), 
+      JSON.stringify({ analysis, sentiment }), 
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

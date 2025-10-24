@@ -27,30 +27,53 @@ serve(async (req) => {
 
     console.log('Fetching fundamentals for:', symbol);
 
-    // Fetch basic metrics and ratios
-    const metricsUrl = `https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FINNHUB_API_KEY}`;
-    const metricsResponse = await fetch(metricsUrl);
-    const metricsData = await metricsResponse.json();
+    // Fetch all data in parallel
+    const [metricsResponse, profileResponse, peersResponse, quoteResponse, spxQuoteResponse, insiderResponse, newsResponse] = await Promise.all([
+      fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FINNHUB_API_KEY}`),
+      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FINNHUB_API_KEY}`),
+      fetch(`https://finnhub.io/api/v1/stock/peers?symbol=${symbol}&token=${FINNHUB_API_KEY}`),
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`),
+      fetch(`https://finnhub.io/api/v1/quote?symbol=SPY&token=${FINNHUB_API_KEY}`),
+      fetch(`https://finnhub.io/api/v1/stock/insider-transactions?symbol=${symbol}&token=${FINNHUB_API_KEY}`),
+      fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}&to=${new Date().toISOString().split('T')[0]}&token=${FINNHUB_API_KEY}`)
+    ]);
 
-    // Fetch company profile
-    const profileUrl = `https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FINNHUB_API_KEY}`;
-    const profileResponse = await fetch(profileUrl);
-    const profileData = await profileResponse.json();
+    const [metricsData, profileData, peersData, quoteData, spxQuoteData, insiderData, newsData] = await Promise.all([
+      metricsResponse.json(),
+      profileResponse.json(),
+      peersResponse.json(),
+      quoteResponse.json(),
+      spxQuoteResponse.json(),
+      insiderResponse.json(),
+      newsResponse.json()
+    ]);
 
-    // Fetch peer companies
-    const peersUrl = `https://finnhub.io/api/v1/stock/peers?symbol=${symbol}&token=${FINNHUB_API_KEY}`;
-    const peersResponse = await fetch(peersUrl);
-    const peersData = await peersResponse.json();
+    console.log('Fetched metrics:', metricsData);
+    console.log('Fetched insider data:', insiderData);
 
-    // Fetch current quote
-    const quoteUrl = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`;
-    const quoteResponse = await fetch(quoteUrl);
-    const quoteData = await quoteResponse.json();
+    // Fetch peer metrics for comparison
+    const peerSymbols = (peersData || []).slice(0, 5);
+    const peerMetricsPromises = peerSymbols.map((peerSymbol: string) =>
+      fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${peerSymbol}&metric=all&token=${FINNHUB_API_KEY}`)
+        .then(res => res.json())
+        .catch(() => null)
+    );
+    const peerMetrics = await Promise.all(peerMetricsPromises);
 
-    // Fetch SPX quote for comparison
-    const spxQuoteUrl = `https://finnhub.io/api/v1/quote?symbol=SPX&token=${FINNHUB_API_KEY}`;
-    const spxQuoteResponse = await fetch(spxQuoteUrl);
-    const spxQuoteData = await spxQuoteResponse.json();
+    // Calculate sector/industry rankings
+    const calculateRanking = (value: number, peerValues: number[]) => {
+      if (!value || !peerValues.length) return { rank: 'N/A', total: 'N/A' };
+      const validPeers = peerValues.filter((v: number) => v && !isNaN(v));
+      if (!validPeers.length) return { rank: 'N/A', total: 'N/A' };
+      
+      const allValues = [...validPeers, value].sort((a: number, b: number) => b - a);
+      const rank = allValues.indexOf(value) + 1;
+      return { rank, total: allValues.length };
+    };
+
+    const peerPEs = peerMetrics.map((m: any) => m?.metric?.peBasicExclExtraTTM).filter(Boolean);
+    const peerROEs = peerMetrics.map((m: any) => m?.metric?.roeRfy).filter(Boolean);
+    const peerROAs = peerMetrics.map((m: any) => m?.metric?.roaRfy).filter(Boolean);
 
     const fundamentals = {
       symbol,
@@ -64,6 +87,13 @@ serve(async (req) => {
       peers: peersData || [],
       spxChange: spxQuoteData.dp,
       profile: profileData,
+      insiderTransactions: insiderData?.data || [],
+      recentNews: newsData || [],
+      rankings: {
+        peRatio: calculateRanking(metricsData.metric?.peBasicExclExtraTTM, peerPEs),
+        roe: calculateRanking(metricsData.metric?.roeRfy, peerROEs),
+        roa: calculateRanking(metricsData.metric?.roaRfy, peerROAs)
+      }
     };
 
     console.log('Successfully fetched fundamentals');
