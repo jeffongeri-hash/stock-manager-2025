@@ -16,7 +16,6 @@ import ZeroDTE from "./pages/ZeroDTE";
 import Auth from "./pages/Auth";
 import TradingToolkit from "./pages/TradingToolkit";
 import TradeJournal from "./pages/TradeJournal";
-import IVTracker from "./pages/IVTracker";
 import Backtesting from "./pages/Backtesting";
 import TradeIdeas from "./pages/TradeIdeas";
 import MarketScanner from "./pages/MarketScanner";
@@ -42,7 +41,6 @@ const App = () => (
           <Route path="/options-portfolio" element={<OptionsPortfolio />} />
           <Route path="/zero-dte" element={<ZeroDTE />} />
           <Route path="/trade-journal" element={<TradeJournal />} />
-          <Route path="/iv-tracker" element={<IVTracker />} />
           <Route path="/backtesting" element={<Backtesting />} />
           <Route path="/trade-ideas" element={<TradeIdeas />} />
           <Route path="/market-scanner" element={<MarketScanner />} />

@@ -131,11 +131,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/trade-journal',
     },
     {
-      title: 'IV Tracker',
-      icon: Activity,
-      href: '/iv-tracker',
-    },
-    {
       title: 'Backtesting',
       icon: TestTube,
       href: '/backtesting',
