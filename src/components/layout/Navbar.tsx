@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Bell, User, LogOut, Menu } from 'lucide-react';
+import { Search, User, LogOut, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -53,15 +53,6 @@ export function Navbar({ className }: NavbarProps) {
         </div>
         
         <div className="flex items-center gap-2 sm:gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="relative h-8 w-8 sm:h-9 sm:w-9"
-          >
-            <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="absolute top-0 right-0 sm:top-1 sm:right-1 h-2 w-2 rounded-full bg-primary animate-pulse" />
-          </Button>
-          
           {user ? (
             <>
               <Avatar className="h-8 w-8 sm:h-9 sm:w-9 transition-transform duration-200 hover:scale-105">
