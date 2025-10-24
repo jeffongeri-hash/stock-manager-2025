@@ -23,6 +23,7 @@ interface BacktestResult {
   winning_trades: number;
   win_rate: number;
   created_at: string;
+  parameters?: any;
 }
 
 const Backtesting = () => {
@@ -35,8 +36,11 @@ const Backtesting = () => {
     start_date: '',
     end_date: new Date().toISOString().split('T')[0],
     initial_capital: '10000',
-    strategy_type: 'buy_hold'
+    strategy_type: 'buy_hold',
+    entry_trigger: '',
+    exit_trigger: ''
   });
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -75,6 +79,51 @@ const Backtesting = () => {
     const winning = Math.floor(trades * (0.4 + Math.random() * 0.3)); // 40-70% win rate
     const winRate = (winning / trades) * 100;
 
+    // Generate entry/exit triggers based on strategy type
+    const getStrategyTriggers = (type: string) => {
+      const triggers: { [key: string]: { entry: string; exit: string; entryConditions: string; exitConditions: string } } = {
+        buy_hold: {
+          entry: 'Market Open',
+          exit: 'Market Close / Target Date',
+          entryConditions: 'Buy at start date market open price',
+          exitConditions: 'Sell at end date market close price or when target is reached'
+        },
+        iron_condor: {
+          entry: 'IV > 50th Percentile',
+          exit: '50% Max Profit or 21 DTE',
+          entryConditions: 'Sell OTM call spread & put spread when IV is elevated (>50th percentile). Delta ~0.16 per leg.',
+          exitConditions: 'Close at 50% max profit, 21 DTE, or if position reaches 2x max profit in loss'
+        },
+        vertical_spread: {
+          entry: 'Directional Signal + IV',
+          exit: '50% Max Profit or Expiration',
+          entryConditions: 'Buy lower strike, sell higher strike (call) or reverse (put). Enter on trend confirmation.',
+          exitConditions: 'Exit at 50% max profit, expiration, or if underlying moves against position >5%'
+        },
+        straddle: {
+          entry: 'IV < 30th Percentile',
+          exit: 'IV Expansion or 30 DTE',
+          entryConditions: 'Buy ATM call and put when IV is low, expecting volatility expansion',
+          exitConditions: 'Exit when IV expands >20 points, at 30 DTE, or 50% loss'
+        },
+        ma_crossover: {
+          entry: 'Fast MA Crosses Above Slow MA',
+          exit: 'Fast MA Crosses Below Slow MA',
+          entryConditions: 'Enter long when 20-day MA crosses above 50-day MA (bullish crossover)',
+          exitConditions: 'Exit when 20-day MA crosses below 50-day MA (bearish crossover) or -2% stop loss'
+        },
+        rsi: {
+          entry: 'RSI < 30 (Oversold)',
+          exit: 'RSI > 70 (Overbought)',
+          entryConditions: 'Buy when RSI(14) crosses below 30, indicating oversold conditions',
+          exitConditions: 'Sell when RSI(14) crosses above 70 or -3% stop loss triggered'
+        }
+      };
+      return triggers[type] || triggers.buy_hold;
+    };
+
+    const strategyTriggers = getStrategyTriggers(backtest.strategy_type);
+
     const { error } = await supabase
       .from('backtest_results')
       .insert({
@@ -88,7 +137,13 @@ const Backtesting = () => {
         total_trades: trades,
         winning_trades: winning,
         win_rate: winRate,
-        parameters: { strategy_type: backtest.strategy_type }
+        parameters: { 
+          strategy_type: backtest.strategy_type,
+          entry_trigger: strategyTriggers.entry,
+          exit_trigger: strategyTriggers.exit,
+          entry_conditions: strategyTriggers.entryConditions,
+          exit_conditions: strategyTriggers.exitConditions
+        }
       });
 
     if (error) {
@@ -206,43 +261,113 @@ const Backtesting = () => {
             {results.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No backtest results yet. Run your first backtest!</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Strategy</TableHead>
-                    <TableHead>Symbol</TableHead>
-                    <TableHead>Period</TableHead>
-                    <TableHead>Return</TableHead>
-                    <TableHead>Win Rate</TableHead>
-                    <TableHead>Trades</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {results.map((result) => {
-                    const returnPct = ((result.final_capital - result.initial_capital) / result.initial_capital) * 100;
-                    return (
-                      <TableRow key={result.id}>
-                        <TableCell className="font-medium">{result.strategy_name}</TableCell>
-                        <TableCell>{result.symbol}</TableCell>
-                        <TableCell className="text-sm">
-                          {new Date(result.start_date).toLocaleDateString()} - {new Date(result.end_date).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className={returnPct >= 0 ? 'text-green-500 font-semibold' : 'text-red-500 font-semibold'}>
-                          {returnPct >= 0 ? '+' : ''}{returnPct.toFixed(2)}%
-                        </TableCell>
-                        <TableCell>{result.win_rate.toFixed(1)}%</TableCell>
-                        <TableCell>{result.total_trades}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => deleteResult(result.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+              <div className="space-y-2">
+                {results.map((result) => {
+                  const returnPct = ((result.final_capital - result.initial_capital) / result.initial_capital) * 100;
+                  const isExpanded = expandedRow === result.id;
+                  const params = result.parameters as any;
+                  
+                  return (
+                    <div key={result.id} className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Strategy</TableHead>
+                            <TableHead>Symbol</TableHead>
+                            <TableHead>Period</TableHead>
+                            <TableHead>Return</TableHead>
+                            <TableHead>Win Rate</TableHead>
+                            <TableHead>Trades</TableHead>
+                            <TableHead></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => setExpandedRow(isExpanded ? null : result.id)}
+                          >
+                            <TableCell className="font-medium">{result.strategy_name}</TableCell>
+                            <TableCell>{result.symbol}</TableCell>
+                            <TableCell className="text-sm">
+                              {new Date(result.start_date).toLocaleDateString()} - {new Date(result.end_date).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className={returnPct >= 0 ? 'text-green-500 font-semibold' : 'text-red-500 font-semibold'}>
+                              {returnPct >= 0 ? '+' : ''}{returnPct.toFixed(2)}%
+                            </TableCell>
+                            <TableCell>{result.win_rate.toFixed(1)}%</TableCell>
+                            <TableCell>{result.total_trades}</TableCell>
+                            <TableCell>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteResult(result.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                      
+                      {isExpanded && params && (
+                        <div className="bg-muted/30 p-4 border-t space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Card>
+                              <CardHeader>
+                                <CardTitle className="text-sm">Entry Trigger</CardTitle>
+                              </CardHeader>
+                              <CardContent className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-semibold bg-green-500/20 text-green-700 dark:text-green-400 px-2 py-1 rounded">
+                                    {params.entry_trigger || 'Not specified'}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-muted-foreground">{params.entry_conditions || 'No entry conditions specified'}</p>
+                              </CardContent>
+                            </Card>
+                            
+                            <Card>
+                              <CardHeader>
+                                <CardTitle className="text-sm">Exit Trigger</CardTitle>
+                              </CardHeader>
+                              <CardContent className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-semibold bg-red-500/20 text-red-700 dark:text-red-400 px-2 py-1 rounded">
+                                    {params.exit_trigger || 'Not specified'}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-muted-foreground">{params.exit_conditions || 'No exit conditions specified'}</p>
+                              </CardContent>
+                            </Card>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div className="bg-card p-3 rounded border">
+                              <p className="text-muted-foreground">Initial Capital</p>
+                              <p className="font-bold">${result.initial_capital.toLocaleString()}</p>
+                            </div>
+                            <div className="bg-card p-3 rounded border">
+                              <p className="text-muted-foreground">Final Capital</p>
+                              <p className="font-bold">${result.final_capital.toLocaleString()}</p>
+                            </div>
+                            <div className="bg-card p-3 rounded border">
+                              <p className="text-muted-foreground">Winning Trades</p>
+                              <p className="font-bold text-green-500">{result.winning_trades}</p>
+                            </div>
+                            <div className="bg-card p-3 rounded border">
+                              <p className="text-muted-foreground">Losing Trades</p>
+                              <p className="font-bold text-red-500">{result.total_trades - result.winning_trades}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>

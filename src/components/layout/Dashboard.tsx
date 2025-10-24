@@ -401,18 +401,6 @@ export function Dashboard() {
                   </Card>
                 </Link>
 
-                <Link to="/options-premium">
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <DollarSign className="h-8 w-8 text-primary mb-2" />
-                      <CardTitle>Options Premium</CardTitle>
-                      <CardDescription>Calculate theoretical prices and Greeks for options</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button variant="outline" className="w-full">Calculate Premium</Button>
-                    </CardContent>
-                  </Card>
-                </Link>
 
                 <Link to="/expected-move">
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer">
