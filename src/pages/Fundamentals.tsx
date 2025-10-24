@@ -44,7 +44,12 @@ export default function Fundamentals() {
         body: { symbol: symbol.toUpperCase() }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to fetch fundamentals');
+      }
+
+      console.log('Fundamentals data received:', data);
 
       if (data?.fundamentals) {
         setFundamentals(data.fundamentals);
@@ -64,8 +69,10 @@ export default function Fundamentals() {
       }
     } catch (err) {
       console.error('Error fetching fundamentals:', err);
-      toast.error('Failed to fetch fundamentals data');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch fundamentals data';
+      toast.error(errorMessage);
       setAnalyzing(false);
+      setFundamentals(null);
     } finally {
       setLoading(false);
     }
@@ -76,8 +83,9 @@ export default function Fundamentals() {
   };
 
   const formatNumber = (num: number) => {
-    if (num >= 1000000000) return `$${(num / 1000).toFixed(2)}B`;
-    if (num >= 1000000) return `$${num.toFixed(2)}M`;
+    if (!num || isNaN(num)) return 'N/A';
+    if (num >= 1000000000) return `$${(num / 1000000000).toFixed(2)}B`;
+    if (num >= 1000000) return `$${(num / 1000000).toFixed(2)}M`;
     return `$${num.toFixed(2)}`;
   };
 
