@@ -42,7 +42,7 @@ export function Navbar({ className }: NavbarProps) {
             </SheetContent>
           </Sheet>
           
-          <h1 className="text-base sm:text-lg font-semibold tracking-tight lg:text-xl">MarketPulse</h1>
+          <h1 className="text-base sm:text-lg font-semibold tracking-tight lg:text-xl">Profit Pathway</h1>
           
           <div className="relative hidden md:flex items-center h-9 rounded-md px-3 text-muted-foreground focus-within:text-foreground bg-muted/50">
             <Search className="h-4 w-4 mr-2" />

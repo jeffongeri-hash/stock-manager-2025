@@ -93,7 +93,7 @@ const Reports = () => {
         body: JSON.stringify({
           type: 'test_report',
           timestamp: new Date().toISOString(),
-          message: 'This is a test trading report from MarketPulse'
+          message: 'This is a test trading report from Profit Pathway'
         }),
       });
 

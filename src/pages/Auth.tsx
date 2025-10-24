@@ -73,7 +73,7 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>MarketPulse</CardTitle>
+          <CardTitle>Profit Pathway</CardTitle>
           <CardDescription>Sign in to manage your trading portfolio</CardDescription>
         </CardHeader>
         <CardContent>
