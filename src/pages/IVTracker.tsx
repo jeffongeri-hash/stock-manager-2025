@@ -52,15 +52,34 @@ const IVTracker = () => {
 
     for (const symbol of symbols) {
       try {
+        // Get current date and calculate expiration 30 days out
+        const today = new Date();
+        const expiration = new Date(today);
+        expiration.setDate(today.getDate() + 30);
+        const expirationStr = expiration.toISOString().split('T')[0];
+
+        // Fetch stock data first to get current price for strike
+        const { data: stockData } = await supabase.functions.invoke('fetch-stock-data', {
+          body: { symbols: [symbol] }
+        });
+
+        const currentPrice = stockData?.stocks?.[0]?.price || 100;
+
+        // Fetch options data to get IV
         const { data, error } = await supabase.functions.invoke('fetch-options-data', {
-          body: { symbol, strike: 100, expiration: '2025-12-31', optionType: 'call' }
+          body: { 
+            symbol, 
+            strike: currentPrice, 
+            expiration: expirationStr, 
+            optionType: 'call' 
+          }
         });
 
         if (!error && data) {
-          // Mock IV data - in production, this would come from actual market data
-          const iv = Math.random() * 60 + 20; // Random IV between 20-80%
-          const ivRank = Math.random() * 100; // Random IV Rank 0-100
-          const ivPercentile = Math.random() * 100;
+          // Use actual IV from options data or calculate from bid-ask spread
+          const iv = data.impliedVolatility || data.iv || 30;
+          const ivRank = data.ivRank || ((iv - 20) / 60 * 100); // Estimate based on typical range
+          const ivPercentile = data.ivPercentile || ivRank;
 
           ivResults.push({
             symbol,

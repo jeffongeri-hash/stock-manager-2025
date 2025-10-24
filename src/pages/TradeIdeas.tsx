@@ -32,6 +32,8 @@ const TradeIdeas = () => {
   const [ideas, setIdeas] = useState<TradeIdea[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
+  const [showAIForm, setShowAIForm] = useState(false);
+  const [aiSymbols, setAiSymbols] = useState('');
   const [newIdea, setNewIdea] = useState({
     symbol: '',
     idea_type: 'bullish',
@@ -156,10 +158,16 @@ const TradeIdeas = () => {
 
   const generateAIIdeas = async () => {
     setGeneratingAI(true);
+    setShowAIForm(false);
     try {
-      // Fetch current market data (top stocks)
+      // Parse symbols from input or use defaults
+      const symbols = aiSymbols.trim() 
+        ? aiSymbols.split(',').map(s => s.trim().toUpperCase())
+        : ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'SPY', 'QQQ', 'IWM'];
+
+      // Fetch current market data
       const { data: marketData, error: marketError } = await supabase.functions.invoke('fetch-stock-data', {
-        body: { symbols: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'SPY', 'QQQ', 'IWM'] }
+        body: { symbols }
       });
 
       if (marketError) throw marketError;
@@ -195,6 +203,7 @@ const TradeIdeas = () => {
       if (insertError) throw insertError;
 
       toast.success(`Generated ${data.ideas.length} AI trade ideas!`);
+      setAiSymbols('');
       fetchIdeas();
     } catch (err: any) {
       console.error('Error generating AI ideas:', err);
@@ -220,7 +229,7 @@ const TradeIdeas = () => {
               <CardDescription>Share and discover trading setups from the community</CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button onClick={generateAIIdeas} disabled={generatingAI} variant="outline">
+              <Button onClick={() => setShowAIForm(!showAIForm)} disabled={generatingAI} variant="outline">
                 {generatingAI ? (
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
@@ -235,6 +244,28 @@ const TradeIdeas = () => {
             </div>
           </CardHeader>
           <CardContent>
+            {showAIForm && (
+              <div className="mb-6 p-4 border rounded-lg space-y-4">
+                <div>
+                  <Label>Symbols for AI Analysis (comma separated)</Label>
+                  <Input
+                    value={aiSymbols}
+                    onChange={(e) => setAiSymbols(e.target.value)}
+                    placeholder="AAPL, TSLA, NVDA (leave blank for top stocks)"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Enter specific stocks or leave blank to analyze top market stocks
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={generateAIIdeas} disabled={generatingAI}>
+                    {generatingAI ? 'Generating...' : 'Generate Ideas'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowAIForm(false)}>Cancel</Button>
+                </div>
+              </div>
+            )}
+
             {showForm && (
               <div className="mb-6 p-4 border rounded-lg space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
