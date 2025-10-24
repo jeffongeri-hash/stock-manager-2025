@@ -5,8 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, TrendingUp } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { Plus, TrendingUp, X } from 'lucide-react';
 
 interface IVData {
   symbol: string;
@@ -17,33 +16,31 @@ interface IVData {
 }
 
 const IVTracker = () => {
-  const { user } = useAuth();
   const [watchlist, setWatchlist] = useState<string[]>([]);
   const [ivData, setIVData] = useState<IVData[]>([]);
   const [newSymbol, setNewSymbol] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Load watchlist from localStorage on mount
   useEffect(() => {
-    if (user) {
-      fetchWatchlist();
+    const savedWatchlist = localStorage.getItem('ivTrackerWatchlist');
+    if (savedWatchlist) {
+      try {
+        const symbols = JSON.parse(savedWatchlist);
+        setWatchlist(symbols);
+        if (symbols.length > 0) {
+          fetchIVData(symbols);
+        }
+      } catch (error) {
+        console.error('Error loading watchlist:', error);
+      }
     }
-  }, [user]);
+  }, []);
 
-  const fetchWatchlist = async () => {
-    const { data, error } = await supabase
-      .from('watchlist')
-      .select('symbol');
-
-    if (error) {
-      toast.error('Failed to fetch watchlist');
-      return;
-    }
-
-    const symbols = data?.map(item => item.symbol) || [];
+  // Save watchlist to localStorage whenever it changes
+  const saveWatchlist = (symbols: string[]) => {
+    localStorage.setItem('ivTrackerWatchlist', JSON.stringify(symbols));
     setWatchlist(symbols);
-    if (symbols.length > 0) {
-      fetchIVData(symbols);
-    }
   };
 
   const fetchIVData = async (symbols: string[]) => {
@@ -103,18 +100,23 @@ const IVTracker = () => {
 
     const symbol = newSymbol.toUpperCase().trim();
     
-    const { error } = await supabase
-      .from('watchlist')
-      .insert({ user_id: user?.id, symbol });
-
-    if (error) {
-      toast.error('Failed to add symbol');
+    if (watchlist.includes(symbol)) {
+      toast.error(`${symbol} is already in your watchlist`);
       return;
     }
 
+    const updatedWatchlist = [...watchlist, symbol];
+    saveWatchlist(updatedWatchlist);
     setNewSymbol('');
-    fetchWatchlist();
+    fetchIVData(updatedWatchlist);
     toast.success(`${symbol} added to IV tracker`);
+  };
+
+  const removeSymbol = (symbol: string) => {
+    const updatedWatchlist = watchlist.filter(s => s !== symbol);
+    saveWatchlist(updatedWatchlist);
+    setIVData(ivData.filter(data => data.symbol !== symbol));
+    toast.success(`${symbol} removed from IV tracker`);
   };
 
   const getIVRankColor = (rank: number) => {
@@ -157,7 +159,17 @@ const IVTracker = () => {
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between">
                         <span>{data.symbol}</span>
-                        <TrendingUp className="h-5 w-5 text-primary" />
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-5 w-5 text-primary" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeSymbol(data.symbol)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
