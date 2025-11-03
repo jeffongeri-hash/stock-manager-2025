@@ -242,6 +242,268 @@ export default function CreditOptionsGuide() {
             </blockquote>
           </CardContent>
         </Card>
+
+        {/* Flowchart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>📋 KaChing Weekly Strategy Flowchart</CardTitle>
+            <CardDescription>Step-by-step process from screening to supersizing</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <pre className="text-sm bg-muted p-4 rounded-lg">
+{`START
+│
+├──► STEP 1: SCREEN FOR CANDIDATES
+│     ├─ Use liquid underlyings → SPY, QQQ, AAPL, MSFT, NVDA
+│     ├─ Check: tight bid/ask (≤ $0.05), weekly options available
+│     └─ Confirm IV Rank > 30% for richer premium
+│
+├──► STEP 2: DETERMINE MARKET BIAS
+│     ├─ Use simple chart → support / resistance / trendline
+│     └─ No prediction—just identify if bias is UP, DOWN, or NEUTRAL
+│
+├──► STEP 3: CHOOSE STRATEGY
+│     ├─ Bull Put Spread → mild bullish to neutral
+│     ├─ Bear Call Spread → mild bearish to neutral
+│     └─ Iron Condor → neutral range bound play
+│
+├──► STEP 4: SET STRIKES (1–2 SD OUT OF MONEY)
+│     ├─ Choose 5-point width (e.g. Sell 195 Put / Buy 190 Put)
+│     ├─ Target credit ≈ $0.50–$1.00 per spread
+│     └─ Risk ≤ 2% of account per trade
+│
+├──► STEP 5: PLACE THE TRADE
+│     ├─ Sell weekly expiration (Friday)
+│     └─ Record entry credit and chart support / resistance
+│
+├──► STEP 6: MANAGE THE POSITION
+│     ├─ If 50% profit achieved → close early (Thu)
+│     ├─ If price threatens short strike → adjust or roll
+│     └─ Never let loss > max defined risk
+│
+├──► STEP 7: ADJUST WHEN NEEDED
+│     ├─ Roll out a week to lower/higher strike (collect new credit)
+│     ├─ Convert to Iron Condor to offset loss
+│     ├─ Tighten spread width if volatility rises
+│     └─ Think: "temporary investment in someone else's account"
+│
+├──► STEP 8: REVIEW & LOG
+│     ├─ Note entry, exit, credit, result (% gain/loss)
+│     └─ Track weekly goal (≈ 1% of equity)
+│
+├──► STEP 9: SUPERSIZE (WHEN CONSISTENT > 3 MO.)
+│     ├─ Scale contracts incrementally (2 → 3 → 4)
+│     ├─ Layer two Iron Condors (near & far OTM) = "Double KaChing"
+│     ├─ Exploit high IV weeks for extra credit
+│     └─ Consider diagonal or calendar spread upgrade (advanced)
+│
+└──► END → ENJOY FRIDAY PAYDAY & LOG WINS`}
+              </pre>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* IV & Theta Calculator Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>⚙️ KaChing IV & Theta Quick-Calculator Table</CardTitle>
+            <CardDescription>Weekly Options — Time-decay compass for managing Theta and IV</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Days to Expiration (DTE)</TableHead>
+                    <TableHead>IV Rank Range</TableHead>
+                    <TableHead>Expected Daily Theta Decay (% of Credit)</TableHead>
+                    <TableHead>What to Expect / Action</TableHead>
+                    <TableHead>Book Principle & Mindset</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell rowSpan={3} className="font-medium align-top">7–10 days</TableCell>
+                    <TableCell>Low IV (&lt; 20%)</TableCell>
+                    <TableCell className="font-mono">~5–7% / day</TableCell>
+                    <TableCell className="text-sm">Smaller credits; choose safer strikes; expect slower decay.</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">"Low IV = skinny premiums; don't chase."</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Medium IV (20–40%)</TableCell>
+                    <TableCell className="font-mono">~7–10% / day</TableCell>
+                    <TableCell className="text-sm">Ideal for weekly KaChing spreads; smooth Theta decay.</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">"Moderate IV = sweet spot for steady income."</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>High IV (&gt; 40%)</TableCell>
+                    <TableCell className="font-mono">~10–15% / day</TableCell>
+                    <TableCell className="text-sm">Bigger premiums but wider risk swings; stay further OTM.</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">"High IV = opportunity with discipline."</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell rowSpan={3} className="font-medium align-top">5–6 days</TableCell>
+                    <TableCell>Low</TableCell>
+                    <TableCell className="font-mono">8–10% / day</TableCell>
+                    <TableCell className="text-sm">Decay accelerates; close early if profit ≥ 50%.</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">Lock small gains; don't overstay.</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Medium</TableCell>
+                    <TableCell className="font-mono">10–15% / day</TableCell>
+                    <TableCell className="text-sm">Watch Delta; roll if price nears short strike.</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">Theta &gt; Vega → sweet KaChing zone.</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>High</TableCell>
+                    <TableCell className="font-mono">15–20% / day</TableCell>
+                    <TableCell className="text-sm">Rapid decay + fast moves possible; widen spreads.</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">Sell volatility only with defined risk.</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell rowSpan={3} className="font-medium align-top">3–4 days</TableCell>
+                    <TableCell>Low</TableCell>
+                    <TableCell className="font-mono">12–15% / day</TableCell>
+                    <TableCell className="text-sm">Time decay peaks but little premium left.</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">Take profits &gt; 40–60%.</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Medium</TableCell>
+                    <TableCell className="font-mono">15–25% / day</TableCell>
+                    <TableCell className="text-sm">Most decay happens → close before news events.</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">"Collect and reset."</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>High</TableCell>
+                    <TableCell className="font-mono">25–30% / day</TableCell>
+                    <TableCell className="text-sm">Wild Gamma moves; do not hold into expiration.</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">"Fast money = fast risk."</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">1–2 days</TableCell>
+                    <TableCell>Any</TableCell>
+                    <TableCell className="font-mono">30–50% / day</TableCell>
+                    <TableCell className="text-sm">Near expiration: assignment risk &gt; reward.</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">Close positions; sleep well.</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quick Formulas for Calculator */}
+        <Card>
+          <CardHeader>
+            <CardTitle>🧮 Quick Formulas for Reference</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Concept</TableHead>
+                  <TableHead>Formula</TableHead>
+                  <TableHead>Example</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">Approx. Theta per day</TableCell>
+                  <TableCell className="font-mono text-sm">(Credit × Daily Decay %)</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">$0.40 × 10% = $0.04/day</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Time Decay Target</TableCell>
+                  <TableCell className="font-mono text-sm">Credit × 50% → exit</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">$0.40 × 0.5 = $0.20 buy-to-close</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">ROI per Week</TableCell>
+                  <TableCell className="font-mono text-sm">(Credit / Max Risk) × 100</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">$0.30 / $0.70 = 43% ROI</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">IV Adjustment for Strike Distance</TableCell>
+                  <TableCell className="font-mono text-sm">For each +10 IV pts → go ~0.5 SD further OTM</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">If IV 60 → choose 2 SD away instead of 1.5 SD</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* IV Effect on Credit & Risk */}
+        <Card>
+          <CardHeader>
+            <CardTitle>📊 IV Effect on Credit & Risk (Visual Guide)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>IV Rank</TableHead>
+                  <TableHead>Premium Size</TableHead>
+                  <TableHead>Risk Volatility</TableHead>
+                  <TableHead>Strategy Bias</TableHead>
+                  <TableHead>Book Comment</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">0–20</TableCell>
+                  <TableCell>Low</TableCell>
+                  <TableCell>Low</TableCell>
+                  <TableCell className="text-sm">Avoid new entries unless super OTM</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">"IV desert — little juice left."</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">20–40</TableCell>
+                  <TableCell>Medium</TableCell>
+                  <TableCell>Moderate</TableCell>
+                  <TableCell className="text-sm">Prime weekly KaChing zone</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">"Sweet spot for Theta harvest."</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">40–60</TableCell>
+                  <TableCell>High</TableCell>
+                  <TableCell>Elevated</TableCell>
+                  <TableCell className="text-sm">Sell further OTM or reduce size</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">"More premium = more discipline."</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">60–80</TableCell>
+                  <TableCell>Very High</TableCell>
+                  <TableCell>High</TableCell>
+                  <TableCell className="text-sm">Prefer defined-risk only (spreads)</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">"Collect premium while others panic."</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">&gt; 80</TableCell>
+                  <TableCell>Extreme</TableCell>
+                  <TableCell>Extreme</TableCell>
+                  <TableCell className="text-sm">Wait for vol to calm or sell tiny size</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">"High IV = fear in the air — be patient."</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Mini Summary */}
+        <Card className="border-primary/50">
+          <CardHeader>
+            <CardTitle>🧠 Mini Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc list-inside space-y-2 text-sm">
+              <li>Theta accelerates as expiration nears; IV dictates how rich that Theta is.</li>
+              <li>Sell when IV Rank &gt; 30%, close when you've harvested ~50% of credit.</li>
+              <li>Rising IV = roll out/down; falling IV = take profits sooner.</li>
+              <li>Best combo: 7-day trades, IV Rank 30–45%, credit 0.30–0.50 × width.</li>
+            </ul>
+          </CardContent>
+        </Card>
       </div>
     </PageLayout>
   );
