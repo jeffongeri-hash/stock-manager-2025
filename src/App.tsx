@@ -21,6 +21,7 @@ import Backtesting from "./pages/Backtesting";
 import TradeIdeas from "./pages/TradeIdeas";
 import MarketScanner from "./pages/MarketScanner";
 import Reports from "./pages/Reports";
+import CreditOptionsGuide from "./pages/CreditOptionsGuide";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
           <Route path="/trade-ideas" element={<TradeIdeas />} />
           <Route path="/market-scanner" element={<MarketScanner />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/credit-options-guide" element={<CreditOptionsGuide />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
