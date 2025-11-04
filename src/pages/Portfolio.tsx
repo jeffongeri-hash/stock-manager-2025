@@ -177,12 +177,18 @@ const Portfolio = () => {
     // Update with current prices
     stocks.forEach(stock => {
       const position = positionsBySymbol.get(stock.symbol);
-      if (position) {
+      if (position && stock.price) {
         position.currentPrice = stock.price;
-        totalShares += position.shares;
-        totalCostBasis += position.costBasis;
-        totalCurrentValue += stock.price * position.shares;
       }
+    });
+
+    // Calculate totals
+    positionsBySymbol.forEach((position) => {
+      totalShares += position.shares;
+      totalCostBasis += position.costBasis;
+      // Use current price if available, otherwise use cost basis (average entry price)
+      const valuePrice = position.currentPrice > 0 ? position.currentPrice : (position.costBasis / position.shares);
+      totalCurrentValue += valuePrice * position.shares;
     });
 
     return {
@@ -191,16 +197,23 @@ const Portfolio = () => {
       totalShares,
       totalPnL: totalCurrentValue - totalCostBasis,
       totalPnLPercent: totalCostBasis > 0 ? ((totalCurrentValue - totalCostBasis) / totalCostBasis) * 100 : 0,
-      positions: Array.from(positionsBySymbol.entries()).map(([symbol, data]) => ({
-        symbol,
-        shares: data.shares,
-        costBasis: data.costBasis,
-        currentValue: data.currentPrice * data.shares,
-        avgPrice: data.costBasis / data.shares,
-        currentPrice: data.currentPrice,
-        pnl: (data.currentPrice * data.shares) - data.costBasis,
-        pnlPercent: ((data.currentPrice * data.shares) - data.costBasis) / data.costBasis * 100
-      }))
+      positions: Array.from(positionsBySymbol.entries()).map(([symbol, data]) => {
+        const currentPrice = data.currentPrice > 0 ? data.currentPrice : (data.costBasis / data.shares);
+        const currentValue = currentPrice * data.shares;
+        const pnl = currentValue - data.costBasis;
+        const pnlPercent = data.costBasis > 0 ? (pnl / data.costBasis) * 100 : 0;
+        
+        return {
+          symbol,
+          shares: data.shares,
+          costBasis: data.costBasis,
+          currentValue,
+          avgPrice: data.costBasis / data.shares,
+          currentPrice,
+          pnl,
+          pnlPercent
+        };
+      })
     };
   }, [stockTrades, stocks]);
 

@@ -111,15 +111,19 @@ const Performance = () => {
 
     trades.forEach(trade => {
       const entryValue = trade.entry_price * trade.quantity;
-      totalInvested += entryValue;
 
       if (trade.exit_price) {
+        // Closed trade
         const exitValue = trade.exit_price * trade.quantity;
         const pnl = exitValue - entryValue;
         closedPnL += pnl;
         totalPnL += pnl;
+        totalInvested += entryValue;
       } else {
+        // Open position - count entry value for now
+        // Note: Real-time P&L calculation would require fetching current prices
         openPositionsValue += entryValue;
+        totalInvested += entryValue;
       }
     });
 
@@ -128,7 +132,7 @@ const Performance = () => {
       totalInvested,
       openPositionsValue,
       closedPnL,
-      returnPct: totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0
+      returnPct: totalInvested > 0 ? (closedPnL / totalInvested) * 100 : 0
     };
   };
 

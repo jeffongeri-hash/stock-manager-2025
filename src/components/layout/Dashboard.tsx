@@ -66,16 +66,46 @@ export function Dashboard() {
       let closedTrades = 0;
       let winningTrades = 0;
 
+      // Get unique symbols for open positions to fetch current prices
+      const openSymbols = stockTrades
+        ?.filter(trade => !trade.exit_price && !trade.exit_date)
+        .map(trade => trade.symbol) || [];
+      const uniqueOpenSymbols = Array.from(new Set(openSymbols));
+
+      // Fetch current prices for open positions
+      let currentPrices: { [symbol: string]: number } = {};
+      if (uniqueOpenSymbols.length > 0) {
+        try {
+          const { data: stockData } = await supabase.functions.invoke('fetch-stock-data', {
+            body: { symbols: uniqueOpenSymbols }
+          });
+          if (stockData?.stocks) {
+            stockData.stocks.forEach((stock: any) => {
+              currentPrices[stock.symbol] = stock.price || 0;
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching stock prices:', err);
+        }
+      }
+
       // Calculate stock trades P&L
       if (stockTrades) {
         stockTrades.forEach(trade => {
           if (trade.exit_price) {
+            // Closed position
             const pnl = (trade.exit_price - trade.entry_price) * trade.quantity;
             totalPnL += pnl;
             closedTrades++;
             if (pnl > 0) winningTrades++;
           } else {
+            // Open position - use current price if available
             openPositions++;
+            const currentPrice = currentPrices[trade.symbol];
+            if (currentPrice) {
+              const pnl = (currentPrice - trade.entry_price) * trade.quantity;
+              totalPnL += pnl;
+            }
           }
         });
       }
