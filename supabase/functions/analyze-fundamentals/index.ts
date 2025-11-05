@@ -29,7 +29,16 @@ serve(async (req) => {
 
     const systemPrompt = `You are a financial analyst expert. Analyze the provided stock fundamentals and provide comprehensive, actionable insights. 
     
-Focus on:
+Your analysis should be structured in TWO parts:
+
+PART 1 - Company Background & Overview:
+- What the company does (main products/services, business model)
+- Company's mission and strategic goals
+- Industry position and competitive advantages
+- Target markets and customer base
+- Key information investors should know about the company's background
+
+PART 2 - Financial Analysis:
 1. Valuation metrics and what they indicate
 2. Profitability and efficiency
 3. Financial health and liquidity
@@ -49,7 +58,7 @@ At the end, provide a clear sentiment classification: BULLISH, BEARISH, or NEUTR
 - Recent news sentiment
 - Market position vs peers
 
-Format your response with the sentiment on the last line as: "SENTIMENT: [BULLISH/BEARISH/NEUTRAL]"`;
+Format your response with clearly marked sections and the sentiment on the last line as: "SENTIMENT: [BULLISH/BEARISH/NEUTRAL]"`;
 
     // Calculate growth metrics
     const salesGrowth1Y = fundamentals.metrics.revenueGrowthTTMYoy || 'N/A';
@@ -68,10 +77,17 @@ Format your response with the sentiment on the last line as: "SENTIMENT: [BULLIS
 
     const userPrompt = `Analyze the fundamentals for ${fundamentals.name} (${fundamentals.symbol}):
 
-Current Price: $${fundamentals.currentPrice}
-Price Change: ${fundamentals.priceChangePercent}%
-Market Cap: $${fundamentals.marketCap}M
-Industry: ${fundamentals.industry}
+Company Profile:
+${fundamentals.profile?.description ? `Description: ${fundamentals.profile.description}` : ''}
+${fundamentals.profile?.sector ? `Sector: ${fundamentals.profile.sector}` : ''}
+${fundamentals.profile?.country ? `Country: ${fundamentals.profile.country}` : ''}
+${fundamentals.profile?.weburl ? `Website: ${fundamentals.profile.weburl}` : ''}
+
+Current Market Data:
+- Current Price: $${fundamentals.currentPrice}
+- Price Change: ${fundamentals.priceChangePercent}%
+- Market Cap: $${fundamentals.marketCap}M
+- Industry: ${fundamentals.industry}
 
 Key Ratios:
 - P/E Ratio: ${fundamentals.metrics.peBasicExclExtraTTM || 'N/A'} (Rank: ${fundamentals.rankings?.peRatio?.rank || 'N/A'}/${fundamentals.rankings?.peRatio?.total || 'N/A'} in peer group)
@@ -104,7 +120,11 @@ ${insiderSummary.buys > insiderSummary.sells ? '(Positive signal - insiders are 
 Recent News Headlines (Last 7 days):
 ${fundamentals.recentNews?.slice(0, 5).map((n: any) => `- ${n.headline}`).join('\n') || 'No recent news available'}
 
-Provide a detailed analysis of this stock's fundamentals, growth trajectory, peer comparison, and investment potential. End with a clear sentiment.`;
+Provide a comprehensive two-part analysis:
+1. Company Background & Overview - Explain what this company does, their mission/goals, and key background info investors need
+2. Financial Analysis - Detailed analysis of fundamentals, growth trajectory, peer comparison, and investment potential
+
+End with a clear sentiment.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

@@ -308,8 +308,8 @@ export default function Fundamentals() {
 
             <Card>
               <CardHeader>
-                <CardTitle>AI-Powered Analysis</CardTitle>
-                <CardDescription>Comprehensive insights on fundamentals and market position</CardDescription>
+                <CardTitle>Company Background & AI Analysis</CardTitle>
+                <CardDescription>Comprehensive company overview and investment insights</CardDescription>
               </CardHeader>
               <CardContent>
                 {analyzing && (
@@ -334,9 +334,9 @@ export default function Fundamentals() {
                     }`}>
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-lg font-semibold mb-2">Market Sentiment</h3>
+                          <h3 className="text-lg font-semibold mb-2">Investment Sentiment</h3>
                           <p className="text-sm text-muted-foreground">
-                            Based on fundamentals, insider activity, and market conditions
+                            Based on company fundamentals, insider activity, and market conditions
                           </p>
                         </div>
                         <div className={`text-4xl font-bold ${
