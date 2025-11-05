@@ -24,6 +24,8 @@ interface StockTrade {
 const Performance = () => {
   const { user } = useAuth();
   const [trades, setTrades] = useState<StockTrade[]>([]);
+  const [currentPrices, setCurrentPrices] = useState<{ [symbol: string]: number }>({});
+  const [loadingPrices, setLoadingPrices] = useState(false);
   const [newTrade, setNewTrade] = useState({
     symbol: '',
     entry_price: '',
@@ -39,6 +41,12 @@ const Performance = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (trades.length > 0) {
+      fetchCurrentPrices();
+    }
+  }, [trades]);
+
   const fetchTrades = async () => {
     const { data, error } = await supabase
       .from('stock_trades')
@@ -50,6 +58,37 @@ const Performance = () => {
       return;
     }
     setTrades(data || []);
+  };
+
+  const fetchCurrentPrices = async () => {
+    const openSymbols = trades
+      .filter(trade => !trade.exit_price)
+      .map(trade => trade.symbol);
+    
+    const uniqueSymbols = Array.from(new Set(openSymbols));
+    
+    if (uniqueSymbols.length === 0) return;
+
+    setLoadingPrices(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-stock-data', {
+        body: { symbols: uniqueSymbols }
+      });
+
+      if (error) throw error;
+
+      if (data?.stocks) {
+        const prices: { [symbol: string]: number } = {};
+        data.stocks.forEach((stock: any) => {
+          prices[stock.symbol] = stock.price || 0;
+        });
+        setCurrentPrices(prices);
+      }
+    } catch (error) {
+      console.error('Error fetching current prices:', error);
+    } finally {
+      setLoadingPrices(false);
+    }
   };
 
   const addTrade = async () => {
@@ -121,12 +160,16 @@ const Performance = () => {
         totalPnL += pnl;
         totalInvested += entryValue;
       } else {
-        // Open position - count entry value for now
-        // Note: Real-time P&L calculation would require fetching current prices
+        // Open position - use current price if available
         openPositionsValue += entryValue;
         totalInvested += entryValue;
-        // Unrealized P&L would be (current_price - entry_price) * quantity
-        // For now showing as 0 until we fetch real-time prices
+        
+        const currentPrice = currentPrices[trade.symbol];
+        if (currentPrice) {
+          const pnl = (currentPrice - trade.entry_price) * trade.quantity;
+          unrealizedPnL += pnl;
+          totalPnL += pnl;
+        }
       }
     });
 
@@ -140,7 +183,34 @@ const Performance = () => {
     };
   };
 
+  // Generate open positions breakdown
+  const getOpenPositionsBreakdown = () => {
+    return trades
+      .filter(trade => !trade.exit_price)
+      .map(trade => {
+        const currentPrice = currentPrices[trade.symbol] || trade.entry_price;
+        const entryValue = trade.entry_price * trade.quantity;
+        const currentValue = currentPrice * trade.quantity;
+        const unrealizedPnL = currentValue - entryValue;
+        const unrealizedPnLPercent = (unrealizedPnL / entryValue) * 100;
+
+        return {
+          symbol: trade.symbol,
+          quantity: trade.quantity,
+          entryPrice: trade.entry_price,
+          currentPrice,
+          entryValue,
+          currentValue,
+          unrealizedPnL,
+          unrealizedPnLPercent,
+          entryDate: trade.entry_date
+        };
+      })
+      .sort((a, b) => Math.abs(b.unrealizedPnL) - Math.abs(a.unrealizedPnL));
+  };
+
   const metrics = calculateMetrics();
+  const openPositionsBreakdown = getOpenPositionsBreakdown();
 
   // Generate performance chart data
   const generatePerformanceData = () => {
@@ -410,22 +480,86 @@ const Performance = () => {
           </div>
         )}
 
-        {/* Unrealized P&L Summary */}
+        {/* Unrealized P&L Summary & Breakdown */}
         <div className="lg:col-span-3">
           <Card>
             <CardHeader>
-              <CardTitle>Unrealized P&L</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Unrealized P&L - Open Positions</CardTitle>
+                <Button 
+                  onClick={fetchCurrentPrices} 
+                  size="sm" 
+                  variant="outline"
+                  disabled={loadingPrices || openPositionsBreakdown.length === 0}
+                >
+                  {loadingPrices ? 'Refreshing...' : 'Refresh Prices'}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <p className={`text-3xl font-bold ${metrics.unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                ${metrics.unrealizedPnL.toFixed(2)}
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                From {trades.filter(t => !t.exit_price).length} open position{trades.filter(t => !t.exit_price).length !== 1 ? 's' : ''}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Note: Real-time P&L requires fetching current market prices
-              </p>
+              <div className="mb-6">
+                <p className={`text-3xl font-bold ${metrics.unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {metrics.unrealizedPnL >= 0 ? '+' : ''}${metrics.unrealizedPnL.toFixed(2)}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  From {openPositionsBreakdown.length} open position{openPositionsBreakdown.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+
+              {openPositionsBreakdown.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No open positions</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Symbol</TableHead>
+                      <TableHead className="text-right">Quantity</TableHead>
+                      <TableHead className="text-right">Entry Price</TableHead>
+                      <TableHead className="text-right">Current Price</TableHead>
+                      <TableHead className="text-right">Entry Value</TableHead>
+                      <TableHead className="text-right">Current Value</TableHead>
+                      <TableHead className="text-right">Unrealized P&L</TableHead>
+                      <TableHead className="text-right">Return %</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {openPositionsBreakdown.map((position, index) => (
+                      <TableRow key={`${position.symbol}-${index}`}>
+                        <TableCell className="font-medium">{position.symbol}</TableCell>
+                        <TableCell className="text-right">{position.quantity}</TableCell>
+                        <TableCell className="text-right">${position.entryPrice.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">
+                          {currentPrices[position.symbol] ? (
+                            `$${position.currentPrice.toFixed(2)}`
+                          ) : (
+                            <span className="text-muted-foreground">Loading...</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">${position.entryValue.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">${position.currentValue.toFixed(2)}</TableCell>
+                        <TableCell className={`text-right font-semibold ${position.unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {position.unrealizedPnL >= 0 ? '+' : ''}${position.unrealizedPnL.toFixed(2)}
+                        </TableCell>
+                        <TableCell className={`text-right font-semibold ${position.unrealizedPnLPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {position.unrealizedPnLPercent >= 0 ? '+' : ''}{position.unrealizedPnLPercent.toFixed(2)}%
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="font-bold border-t-2">
+                      <TableCell colSpan={5}>Total</TableCell>
+                      <TableCell className="text-right">${openPositionsBreakdown.reduce((sum, p) => sum + p.currentValue, 0).toFixed(2)}</TableCell>
+                      <TableCell className={`text-right ${metrics.unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {metrics.unrealizedPnL >= 0 ? '+' : ''}${metrics.unrealizedPnL.toFixed(2)}
+                      </TableCell>
+                      <TableCell className={`text-right ${metrics.unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {metrics.openPositionsValue > 0 ? (
+                          `${metrics.unrealizedPnL >= 0 ? '+' : ''}${((metrics.unrealizedPnL / metrics.openPositionsValue) * 100).toFixed(2)}%`
+                        ) : '0.00%'}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </div>
