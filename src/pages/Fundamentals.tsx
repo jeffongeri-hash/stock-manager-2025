@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Search, TrendingUp, TrendingDown } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, ArrowLeftRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import ReactMarkdown from 'react-markdown';
+import { CompanyComparison } from '@/components/fundamentals/CompanyComparison';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface FundamentalsData {
   symbol: string;
@@ -33,11 +35,15 @@ interface FundamentalsData {
 
 export default function Fundamentals() {
   const [symbol, setSymbol] = useState('');
+  const [symbol2, setSymbol2] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loading2, setLoading2] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [fundamentals, setFundamentals] = useState<FundamentalsData | null>(null);
+  const [fundamentals2, setFundamentals2] = useState<FundamentalsData | null>(null);
   const [analysis, setAnalysis] = useState('');
   const [sentiment, setSentiment] = useState<'BULLISH' | 'BEARISH' | 'NEUTRAL'>('NEUTRAL');
+  const [activeTab, setActiveTab] = useState('single');
 
   const handleSearch = async () => {
     if (!symbol.trim()) {
@@ -89,6 +95,38 @@ export default function Fundamentals() {
     }
   };
 
+  const handleSearchComparison = async () => {
+    if (!symbol2.trim()) {
+      toast.error('Please enter a second stock symbol');
+      return;
+    }
+
+    setLoading2(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-fundamentals', {
+        body: { symbol: symbol2.toUpperCase() }
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to fetch fundamentals');
+      }
+
+      if (data?.fundamentals) {
+        setFundamentals2(data.fundamentals);
+        toast.success(`Loaded ${data.fundamentals.name} for comparison`);
+      }
+    } catch (err) {
+      console.error('Error fetching fundamentals:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch fundamentals data';
+      toast.error(errorMessage);
+      setFundamentals2(null);
+    } finally {
+      setLoading2(false);
+    }
+  };
+
   const getRatioValue = (key: string) => {
     return fundamentals?.metrics[key] || 'N/A';
   };
@@ -103,35 +141,45 @@ export default function Fundamentals() {
   return (
     <PageLayout title="Fundamental Analysis">
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Stock Search</CardTitle>
-            <CardDescription>Enter a stock symbol to analyze its fundamentals</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4">
-              <Input
-                placeholder="Enter stock symbol (e.g., AAPL)"
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              />
-              <Button onClick={handleSearch} disabled={loading}>
-                <Search className="h-4 w-4 mr-2" />
-                Analyze
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="single">Single Stock Analysis</TabsTrigger>
+            <TabsTrigger value="compare">
+              <ArrowLeftRight className="h-4 w-4 mr-2" />
+              Compare Stocks
+            </TabsTrigger>
+          </TabsList>
 
-        {loading && (
-          <div className="space-y-4">
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        )}
+          <TabsContent value="single" className="space-y-6 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Stock Search</CardTitle>
+                <CardDescription>Enter a stock symbol to analyze its fundamentals</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4">
+                  <Input
+                    placeholder="Enter stock symbol (e.g., AAPL)"
+                    value={symbol}
+                    onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                  <Button onClick={handleSearch} disabled={loading}>
+                    <Search className="h-4 w-4 mr-2" />
+                    Analyze
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-        {fundamentals && !loading && (
+            {loading && (
+              <div className="space-y-4">
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            )}
+
+            {fundamentals && !loading && (
           <>
             <Card>
               <CardHeader>
@@ -367,8 +415,90 @@ export default function Fundamentals() {
                 )}
               </CardContent>
             </Card>
-          </>
-        )}
+            </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="compare" className="space-y-6 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>First Stock</CardTitle>
+                  <CardDescription>Enter the first stock symbol</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-4">
+                    <Input
+                      placeholder="e.g., AAPL"
+                      value={symbol}
+                      onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    />
+                    <Button onClick={handleSearch} disabled={loading}>
+                      <Search className="h-4 w-4 mr-2" />
+                      Load
+                    </Button>
+                  </div>
+                  {fundamentals && (
+                    <div className="mt-4 p-3 bg-secondary/50 rounded-md">
+                      <p className="font-semibold">{fundamentals.name}</p>
+                      <p className="text-sm text-muted-foreground">{fundamentals.symbol}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Second Stock</CardTitle>
+                  <CardDescription>Enter the second stock symbol</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-4">
+                    <Input
+                      placeholder="e.g., MSFT"
+                      value={symbol2}
+                      onChange={(e) => setSymbol2(e.target.value.toUpperCase())}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearchComparison()}
+                    />
+                    <Button onClick={handleSearchComparison} disabled={loading2}>
+                      <Search className="h-4 w-4 mr-2" />
+                      Load
+                    </Button>
+                  </div>
+                  {fundamentals2 && (
+                    <div className="mt-4 p-3 bg-secondary/50 rounded-md">
+                      <p className="font-semibold">{fundamentals2.name}</p>
+                      <p className="text-sm text-muted-foreground">{fundamentals2.symbol}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {(loading || loading2) && (
+              <div className="space-y-4">
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            )}
+
+            {fundamentals && fundamentals2 && !loading && !loading2 && (
+              <CompanyComparison stock1={fundamentals} stock2={fundamentals2} />
+            )}
+
+            {!fundamentals && !fundamentals2 && !loading && !loading2 && (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <ArrowLeftRight className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    Load two stocks to see a side-by-side comparison
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </PageLayout>
   );
