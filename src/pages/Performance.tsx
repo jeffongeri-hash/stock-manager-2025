@@ -107,6 +107,7 @@ const Performance = () => {
     let totalPnL = 0;
     let totalInvested = 0;
     let openPositionsValue = 0;
+    let unrealizedPnL = 0;
     let closedPnL = 0;
 
     trades.forEach(trade => {
@@ -124,6 +125,8 @@ const Performance = () => {
         // Note: Real-time P&L calculation would require fetching current prices
         openPositionsValue += entryValue;
         totalInvested += entryValue;
+        // Unrealized P&L would be (current_price - entry_price) * quantity
+        // For now showing as 0 until we fetch real-time prices
       }
     });
 
@@ -131,6 +134,7 @@ const Performance = () => {
       totalPnL,
       totalInvested,
       openPositionsValue,
+      unrealizedPnL,
       closedPnL,
       returnPct: totalInvested > 0 ? (closedPnL / totalInvested) * 100 : 0
     };
@@ -388,7 +392,7 @@ const Performance = () => {
                           </TableCell>
                         </TableRow>
                       ))}
-                      <TableRow className="font-bold border-t-2">
+                       <TableRow className="font-bold border-t-2">
                         <TableCell>Total</TableCell>
                         <TableCell className={metrics.closedPnL >= 0 ? 'text-green-500' : 'text-red-500'}>
                           {metrics.closedPnL >= 0 ? '+' : ''}${metrics.closedPnL.toFixed(2)}
@@ -405,6 +409,26 @@ const Performance = () => {
             </Card>
           </div>
         )}
+
+        {/* Unrealized P&L Summary */}
+        <div className="lg:col-span-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Unrealized P&L</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className={`text-3xl font-bold ${metrics.unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                ${metrics.unrealizedPnL.toFixed(2)}
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                From {trades.filter(t => !t.exit_price).length} open position{trades.filter(t => !t.exit_price).length !== 1 ? 's' : ''}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Note: Real-time P&L requires fetching current market prices
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Add Trade Form */}
         <div className="lg:col-span-3">

@@ -35,6 +35,7 @@ export function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [tradeStats, setTradeStats] = useState({
     totalPnL: 0,
+    unrealizedPnL: 0,
     openPositions: 0,
     winRate: 0,
     totalTrades: 0
@@ -62,6 +63,7 @@ export function Dashboard() {
       if (stockError) throw stockError;
 
       let totalPnL = 0;
+      let unrealizedPnL = 0;
       let openPositions = 0;
       let closedTrades = 0;
       let winningTrades = 0;
@@ -105,6 +107,7 @@ export function Dashboard() {
             if (currentPrice) {
               const pnl = (currentPrice - trade.entry_price) * trade.quantity;
               totalPnL += pnl;
+              unrealizedPnL += pnl;
             }
           }
         });
@@ -130,6 +133,7 @@ export function Dashboard() {
 
       setTradeStats({
         totalPnL,
+        unrealizedPnL,
         openPositions,
         winRate,
         totalTrades: closedTrades + openPositions
@@ -286,13 +290,20 @@ export function Dashboard() {
             <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Market Dashboard</h1>
             
             {/* Stats Row - Trading Performance */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6 animate-slide-up" style={{ '--delay': '100ms' } as React.CSSProperties}>
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6 animate-slide-up" style={{ '--delay': '100ms' } as React.CSSProperties}>
               <StatsCard 
                 title="Total P&L" 
                 value={`$${tradeStats.totalPnL.toFixed(2)}`}
                 trend={tradeStats.totalPnL >= 0 ? Math.abs(tradeStats.totalPnL) : -Math.abs(tradeStats.totalPnL)}
                 icon={<DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />}
                 className={tradeStats.totalPnL >= 0 ? "bg-green-500/10" : "bg-red-500/10"}
+              />
+              <StatsCard 
+                title="Unrealized P&L" 
+                value={`$${tradeStats.unrealizedPnL.toFixed(2)}`}
+                description="Open positions"
+                icon={<TrendingUpIcon className="h-4 w-4 sm:h-5 sm:w-5" />}
+                className={tradeStats.unrealizedPnL >= 0 ? "bg-green-500/10" : "bg-red-500/10"}
               />
               <StatsCard 
                 title="Open Positions" 
