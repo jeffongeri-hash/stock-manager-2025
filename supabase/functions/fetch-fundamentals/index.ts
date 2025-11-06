@@ -11,11 +11,21 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Missing authorization header' }), 
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { symbol } = await req.json();
     
-    if (!symbol) {
+    // Input validation
+    if (!symbol || typeof symbol !== 'string' || !/^[A-Z0-9]{1,10}$/i.test(symbol)) {
       return new Response(
-        JSON.stringify({ error: 'Symbol is required' }), 
+        JSON.stringify({ error: 'Invalid symbol format' }), 
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

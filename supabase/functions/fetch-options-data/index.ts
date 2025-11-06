@@ -66,6 +66,15 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Missing authorization header' }), 
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { 
       symbol, 
       stockPrice, 
@@ -75,9 +84,45 @@ serve(async (req) => {
       optionType = 'call' 
     } = await req.json();
 
-    if (!symbol || !stockPrice || !strikePrice || !daysToExpiry) {
+    // Input validation
+    if (!symbol || typeof symbol !== 'string' || !/^[A-Z0-9]{1,10}$/i.test(symbol)) {
       return new Response(
-        JSON.stringify({ error: 'Missing required parameters' }), 
+        JSON.stringify({ error: 'Invalid symbol format' }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!stockPrice || typeof stockPrice !== 'number' || stockPrice <= 0 || stockPrice > 1000000) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid stock price' }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!strikePrice || typeof strikePrice !== 'number' || strikePrice <= 0 || strikePrice > 1000000) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid strike price' }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!daysToExpiry || typeof daysToExpiry !== 'number' || daysToExpiry < 0 || daysToExpiry > 1825) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid days to expiry (must be 0-1825)' }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (volatility && (typeof volatility !== 'number' || volatility < 0 || volatility > 5)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid volatility (must be 0-5)' }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (optionType !== 'call' && optionType !== 'put') {
+      return new Response(
+        JSON.stringify({ error: 'Option type must be "call" or "put"' }), 
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

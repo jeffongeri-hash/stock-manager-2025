@@ -11,13 +11,41 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Missing authorization header' }), 
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { symbols } = await req.json();
     
+    // Input validation
     if (!symbols || !Array.isArray(symbols) || symbols.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Symbols array is required' }), 
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    if (symbols.length > 50) {
+      return new Response(
+        JSON.stringify({ error: 'Maximum 50 symbols allowed' }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate each symbol (alphanumeric only, max 10 chars)
+    const validSymbolRegex = /^[A-Z0-9]{1,10}$/i;
+    for (const symbol of symbols) {
+      if (typeof symbol !== 'string' || !validSymbolRegex.test(symbol)) {
+        return new Response(
+          JSON.stringify({ error: `Invalid symbol format: ${symbol}` }), 
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     const FINNHUB_API_KEY = Deno.env.get('FINNHUB_API_KEY');

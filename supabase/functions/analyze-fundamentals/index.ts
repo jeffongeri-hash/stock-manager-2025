@@ -11,11 +11,28 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Missing authorization header' }), 
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { fundamentals } = await req.json();
     
-    if (!fundamentals) {
+    // Input validation
+    if (!fundamentals || typeof fundamentals !== 'object') {
       return new Response(
-        JSON.stringify({ error: 'Fundamentals data is required' }), 
+        JSON.stringify({ error: 'Valid fundamentals data is required' }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!fundamentals.symbol || typeof fundamentals.symbol !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Valid symbol is required in fundamentals data' }), 
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

@@ -2,9 +2,25 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2, TrendingUp, BarChart3, DollarSign, Shield, Brain } from "lucide-react";
+import { useState } from "react";
 
 const FundamentalAnalysisGuide = () => {
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+
+  const toggleCheck = (id: string) => {
+    setCheckedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <PageLayout title="Fundamental Analysis Guide">
       <div className="space-y-6">
@@ -40,6 +56,7 @@ const FundamentalAnalysisGuide = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12"></TableHead>
                   <TableHead>Step</TableHead>
                   <TableHead>What to Check</TableHead>
                   <TableHead>O'Neil's Benchmark</TableHead>
@@ -47,51 +64,111 @@ const FundamentalAnalysisGuide = () => {
               </TableHeader>
               <TableBody>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('can-1')}
+                      onCheckedChange={() => toggleCheck('can-1')}
+                    />
+                  </TableCell>
                   <TableCell>1</TableCell>
                   <TableCell>Current quarterly EPS growth (C)</TableCell>
                   <TableCell>≥ +25–50% YoY (the higher, the better)</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('can-2')}
+                      onCheckedChange={() => toggleCheck('can-2')}
+                    />
+                  </TableCell>
                   <TableCell>2</TableCell>
                   <TableCell>Quarterly sales (revenue) growth</TableCell>
                   <TableCell>≥ +25% YoY</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('can-3')}
+                      onCheckedChange={() => toggleCheck('can-3')}
+                    />
+                  </TableCell>
                   <TableCell>3</TableCell>
                   <TableCell>Annual EPS growth (A)</TableCell>
                   <TableCell>≥ +25% CAGR for past 3 years</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('can-4')}
+                      onCheckedChange={() => toggleCheck('can-4')}
+                    />
+                  </TableCell>
                   <TableCell>4</TableCell>
                   <TableCell>Return on equity (ROE)</TableCell>
                   <TableCell>≥ 17%</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('can-5')}
+                      onCheckedChange={() => toggleCheck('can-5')}
+                    />
+                  </TableCell>
                   <TableCell>5</TableCell>
                   <TableCell>Profit margins</TableCell>
                   <TableCell>Expanding vs prior year</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('can-6')}
+                      onCheckedChange={() => toggleCheck('can-6')}
+                    />
+                  </TableCell>
                   <TableCell>6</TableCell>
                   <TableCell>Debt-to-equity ratio</TableCell>
                   <TableCell>Low or declining</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('can-7')}
+                      onCheckedChange={() => toggleCheck('can-7')}
+                    />
+                  </TableCell>
                   <TableCell>7</TableCell>
                   <TableCell>New catalyst (N)</TableCell>
                   <TableCell>New product, service, management, or new price highs</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('can-8')}
+                      onCheckedChange={() => toggleCheck('can-8')}
+                    />
+                  </TableCell>
                   <TableCell>8</TableCell>
                   <TableCell>Institutional sponsorship (I)</TableCell>
                   <TableCell>Increasing over time; not overcrowded</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('can-9')}
+                      onCheckedChange={() => toggleCheck('can-9')}
+                    />
+                  </TableCell>
                   <TableCell>9</TableCell>
                   <TableCell>Industry leadership (L)</TableCell>
                   <TableCell>Top in its field; RS Rating ≥ 80</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('can-10')}
+                      onCheckedChange={() => toggleCheck('can-10')}
+                    />
+                  </TableCell>
                   <TableCell>10</TableCell>
                   <TableCell>Shares outstanding (S)</TableCell>
                   <TableCell>Lower float = greater supply/demand effect</TableCell>
@@ -113,6 +190,7 @@ const FundamentalAnalysisGuide = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12"></TableHead>
                   <TableHead>Step</TableHead>
                   <TableHead>Technical Signal</TableHead>
                   <TableHead>Ideal Pattern / Condition</TableHead>
@@ -120,51 +198,111 @@ const FundamentalAnalysisGuide = () => {
               </TableHeader>
               <TableBody>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('tech-1')}
+                      onCheckedChange={() => toggleCheck('tech-1')}
+                    />
+                  </TableCell>
                   <TableCell>1</TableCell>
                   <TableCell>Market Direction (M)</TableCell>
                   <TableCell>Confirm uptrend via follow-through day</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('tech-2')}
+                      onCheckedChange={() => toggleCheck('tech-2')}
+                    />
+                  </TableCell>
                   <TableCell>2</TableCell>
                   <TableCell>Relative Strength (RS) line</TableCell>
                   <TableCell>Rising before breakout</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('tech-3')}
+                      onCheckedChange={() => toggleCheck('tech-3')}
+                    />
+                  </TableCell>
                   <TableCell>3</TableCell>
                   <TableCell>Volume trends</TableCell>
                   <TableCell>Higher volume on up days, lower on down days</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('tech-4')}
+                      onCheckedChange={() => toggleCheck('tech-4')}
+                    />
+                  </TableCell>
                   <TableCell>4</TableCell>
                   <TableCell>Base pattern</TableCell>
                   <TableCell>Cup-with-handle, double bottom, flat base, etc.</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('tech-5')}
+                      onCheckedChange={() => toggleCheck('tech-5')}
+                    />
+                  </TableCell>
                   <TableCell>5</TableCell>
                   <TableCell>Handle depth</TableCell>
                   <TableCell>≤ 15% correction from high</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('tech-6')}
+                      onCheckedChange={() => toggleCheck('tech-6')}
+                    />
+                  </TableCell>
                   <TableCell>6</TableCell>
                   <TableCell>Pivot point</TableCell>
                   <TableCell>Breakout price where stock clears resistance on volume ≥ 40% above average</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('tech-7')}
+                      onCheckedChange={() => toggleCheck('tech-7')}
+                    />
+                  </TableCell>
                   <TableCell>7</TableCell>
                   <TableCell>Moving averages</TableCell>
                   <TableCell>Price above 50-day and 200-day MA</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('tech-8')}
+                      onCheckedChange={() => toggleCheck('tech-8')}
+                    />
+                  </TableCell>
                   <TableCell>8</TableCell>
                   <TableCell>Tight price action near highs</TableCell>
                   <TableCell>Shows institutional accumulation</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('tech-9')}
+                      onCheckedChange={() => toggleCheck('tech-9')}
+                    />
+                  </TableCell>
                   <TableCell>9</TableCell>
                   <TableCell>Avoid wide-and-loose charts</TableCell>
                   <TableCell>Indicates volatility and lack of support</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('tech-10')}
+                      onCheckedChange={() => toggleCheck('tech-10')}
+                    />
+                  </TableCell>
                   <TableCell>10</TableCell>
                   <TableCell>Post-breakout behavior</TableCell>
                   <TableCell>Should rise 10–20% quickly; volume should confirm</TableCell>
@@ -186,6 +324,7 @@ const FundamentalAnalysisGuide = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12"></TableHead>
                   <TableHead>Step</TableHead>
                   <TableHead>Market Signal</TableHead>
                   <TableHead>Interpretation</TableHead>
@@ -193,26 +332,56 @@ const FundamentalAnalysisGuide = () => {
               </TableHeader>
               <TableBody>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('market-1')}
+                      onCheckedChange={() => toggleCheck('market-1')}
+                    />
+                  </TableCell>
                   <TableCell>1</TableCell>
                   <TableCell>Identify market direction</TableCell>
                   <TableCell>Use indexes (Nasdaq, S&P 500, Dow)</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('market-2')}
+                      onCheckedChange={() => toggleCheck('market-2')}
+                    />
+                  </TableCell>
                   <TableCell>2</TableCell>
                   <TableCell>Follow-Through Day (FTD)</TableCell>
                   <TableCell>4–7 days after low, index up ≥1.7% on higher volume</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('market-3')}
+                      onCheckedChange={() => toggleCheck('market-3')}
+                    />
+                  </TableCell>
                   <TableCell>3</TableCell>
                   <TableCell>Distribution days</TableCell>
                   <TableCell>≥ 5–6 within 3 weeks = uptrend likely ending</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('market-4')}
+                      onCheckedChange={() => toggleCheck('market-4')}
+                    />
+                  </TableCell>
                   <TableCell>4</TableCell>
                   <TableCell>Sector rotation</TableCell>
                   <TableCell>Check leading sectors (tech, healthcare, etc.)</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('market-5')}
+                      onCheckedChange={() => toggleCheck('market-5')}
+                    />
+                  </TableCell>
                   <TableCell>5</TableCell>
                   <TableCell>Confirm leadership</TableCell>
                   <TableCell>Strongest stocks lead early in new rally</TableCell>
@@ -234,6 +403,7 @@ const FundamentalAnalysisGuide = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12"></TableHead>
                   <TableHead>Step</TableHead>
                   <TableHead>Buy Condition</TableHead>
                   <TableHead>Guideline</TableHead>
@@ -241,26 +411,56 @@ const FundamentalAnalysisGuide = () => {
               </TableHeader>
               <TableBody>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('buy-1')}
+                      onCheckedChange={() => toggleCheck('buy-1')}
+                    />
+                  </TableCell>
                   <TableCell>1</TableCell>
                   <TableCell>Buy near breakout/pivot</TableCell>
                   <TableCell>Within 5% of pivot price</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('buy-2')}
+                      onCheckedChange={() => toggleCheck('buy-2')}
+                    />
+                  </TableCell>
                   <TableCell>2</TableCell>
                   <TableCell>Volume confirmation</TableCell>
                   <TableCell>Breakout volume ≥ 40% above average</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('buy-3')}
+                      onCheckedChange={() => toggleCheck('buy-3')}
+                    />
+                  </TableCell>
                   <TableCell>3</TableCell>
                   <TableCell>Buy leading stocks</TableCell>
                   <TableCell>In top 40 industry groups</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('buy-4')}
+                      onCheckedChange={() => toggleCheck('buy-4')}
+                    />
+                  </TableCell>
                   <TableCell>4</TableCell>
                   <TableCell>Avoid extended stocks</TableCell>
                   <TableCell>Don't chase &gt;5% above pivot</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('buy-5')}
+                      onCheckedChange={() => toggleCheck('buy-5')}
+                    />
+                  </TableCell>
                   <TableCell>5</TableCell>
                   <TableCell>Add on strength</TableCell>
                   <TableCell>Add when stock gains +2–3% from prior add point on volume</TableCell>
@@ -282,6 +482,7 @@ const FundamentalAnalysisGuide = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12"></TableHead>
                   <TableHead>Step</TableHead>
                   <TableHead>Sell Condition</TableHead>
                   <TableHead>O'Neil Rule</TableHead>
@@ -289,36 +490,78 @@ const FundamentalAnalysisGuide = () => {
               </TableHeader>
               <TableBody>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('sell-1')}
+                      onCheckedChange={() => toggleCheck('sell-1')}
+                    />
+                  </TableCell>
                   <TableCell>1</TableCell>
                   <TableCell>Cut losses quickly</TableCell>
                   <TableCell>Sell if –7% to –8% below buy point</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('sell-2')}
+                      onCheckedChange={() => toggleCheck('sell-2')}
+                    />
+                  </TableCell>
                   <TableCell>2</TableCell>
                   <TableCell>Protect profits</TableCell>
                   <TableCell>Sell partials after +20–25% gain (unless powerful stock in early-stage bull)</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('sell-3')}
+                      onCheckedChange={() => toggleCheck('sell-3')}
+                    />
+                  </TableCell>
                   <TableCell>3</TableCell>
                   <TableCell>Watch for climax runs</TableCell>
                   <TableCell>Big volume + vertical rise → take profits</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('sell-4')}
+                      onCheckedChange={() => toggleCheck('sell-4')}
+                    />
+                  </TableCell>
                   <TableCell>4</TableCell>
                   <TableCell>Distribution signals</TableCell>
                   <TableCell>Heavy selling volume = institutional exit</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('sell-5')}
+                      onCheckedChange={() => toggleCheck('sell-5')}
+                    />
+                  </TableCell>
                   <TableCell>5</TableCell>
                   <TableCell>Break of 50-day MA on heavy volume</TableCell>
                   <TableCell>Often signals end of run</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('sell-6')}
+                      onCheckedChange={() => toggleCheck('sell-6')}
+                    />
+                  </TableCell>
                   <TableCell>6</TableCell>
                   <TableCell>Sell laggards</TableCell>
                   <TableCell>Rotate into stronger leaders</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('sell-7')}
+                      onCheckedChange={() => toggleCheck('sell-7')}
+                    />
+                  </TableCell>
                   <TableCell>7</TableCell>
                   <TableCell>Re-evaluate fundamentals</TableCell>
                   <TableCell>Growth deceleration or poor quarterly report</TableCell>
@@ -340,6 +583,7 @@ const FundamentalAnalysisGuide = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12"></TableHead>
                   <TableHead>Step</TableHead>
                   <TableHead>Discipline</TableHead>
                   <TableHead>Why It Matters</TableHead>
@@ -347,36 +591,78 @@ const FundamentalAnalysisGuide = () => {
               </TableHeader>
               <TableBody>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('mindset-1')}
+                      onCheckedChange={() => toggleCheck('mindset-1')}
+                    />
+                  </TableCell>
                   <TableCell>1</TableCell>
                   <TableCell>Keep a watchlist</TableCell>
                   <TableCell>Track 20–30 top stocks forming bases</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('mindset-2')}
+                      onCheckedChange={() => toggleCheck('mindset-2')}
+                    />
+                  </TableCell>
                   <TableCell>2</TableCell>
                   <TableCell>Maintain a trading journal</TableCell>
                   <TableCell>Record reasons for entry/exit</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('mindset-3')}
+                      onCheckedChange={() => toggleCheck('mindset-3')}
+                    />
+                  </TableCell>
                   <TableCell>3</TableCell>
                   <TableCell>Study past winners</TableCell>
                   <TableCell>Learn recurring patterns (e.g., AAPL, TSLA, NVDA)</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('mindset-4')}
+                      onCheckedChange={() => toggleCheck('mindset-4')}
+                    />
+                  </TableCell>
                   <TableCell>4</TableCell>
                   <TableCell>Focus on quality over quantity</TableCell>
                   <TableCell>Only buy true leaders</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('mindset-5')}
+                      onCheckedChange={() => toggleCheck('mindset-5')}
+                    />
+                  </TableCell>
                   <TableCell>5</TableCell>
                   <TableCell>Stay objective</TableCell>
                   <TableCell>Price and volume action &gt; opinions</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('mindset-6')}
+                      onCheckedChange={() => toggleCheck('mindset-6')}
+                    />
+                  </TableCell>
                   <TableCell>6</TableCell>
                   <TableCell>Avoid averaging down</TableCell>
                   <TableCell>Only add to winners, never losers</TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>
+                    <Checkbox 
+                      checked={checkedItems.has('mindset-7')}
+                      onCheckedChange={() => toggleCheck('mindset-7')}
+                    />
+                  </TableCell>
                   <TableCell>7</TableCell>
                   <TableCell>Follow rules precisely</TableCell>
                   <TableCell>Small errors compound over time</TableCell>

@@ -11,7 +11,32 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Missing authorization header' }), 
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { stockData, analysisType } = await req.json();
+
+    // Input validation
+    const validAnalysisTypes = ['overview', 'recommendations', 'risk-assessment', 'sector-analysis'];
+    if (analysisType && !validAnalysisTypes.includes(analysisType)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid analysis type' }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!stockData || typeof stockData !== 'object') {
+      return new Response(
+        JSON.stringify({ error: 'Valid stock data is required' }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
