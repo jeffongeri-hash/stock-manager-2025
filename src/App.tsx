@@ -22,6 +22,7 @@ import TradeIdeas from "./pages/TradeIdeas";
 import MarketScanner from "./pages/MarketScanner";
 import Reports from "./pages/Reports";
 import CreditOptionsGuide from "./pages/CreditOptionsGuide";
+import FundamentalAnalysisGuide from "./pages/FundamentalAnalysisGuide";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => (
           <Route path="/market-scanner" element={<MarketScanner />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/credit-options-guide" element={<CreditOptionsGuide />} />
+          <Route path="/fundamental-analysis-guide" element={<FundamentalAnalysisGuide />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
