@@ -177,7 +177,7 @@ const Portfolio = () => {
     // Update with current prices
     stocks.forEach(stock => {
       const position = positionsBySymbol.get(stock.symbol);
-      if (position && stock.price) {
+      if (position && stock.price && stock.price > 0) {
         position.currentPrice = stock.price;
       }
     });
@@ -186,9 +186,13 @@ const Portfolio = () => {
     positionsBySymbol.forEach((position) => {
       totalShares += position.shares;
       totalCostBasis += position.costBasis;
-      // Use current price if available, otherwise use cost basis (average entry price)
-      const valuePrice = position.currentPrice > 0 ? position.currentPrice : (position.costBasis / position.shares);
-      totalCurrentValue += valuePrice * position.shares;
+      // Only calculate value if we have a real current price, not zero
+      if (position.currentPrice > 0) {
+        totalCurrentValue += position.currentPrice * position.shares;
+      } else {
+        // If no price data, show cost basis as current value (no P/L)
+        totalCurrentValue += position.costBasis;
+      }
     });
 
     return {
@@ -198,20 +202,22 @@ const Portfolio = () => {
       totalPnL: totalCurrentValue - totalCostBasis,
       totalPnLPercent: totalCostBasis > 0 ? ((totalCurrentValue - totalCostBasis) / totalCostBasis) * 100 : 0,
       positions: Array.from(positionsBySymbol.entries()).map(([symbol, data]) => {
-        const currentPrice = data.currentPrice > 0 ? data.currentPrice : (data.costBasis / data.shares);
+        const avgPrice = data.costBasis / data.shares;
+        const currentPrice = data.currentPrice > 0 ? data.currentPrice : avgPrice;
         const currentValue = currentPrice * data.shares;
-        const pnl = currentValue - data.costBasis;
-        const pnlPercent = data.costBasis > 0 ? (pnl / data.costBasis) * 100 : 0;
+        const pnl = data.currentPrice > 0 ? (currentValue - data.costBasis) : 0;
+        const pnlPercent = (data.currentPrice > 0 && data.costBasis > 0) ? (pnl / data.costBasis) * 100 : 0;
         
         return {
           symbol,
           shares: data.shares,
           costBasis: data.costBasis,
           currentValue,
-          avgPrice: data.costBasis / data.shares,
+          avgPrice,
           currentPrice,
           pnl,
-          pnlPercent
+          pnlPercent,
+          hasPriceData: data.currentPrice > 0
         };
       })
     };
@@ -394,14 +400,17 @@ const Portfolio = () => {
                     <td className="py-3 px-4 font-medium">{position.symbol}</td>
                     <td className="py-3 px-4 text-right">{position.shares}</td>
                     <td className="py-3 px-4 text-right">${position.avgPrice.toFixed(2)}</td>
-                    <td className="py-3 px-4 text-right">${position.currentPrice.toFixed(2)}</td>
+                    <td className="py-3 px-4 text-right">
+                      ${position.currentPrice.toFixed(2)}
+                      {!position.hasPriceData && <span className="text-xs text-muted-foreground ml-1">(est)</span>}
+                    </td>
                     <td className="py-3 px-4 text-right">${position.costBasis.toFixed(2)}</td>
                     <td className="py-3 px-4 text-right">${position.currentValue.toFixed(2)}</td>
                     <td className={`py-3 px-4 text-right font-medium ${position.pnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      ${position.pnl.toFixed(2)}
+                      {position.hasPriceData ? `$${position.pnl.toFixed(2)}` : '-'}
                     </td>
                     <td className={`py-3 px-4 text-right ${position.pnlPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {position.pnlPercent >= 0 ? '+' : ''}{position.pnlPercent.toFixed(2)}%
+                      {position.hasPriceData ? `${position.pnlPercent >= 0 ? '+' : ''}${position.pnlPercent.toFixed(2)}%` : '-'}
                     </td>
                     <td className="py-3 px-4 text-right">
                       <Input
