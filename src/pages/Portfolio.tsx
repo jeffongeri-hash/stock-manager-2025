@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { PlusCircle, Trash2, TrendingUp } from 'lucide-react';
+import { PlusCircle, Trash2, TrendingUp, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useStockData } from '@/hooks/useStockData';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart } from 'recharts';
 
 interface StockTrade {
   id: string;
@@ -42,7 +42,7 @@ const Portfolio = () => {
   }, [stockTrades]);
 
   // Fetch real-time stock prices
-  const { stocks } = useStockData(activeSymbols);
+  const { stocks, refresh, isRefreshing } = useStockData(activeSymbols);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -223,7 +223,7 @@ const Portfolio = () => {
     };
   }, [stockTrades, stocks]);
 
-  // Generate chart data for portfolio performance
+  // Generate chart data for portfolio performance by position
   const chartData = useMemo(() => {
     const data = portfolioMetrics.positions.map(pos => ({
       symbol: pos.symbol,
@@ -233,6 +233,33 @@ const Portfolio = () => {
     }));
     return data;
   }, [portfolioMetrics]);
+
+  // Generate P/L trend over time based on closed trades
+  const plTrendData = useMemo(() => {
+    // Get closed trades sorted by exit date
+    const closedTrades = stockTrades
+      .filter(trade => trade.exit_date && trade.exit_price)
+      .sort((a, b) => new Date(a.exit_date!).getTime() - new Date(b.exit_date!).getTime());
+
+    if (closedTrades.length === 0) return [];
+
+    let cumulativePnL = 0;
+    const trendData: { date: string; pnl: number; cumulative: number; symbol: string }[] = [];
+
+    closedTrades.forEach(trade => {
+      const tradePnL = (trade.exit_price! - trade.entry_price) * trade.quantity;
+      cumulativePnL += tradePnL;
+      
+      trendData.push({
+        date: new Date(trade.exit_date!).toLocaleDateString(),
+        pnl: tradePnL,
+        cumulative: cumulativePnL,
+        symbol: trade.symbol
+      });
+    });
+
+    return trendData;
+  }, [stockTrades]);
 
   if (loading) {
     return <PageLayout title="Portfolio"><div>Loading...</div></PageLayout>;
@@ -292,11 +319,76 @@ const Portfolio = () => {
         </Card>
       </div>
 
+      {/* P/L Trend Over Time Chart */}
+      {plTrendData.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>P/L Trend Over Time</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh Prices'}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={plTrendData}>
+                <defs>
+                  <linearGradient id="colorPnL" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="date" className="text-xs" />
+                <YAxis className="text-xs" />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+                  formatter={(value: number, name: string) => [`$${value.toFixed(2)}`, name === 'cumulative' ? 'Cumulative P/L' : 'Trade P/L']}
+                  labelFormatter={(label) => `Date: ${label}`}
+                />
+                <Legend formatter={(value) => value === 'cumulative' ? 'Cumulative P/L' : 'Trade P/L'} />
+                <Area 
+                  type="monotone" 
+                  dataKey="cumulative" 
+                  stroke="hsl(var(--primary))" 
+                  fillOpacity={1}
+                  fill="url(#colorPnL)"
+                  strokeWidth={2}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="pnl" 
+                  stroke="hsl(var(--chart-2))" 
+                  strokeWidth={2}
+                  dot={{ fill: 'hsl(var(--chart-2))' }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Performance Chart */}
       {chartData.length > 0 && (
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Portfolio Performance</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Position Performance</CardTitle>
+            {plTrendData.length === 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refresh}
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Refreshing...' : 'Refresh Prices'}
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
