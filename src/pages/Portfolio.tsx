@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useStockData } from '@/hooks/useStockData';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart } from 'recharts';
-
+import { PriceAlerts } from '@/components/portfolio/PriceAlerts';
 interface StockTrade {
   id: string;
   symbol: string;
@@ -261,6 +261,17 @@ const Portfolio = () => {
     return trendData;
   }, [stockTrades]);
 
+  // Create a map of current prices for alerts
+  const currentPricesMap = useMemo(() => {
+    const priceMap = new Map<string, number>();
+    stocks.forEach(stock => {
+      if (stock.price && stock.price > 0) {
+        priceMap.set(stock.symbol.toUpperCase(), stock.price);
+      }
+    });
+    return priceMap;
+  }, [stocks]);
+
   if (loading) {
     return <PageLayout title="Portfolio"><div>Loading...</div></PageLayout>;
   }
@@ -318,6 +329,9 @@ const Portfolio = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Price Alerts */}
+      <PriceAlerts userId={user.id} currentPrices={currentPricesMap} />
 
       {/* P/L Trend Over Time Chart */}
       {plTrendData.length > 0 && (
