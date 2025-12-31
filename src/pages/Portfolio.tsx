@@ -261,7 +261,7 @@ const Portfolio = () => {
     return trendData;
   }, [stockTrades]);
 
-  // Create a map of current prices for alerts
+  // Create a map of current prices and changes for alerts
   const currentPricesMap = useMemo(() => {
     const priceMap = new Map<string, number>();
     stocks.forEach(stock => {
@@ -270,6 +270,19 @@ const Portfolio = () => {
       }
     });
     return priceMap;
+  }, [stocks]);
+
+  const stockChangesMap = useMemo(() => {
+    const changeMap = new Map<string, { changePercent: number; previousClose: number }>();
+    stocks.forEach(stock => {
+      if (stock.changePercent !== undefined && stock.previousClose) {
+        changeMap.set(stock.symbol.toUpperCase(), {
+          changePercent: stock.changePercent,
+          previousClose: stock.previousClose
+        });
+      }
+    });
+    return changeMap;
   }, [stocks]);
 
   if (loading) {
@@ -331,7 +344,7 @@ const Portfolio = () => {
       </div>
 
       {/* Price Alerts */}
-      <PriceAlerts userId={user.id} currentPrices={currentPricesMap} />
+      <PriceAlerts userId={user.id} currentPrices={currentPricesMap} stockChanges={stockChangesMap} />
 
       {/* P/L Trend Over Time Chart */}
       {plTrendData.length > 0 && (
