@@ -1,1 +1,25 @@
 project_id = "uvqrdzwimiszqkmyzbvf"
+
+[functions.analyze-fundamentals]
+verify_jwt = false
+
+[functions.analyze-stocks]
+verify_jwt = false
+
+[functions.fetch-fundamentals]
+verify_jwt = false
+
+[functions.fetch-options-data]
+verify_jwt = false
+
+[functions.fetch-stock-data]
+verify_jwt = false
+
+[functions.generate-trade-ideas]
+verify_jwt = false
+
+[functions.grade-trades]
+verify_jwt = false
+
+[functions.trade-assistant]
+verify_jwt = false

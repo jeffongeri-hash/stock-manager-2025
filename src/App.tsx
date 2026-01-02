@@ -24,6 +24,9 @@ import Reports from "./pages/Reports";
 import CreditOptionsGuide from "./pages/CreditOptionsGuide";
 import FundamentalAnalysisGuide from "./pages/FundamentalAnalysisGuide";
 import AlertHistory from "./pages/AlertHistory";
+import TradeAssistant from "./pages/TradeAssistant";
+import SectorHeatmap from "./pages/SectorHeatmap";
+import DividendTracker from "./pages/DividendTracker";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +56,9 @@ const App = () => (
           <Route path="/credit-options-guide" element={<CreditOptionsGuide />} />
           <Route path="/fundamental-analysis-guide" element={<FundamentalAnalysisGuide />} />
           <Route path="/alert-history" element={<AlertHistory />} />
+          <Route path="/trade-assistant" element={<TradeAssistant />} />
+          <Route path="/sector-heatmap" element={<SectorHeatmap />} />
+          <Route path="/dividend-tracker" element={<DividendTracker />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
