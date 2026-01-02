@@ -9,8 +9,10 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles } from 'lucide-react';
+import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3 } from 'lucide-react';
 import { NaturalLanguageRuleBuilder } from '@/components/trading/NaturalLanguageRuleBuilder';
+import { StrategyTemplateLibrary, StrategyTemplate } from '@/components/trading/StrategyTemplateLibrary';
+import { RuleBacktester } from '@/components/trading/RuleBacktester';
 
 interface TradingRule {
   id: string;
@@ -65,6 +67,9 @@ const TradingAutomation = () => {
   const [showNewRule, setShowNewRule] = useState(false);
   const [brokerConnections, setBrokerConnections] = useState<BrokerConnection[]>([]);
   const [showBrokerSetup, setShowBrokerSetup] = useState(false);
+  const [selectedTemplateText, setSelectedTemplateText] = useState('');
+  const [currentRuleText, setCurrentRuleText] = useState('');
+  const [currentParsedRule, setCurrentParsedRule] = useState<any>(null);
   const [ibCredentials, setIbCredentials] = useState({ 
     username: '', 
     accountId: '',
@@ -76,6 +81,15 @@ const TradingAutomation = () => {
     condition: { type: 'price_above', symbol: '', value: 0, timeframe: '1D' },
     action: { type: 'alert', quantity: 0, orderType: 'market' }
   });
+
+  const handleTemplateSelect = (template: StrategyTemplate) => {
+    setSelectedTemplateText(template.ruleText);
+  };
+
+  const handleRuleTextChange = (text: string, parsedRule: any) => {
+    setCurrentRuleText(text);
+    setCurrentParsedRule(parsedRule);
+  };
 
   const toggleRule = (id: string) => {
     setRules(rules.map(r => r.id === id ? { ...r, active: !r.active } : r));
@@ -232,10 +246,18 @@ const TradingAutomation = () => {
       </div>
 
       <Tabs defaultValue="ai-builder" className="space-y-6">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="ai-builder" className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             AI Rule Builder
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="flex items-center gap-2">
+            <Star className="h-4 w-4" />
+            Templates
+          </TabsTrigger>
+          <TabsTrigger value="backtest" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Backtest
           </TabsTrigger>
           <TabsTrigger value="rules">Trading Rules</TabsTrigger>
           <TabsTrigger value="brokers">Broker Connections</TabsTrigger>
@@ -244,9 +266,23 @@ const TradingAutomation = () => {
 
         <TabsContent value="ai-builder">
           <NaturalLanguageRuleBuilder 
+            initialRuleText={selectedTemplateText}
             onRuleCreated={(rule) => {
               setRules([...rules, rule]);
+              setSelectedTemplateText('');
             }}
+            onRuleTextChange={handleRuleTextChange}
+          />
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <StrategyTemplateLibrary onSelectTemplate={handleTemplateSelect} />
+        </TabsContent>
+
+        <TabsContent value="backtest">
+          <RuleBacktester 
+            ruleText={currentRuleText} 
+            ruleName={currentParsedRule?.name}
           />
         </TabsContent>
 
