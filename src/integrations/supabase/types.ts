@@ -149,6 +149,57 @@ export type Database = {
         }
         Relationships: []
       }
+      paper_trading_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          final_balance: number
+          id: string
+          initial_balance: number
+          max_drawdown: number | null
+          session_data: Json | null
+          strategy: string
+          symbol: string
+          total_pnl: number
+          total_trades: number
+          user_id: string
+          win_rate: number | null
+          winning_trades: number
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          final_balance: number
+          id?: string
+          initial_balance?: number
+          max_drawdown?: number | null
+          session_data?: Json | null
+          strategy: string
+          symbol: string
+          total_pnl?: number
+          total_trades?: number
+          user_id: string
+          win_rate?: number | null
+          winning_trades?: number
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          final_balance?: number
+          id?: string
+          initial_balance?: number
+          max_drawdown?: number | null
+          session_data?: Json | null
+          strategy?: string
+          symbol?: string
+          total_pnl?: number
+          total_trades?: number
+          user_id?: string
+          win_rate?: number | null
+          winning_trades?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
