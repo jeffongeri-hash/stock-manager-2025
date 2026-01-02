@@ -9,12 +9,13 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2 } from 'lucide-react';
+import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle } from 'lucide-react';
 import { NaturalLanguageRuleBuilder } from '@/components/trading/NaturalLanguageRuleBuilder';
 import { StrategyTemplateLibrary, StrategyTemplate } from '@/components/trading/StrategyTemplateLibrary';
 import { RuleBacktester } from '@/components/trading/RuleBacktester';
 import { StrategyComparison } from '@/components/trading/StrategyComparison';
 import { StrategyOptimizer } from '@/components/trading/StrategyOptimizer';
+import { WalkForwardAnalysis } from '@/components/trading/WalkForwardAnalysis';
 
 interface TradingRule {
   id: string;
@@ -269,6 +270,10 @@ const TradingAutomation = () => {
             <Settings2 className="h-4 w-4" />
             Optimize
           </TabsTrigger>
+          <TabsTrigger value="walkforward" className="flex items-center gap-2">
+            <Shuffle className="h-4 w-4" />
+            Walk-Forward
+          </TabsTrigger>
           <TabsTrigger value="rules">Trading Rules</TabsTrigger>
           <TabsTrigger value="brokers">Broker Connections</TabsTrigger>
           <TabsTrigger value="capitalise">Capitalise.ai Setup</TabsTrigger>
@@ -302,6 +307,10 @@ const TradingAutomation = () => {
 
         <TabsContent value="optimize">
           <StrategyOptimizer />
+        </TabsContent>
+
+        <TabsContent value="walkforward">
+          <WalkForwardAnalysis />
         </TabsContent>
 
         <TabsContent value="rules">
