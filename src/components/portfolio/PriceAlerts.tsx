@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, BellOff, Trash2, Plus, TrendingUp, TrendingDown, Percent, DollarSign } from 'lucide-react';
+import { Bell, BellOff, Trash2, Plus, TrendingUp, TrendingDown, Percent, DollarSign, BellRing } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// Check if browser notifications are supported
+const notificationsSupported = 'Notification' in window;
 
 interface Alert {
   id: string;
@@ -36,11 +39,64 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [alertType, setAlertType] = useState<'price' | 'percent'>('price');
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    notificationsSupported ? Notification.permission : 'denied'
+  );
   const [newAlert, setNewAlert] = useState({
     symbol: '',
     target_value: '',
     condition: 'above',
   });
+
+  // Request notification permission
+  const requestNotificationPermission = useCallback(async () => {
+    if (!notificationsSupported) {
+      toast.error('Browser notifications are not supported');
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      if (permission === 'granted') {
+        toast.success('Push notifications enabled!');
+        // Show a test notification
+        new Notification('Notifications Enabled', {
+          body: 'You will now receive alerts when your stocks hit target prices.',
+          icon: '/favicon.ico',
+        });
+      } else if (permission === 'denied') {
+        toast.error('Notification permission denied. Please enable in browser settings.');
+      }
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      toast.error('Failed to request notification permission');
+    }
+  }, []);
+
+  // Send browser notification
+  const sendBrowserNotification = useCallback((title: string, body: string) => {
+    if (!notificationsSupported || notificationPermission !== 'granted') {
+      return;
+    }
+
+    try {
+      const notification = new Notification(title, {
+        body,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: `alert-${Date.now()}`,
+        requireInteraction: true,
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
+  }, [notificationPermission]);
 
   useEffect(() => {
     fetchAlerts();
@@ -105,11 +161,16 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
       .eq('id', alert.id);
 
     if (!error) {
+      const title = alert.alert_type === 'price' ? 'Price Alert Triggered!' : 'Percentage Alert Triggered!';
       const message = alert.alert_type === 'price'
-        ? `🔔 Price Alert: ${alert.symbol} has ${alert.condition === 'above' ? 'risen above' : 'fallen below'} $${alert.target_value.toFixed(2)}! Current: $${currentPrice.toFixed(2)}`
-        : `🔔 Percent Alert: ${alert.symbol} has moved ${alert.condition === 'up' ? 'up' : 'down'} ${alert.target_value}%! Current: $${currentPrice.toFixed(2)}`;
+        ? `${alert.symbol} has ${alert.condition === 'above' ? 'risen above' : 'fallen below'} $${alert.target_value.toFixed(2)}! Current: $${currentPrice.toFixed(2)}`
+        : `${alert.symbol} has moved ${alert.condition === 'up' ? 'up' : 'down'} ${alert.target_value}%! Current: $${currentPrice.toFixed(2)}`;
       
-      toast.success(message, { duration: 10000 });
+      // Send browser push notification
+      sendBrowserNotification(title, message);
+      
+      // Also show in-app toast
+      toast.success(`🔔 ${message}`, { duration: 10000 });
       fetchAlerts();
     }
   };
@@ -290,11 +351,31 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
 
   return (
     <Card className="mb-6">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <Bell className="h-5 w-5" />
           Price Alerts
         </CardTitle>
+        {notificationsSupported && (
+          <div className="flex items-center gap-2">
+            {notificationPermission === 'granted' ? (
+              <Badge variant="secondary" className="gap-1">
+                <BellRing className="h-3 w-3" />
+                Notifications On
+              </Badge>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={requestNotificationPermission}
+                className="gap-2"
+              >
+                <BellRing className="h-4 w-4" />
+                Enable Notifications
+              </Button>
+            )}
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <Tabs value={alertType} onValueChange={(v) => {
