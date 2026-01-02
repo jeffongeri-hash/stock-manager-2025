@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp, BarChart3, Settings, Maximize2, Minimize2 } from 'lucide-react';
+import { TrendingUp, BarChart3, Maximize2, Minimize2, ExternalLink, TestTube, Info, PlayCircle } from 'lucide-react';
 
 const TradingViewWebhook = () => {
   const [symbol, setSymbol] = useState('SPY');
@@ -26,7 +27,7 @@ const TradingViewWebhook = () => {
       // Clear previous widget
       chartContainerRef.current.innerHTML = '';
 
-      // Create TradingView widget
+      // Create TradingView widget with studies enabled
       const script = document.createElement('script');
       script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
       script.type = 'text/javascript';
@@ -46,6 +47,10 @@ const TradingViewWebhook = () => {
         details: true,
         hotlist: true,
         calendar: true,
+        studies: [
+          "STD;RSI",
+          "STD;MACD"
+        ],
         show_popup_button: true,
         popup_width: "1000",
         popup_height: "650",
@@ -70,6 +75,10 @@ const TradingViewWebhook = () => {
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
+  };
+
+  const openInTradingView = () => {
+    window.open(`https://www.tradingview.com/chart/?symbol=${symbol}`, '_blank');
   };
 
   const popularSymbols = [
@@ -152,12 +161,46 @@ const TradingViewWebhook = () => {
                 </Select>
               </div>
 
-              <Button variant="outline" size="icon" onClick={toggleFullscreen} className="ml-auto">
-                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-              </Button>
+              <div className="flex items-center gap-2 ml-auto">
+                <Button variant="outline" onClick={openInTradingView}>
+                  <TestTube className="h-4 w-4 mr-2" />
+                  Open Strategy Tester
+                  <ExternalLink className="h-3 w-3 ml-2" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={toggleFullscreen}>
+                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Strategy Tester Info */}
+        {!isFullscreen && (
+          <Card className="border-blue-500/30 bg-blue-500/5">
+            <CardContent className="py-4">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-blue-500 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-blue-600 dark:text-blue-400">Using the Strategy Tester</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    TradingView's Strategy Tester is available on the full TradingView website. Click "Open Strategy Tester" above to:
+                  </p>
+                  <ul className="text-sm text-muted-foreground mt-2 space-y-1 list-disc list-inside">
+                    <li>Add Pine Script strategies from the Indicators menu</li>
+                    <li>View backtesting results in the Strategy Tester tab</li>
+                    <li>Analyze performance metrics, trade list, and equity curve</li>
+                    <li>Customize strategy parameters and re-run tests</li>
+                  </ul>
+                  <div className="flex gap-2 mt-3">
+                    <Badge variant="outline">Free account required</Badge>
+                    <Badge variant="outline">Pro plan for more features</Badge>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* TradingView Chart */}
         <Card className={isFullscreen ? 'flex-1' : ''}>
@@ -167,7 +210,7 @@ const TradingViewWebhook = () => {
               {symbol} Chart
             </CardTitle>
             <CardDescription>
-              Interactive TradingView chart with full technical analysis tools
+              Interactive TradingView chart with RSI and MACD indicators pre-loaded
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -180,12 +223,115 @@ const TradingViewWebhook = () => {
 
         {/* Quick Access Tabs */}
         {!isFullscreen && (
-          <Tabs defaultValue="market-overview" className="space-y-4">
+          <Tabs defaultValue="strategy-guide" className="space-y-4">
             <TabsList>
+              <TabsTrigger value="strategy-guide">
+                <PlayCircle className="h-4 w-4 mr-2" />
+                Strategy Testing Guide
+              </TabsTrigger>
               <TabsTrigger value="market-overview">Market Overview</TabsTrigger>
               <TabsTrigger value="screener">Stock Screener</TabsTrigger>
               <TabsTrigger value="heatmap">Market Heatmap</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="strategy-guide">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TestTube className="h-5 w-5" />
+                    How to Use TradingView Strategy Tester
+                  </CardTitle>
+                  <CardDescription>
+                    Step-by-step guide to backtest trading strategies on TradingView
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <Badge className="mt-0.5">1</Badge>
+                        <div>
+                          <p className="font-medium">Open TradingView Chart</p>
+                          <p className="text-sm text-muted-foreground">
+                            Click "Open Strategy Tester" button above to open {symbol} in TradingView
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-3">
+                        <Badge className="mt-0.5">2</Badge>
+                        <div>
+                          <p className="font-medium">Add a Strategy</p>
+                          <p className="text-sm text-muted-foreground">
+                            Click "Indicators" (fx button) → Search for strategies like "RSI Strategy", "MACD Strategy", or "Moving Average Strategy"
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-3">
+                        <Badge className="mt-0.5">3</Badge>
+                        <div>
+                          <p className="font-medium">View Strategy Tester Tab</p>
+                          <p className="text-sm text-muted-foreground">
+                            Once a strategy is added, the "Strategy Tester" tab appears at the bottom of the chart
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <Badge className="mt-0.5">4</Badge>
+                        <div>
+                          <p className="font-medium">Analyze Results</p>
+                          <p className="text-sm text-muted-foreground">
+                            View performance summary, trade list, and equity curve in the Strategy Tester panel
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-3">
+                        <Badge className="mt-0.5">5</Badge>
+                        <div>
+                          <p className="font-medium">Customize Parameters</p>
+                          <p className="text-sm text-muted-foreground">
+                            Click the gear icon on the strategy to adjust parameters and see how results change
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-3">
+                        <Badge className="mt-0.5">6</Badge>
+                        <div>
+                          <p className="font-medium">Compare Strategies</p>
+                          <p className="text-sm text-muted-foreground">
+                            Add multiple strategies to compare performance on the same chart
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-muted rounded-lg p-4">
+                    <p className="font-medium mb-2">Popular Built-in Strategies to Try:</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline">RSI Strategy</Badge>
+                      <Badge variant="outline">MACD Strategy</Badge>
+                      <Badge variant="outline">Bollinger Bands Strategy</Badge>
+                      <Badge variant="outline">Moving Average Cross</Badge>
+                      <Badge variant="outline">Supertrend Strategy</Badge>
+                      <Badge variant="outline">Momentum Strategy</Badge>
+                    </div>
+                  </div>
+
+                  <Button onClick={openInTradingView} className="w-full">
+                    <TestTube className="h-4 w-4 mr-2" />
+                    Open {symbol} in TradingView Strategy Tester
+                    <ExternalLink className="h-3 w-3 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="market-overview">
               <Card>
