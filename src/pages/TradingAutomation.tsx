@@ -9,11 +9,12 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare } from 'lucide-react';
+import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2 } from 'lucide-react';
 import { NaturalLanguageRuleBuilder } from '@/components/trading/NaturalLanguageRuleBuilder';
 import { StrategyTemplateLibrary, StrategyTemplate } from '@/components/trading/StrategyTemplateLibrary';
 import { RuleBacktester } from '@/components/trading/RuleBacktester';
 import { StrategyComparison } from '@/components/trading/StrategyComparison';
+import { StrategyOptimizer } from '@/components/trading/StrategyOptimizer';
 
 interface TradingRule {
   id: string;
@@ -264,6 +265,10 @@ const TradingAutomation = () => {
             <GitCompare className="h-4 w-4" />
             Compare
           </TabsTrigger>
+          <TabsTrigger value="optimize" className="flex items-center gap-2">
+            <Settings2 className="h-4 w-4" />
+            Optimize
+          </TabsTrigger>
           <TabsTrigger value="rules">Trading Rules</TabsTrigger>
           <TabsTrigger value="brokers">Broker Connections</TabsTrigger>
           <TabsTrigger value="capitalise">Capitalise.ai Setup</TabsTrigger>
@@ -293,6 +298,10 @@ const TradingAutomation = () => {
 
         <TabsContent value="compare">
           <StrategyComparison />
+        </TabsContent>
+
+        <TabsContent value="optimize">
+          <StrategyOptimizer />
         </TabsContent>
 
         <TabsContent value="rules">

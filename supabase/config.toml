@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.parse-trading-rule]
 verify_jwt = false
+
+[functions.fetch-historical-data]
+verify_jwt = false
