@@ -7,7 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp, BarChart3, Maximize2, Minimize2, ExternalLink, TestTube, Info, PlayCircle } from 'lucide-react';
+import { TrendingUp, BarChart3, Maximize2, Minimize2, ExternalLink, TestTube, Info, PlayCircle, Code, Wallet } from 'lucide-react';
+import { PaperTradingSimulator } from '@/components/trading/PaperTradingSimulator';
+import { PineScriptBuilder } from '@/components/trading/PineScriptBuilder';
 
 const TradingViewWebhook = () => {
   const [symbol, setSymbol] = useState('SPY');
@@ -223,16 +225,58 @@ const TradingViewWebhook = () => {
 
         {/* Quick Access Tabs */}
         {!isFullscreen && (
-          <Tabs defaultValue="strategy-guide" className="space-y-4">
-            <TabsList>
+          <Tabs defaultValue="paper-trading" className="space-y-4">
+            <TabsList className="flex-wrap h-auto gap-1">
+              <TabsTrigger value="paper-trading">
+                <Wallet className="h-4 w-4 mr-2" />
+                Paper Trading
+              </TabsTrigger>
+              <TabsTrigger value="pine-script">
+                <Code className="h-4 w-4 mr-2" />
+                Pine Script Builder
+              </TabsTrigger>
               <TabsTrigger value="strategy-guide">
                 <PlayCircle className="h-4 w-4 mr-2" />
-                Strategy Testing Guide
+                Strategy Guide
               </TabsTrigger>
               <TabsTrigger value="market-overview">Market Overview</TabsTrigger>
-              <TabsTrigger value="screener">Stock Screener</TabsTrigger>
-              <TabsTrigger value="heatmap">Market Heatmap</TabsTrigger>
+              <TabsTrigger value="screener">Screener</TabsTrigger>
+              <TabsTrigger value="heatmap">Heatmap</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="paper-trading">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wallet className="h-5 w-5" />
+                    Paper Trading Simulator
+                  </CardTitle>
+                  <CardDescription>
+                    Practice trading with virtual money. Test your strategies without risking real capital.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PaperTradingSimulator symbol={symbol} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="pine-script">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Code className="h-5 w-5" />
+                    Pine Script Strategy Builder
+                  </CardTitle>
+                  <CardDescription>
+                    Create custom Pine Script strategies to export and backtest on TradingView
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PineScriptBuilder />
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="strategy-guide">
               <Card>
