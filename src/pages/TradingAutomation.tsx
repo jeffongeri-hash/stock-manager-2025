@@ -9,7 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Bot, Play, Pause, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings } from 'lucide-react';
+import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles } from 'lucide-react';
+import { NaturalLanguageRuleBuilder } from '@/components/trading/NaturalLanguageRuleBuilder';
 
 interface TradingRule {
   id: string;
@@ -230,12 +231,24 @@ const TradingAutomation = () => {
         </Card>
       </div>
 
-      <Tabs defaultValue="rules" className="space-y-6">
+      <Tabs defaultValue="ai-builder" className="space-y-6">
         <TabsList>
+          <TabsTrigger value="ai-builder" className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            AI Rule Builder
+          </TabsTrigger>
           <TabsTrigger value="rules">Trading Rules</TabsTrigger>
           <TabsTrigger value="brokers">Broker Connections</TabsTrigger>
           <TabsTrigger value="capitalise">Capitalise.ai Setup</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="ai-builder">
+          <NaturalLanguageRuleBuilder 
+            onRuleCreated={(rule) => {
+              setRules([...rules, rule]);
+            }}
+          />
+        </TabsContent>
 
         <TabsContent value="rules">
           <Card>

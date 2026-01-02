@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.tradingview-webhook]
 verify_jwt = false
+
+[functions.parse-trading-rule]
+verify_jwt = false
