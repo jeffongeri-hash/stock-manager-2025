@@ -93,6 +93,11 @@
     --border: 240 10% 22%;
     --input: 240 10% 20%;
     --ring: 260 70% 60%;
+
+    /* Dashboard specific tokens */
+    --card-glow: 260 70% 60%;
+    --sparkline-positive: 142 72% 52%;
+    --sparkline-negative: 0 84% 60%;
   }
 }
 
@@ -217,5 +222,53 @@
     to {
       --angle: 360deg;
     }
+  }
+
+  /* Stats card with glow effect */
+  .stats-card-glow {
+    @apply relative overflow-hidden;
+  }
+
+  .stats-card-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: radial-gradient(
+      circle at 50% 50%,
+      hsl(var(--primary) / 0.15) 0%,
+      transparent 70%
+    );
+  }
+
+  .stats-card-glow:hover::before {
+    opacity: 1;
+  }
+
+  /* Investor dashboard animations */
+  .stagger-animation > * {
+    @apply animate-slide-up;
+  }
+
+  .stagger-animation > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-animation > *:nth-child(2) { animation-delay: 50ms; }
+  .stagger-animation > *:nth-child(3) { animation-delay: 100ms; }
+  .stagger-animation > *:nth-child(4) { animation-delay: 150ms; }
+  .stagger-animation > *:nth-child(5) { animation-delay: 200ms; }
+  .stagger-animation > *:nth-child(6) { animation-delay: 250ms; }
+
+  /* Market indicator colors */
+  .market-green {
+    @apply text-success;
+  }
+
+  .market-red {
+    @apply text-danger;
+  }
+
+  /* Smooth number transitions */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
