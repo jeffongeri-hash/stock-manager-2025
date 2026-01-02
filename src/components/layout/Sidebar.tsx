@@ -236,11 +236,11 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
 
   return (
     <aside className={cn(
-      "bg-sidebar text-sidebar-foreground relative transition-all duration-300 ease-in-out flex flex-col border-r border-sidebar-border",
+      "bg-sidebar text-sidebar-foreground relative transition-all duration-300 ease-in-out flex flex-col border-r border-sidebar-border h-screen sticky top-0",
       isCollapsed ? "w-16" : "w-64",
       className
     )}>
-      <div className="flex h-16 items-center justify-center border-b border-sidebar-border">
+      <div className="flex h-16 items-center justify-center border-b border-sidebar-border shrink-0">
         <h2 className={cn(
           "font-semibold tracking-tight transition-opacity duration-200",
           isCollapsed ? "opacity-0" : "opacity-100"
@@ -261,7 +261,7 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
         </Button>
       </div>
       
-      <ScrollArea className="flex-1 py-4">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-4">
         <nav className="grid gap-1 px-2">
           {navItems.map((item, index) => {
             const isActive = location.pathname === item.href;
@@ -277,8 +277,8 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
               >
                 <item.icon className={cn("h-5 w-5 shrink-0")} />
                 <span className={cn(
-                  "text-sm font-medium transition-opacity duration-200",
-                  isCollapsed ? "opacity-0 w-0" : "opacity-100"
+                  "text-sm font-medium transition-opacity duration-200 whitespace-nowrap",
+                  isCollapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
                 )}>
                   {item.title}
                 </span>
@@ -286,9 +286,9 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
             );
           })}
         </nav>
-      </ScrollArea>
+      </div>
       
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border shrink-0">
         <div className={cn(
           "transition-opacity duration-200 rounded-md p-2 text-xs",
           isCollapsed ? "opacity-0" : "opacity-100",

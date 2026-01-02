@@ -1,331 +1,236 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
-import { Webhook, Copy, ExternalLink, CheckCircle, AlertCircle, Clock, Code } from 'lucide-react';
-
-interface WebhookSignal {
-  id: string;
-  strategy_name: string;
-  symbol: string;
-  created_at: string;
-  parameters?: {
-    source?: string;
-    action?: string;
-    price?: number;
-    timeframe?: string;
-    entry_condition?: string;
-    exit_condition?: string;
-    received_at?: string;
-  };
-}
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TrendingUp, BarChart3, Settings, Maximize2, Minimize2 } from 'lucide-react';
 
 const TradingViewWebhook = () => {
-  const { user } = useAuth();
-  const [signals, setSignals] = useState<WebhookSignal[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const webhookUrl = `https://uvqrdzwimiszqkmyzbvf.functions.supabase.co/tradingview-webhook`;
+  const [symbol, setSymbol] = useState('SPY');
+  const [interval, setInterval] = useState('D');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (user) {
-      fetchSignals();
-    }
-  }, [user]);
+    // Check system theme
+    const isDark = document.documentElement.classList.contains('dark');
+    setTheme(isDark ? 'dark' : 'light');
+  }, []);
 
-  const fetchSignals = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('backtest_results')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50);
+  useEffect(() => {
+    if (chartContainerRef.current) {
+      // Clear previous widget
+      chartContainerRef.current.innerHTML = '';
 
-    if (error) {
-      console.error('Error fetching signals:', error);
-    } else {
-      // Filter for TradingView webhook signals
-      const webhookSignals = (data || []).filter((s: any) => 
-        s.parameters?.source === 'tradingview_webhook'
-      ).map((s: any) => ({
-        id: s.id,
-        strategy_name: s.strategy_name,
-        symbol: s.symbol,
-        created_at: s.created_at,
-        parameters: s.parameters as WebhookSignal['parameters']
-      }));
-      setSignals(webhookSignals);
-    }
-    setLoading(false);
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard!');
-  };
-
-  const alertMessageTemplate = `{
-  "symbol": "{{ticker}}",
-  "action": "{{strategy.order.action}}",
-  "price": {{close}},
-  "strategy": "{{strategy.order.comment}}",
-  "user_id": "${user?.id || 'YOUR_USER_ID'}",
-  "timeframe": "{{interval}}",
-  "entry_condition": "Signal from {{ticker}} at {{time}}"
-}`;
-
-  const testWebhook = async () => {
-    try {
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          symbol: 'TEST',
-          action: 'buy',
-          price: 100,
-          strategy: 'Test Signal',
-          user_id: user?.id,
-          timeframe: '1D',
-          entry_condition: 'Manual test'
-        })
+      // Create TradingView widget
+      const script = document.createElement('script');
+      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+      script.type = 'text/javascript';
+      script.async = true;
+      script.innerHTML = JSON.stringify({
+        autosize: true,
+        symbol: symbol,
+        interval: interval,
+        timezone: "America/New_York",
+        theme: theme,
+        style: "1",
+        locale: "en",
+        enable_publishing: false,
+        withdateranges: true,
+        hide_side_toolbar: false,
+        allow_symbol_change: true,
+        details: true,
+        hotlist: true,
+        calendar: true,
+        show_popup_button: true,
+        popup_width: "1000",
+        popup_height: "650",
+        support_host: "https://www.tradingview.com"
       });
 
-      if (response.ok) {
-        toast.success('Test webhook sent successfully!');
-        setTimeout(fetchSignals, 1000);
-      } else {
-        toast.error('Webhook test failed');
-      }
-    } catch (error) {
-      console.error('Test webhook error:', error);
-      toast.error('Failed to send test webhook');
+      const container = document.createElement('div');
+      container.className = 'tradingview-widget-container';
+      container.style.height = '100%';
+      container.style.width = '100%';
+
+      const widgetContainer = document.createElement('div');
+      widgetContainer.className = 'tradingview-widget-container__widget';
+      widgetContainer.style.height = 'calc(100% - 32px)';
+      widgetContainer.style.width = '100%';
+
+      container.appendChild(widgetContainer);
+      container.appendChild(script);
+      chartContainerRef.current.appendChild(container);
     }
+  }, [symbol, interval, theme]);
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
   };
 
+  const popularSymbols = [
+    { value: 'SPY', label: 'SPY - S&P 500 ETF' },
+    { value: 'QQQ', label: 'QQQ - Nasdaq 100 ETF' },
+    { value: 'AAPL', label: 'AAPL - Apple' },
+    { value: 'MSFT', label: 'MSFT - Microsoft' },
+    { value: 'NVDA', label: 'NVDA - NVIDIA' },
+    { value: 'TSLA', label: 'TSLA - Tesla' },
+    { value: 'AMZN', label: 'AMZN - Amazon' },
+    { value: 'GOOGL', label: 'GOOGL - Google' },
+    { value: 'META', label: 'META - Meta' },
+    { value: 'AMD', label: 'AMD - AMD' },
+  ];
+
+  const intervals = [
+    { value: '1', label: '1 Minute' },
+    { value: '5', label: '5 Minutes' },
+    { value: '15', label: '15 Minutes' },
+    { value: '30', label: '30 Minutes' },
+    { value: '60', label: '1 Hour' },
+    { value: '240', label: '4 Hours' },
+    { value: 'D', label: 'Daily' },
+    { value: 'W', label: 'Weekly' },
+    { value: 'M', label: 'Monthly' },
+  ];
+
   return (
-    <PageLayout title="TradingView Webhook Integration">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Webhook Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <span className="text-lg font-semibold">Active</span>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Signals Received</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{signals.length}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Last Signal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm">
-              {signals[0] ? new Date(signals[0].created_at).toLocaleString() : 'No signals yet'}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="setup" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="setup">Setup Guide</TabsTrigger>
-          <TabsTrigger value="signals">Signal History</TabsTrigger>
-          <TabsTrigger value="test">Test Webhook</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="setup">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Webhook className="h-5 w-5" />
-                  Your Webhook URL
-                </CardTitle>
-                <CardDescription>Use this URL in your TradingView alerts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2">
-                  <Input value={webhookUrl} readOnly className="font-mono text-sm" />
-                  <Button variant="outline" onClick={() => copyToClipboard(webhookUrl)}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Code className="h-5 w-5" />
-                  Alert Message Template
-                </CardTitle>
-                <CardDescription>Copy this JSON into your TradingView alert message</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="relative">
-                  <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono">
-                    {alertMessageTemplate}
-                  </pre>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="absolute top-2 right-2"
-                    onClick={() => copyToClipboard(alertMessageTemplate)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Setup Instructions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Badge variant="outline" className="mt-0.5">1</Badge>
-                    <div>
-                      <p className="font-medium">Open TradingView and create an alert</p>
-                      <p className="text-sm text-muted-foreground">Go to your chart and click on the alert icon or press Alt+A</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Badge variant="outline" className="mt-0.5">2</Badge>
-                    <div>
-                      <p className="font-medium">Set your alert conditions</p>
-                      <p className="text-sm text-muted-foreground">Configure when the alert should trigger based on your strategy</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Badge variant="outline" className="mt-0.5">3</Badge>
-                    <div>
-                      <p className="font-medium">Enable Webhook URL</p>
-                      <p className="text-sm text-muted-foreground">Check "Webhook URL" and paste your webhook URL from above</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Badge variant="outline" className="mt-0.5">4</Badge>
-                    <div>
-                      <p className="font-medium">Set the alert message</p>
-                      <p className="text-sm text-muted-foreground">Paste the JSON template into the "Message" field</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <Badge variant="outline" className="mt-0.5">5</Badge>
-                    <div>
-                      <p className="font-medium">Create the alert</p>
-                      <p className="text-sm text-muted-foreground">Click "Create" and your signals will appear here automatically</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-muted p-4 rounded-lg">
-                  <p className="text-sm">
-                    <strong>Note:</strong> TradingView webhooks require a paid plan (Pro, Pro+ or Premium).
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="signals">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Signal History</CardTitle>
-                <CardDescription>Recent signals received from TradingView</CardDescription>
-              </div>
-              <Button variant="outline" onClick={fetchSignals}>
-                Refresh
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[500px]">
-                {loading ? (
-                  <p className="text-center text-muted-foreground py-8">Loading signals...</p>
-                ) : signals.length === 0 ? (
-                  <div className="text-center py-8">
-                    <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No webhook signals received yet</p>
-                    <p className="text-sm text-muted-foreground mt-2">Set up your TradingView alerts to start receiving signals</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {signals.map((signal) => (
-                      <div key={signal.id} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">{signal.symbol}</Badge>
-                            <Badge variant={signal.parameters?.action === 'buy' ? 'default' : 'destructive'}>
-                              {signal.parameters?.action?.toUpperCase() || 'SIGNAL'}
-                            </Badge>
-                          </div>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {new Date(signal.created_at).toLocaleString()}
-                          </span>
-                        </div>
-                        <p className="text-sm font-medium">{signal.strategy_name}</p>
-                        {signal.parameters?.price && (
-                          <p className="text-sm text-muted-foreground">Price: ${signal.parameters.price}</p>
-                        )}
-                        {signal.parameters?.timeframe && (
-                          <p className="text-sm text-muted-foreground">Timeframe: {signal.parameters.timeframe}</p>
-                        )}
-                      </div>
+    <PageLayout title="TradingView Charts">
+      <div className={`space-y-6 ${isFullscreen ? 'fixed inset-0 z-50 bg-background p-4' : ''}`}>
+        {/* Controls */}
+        <Card className={isFullscreen ? 'mb-2' : ''}>
+          <CardContent className="py-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label className="whitespace-nowrap">Symbol</Label>
+                <Select value={symbol} onValueChange={setSymbol}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {popularSymbols.map(s => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                     ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  </SelectContent>
+                </Select>
+                <span className="text-muted-foreground">or</span>
+                <Input 
+                  placeholder="Enter symbol..."
+                  className="w-32"
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                />
+              </div>
 
-        <TabsContent value="test">
-          <Card>
-            <CardHeader>
-              <CardTitle>Test Your Webhook</CardTitle>
-              <CardDescription>Send a test signal to verify your webhook is working</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Click the button below to send a test signal. This will create a test entry in your signal history.
-              </p>
-              <Button onClick={testWebhook}>
-                <Webhook className="h-4 w-4 mr-2" />
-                Send Test Signal
+              <div className="flex items-center gap-2">
+                <Label className="whitespace-nowrap">Interval</Label>
+                <Select value={interval} onValueChange={setInterval}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {intervals.map(i => (
+                      <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Label className="whitespace-nowrap">Theme</Label>
+                <Select value={theme} onValueChange={(v) => setTheme(v as 'light' | 'dark')}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dark">Dark</SelectItem>
+                    <SelectItem value="light">Light</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button variant="outline" size="icon" onClick={toggleFullscreen} className="ml-auto">
+                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
               </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* TradingView Chart */}
+        <Card className={isFullscreen ? 'flex-1' : ''}>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              {symbol} Chart
+            </CardTitle>
+            <CardDescription>
+              Interactive TradingView chart with full technical analysis tools
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div 
+              ref={chartContainerRef} 
+              className={`w-full rounded-lg overflow-hidden ${isFullscreen ? 'h-[calc(100vh-220px)]' : 'h-[600px]'}`}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Quick Access Tabs */}
+        {!isFullscreen && (
+          <Tabs defaultValue="market-overview" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="market-overview">Market Overview</TabsTrigger>
+              <TabsTrigger value="screener">Stock Screener</TabsTrigger>
+              <TabsTrigger value="heatmap">Market Heatmap</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="market-overview">
+              <Card>
+                <CardContent className="py-4">
+                  <div className="h-[400px]" id="market-overview-widget">
+                    <iframe 
+                      src={`https://s.tradingview.com/embed-widget/market-overview/?locale=en#%7B%22colorTheme%22%3A%22${theme}%22%2C%22dateRange%22%3A%2212M%22%2C%22showChart%22%3Atrue%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22100%25%22%2C%22largeChartUrl%22%3A%22%22%2C%22isTransparent%22%3Afalse%2C%22showSymbolLogo%22%3Atrue%2C%22showFloatingTooltip%22%3Afalse%2C%22plotLineColorGrowing%22%3A%22rgba(41%2C%20191%2C%20141%2C%201)%22%2C%22plotLineColorFalling%22%3A%22rgba(255%2C%2053%2C%2053%2C%201)%22%2C%22gridLineColor%22%3A%22rgba(240%2C%20243%2C%20250%2C%200)%22%2C%22scaleFontColor%22%3A%22rgba(120%2C%20123%2C%20134%2C%201)%22%2C%22belowLineFillColorGrowing%22%3A%22rgba(41%2C%20191%2C%20141%2C%200.12)%22%2C%22belowLineFillColorFalling%22%3A%22rgba(255%2C%2053%2C%2053%2C%200.12)%22%2C%22belowLineFillColorGrowingBottom%22%3A%22rgba(41%2C%20191%2C%20141%2C%200)%22%2C%22belowLineFillColorFallingBottom%22%3A%22rgba(255%2C%2053%2C%2053%2C%200)%22%2C%22symbolActiveColor%22%3A%22rgba(41%2C%2098%2C%20255%2C%200.12)%22%2C%22tabs%22%3A%5B%7B%22title%22%3A%22Indices%22%2C%22symbols%22%3A%5B%7B%22s%22%3A%22FOREXCOM%3ASPXUSD%22%2C%22d%22%3A%22S%26P%20500%22%7D%2C%7B%22s%22%3A%22FOREXCOM%3ANSXUSD%22%2C%22d%22%3A%22Nasdaq%20100%22%7D%2C%7B%22s%22%3A%22FOREXCOM%3ADJI%22%2C%22d%22%3A%22Dow%2030%22%7D%5D%7D%2C%7B%22title%22%3A%22Commodities%22%2C%22symbols%22%3A%5B%7B%22s%22%3A%22CME_MINI%3AES1!%22%2C%22d%22%3A%22S%26P%20500%22%7D%2C%7B%22s%22%3A%22CME%3A6E1!%22%2C%22d%22%3A%22Euro%22%7D%2C%7B%22s%22%3A%22COMEX%3AGC1!%22%2C%22d%22%3A%22Gold%22%7D%2C%7B%22s%22%3A%22NYMEX%3ACL1!%22%2C%22d%22%3A%22Crude%20Oil%22%7D%5D%7D%5D%7D`}
+                      className="w-full h-full border-0"
+                      title="Market Overview"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="screener">
+              <Card>
+                <CardContent className="py-4">
+                  <div className="h-[500px]">
+                    <iframe 
+                      src={`https://s.tradingview.com/embed-widget/screener/?locale=en#%7B%22width%22%3A%22100%25%22%2C%22height%22%3A%22100%25%22%2C%22defaultColumn%22%3A%22overview%22%2C%22defaultScreen%22%3A%22most_capitalized%22%2C%22market%22%3A%22america%22%2C%22showToolbar%22%3Atrue%2C%22colorTheme%22%3A%22${theme}%22%2C%22isTransparent%22%3Afalse%7D`}
+                      className="w-full h-full border-0"
+                      title="Stock Screener"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="heatmap">
+              <Card>
+                <CardContent className="py-4">
+                  <div className="h-[500px]">
+                    <iframe 
+                      src={`https://s.tradingview.com/embed-widget/stock-heatmap/?locale=en#%7B%22exchanges%22%3A%5B%5D%2C%22dataSource%22%3A%22SPX500%22%2C%22grouping%22%3A%22sector%22%2C%22blockSize%22%3A%22market_cap_basic%22%2C%22blockColor%22%3A%22change%22%2C%22symbolUrl%22%3A%22%22%2C%22colorTheme%22%3A%22${theme}%22%2C%22hasTopBar%22%3Atrue%2C%22isDataSet498%22%3Atrue%2C%22isZoomEnabled%22%3Atrue%2C%22hasSymbolTooltip%22%3Atrue%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22100%25%22%7D`}
+                      className="w-full h-full border-0"
+                      title="Market Heatmap"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        )}
+      </div>
     </PageLayout>
   );
 };
