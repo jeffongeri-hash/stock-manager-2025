@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { generatePriceHistory } from '@/utils/stocksApi';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { StockCard } from '@/components/stocks/StockCard';
-import { StockChart } from '@/components/stocks/StockChart';
-import { StatsCard } from '@/components/ui/StatsCard';
+import { AnimatedStatsCard } from '@/components/ui/AnimatedStatsCard';
+import { TradingToolCard } from '@/components/dashboard/TradingToolCard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { BarChart3, TrendingDown, TrendingUp, Wallet2, Calculator, Target, Shield, DollarSign, TrendingUpIcon, Activity, Plus, X } from 'lucide-react';
+import { BarChart3, TrendingDown, TrendingUp, Wallet2, Calculator, Target, Shield, DollarSign, TrendingUpIcon, Activity, Plus, X, BookOpen, Clock, Newspaper, PieChart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -289,42 +289,51 @@ export function Dashboard() {
           <div className="container max-w-full p-3 sm:p-4 lg:p-6 animate-fade-in">
             <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Market Dashboard</h1>
             
-            {/* Stats Row - Trading Performance */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6 animate-slide-up" style={{ '--delay': '100ms' } as React.CSSProperties}>
-              <StatsCard 
+            {/* Stats Row - Trading Performance with Sparklines */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6 stagger-animation">
+              <AnimatedStatsCard 
                 title="Total P&L" 
                 value={`$${tradeStats.totalPnL.toFixed(2)}`}
-                trend={tradeStats.totalPnL >= 0 ? Math.abs(tradeStats.totalPnL) : -Math.abs(tradeStats.totalPnL)}
-                icon={<DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />}
-                className={tradeStats.totalPnL >= 0 ? "bg-green-500/10" : "bg-red-500/10"}
+                trend={tradeStats.totalPnL}
+                trendLabel="all time"
+                icon={<DollarSign className="h-full w-full" />}
+                variant={tradeStats.totalPnL >= 0 ? "success" : "danger"}
+                sparklineData={generatePriceHistory(20, Math.abs(tradeStats.totalPnL) || 100, 5)}
+                delay={0}
               />
-              <StatsCard 
+              <AnimatedStatsCard 
                 title="Unrealized P&L" 
                 value={`$${tradeStats.unrealizedPnL.toFixed(2)}`}
                 description="Open positions"
-                icon={<TrendingUpIcon className="h-4 w-4 sm:h-5 sm:w-5" />}
-                className={tradeStats.unrealizedPnL >= 0 ? "bg-green-500/10" : "bg-red-500/10"}
+                icon={<TrendingUpIcon className="h-full w-full" />}
+                variant={tradeStats.unrealizedPnL >= 0 ? "success" : "danger"}
+                sparklineData={generatePriceHistory(20, Math.abs(tradeStats.unrealizedPnL) || 50, 3)}
+                delay={50}
               />
-              <StatsCard 
+              <AnimatedStatsCard 
                 title="Open Positions" 
                 value={tradeStats.openPositions.toString()}
                 description="Active trades"
-                icon={<Activity className="h-4 w-4 sm:h-5 sm:w-5" />}
-                className="bg-primary/5"
+                icon={<Activity className="h-full w-full" />}
+                variant="primary"
+                delay={100}
               />
-              <StatsCard 
+              <AnimatedStatsCard 
                 title="Win Rate" 
                 value={`${tradeStats.winRate.toFixed(1)}%`}
                 description="Success rate"
-                icon={<Target className="h-4 w-4 sm:h-5 sm:w-5" />}
-                className="bg-primary/5"
+                icon={<Target className="h-full w-full" />}
+                variant={tradeStats.winRate >= 50 ? "success" : "warning"}
+                sparklineData={generatePriceHistory(15, tradeStats.winRate || 50, 10)}
+                delay={150}
               />
-              <StatsCard 
+              <AnimatedStatsCard 
                 title="Total Trades" 
                 value={tradeStats.totalTrades.toString()}
                 description="All time"
-                icon={<BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />}
-                className="bg-primary/5"
+                icon={<BarChart3 className="h-full w-full" />}
+                variant="primary"
+                delay={200}
               />
             </div>
             
@@ -427,73 +436,70 @@ export function Dashboard() {
             
             {/* Trading Tools Section */}
             <div className="mt-6 sm:mt-8">
-              <h2 className="text-lg sm:text-2xl font-bold mb-4 sm:mb-6">Trading Tools</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 animate-slide-up" style={{ '--delay': '500ms' } as React.CSSProperties}>
-                <Link to="/trading-toolkit">
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <Calculator className="h-8 w-8 text-primary mb-2" />
-                      <CardTitle>Trading Toolkit</CardTitle>
-                      <CardDescription>Position sizing, risk management, and profit calculators</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button variant="outline" className="w-full">Open Toolkit</Button>
-                    </CardContent>
-                  </Card>
-                </Link>
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-2xl font-bold">Trading Tools</h2>
+                <span className="text-sm text-muted-foreground">Essential investor resources</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 stagger-animation">
+                <TradingToolCard
+                  to="/trading-toolkit"
+                  icon={<Calculator className="h-full w-full" />}
+                  title="Trading Toolkit"
+                  description="Position sizing, risk management, and profit calculators"
+                  buttonText="Open Toolkit"
+                  gradient="purple"
+                  delay={0}
+                />
 
+                <TradingToolCard
+                  to="/expected-move"
+                  icon={<Target className="h-full w-full" />}
+                  title="Expected Move"
+                  description="Predict stock price movements and ranges"
+                  buttonText="View Expected Move"
+                  gradient="blue"
+                  delay={50}
+                />
 
-                <Link to="/expected-move">
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <Target className="h-8 w-8 text-primary mb-2" />
-                      <CardTitle>Expected Move</CardTitle>
-                      <CardDescription>Predict stock price movements and ranges</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button variant="outline" className="w-full">View Expected Move</Button>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <TradingToolCard
+                  to="/options-risk"
+                  icon={<Shield className="h-full w-full" />}
+                  title="Options Risk"
+                  description="Monitor and analyze options position risk"
+                  buttonText="Check Risk"
+                  gradient="orange"
+                  delay={100}
+                />
 
-                <Link to="/options-risk">
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <Shield className="h-8 w-8 text-primary mb-2" />
-                      <CardTitle>Options Risk</CardTitle>
-                      <CardDescription>Monitor and analyze options position risk</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button variant="outline" className="w-full">Check Risk</Button>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <TradingToolCard
+                  to="/portfolio"
+                  icon={<Activity className="h-full w-full" />}
+                  title="Options Portfolio"
+                  description="Track and manage your options trades"
+                  buttonText="View Portfolio"
+                  gradient="green"
+                  delay={150}
+                />
 
-                <Link to="/portfolio">
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <Activity className="h-8 w-8 text-primary mb-2" />
-                      <CardTitle>Options Portfolio</CardTitle>
-                      <CardDescription>Track and manage your options trades</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button variant="outline" className="w-full">View Portfolio</Button>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <TradingToolCard
+                  to="/performance"
+                  icon={<TrendingUpIcon className="h-full w-full" />}
+                  title="Performance"
+                  description="Analyze your trading performance and P&L"
+                  buttonText="View Performance"
+                  gradient="pink"
+                  delay={200}
+                />
 
-                <Link to="/performance">
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <TrendingUpIcon className="h-8 w-8 text-primary mb-2" />
-                      <CardTitle>Performance</CardTitle>
-                      <CardDescription>Analyze your trading performance and P&L</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button variant="outline" className="w-full">View Performance</Button>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <TradingToolCard
+                  to="/fundamentals"
+                  icon={<BookOpen className="h-full w-full" />}
+                  title="Fundamentals"
+                  description="Deep dive into company financials and metrics"
+                  buttonText="Analyze"
+                  gradient="blue"
+                  delay={250}
+                />
               </div>
             </div>
           </div>
