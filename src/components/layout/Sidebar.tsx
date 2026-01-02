@@ -4,7 +4,7 @@ import {
   Settings, ChevronRight, ChevronLeft, Home, Calculator,
   TrendingUp, FolderKanban, Zap, BookOpen, Activity,
   TestTube, Users, Radar, FileText, BarChart3, BookMarked, BellRing,
-  Bot, Grid3X3, DollarSign
+  Bot, Grid3X3, DollarSign, CalendarDays
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -175,6 +175,11 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Dividend Tracker',
       icon: DollarSign,
       href: '/dividend-tracker',
+    },
+    {
+      title: 'Economic Calendar',
+      icon: CalendarDays,
+      href: '/economic-calendar',
     },
     {
       title: 'Credit Options Guide',
