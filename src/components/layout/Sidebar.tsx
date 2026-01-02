@@ -3,7 +3,7 @@ import {
   PieChart, Wallet, LineChart, 
   Settings, ChevronRight, ChevronLeft, Home, Calculator,
   TrendingUp, FolderKanban, Zap, BookOpen, Activity,
-  TestTube, Users, Radar, FileText, BarChart3, BookMarked
+  TestTube, Users, Radar, FileText, BarChart3, BookMarked, BellRing
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -154,6 +154,11 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Reports',
       icon: FileText,
       href: '/reports',
+    },
+    {
+      title: 'Alert History',
+      icon: BellRing,
+      href: '/alert-history',
     },
     {
       title: 'Credit Options Guide',
