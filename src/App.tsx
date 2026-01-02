@@ -28,6 +28,9 @@ import TradeAssistant from "./pages/TradeAssistant";
 import SectorHeatmap from "./pages/SectorHeatmap";
 import DividendTracker from "./pages/DividendTracker";
 import EconomicCalendar from "./pages/EconomicCalendar";
+import CorrelationMatrix from "./pages/CorrelationMatrix";
+import RiskMetrics from "./pages/RiskMetrics";
+import MarketNews from "./pages/MarketNews";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +64,9 @@ const App = () => (
           <Route path="/sector-heatmap" element={<SectorHeatmap />} />
           <Route path="/dividend-tracker" element={<DividendTracker />} />
           <Route path="/economic-calendar" element={<EconomicCalendar />} />
+          <Route path="/correlation-matrix" element={<CorrelationMatrix />} />
+          <Route path="/risk-metrics" element={<RiskMetrics />} />
+          <Route path="/market-news" element={<MarketNews />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

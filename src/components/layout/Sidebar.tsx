@@ -4,7 +4,7 @@ import {
   Settings, ChevronRight, ChevronLeft, Home, Calculator,
   TrendingUp, FolderKanban, Zap, BookOpen, Activity,
   TestTube, Users, Radar, FileText, BarChart3, BookMarked, BellRing,
-  Bot, Grid3X3, DollarSign, CalendarDays
+  Bot, Grid3X3, DollarSign, CalendarDays, GitCompare, Shield, Newspaper
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -180,6 +180,21 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Economic Calendar',
       icon: CalendarDays,
       href: '/economic-calendar',
+    },
+    {
+      title: 'Correlation Matrix',
+      icon: GitCompare,
+      href: '/correlation-matrix',
+    },
+    {
+      title: 'Risk Metrics',
+      icon: Shield,
+      href: '/risk-metrics',
+    },
+    {
+      title: 'Market News',
+      icon: Newspaper,
+      href: '/market-news',
     },
     {
       title: 'Credit Options Guide',
