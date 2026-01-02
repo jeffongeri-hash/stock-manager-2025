@@ -101,6 +101,54 @@ export type Database = {
         }
         Relationships: []
       }
+      optimization_results: {
+        Row: {
+          all_results: Json
+          best_combination: Json
+          best_max_drawdown: number | null
+          best_return: number
+          best_sharpe: number | null
+          created_at: string
+          id: string
+          parameters: Json
+          strategy_name: string
+          symbol: string
+          timeframe: string
+          total_combinations: number
+          user_id: string
+        }
+        Insert: {
+          all_results: Json
+          best_combination: Json
+          best_max_drawdown?: number | null
+          best_return: number
+          best_sharpe?: number | null
+          created_at?: string
+          id?: string
+          parameters: Json
+          strategy_name: string
+          symbol: string
+          timeframe: string
+          total_combinations: number
+          user_id: string
+        }
+        Update: {
+          all_results?: Json
+          best_combination?: Json
+          best_max_drawdown?: number | null
+          best_return?: number
+          best_sharpe?: number | null
+          created_at?: string
+          id?: string
+          parameters?: Json
+          strategy_name?: string
+          symbol?: string
+          timeframe?: string
+          total_combinations?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

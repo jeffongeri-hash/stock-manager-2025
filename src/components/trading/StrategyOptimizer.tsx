@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter, ZAxis } from 'recharts';
-import { Settings2, Play, Zap, Trophy, TrendingUp, Target, AlertTriangle, Loader2 } from 'lucide-react';
+import { Settings2, Play, Zap, Trophy, TrendingUp, Target, AlertTriangle, Loader2, Save, History, Trash2, Download } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { format } from 'date-fns';
 
 interface ParameterRange {
   name: string;
@@ -60,25 +64,165 @@ const STRATEGIES = [
   { id: 'macd', name: 'MACD', description: 'MACD crossover signals' },
 ];
 
+interface SavedOptimization {
+  id: string;
+  strategy_name: string;
+  symbol: string;
+  timeframe: string;
+  parameters: Record<string, { min: number; max: number; step: number }>;
+  best_combination: Record<string, number>;
+  all_results: OptimizationResult[];
+  best_return: number;
+  best_sharpe: number;
+  best_max_drawdown: number;
+  total_combinations: number;
+  created_at: string;
+}
+
 export const StrategyOptimizer: React.FC = () => {
+  const { user } = useAuth();
   const [selectedStrategy, setSelectedStrategy] = useState('rsi');
   const [symbol, setSymbol] = useState('SPY');
   const [timeframe, setTimeframe] = useState('1y');
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<OptimizationResult[]>([]);
   const [bestResult, setBestResult] = useState<OptimizationResult | null>(null);
   const [parameterRanges, setParameterRanges] = useState<Record<string, { min: number; max: number; step: number }>>({});
+  const [savedOptimizations, setSavedOptimizations] = useState<SavedOptimization[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [activeTab, setActiveTab] = useState('optimize');
 
   const currentParams = STRATEGY_PARAMETERS[selectedStrategy] || [];
 
-  React.useEffect(() => {
+  useEffect(() => {
     const ranges: Record<string, { min: number; max: number; step: number }> = {};
     currentParams.forEach(param => {
       ranges[param.name] = { min: param.min, max: param.max, step: param.step };
     });
     setParameterRanges(ranges);
   }, [selectedStrategy]);
+
+  useEffect(() => {
+    if (user) {
+      fetchSavedOptimizations();
+    }
+  }, [user]);
+
+  const fetchSavedOptimizations = async () => {
+    if (!user) return;
+    
+    setIsLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('optimization_results')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      setSavedOptimizations((data || []).map(d => ({
+        ...d,
+        parameters: d.parameters as unknown as Record<string, { min: number; max: number; step: number }>,
+        best_combination: d.best_combination as unknown as Record<string, number>,
+        all_results: d.all_results as unknown as OptimizationResult[],
+      })));
+    } catch (error) {
+      console.error('Error fetching saved optimizations:', error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  const saveOptimization = async () => {
+    if (!user || !bestResult || results.length === 0) {
+      toast.error('No optimization results to save. Please run an optimization first.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('optimization_results')
+        .insert([{
+          user_id: user.id,
+          strategy_name: selectedStrategy,
+          symbol: symbol,
+          timeframe: timeframe,
+          parameters: JSON.parse(JSON.stringify(parameterRanges)),
+          best_combination: JSON.parse(JSON.stringify(bestResult.parameters)),
+          all_results: JSON.parse(JSON.stringify(results)),
+          best_return: bestResult.totalReturn,
+          best_sharpe: bestResult.sharpeRatio,
+          best_max_drawdown: bestResult.maxDrawdown,
+          total_combinations: results.length,
+        }]);
+
+      if (error) throw error;
+      
+      toast.success('Optimization results saved successfully!');
+      fetchSavedOptimizations();
+    } catch (error) {
+      console.error('Error saving optimization:', error);
+      toast.error('Failed to save optimization results');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+
+
+  const deleteOptimization = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('optimization_results')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Optimization deleted');
+      setSavedOptimizations(prev => prev.filter(o => o.id !== id));
+    } catch (error) {
+      console.error('Error deleting optimization:', error);
+      toast.error('Failed to delete optimization');
+    }
+  };
+
+  const loadOptimization = (saved: SavedOptimization) => {
+    setSelectedStrategy(saved.strategy_name);
+    setSymbol(saved.symbol);
+    setTimeframe(saved.timeframe);
+    setParameterRanges(saved.parameters);
+    setResults(saved.all_results);
+    setBestResult(saved.all_results[0] || null);
+    setActiveTab('optimize');
+    toast.success('Optimization loaded');
+  };
+
+  const exportToCSV = (saved: SavedOptimization) => {
+    const headers = ['Rank', ...Object.keys(saved.best_combination), 'Return %', 'Sharpe', 'Max DD %', 'Win Rate %', 'Trades'];
+    const rows = saved.all_results.slice(0, 100).map((r, idx) => [
+      idx + 1,
+      ...Object.values(r.parameters),
+      r.totalReturn,
+      r.sharpeRatio,
+      r.maxDrawdown,
+      r.winRate,
+      r.trades
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `optimization_${saved.strategy_name}_${saved.symbol}_${format(new Date(saved.created_at), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Exported to CSV');
+  };
 
   const updateParamRange = (paramName: string, field: 'min' | 'max' | 'step', value: number) => {
     setParameterRanges(prev => ({
@@ -210,7 +354,20 @@ export const StrategyOptimizer: React.FC = () => {
             Test thousands of parameter combinations to find optimal settings for your strategy
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-6">
+              <TabsTrigger value="optimize">
+                <Zap className="h-4 w-4 mr-2" />
+                Optimize
+              </TabsTrigger>
+              <TabsTrigger value="history">
+                <History className="h-4 w-4 mr-2" />
+                History ({savedOptimizations.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="optimize" className="space-y-6">
           {/* Configuration */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -303,32 +460,125 @@ export const StrategyOptimizer: React.FC = () => {
             </div>
           </div>
 
-          {/* Run Button */}
-          <div className="flex items-center gap-4">
-            <Button 
-              onClick={runOptimization} 
-              disabled={isOptimizing}
-              className="flex-1 md:flex-none"
-            >
-              {isOptimizing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Optimizing...
-                </>
-              ) : (
-                <>
-                  <Zap className="h-4 w-4 mr-2" />
-                  Run Optimization ({generateCombinations().length} combinations)
-                </>
-              )}
-            </Button>
-            {isOptimizing && (
-              <div className="flex-1 space-y-1">
-                <Progress value={progress} />
-                <p className="text-xs text-muted-foreground text-center">{progress}% complete</p>
+              {/* Run Button */}
+              <div className="flex items-center gap-4">
+                <Button 
+                  onClick={runOptimization} 
+                  disabled={isOptimizing}
+                  className="flex-1 md:flex-none"
+                >
+                  {isOptimizing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Optimizing...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-4 w-4 mr-2" />
+                      Run Optimization ({generateCombinations().length} combinations)
+                    </>
+                  )}
+                </Button>
+                {bestResult && !isOptimizing && user && (
+                  <Button 
+                    onClick={saveOptimization} 
+                    disabled={isSaving}
+                    variant="outline"
+                  >
+                    {isSaving ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Save Results
+                  </Button>
+                )}
+                {isOptimizing && (
+                  <div className="flex-1 space-y-1">
+                    <Progress value={progress} />
+                    <p className="text-xs text-muted-foreground text-center">{progress}% complete</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </TabsContent>
+
+            <TabsContent value="history">
+              {!user ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Sign in to save and view optimization history</p>
+                </div>
+              ) : isLoadingHistory ? (
+                <div className="text-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                  <p className="text-muted-foreground mt-2">Loading history...</p>
+                </div>
+              ) : savedOptimizations.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No saved optimizations yet</p>
+                  <p className="text-sm">Run an optimization and save the results to see them here</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {savedOptimizations.map((saved) => (
+                    <Card key={saved.id} className="hover:bg-muted/50 transition-colors">
+                      <CardContent className="py-4">
+                        <div className="flex items-center justify-between flex-wrap gap-4">
+                          <div className="flex-1 min-w-[200px]">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge variant="secondary">
+                                {STRATEGIES.find(s => s.id === saved.strategy_name)?.name || saved.strategy_name}
+                              </Badge>
+                              <Badge variant="outline">{saved.symbol}</Badge>
+                              <Badge variant="outline">{saved.timeframe}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {format(new Date(saved.created_at), 'MMM d, yyyy h:mm a')} • {saved.total_combinations} combinations tested
+                            </p>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {Object.entries(saved.best_combination).map(([key, value]) => (
+                                <Badge key={key} variant="outline" className="text-xs">
+                                  {key}={value}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Return</p>
+                              <p className={`font-bold ${saved.best_return >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {saved.best_return >= 0 ? '+' : ''}{saved.best_return}%
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Sharpe</p>
+                              <p className="font-bold text-blue-500">{saved.best_sharpe}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Max DD</p>
+                              <p className="font-bold text-yellow-500">-{saved.best_max_drawdown}%</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => loadOptimization(saved)}>
+                              Load
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => exportToCSV(saved)}>
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => deleteOptimization(saved.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
