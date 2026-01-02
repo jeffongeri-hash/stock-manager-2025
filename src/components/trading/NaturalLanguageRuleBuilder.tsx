@@ -40,6 +40,8 @@ interface ParsedRule {
 
 interface NaturalLanguageRuleBuilderProps {
   onRuleCreated?: (rule: any) => void;
+  onRuleTextChange?: (text: string, parsedRule: ParsedRule | null) => void;
+  initialRuleText?: string;
 }
 
 const exampleRules = [
@@ -49,11 +51,24 @@ const exampleRules = [
   "If QQQ Daily Change is above 0% and QQQ Daily Change with an offset of 1 bar is above 0% and VXN is below 22 and QQQ RSI(14, Daily) is below 65 and time is 3:55 PM ET then buy 100 QQQ at Market"
 ];
 
-export const NaturalLanguageRuleBuilder: React.FC<NaturalLanguageRuleBuilderProps> = ({ onRuleCreated }) => {
-  const [ruleText, setRuleText] = useState('');
+export const NaturalLanguageRuleBuilder: React.FC<NaturalLanguageRuleBuilderProps> = ({ 
+  onRuleCreated, 
+  onRuleTextChange,
+  initialRuleText 
+}) => {
+  const [ruleText, setRuleText] = useState(initialRuleText || '');
   const [isLoading, setIsLoading] = useState(false);
   const [parsedRule, setParsedRule] = useState<ParsedRule | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
+
+  // Update rule text when initial value changes
+  React.useEffect(() => {
+    if (initialRuleText && initialRuleText !== ruleText) {
+      setRuleText(initialRuleText);
+      setParsedRule(null);
+      setParseError(null);
+    }
+  }, [initialRuleText]);
 
   const parseRule = async () => {
     if (!ruleText.trim()) {
@@ -77,6 +92,7 @@ export const NaturalLanguageRuleBuilder: React.FC<NaturalLanguageRuleBuilderProp
         toast.error(data.error);
       } else if (data.parsedRule) {
         setParsedRule(data.parsedRule);
+        onRuleTextChange?.(ruleText, data.parsedRule);
         toast.success('Rule parsed successfully!');
       }
     } catch (error) {
