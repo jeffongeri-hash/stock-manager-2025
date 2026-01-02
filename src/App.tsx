@@ -31,6 +31,10 @@ import EconomicCalendar from "./pages/EconomicCalendar";
 import CorrelationMatrix from "./pages/CorrelationMatrix";
 import RiskMetrics from "./pages/RiskMetrics";
 import MarketNews from "./pages/MarketNews";
+import PortfolioRebalancing from "./pages/PortfolioRebalancing";
+import TradingViewWebhook from "./pages/TradingViewWebhook";
+import TradingAutomation from "./pages/TradingAutomation";
+import Watchlist from "./pages/Watchlist";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +71,10 @@ const App = () => (
           <Route path="/correlation-matrix" element={<CorrelationMatrix />} />
           <Route path="/risk-metrics" element={<RiskMetrics />} />
           <Route path="/market-news" element={<MarketNews />} />
+          <Route path="/portfolio-rebalancing" element={<PortfolioRebalancing />} />
+          <Route path="/tradingview-webhook" element={<TradingViewWebhook />} />
+          <Route path="/trading-automation" element={<TradingAutomation />} />
+          <Route path="/watchlist" element={<Watchlist />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

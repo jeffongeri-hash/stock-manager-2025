@@ -4,7 +4,8 @@ import {
   Settings, ChevronRight, ChevronLeft, Home, Calculator,
   TrendingUp, FolderKanban, Zap, BookOpen, Activity,
   TestTube, Users, Radar, FileText, BarChart3, BookMarked, BellRing,
-  Bot, Grid3X3, DollarSign, CalendarDays, GitCompare, Shield, Newspaper
+  Bot, Grid3X3, DollarSign, CalendarDays, GitCompare, Shield, Newspaper,
+  Scale, Webhook, Cpu, Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -195,6 +196,26 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Market News',
       icon: Newspaper,
       href: '/market-news',
+    },
+    {
+      title: 'Portfolio Rebalancing',
+      icon: Scale,
+      href: '/portfolio-rebalancing',
+    },
+    {
+      title: 'TradingView Webhook',
+      icon: Webhook,
+      href: '/tradingview-webhook',
+    },
+    {
+      title: 'Trading Automation',
+      icon: Cpu,
+      href: '/trading-automation',
+    },
+    {
+      title: 'Watchlist & Alerts',
+      icon: Eye,
+      href: '/watchlist',
     },
     {
       title: 'Credit Options Guide',
