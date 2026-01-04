@@ -39,7 +39,7 @@ interface TradingRule {
 interface BrokerConnection {
   id: string;
   name: string;
-  type: 'interactive_brokers' | 'alpaca' | 'td_ameritrade' | 'capitalise_ai';
+  type: 'interactive_brokers' | 'td_ameritrade' | 'capitalise_ai';
   status: 'connected' | 'disconnected' | 'pending';
   accountId?: string;
   lastSync?: string;
@@ -138,11 +138,17 @@ const TradingAutomation = () => {
       }
     }
 
+    if (type === 'td_ameritrade') {
+      if (!ibCredentials.username || !ibCredentials.accountId) {
+        toast.error('Please enter your TD Ameritrade credentials');
+        return;
+      }
+    }
+
     const newConnection: BrokerConnection = {
       id: Date.now().toString(),
       name: type === 'interactive_brokers' ? 'Interactive Brokers' : 
-            type === 'capitalise_ai' ? 'Capitalise.ai (IBKR)' : 
-            type === 'alpaca' ? 'Alpaca' : 'TD Ameritrade',
+            type === 'capitalise_ai' ? 'Capitalise.ai (IBKR)' : 'TD Ameritrade',
       type,
       status: 'pending',
       accountId: ibCredentials.accountId || undefined
@@ -607,15 +613,28 @@ const TradingAutomation = () => {
                         </Button>
                       </div>
 
-                      <div className="text-center">
-                        <p className="text-sm text-muted-foreground">or connect other brokers</p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <Button variant="outline" onClick={() => connectBroker('alpaca')}>
-                          Connect Alpaca
-                        </Button>
-                        <Button variant="outline" onClick={() => connectBroker('td_ameritrade')}>
+                      <div className="border-t pt-4 mt-4">
+                        <h4 className="font-medium mb-3">TD Ameritrade Connection</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <Label>TD Ameritrade Username / Client ID</Label>
+                            <Input 
+                              placeholder="Your TD Ameritrade username or client ID"
+                              value={ibCredentials.username}
+                              onChange={(e) => setIbCredentials({ ...ibCredentials, username: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label>Account Number</Label>
+                            <Input 
+                              placeholder="Your TD Ameritrade account number"
+                              value={ibCredentials.accountId}
+                              onChange={(e) => setIbCredentials({ ...ibCredentials, accountId: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                        <Button onClick={() => connectBroker('td_ameritrade')} className="w-full" variant="outline">
+                          <Link2 className="h-4 w-4 mr-2" />
                           Connect TD Ameritrade
                         </Button>
                       </div>
@@ -671,24 +690,21 @@ const TradingAutomation = () => {
                 <CardTitle>Supported Brokers</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="border rounded-lg p-4 text-center">
                     <h3 className="font-semibold mb-2">Interactive Brokers</h3>
                     <p className="text-xs text-muted-foreground">Professional trading platform with global market access</p>
                     <Badge className="mt-2">Recommended</Badge>
                   </div>
                   <div className="border rounded-lg p-4 text-center">
+                    <h3 className="font-semibold mb-2">TD Ameritrade</h3>
+                    <p className="text-xs text-muted-foreground">Full-featured brokerage with thinkorswim integration</p>
+                    <Badge variant="secondary" className="mt-2">Popular</Badge>
+                  </div>
+                  <div className="border rounded-lg p-4 text-center">
                     <h3 className="font-semibold mb-2">Capitalise.ai</h3>
                     <p className="text-xs text-muted-foreground">Connect IBKR via natural language automation</p>
                     <Badge variant="outline" className="mt-2">Via IBKR</Badge>
-                  </div>
-                  <div className="border rounded-lg p-4 text-center">
-                    <h3 className="font-semibold mb-2">Alpaca</h3>
-                    <p className="text-xs text-muted-foreground">Commission-free trading API for stocks</p>
-                  </div>
-                  <div className="border rounded-lg p-4 text-center">
-                    <h3 className="font-semibold mb-2">TD Ameritrade</h3>
-                    <p className="text-xs text-muted-foreground">Full-featured brokerage with API access</p>
                   </div>
                 </div>
               </CardContent>
