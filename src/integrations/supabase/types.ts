@@ -101,6 +101,45 @@ export type Database = {
         }
         Relationships: []
       }
+      broker_connections: {
+        Row: {
+          access_token: string | null
+          accounts: Json | null
+          broker_type: string
+          created_at: string
+          id: string
+          refresh_token: string | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          accounts?: Json | null
+          broker_type: string
+          created_at?: string
+          id?: string
+          refresh_token?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          accounts?: Json | null
+          broker_type?: string
+          created_at?: string
+          id?: string
+          refresh_token?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       optimization_results: {
         Row: {
           all_results: Json
@@ -145,6 +184,60 @@ export type Database = {
           symbol?: string
           timeframe?: string
           total_combinations?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      order_executions: {
+        Row: {
+          account_id: string
+          broker_type: string
+          created_at: string
+          error_message: string | null
+          executed_at: string | null
+          id: string
+          instruction: string
+          order_id: string | null
+          order_type: string
+          price: number | null
+          quantity: number
+          status: string
+          stop_price: number | null
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          broker_type: string
+          created_at?: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          instruction: string
+          order_id?: string | null
+          order_type: string
+          price?: number | null
+          quantity: number
+          status?: string
+          stop_price?: number | null
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          broker_type?: string
+          created_at?: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          instruction?: string
+          order_id?: string | null
+          order_type?: string
+          price?: number | null
+          quantity?: number
+          status?: string
+          stop_price?: number | null
+          symbol?: string
           user_id?: string
         }
         Relationships: []

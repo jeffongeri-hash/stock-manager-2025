@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,13 +9,15 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle } from 'lucide-react';
+import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle, Loader2 } from 'lucide-react';
 import { NaturalLanguageRuleBuilder } from '@/components/trading/NaturalLanguageRuleBuilder';
 import { StrategyTemplateLibrary, StrategyTemplate } from '@/components/trading/StrategyTemplateLibrary';
 import { RuleBacktester } from '@/components/trading/RuleBacktester';
 import { StrategyComparison } from '@/components/trading/StrategyComparison';
 import { StrategyOptimizer } from '@/components/trading/StrategyOptimizer';
 import { WalkForwardAnalysis } from '@/components/trading/WalkForwardAnalysis';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TradingRule {
   id: string;
@@ -66,6 +68,7 @@ const defaultRules: TradingRule[] = [
 ];
 
 const TradingAutomation = () => {
+  const { user } = useAuth();
   const [rules, setRules] = useState<TradingRule[]>(defaultRules);
   const [showNewRule, setShowNewRule] = useState(false);
   const [brokerConnections, setBrokerConnections] = useState<BrokerConnection[]>([]);
@@ -73,6 +76,7 @@ const TradingAutomation = () => {
   const [selectedTemplateText, setSelectedTemplateText] = useState('');
   const [currentRuleText, setCurrentRuleText] = useState('');
   const [currentParsedRule, setCurrentParsedRule] = useState<any>(null);
+  const [isConnectingTD, setIsConnectingTD] = useState(false);
   const [ibCredentials, setIbCredentials] = useState({ 
     username: '', 
     accountId: '',
@@ -84,6 +88,144 @@ const TradingAutomation = () => {
     condition: { type: 'price_above', symbol: '', value: 0, timeframe: '1D' },
     action: { type: 'alert', quantity: 0, orderType: 'market' }
   });
+
+  // Load broker connections from database
+  useEffect(() => {
+    if (!user) return;
+    
+    const loadBrokerConnections = async () => {
+      const { data, error } = await supabase
+        .from('broker_connections')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (!error && data) {
+        const connections: BrokerConnection[] = data.map(conn => ({
+          id: conn.id,
+          name: conn.broker_type === 'td_ameritrade' ? 'TD Ameritrade' : 
+                conn.broker_type === 'interactive_brokers' ? 'Interactive Brokers' : 'Capitalise.ai',
+          type: conn.broker_type as BrokerConnection['type'],
+          status: conn.status as BrokerConnection['status'],
+          accountId: (conn.accounts as any)?.[0]?.securitiesAccount?.accountId,
+          lastSync: conn.updated_at,
+        }));
+        setBrokerConnections(connections);
+      }
+    };
+
+    loadBrokerConnections();
+  }, [user]);
+
+  // Handle OAuth callback for TD Ameritrade
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if (code && user) {
+      handleTDCallback(code);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [user]);
+
+  const handleTDCallback = async (code: string) => {
+    if (!user) return;
+    
+    setIsConnectingTD(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('td-callback', {
+        body: { code, userId: user.id }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success('TD Ameritrade connected successfully!');
+        // Reload connections
+        const { data: connections } = await supabase
+          .from('broker_connections')
+          .select('*')
+          .eq('user_id', user.id);
+        
+        if (connections) {
+          const mapped: BrokerConnection[] = connections.map(conn => ({
+            id: conn.id,
+            name: 'TD Ameritrade',
+            type: 'td_ameritrade',
+            status: conn.status as BrokerConnection['status'],
+            accountId: (conn.accounts as any)?.[0]?.securitiesAccount?.accountId,
+            lastSync: conn.updated_at,
+          }));
+          setBrokerConnections(mapped);
+        }
+      }
+    } catch (error: any) {
+      console.error('TD callback error:', error);
+      toast.error('Failed to connect TD Ameritrade: ' + error.message);
+    } finally {
+      setIsConnectingTD(false);
+    }
+  };
+
+  const connectTDAmeritrade = async () => {
+    setIsConnectingTD(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('td-auth');
+      
+      if (error) throw error;
+
+      if (data.authUrl) {
+        // Redirect to TD Ameritrade OAuth
+        window.location.href = data.authUrl;
+      } else if (data.error) {
+        toast.error(data.message || data.error);
+      }
+    } catch (error: any) {
+      console.error('TD auth error:', error);
+      toast.error('Failed to start TD Ameritrade authentication');
+    } finally {
+      setIsConnectingTD(false);
+    }
+  };
+
+  const executeOrder = async (symbol: string, quantity: number, instruction: 'BUY' | 'SELL', orderType: 'MARKET' | 'LIMIT' = 'MARKET', price?: number) => {
+    if (!user) {
+      toast.error('Please sign in to execute trades');
+      return;
+    }
+
+    const tdConnection = brokerConnections.find(c => c.type === 'td_ameritrade' && c.status === 'connected');
+    if (!tdConnection || !tdConnection.accountId) {
+      toast.error('No connected TD Ameritrade account found');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('td-execute-order', {
+        body: {
+          userId: user.id,
+          accountId: tdConnection.accountId,
+          symbol,
+          quantity,
+          orderType,
+          instruction,
+          price,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success(data.message);
+        return data.orderId;
+      } else {
+        toast.error(data.error || 'Order execution failed');
+      }
+    } catch (error: any) {
+      console.error('Order execution error:', error);
+      toast.error('Failed to execute order: ' + error.message);
+    }
+  };
 
   const handleTemplateSelect = (template: StrategyTemplate) => {
     setSelectedTemplateText(template.ruleText);
@@ -614,29 +756,35 @@ const TradingAutomation = () => {
                       </div>
 
                       <div className="border-t pt-4 mt-4">
-                        <h4 className="font-medium mb-3">TD Ameritrade Connection</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <Label>TD Ameritrade Username / Client ID</Label>
-                            <Input 
-                              placeholder="Your TD Ameritrade username or client ID"
-                              value={ibCredentials.username}
-                              onChange={(e) => setIbCredentials({ ...ibCredentials, username: e.target.value })}
-                            />
-                          </div>
-                          <div>
-                            <Label>Account Number</Label>
-                            <Input 
-                              placeholder="Your TD Ameritrade account number"
-                              value={ibCredentials.accountId}
-                              onChange={(e) => setIbCredentials({ ...ibCredentials, accountId: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                        <Button onClick={() => connectBroker('td_ameritrade')} className="w-full" variant="outline">
-                          <Link2 className="h-4 w-4 mr-2" />
-                          Connect TD Ameritrade
+                        <h4 className="font-medium mb-3 flex items-center gap-2">
+                          TD Ameritrade Connection
+                          <Badge variant="secondary">OAuth</Badge>
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Connect securely using TD Ameritrade's official OAuth flow. You'll be redirected to TD Ameritrade to authorize access.
+                        </p>
+                        <Button 
+                          onClick={connectTDAmeritrade} 
+                          className="w-full" 
+                          disabled={isConnectingTD || !user}
+                        >
+                          {isConnectingTD ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Connecting...
+                            </>
+                          ) : (
+                            <>
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Connect with TD Ameritrade OAuth
+                            </>
+                          )}
                         </Button>
+                        {!user && (
+                          <p className="text-xs text-muted-foreground mt-2 text-center">
+                            Please sign in to connect your broker account
+                          </p>
+                        )}
                       </div>
 
                       <Button variant="ghost" className="w-full" onClick={() => setShowBrokerSetup(false)}>
