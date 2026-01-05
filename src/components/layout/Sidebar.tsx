@@ -5,7 +5,7 @@ import {
   TrendingUp, FolderKanban, Zap, BookOpen, Activity,
   TestTube, Users, Radar, FileText, BarChart3, BookMarked, BellRing,
   Bot, Grid3X3, DollarSign, CalendarDays, GitCompare, Shield, Newspaper,
-  Scale, Webhook, Cpu, Eye
+  Scale, Webhook, Cpu, Eye, FlaskConical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -131,6 +131,11 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Fundamentals',
       icon: BarChart3,
       href: '/fundamentals',
+    },
+    {
+      title: 'Multi-Stock Research',
+      icon: FlaskConical,
+      href: '/stock-research',
     },
     {
       title: 'Trade Journal',
