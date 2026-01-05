@@ -9,9 +9,92 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line, Area, AreaChart } from 'recharts';
-import { Plus, X, Calculator, TrendingUp, Shield, Target, Grid3X3, Save, FolderOpen, Trash2, PlayCircle, Download, Loader2 } from 'lucide-react';
+import { Plus, X, Calculator, TrendingUp, Shield, Target, Grid3X3, Save, FolderOpen, Trash2, PlayCircle, Download, Loader2, AlertTriangle, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { BarChart, Bar, ReferenceLine } from 'recharts';
+
+// Historical stress scenarios based on actual market data
+interface StressScenario {
+  id: string;
+  name: string;
+  description: string;
+  period: string;
+  marketDrop: number; // S&P 500 decline
+  volatilitySpike: number; // VIX spike multiplier
+  correlationIncrease: number; // How much correlations increase toward 1
+  durationMonths: number;
+  recoveryMonths: number;
+}
+
+const STRESS_SCENARIOS: StressScenario[] = [
+  {
+    id: '2008-financial',
+    name: '2008 Financial Crisis',
+    description: 'Lehman Brothers collapse, housing market crash, global banking crisis',
+    period: 'Sep 2008 - Mar 2009',
+    marketDrop: -56.8,
+    volatilitySpike: 3.5,
+    correlationIncrease: 0.85,
+    durationMonths: 17,
+    recoveryMonths: 49,
+  },
+  {
+    id: '2020-covid',
+    name: 'COVID-19 Crash',
+    description: 'Global pandemic triggers fastest market decline in history',
+    period: 'Feb 2020 - Mar 2020',
+    marketDrop: -33.9,
+    volatilitySpike: 4.0,
+    correlationIncrease: 0.9,
+    durationMonths: 1,
+    recoveryMonths: 5,
+  },
+  {
+    id: '2000-dotcom',
+    name: 'Dot-Com Bubble',
+    description: 'Tech bubble burst, NASDAQ lost 78% from peak',
+    period: 'Mar 2000 - Oct 2002',
+    marketDrop: -49.1,
+    volatilitySpike: 2.0,
+    correlationIncrease: 0.7,
+    durationMonths: 30,
+    recoveryMonths: 56,
+  },
+  {
+    id: '2022-bear',
+    name: '2022 Bear Market',
+    description: 'Fed rate hikes, inflation surge, growth stock selloff',
+    period: 'Jan 2022 - Oct 2022',
+    marketDrop: -25.4,
+    volatilitySpike: 1.8,
+    correlationIncrease: 0.65,
+    durationMonths: 10,
+    recoveryMonths: 14,
+  },
+  {
+    id: '1987-blackmonday',
+    name: 'Black Monday 1987',
+    description: 'Single-day crash of 22.6%, largest one-day decline',
+    period: 'Oct 19, 1987',
+    marketDrop: -33.5,
+    volatilitySpike: 5.0,
+    correlationIncrease: 0.95,
+    durationMonths: 2,
+    recoveryMonths: 20,
+  },
+  {
+    id: 'custom-mild',
+    name: 'Mild Correction',
+    description: 'Typical 10-15% market correction',
+    period: 'Hypothetical',
+    marketDrop: -15,
+    volatilitySpike: 1.5,
+    correlationIncrease: 0.5,
+    durationMonths: 3,
+    recoveryMonths: 6,
+  },
+];
 
 interface Preset {
   id: string;
@@ -91,6 +174,19 @@ export const PortfolioOptimizer = () => {
   // Historical correlation import state
   const [isLoadingCorrelations, setIsLoadingCorrelations] = useState(false);
   const [correlationPeriod, setCorrelationPeriod] = useState('1y');
+  
+  // Stress testing state
+  const [stressResults, setStressResults] = useState<{
+    scenario: StressScenario;
+    portfolioLoss: number;
+    stressedValue: number;
+    recoveryValue: number;
+    maxDrawdown: number;
+    monthlyPath: { month: number; value: number }[];
+    assetImpacts: { symbol: string; loss: number; weight: number }[];
+  }[] | null>(null);
+  const [selectedScenarios, setSelectedScenarios] = useState<string[]>(['2008-financial', '2020-covid']);
+  const [isRunningStressTest, setIsRunningStressTest] = useState(false);
 
   // Initialize correlation matrix when stocks change
   useEffect(() => {
@@ -333,6 +429,92 @@ export const PortfolioOptimizer = () => {
     } finally {
       setIsLoadingCorrelations(false);
     }
+  };
+
+  // Run stress test scenarios
+  const runStressTests = () => {
+    if (!optimalPortfolio || stocks.length < 2) {
+      toast.error('Need optimal portfolio to run stress tests');
+      return;
+    }
+
+    setIsRunningStressTest(true);
+    
+    setTimeout(() => {
+      const scenariosToTest = STRESS_SCENARIOS.filter(s => selectedScenarios.includes(s.id));
+      const weights = optimalPortfolio.weights;
+      const volatilities = stocks.map(s => s.volatility / 100);
+      
+      const results = scenariosToTest.map(scenario => {
+        // Calculate portfolio beta (simplified - assume average beta of 1.1 for stocks)
+        const avgBeta = 1.1;
+        
+        // Portfolio loss is proportional to market drop, adjusted by correlation and beta
+        const portfolioLoss = scenario.marketDrop * avgBeta * (1 + (scenario.correlationIncrease - 0.5) * 0.3);
+        
+        // Calculate stressed value
+        const stressedValue = initialInvestment * (1 + portfolioLoss / 100);
+        
+        // Calculate asset-specific impacts
+        const assetImpacts = stocks.map((stock, i) => {
+          // Higher volatility assets tend to drop more in crisis
+          const volMultiplier = volatilities[i] / 0.2; // Relative to 20% avg volatility
+          const assetLoss = scenario.marketDrop * avgBeta * volMultiplier * (1 + (scenario.correlationIncrease - 0.5) * 0.4);
+          return {
+            symbol: stock.symbol,
+            loss: Math.max(assetLoss, -99), // Cap at -99%
+            weight: weights[i] * 100
+          };
+        });
+        
+        // Generate monthly path simulation
+        const monthlyPath: { month: number; value: number }[] = [];
+        let currentValue = initialInvestment;
+        
+        // Decline phase
+        const monthlyDecline = portfolioLoss / scenario.durationMonths;
+        for (let m = 0; m <= scenario.durationMonths; m++) {
+          monthlyPath.push({ month: m, value: currentValue });
+          // Add some volatility to the decline
+          const noise = (Math.random() - 0.5) * Math.abs(monthlyDecline) * 0.3;
+          currentValue = currentValue * (1 + (monthlyDecline + noise) / 100);
+        }
+        
+        const bottomValue = currentValue;
+        
+        // Recovery phase
+        const totalRecovery = (initialInvestment - bottomValue) / bottomValue;
+        const monthlyRecovery = totalRecovery / scenario.recoveryMonths;
+        for (let m = 1; m <= scenario.recoveryMonths; m++) {
+          const noise = (Math.random() - 0.5) * monthlyRecovery * 0.2;
+          currentValue = currentValue * (1 + monthlyRecovery + noise);
+          monthlyPath.push({ month: scenario.durationMonths + m, value: currentValue });
+        }
+        
+        // Calculate max drawdown
+        let peak = monthlyPath[0].value;
+        let maxDrawdown = 0;
+        for (const point of monthlyPath) {
+          if (point.value > peak) peak = point.value;
+          const drawdown = (peak - point.value) / peak * 100;
+          if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+        }
+        
+        return {
+          scenario,
+          portfolioLoss,
+          stressedValue: Math.max(0, stressedValue),
+          recoveryValue: currentValue,
+          maxDrawdown,
+          monthlyPath,
+          assetImpacts
+        };
+      });
+      
+      setStressResults(results);
+      setIsRunningStressTest(false);
+      toast.success(`Completed ${results.length} stress test scenarios`);
+    }, 100);
   };
 
   // Calculate portfolio variance
@@ -595,6 +777,10 @@ export const PortfolioOptimizer = () => {
           <TabsTrigger value="montecarlo">
             <PlayCircle className="h-4 w-4 mr-2" />
             Monte Carlo
+          </TabsTrigger>
+          <TabsTrigger value="stress">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Stress Testing
           </TabsTrigger>
           <TabsTrigger value="frontier">Efficient Frontier</TabsTrigger>
         </TabsList>
@@ -1218,6 +1404,224 @@ export const PortfolioOptimizer = () => {
                     </div>
                   </CardContent>
                 </Card>
+              </>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Stress Testing Tab */}
+        <TabsContent value="stress">
+          <div className="space-y-6">
+            {/* Scenario Selection */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Stress Test Scenarios
+                </CardTitle>
+                <CardDescription>
+                  See how your portfolio would perform during historical market crises
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  {STRESS_SCENARIOS.map((scenario) => (
+                    <div
+                      key={scenario.id}
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        selectedScenarios.includes(scenario.id)
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      onClick={() => {
+                        if (selectedScenarios.includes(scenario.id)) {
+                          setSelectedScenarios(prev => prev.filter(id => id !== scenario.id));
+                        } else {
+                          setSelectedScenarios(prev => [...prev, scenario.id]);
+                        }
+                      }}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-medium text-sm">{scenario.name}</h4>
+                        <Badge variant={scenario.marketDrop < -40 ? 'destructive' : 'secondary'} className="text-xs">
+                          {scenario.marketDrop}%
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-2">{scenario.description}</p>
+                      <div className="text-xs text-muted-foreground">
+                        <span>{scenario.period}</span>
+                        <span className="mx-2">•</span>
+                        <span>Recovery: {scenario.recoveryMonths}mo</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <Label className="text-xs">Starting Portfolio Value</Label>
+                    <Input
+                      type="number"
+                      value={initialInvestment}
+                      onChange={(e) => setInitialInvestment(parseFloat(e.target.value) || 100000)}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      onClick={runStressTests}
+                      disabled={isRunningStressTest || !optimalPortfolio || selectedScenarios.length === 0}
+                      className="h-9"
+                    >
+                      {isRunningStressTest ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Testing...
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle className="h-4 w-4 mr-2" />
+                          Run Stress Tests ({selectedScenarios.length})
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {!optimalPortfolio && (
+                  <p className="text-center text-muted-foreground py-4 mt-4">
+                    Add at least 2 assets and set allocations to run stress tests
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Stress Test Results */}
+            {stressResults && stressResults.length > 0 && (
+              <>
+                {/* Summary Comparison */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Scenario Comparison</CardTitle>
+                    <CardDescription>Impact on your ${initialInvestment.toLocaleString()} portfolio</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={stressResults.map(r => ({
+                            name: r.scenario.name.split(' ')[0],
+                            loss: Math.abs(r.portfolioLoss),
+                            marketDrop: Math.abs(r.scenario.marketDrop),
+                            recovery: r.scenario.recoveryMonths
+                          }))}
+                          layout="vertical"
+                          margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis type="number" unit="%" stroke="hsl(var(--muted-foreground))" />
+                          <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" width={70} />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))' }}
+                          />
+                          <Legend />
+                          <Bar dataKey="loss" name="Portfolio Loss" fill="hsl(var(--destructive))" />
+                          <Bar dataKey="marketDrop" name="Market Drop" fill="hsl(var(--chart-1))" opacity={0.6} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Detailed Results for Each Scenario */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {stressResults.map((result) => (
+                    <Card key={result.scenario.id}>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">{result.scenario.name}</CardTitle>
+                          <Badge variant="destructive">{result.portfolioLoss.toFixed(1)}%</Badge>
+                        </div>
+                        <CardDescription>{result.scenario.period}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Key Metrics */}
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="p-2 bg-muted/50 rounded text-center">
+                            <div className="text-xs text-muted-foreground">Initial</div>
+                            <div className="font-semibold">${initialInvestment.toLocaleString()}</div>
+                          </div>
+                          <div className="p-2 bg-destructive/10 rounded text-center">
+                            <div className="text-xs text-muted-foreground">At Bottom</div>
+                            <div className="font-semibold text-destructive">
+                              ${result.stressedValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            </div>
+                          </div>
+                          <div className="p-2 bg-green-500/10 rounded text-center">
+                            <div className="text-xs text-muted-foreground">After Recovery</div>
+                            <div className="font-semibold text-green-600">
+                              ${result.recoveryValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Portfolio Path */}
+                        <div className="h-32">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={result.monthlyPath} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                              <defs>
+                                <linearGradient id={`gradient-${result.scenario.id}`} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
+                                  <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
+                                </linearGradient>
+                              </defs>
+                              <XAxis dataKey="month" hide />
+                              <YAxis hide domain={['dataMin * 0.9', 'dataMax * 1.1']} />
+                              <Tooltip
+                                formatter={(value: number) => [`$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, 'Value']}
+                                labelFormatter={(month) => `Month ${month}`}
+                                contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', fontSize: '12px' }}
+                              />
+                              <ReferenceLine y={initialInvestment} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+                              <Area
+                                type="monotone"
+                                dataKey="value"
+                                stroke="hsl(var(--chart-1))"
+                                fill={`url(#gradient-${result.scenario.id})`}
+                                strokeWidth={2}
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                        {/* Asset Impact */}
+                        <div className="space-y-2">
+                          <div className="text-xs font-medium text-muted-foreground">Asset Impact</div>
+                          {result.assetImpacts.map((asset) => (
+                            <div key={asset.symbol} className="flex items-center gap-2 text-sm">
+                              <span className="font-mono w-12">{asset.symbol}</span>
+                              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-destructive"
+                                  style={{ width: `${Math.min(100, Math.abs(asset.loss))}%` }}
+                                />
+                              </div>
+                              <span className="text-destructive text-xs w-14 text-right">
+                                {asset.loss.toFixed(1)}%
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="text-xs text-muted-foreground pt-2 border-t">
+                          Max Drawdown: <span className="font-medium text-destructive">{result.maxDrawdown.toFixed(1)}%</span>
+                          <span className="mx-2">•</span>
+                          Recovery Time: <span className="font-medium">{result.scenario.recoveryMonths} months</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </>
             )}
           </div>
