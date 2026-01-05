@@ -9,10 +9,12 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart, ReferenceLine } from 'recharts';
-import { TrendingUp, DollarSign, Calendar, Target, Save, FolderOpen, Trash2, BarChart3, Loader2 } from 'lucide-react';
+import { TrendingUp, DollarSign, Calendar, Target, Save, FolderOpen, Trash2, BarChart3, Loader2, Download, FileText, FileSpreadsheet } from 'lucide-react';
 import { useGuestMode, SavedProjection } from '@/hooks/useGuestMode';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface PortfolioGrowthChartProps {
   mode?: 'backtest' | 'live' | 'projection';
@@ -288,6 +290,183 @@ const PortfolioGrowthChart: React.FC<PortfolioGrowthChartProps> = ({
     deleteProjection(projectionId);
     toast.success('Projection deleted');
   };
+
+  // Export Monte Carlo results to CSV
+  const exportToCSV = useCallback(() => {
+    if (!monteCarloData) {
+      toast.error('Run a simulation first to export results');
+      return;
+    }
+
+    const selectedStrategy = strategyReturns[strategy as keyof typeof strategyReturns];
+    
+    // Create CSV content
+    const headers = ['Month', '10th Percentile', '25th Percentile', 'Median', '75th Percentile', '90th Percentile'];
+    const rows = monteCarloData.results.map(row => [
+      row.month,
+      row.p10.toFixed(2),
+      row.p25.toFixed(2),
+      row.median.toFixed(2),
+      row.p75.toFixed(2),
+      row.p90.toFixed(2)
+    ]);
+
+    // Add summary statistics
+    const summaryRows = [
+      [],
+      ['Summary Statistics'],
+      ['Initial Capital', `$${initialCapital.toLocaleString()}`],
+      ['Time Horizon', `${timeHorizon} months`],
+      ['Strategy', selectedStrategy.label],
+      ['Number of Simulations', numSimulations.toString()],
+      [],
+      ['Final Value Statistics'],
+      ['Mean Final Value', `$${monteCarloData.stats.meanFinal.toFixed(2)}`],
+      ['Median Final Value', `$${monteCarloData.stats.medianFinal.toFixed(2)}`],
+      ['5th Percentile (Worst)', `$${monteCarloData.stats.p5Final.toFixed(2)}`],
+      ['95th Percentile (Best)', `$${monteCarloData.stats.p95Final.toFixed(2)}`],
+      ['Maximum Observed', `$${monteCarloData.stats.maxValue.toFixed(2)}`],
+      ['Minimum Observed', `$${monteCarloData.stats.minValue.toFixed(2)}`],
+      [],
+      ['Probability Analysis'],
+      ['Probability of Profit', `${monteCarloData.stats.probProfit.toFixed(2)}%`],
+      ['Probability of Doubling', `${monteCarloData.stats.probDouble.toFixed(2)}%`],
+      ['Probability of Loss', `${(100 - monteCarloData.stats.probProfit).toFixed(2)}%`]
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(',')),
+      ...summaryRows.map(row => row.join(','))
+    ].join('\n');
+
+    // Download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `monte_carlo_simulation_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success('CSV exported successfully');
+  }, [monteCarloData, initialCapital, timeHorizon, strategy, numSimulations]);
+
+  // Export Monte Carlo results to PDF
+  const exportToPDF = useCallback(() => {
+    if (!monteCarloData) {
+      toast.error('Run a simulation first to export results');
+      return;
+    }
+
+    const selectedStrategy = strategyReturns[strategy as keyof typeof strategyReturns];
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFontSize(20);
+    doc.setTextColor(59, 130, 246); // Primary blue
+    doc.text('Monte Carlo Simulation Report', 20, 20);
+    
+    // Date
+    doc.setFontSize(10);
+    doc.setTextColor(128, 128, 128);
+    doc.text(`Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 20, 28);
+    
+    // Configuration Section
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Simulation Configuration', 20, 42);
+    
+    autoTable(doc, {
+      startY: 46,
+      head: [['Parameter', 'Value']],
+      body: [
+        ['Initial Capital', `$${initialCapital.toLocaleString()}`],
+        ['Time Horizon', `${timeHorizon} months`],
+        ['Strategy', selectedStrategy.label],
+        ['Expected Annual Return', selectedStrategy.description],
+        ['Monthly Volatility', `${(selectedStrategy.volatility * 100).toFixed(1)}%`],
+        ['Number of Simulations', numSimulations.toLocaleString()]
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [59, 130, 246] }
+    });
+
+    // Summary Statistics Section
+    const currentY = (doc as any).lastAutoTable.finalY + 15;
+    doc.setFontSize(14);
+    doc.text('Summary Statistics', 20, currentY);
+    
+    autoTable(doc, {
+      startY: currentY + 4,
+      head: [['Metric', 'Value']],
+      body: [
+        ['Mean Final Value', `$${monteCarloData.stats.meanFinal.toLocaleString(undefined, { maximumFractionDigits: 0 })}`],
+        ['Median Final Value', `$${monteCarloData.stats.medianFinal.toLocaleString(undefined, { maximumFractionDigits: 0 })}`],
+        ['5th Percentile (Worst Case)', `$${monteCarloData.stats.p5Final.toLocaleString(undefined, { maximumFractionDigits: 0 })}`],
+        ['95th Percentile (Best Case)', `$${monteCarloData.stats.p95Final.toLocaleString(undefined, { maximumFractionDigits: 0 })}`],
+        ['Maximum Observed', `$${monteCarloData.stats.maxValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`],
+        ['Minimum Observed', `$${monteCarloData.stats.minValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`]
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [59, 130, 246] }
+    });
+
+    // Probability Analysis Section
+    const probY = (doc as any).lastAutoTable.finalY + 15;
+    doc.setFontSize(14);
+    doc.text('Probability Analysis', 20, probY);
+    
+    autoTable(doc, {
+      startY: probY + 4,
+      head: [['Outcome', 'Probability']],
+      body: [
+        ['Profit (> $' + initialCapital.toLocaleString() + ')', `${monteCarloData.stats.probProfit.toFixed(1)}%`],
+        ['Loss (< $' + initialCapital.toLocaleString() + ')', `${(100 - monteCarloData.stats.probProfit).toFixed(1)}%`],
+        ['Double Initial Capital', `${monteCarloData.stats.probDouble.toFixed(1)}%`]
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [34, 197, 94] }
+    });
+
+    // Monthly Percentiles Table
+    const tableY = (doc as any).lastAutoTable.finalY + 15;
+    doc.setFontSize(14);
+    doc.text('Monthly Portfolio Values by Percentile', 20, tableY);
+    
+    autoTable(doc, {
+      startY: tableY + 4,
+      head: [['Month', '10th %', '25th %', 'Median', '75th %', '90th %']],
+      body: monteCarloData.results.map(row => [
+        row.month,
+        `$${row.p10.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+        `$${row.p25.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+        `$${row.median.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+        `$${row.p75.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+        `$${row.p90.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+      ]),
+      theme: 'striped',
+      headStyles: { fillColor: [59, 130, 246] },
+      styles: { fontSize: 8 }
+    });
+
+    // Disclaimer
+    const disclaimerY = (doc as any).lastAutoTable.finalY + 15;
+    doc.setFontSize(8);
+    doc.setTextColor(128, 128, 128);
+    doc.text('Disclaimer: This simulation is for educational purposes only. Past performance does not guarantee future results.', 20, disclaimerY);
+    doc.text('Actual investment outcomes may vary significantly from these projections.', 20, disclaimerY + 4);
+    
+    // Footer
+    doc.setFontSize(8);
+    doc.text('Generated by Profit Pathway', 20, 285);
+
+    // Save PDF
+    doc.save(`monte_carlo_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    toast.success('PDF exported successfully');
+  }, [monteCarloData, initialCapital, timeHorizon, strategy, numSimulations]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -652,6 +831,22 @@ const PortfolioGrowthChart: React.FC<PortfolioGrowthChartProps> = ({
                       <li>• Min observed: ${monteCarloData.stats.minValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</li>
                     </ul>
                   </div>
+                </div>
+
+                {/* Export Buttons */}
+                <div className="flex flex-wrap gap-2 pt-4 border-t">
+                  <p className="text-sm text-muted-foreground mr-auto flex items-center gap-1">
+                    <Download className="h-4 w-4" />
+                    Export Results:
+                  </p>
+                  <Button variant="outline" size="sm" onClick={exportToCSV}>
+                    <FileSpreadsheet className="h-4 w-4 mr-1" />
+                    Download CSV
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={exportToPDF}>
+                    <FileText className="h-4 w-4 mr-1" />
+                    Download PDF
+                  </Button>
                 </div>
               </>
             ) : (
