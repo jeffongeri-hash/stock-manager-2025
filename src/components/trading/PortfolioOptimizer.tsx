@@ -8,11 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line, Area, AreaChart } from 'recharts';
-import { Plus, X, Calculator, TrendingUp, Shield, Target, Grid3X3, Save, FolderOpen, Trash2, PlayCircle, Download, Loader2, AlertTriangle, BarChart3 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line, Area, AreaChart, BarChart, Bar, ReferenceLine } from 'recharts';
+import { Plus, X, Calculator, TrendingUp, Shield, Target, Grid3X3, Save, FolderOpen, Trash2, PlayCircle, Download, Loader2, AlertTriangle, BarChart3, DollarSign, Coins } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { BarChart, Bar, ReferenceLine } from 'recharts';
 
 // Historical stress scenarios based on actual market data
 interface StressScenario {
@@ -113,6 +114,26 @@ interface Stock {
   expectedReturn: number;
   volatility: number;
   weight?: number;
+  dividendYield?: number; // Annual dividend yield in %
+}
+
+interface CustomScenario {
+  id: string;
+  name: string;
+  description: string;
+  marketDrop: number;
+  volatilitySpike: number;
+  correlationIncrease: number;
+  durationMonths: number;
+  recoveryMonths: number;
+}
+
+interface YearlyIncome {
+  year: number;
+  dividendIncome: number;
+  portfolioValue: number;
+  cumulativeIncome: number;
+  reinvestedValue?: number;
 }
 
 interface PortfolioPoint {
@@ -125,14 +146,14 @@ interface PortfolioPoint {
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(142, 76%, 36%)', 'hsl(280, 65%, 60%)', 'hsl(25, 95%, 53%)'];
 
 const DEFAULT_STOCKS: Stock[] = [
-  { symbol: 'AAPL', expectedReturn: 12, volatility: 25 },
-  { symbol: 'GOOGL', expectedReturn: 15, volatility: 30 },
-  { symbol: 'MSFT', expectedReturn: 11, volatility: 22 },
+  { symbol: 'AAPL', expectedReturn: 12, volatility: 25, dividendYield: 0.5 },
+  { symbol: 'GOOGL', expectedReturn: 15, volatility: 30, dividendYield: 0 },
+  { symbol: 'MSFT', expectedReturn: 11, volatility: 22, dividendYield: 0.8 },
 ];
 
 export const PortfolioOptimizer = () => {
   const [stocks, setStocks] = useState<Stock[]>(DEFAULT_STOCKS);
-  const [newStock, setNewStock] = useState({ symbol: '', expectedReturn: '', volatility: '' });
+  const [newStock, setNewStock] = useState({ symbol: '', expectedReturn: '', volatility: '', dividendYield: '' });
   const [riskTolerance, setRiskTolerance] = useState([50]);
   const [riskFreeRate, setRiskFreeRate] = useState(4.5);
   const [correlationMatrix, setCorrelationMatrix] = useState<number[][]>(() => {
@@ -187,6 +208,23 @@ export const PortfolioOptimizer = () => {
   }[] | null>(null);
   const [selectedScenarios, setSelectedScenarios] = useState<string[]>(['2008-financial', '2020-covid']);
   const [isRunningStressTest, setIsRunningStressTest] = useState(false);
+  
+  // Custom stress scenario state
+  const [customScenarios, setCustomScenarios] = useState<CustomScenario[]>([]);
+  const [newCustomScenario, setNewCustomScenario] = useState<Partial<CustomScenario>>({
+    name: '',
+    description: '',
+    marketDrop: -30,
+    volatilitySpike: 2.5,
+    correlationIncrease: 0.75,
+    durationMonths: 6,
+    recoveryMonths: 12,
+  });
+  const [showCustomScenarioBuilder, setShowCustomScenarioBuilder] = useState(false);
+  
+  // DRIP and income tracking state
+  const [enableDRIP, setEnableDRIP] = useState(false);
+  const [yearlyIncomeResults, setYearlyIncomeResults] = useState<YearlyIncome[] | null>(null);
 
   // Initialize correlation matrix when stocks change
   useEffect(() => {
@@ -259,7 +297,7 @@ export const PortfolioOptimizer = () => {
     toast.success(`Deleted preset "${name}"`);
   };
 
-  // Run Monte Carlo simulation
+  // Run Monte Carlo simulation with dividends and DRIP
   const runMonteCarloSimulation = () => {
     if (!optimalPortfolio || stocks.length < 2) {
       toast.error('Need optimal portfolio to run simulation');
@@ -275,9 +313,12 @@ export const PortfolioOptimizer = () => {
       const weights = optimalPortfolio.weights;
       const returns = stocks.map(s => s.expectedReturn / 100);
       const volatilities = stocks.map(s => s.volatility / 100);
+      const dividendYields = stocks.map(s => (s.dividendYield || 0) / 100);
       
       // Calculate portfolio expected return and volatility
       const portfolioReturn = weights.reduce((sum, w, i) => sum + w * returns[i], 0);
+      const portfolioDividendYield = weights.reduce((sum, w, i) => sum + w * dividendYields[i], 0);
+      
       let portfolioVariance = 0;
       for (let i = 0; i < stocks.length; i++) {
         for (let j = 0; j < stocks.length; j++) {
@@ -289,31 +330,60 @@ export const PortfolioOptimizer = () => {
       
       // Run simulations
       const paths: number[][] = [];
+      const pathsWithDRIP: number[][] = [];
       const finalValues: number[] = [];
+      const yearlyIncomeAcc: { [year: number]: { dividends: number[]; values: number[]; dripValues: number[] } } = {};
+      
+      for (let year = 0; year <= years; year++) {
+        yearlyIncomeAcc[year] = { dividends: [], values: [], dripValues: [] };
+      }
       
       for (let sim = 0; sim < numSims; sim++) {
         const path: number[] = [initialInvestment];
+        const dripPath: number[] = [initialInvestment];
         let value = initialInvestment;
+        let dripValue = initialInvestment;
+        let cumulativeDividends = 0;
         
-        for (let year = 0; year < years; year++) {
+        yearlyIncomeAcc[0].values.push(value);
+        yearlyIncomeAcc[0].dripValues.push(dripValue);
+        yearlyIncomeAcc[0].dividends.push(0);
+        
+        for (let year = 1; year <= years; year++) {
           // Generate random return using normal distribution (Box-Muller)
           const u1 = Math.random();
           const u2 = Math.random();
           const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
           const yearReturn = portfolioReturn + portfolioVol * z;
+          
+          // Calculate dividend income for the year (based on value at start of year)
+          const dividendIncome = value * portfolioDividendYield;
+          cumulativeDividends += dividendIncome;
+          
+          // Update values
           value = value * (1 + yearReturn);
+          
+          // With DRIP: dividends are reinvested
+          dripValue = dripValue * (1 + yearReturn + portfolioDividendYield);
+          
           path.push(Math.max(0, value));
+          dripPath.push(Math.max(0, dripValue));
+          
+          yearlyIncomeAcc[year].dividends.push(dividendIncome);
+          yearlyIncomeAcc[year].values.push(value);
+          yearlyIncomeAcc[year].dripValues.push(dripValue);
         }
         
         paths.push(path);
-        finalValues.push(path[path.length - 1]);
+        pathsWithDRIP.push(dripPath);
+        finalValues.push(enableDRIP ? dripPath[dripPath.length - 1] : path[path.length - 1]);
       }
       
       // Calculate percentiles for each year
       const percentiles: { year: number; p10: number; p25: number; p50: number; p75: number; p90: number }[] = [];
       
       for (let year = 0; year <= years; year++) {
-        const yearValues = paths.map(p => p[year]).sort((a, b) => a - b);
+        const yearValues = (enableDRIP ? pathsWithDRIP : paths).map(p => p[year]).sort((a, b) => a - b);
         percentiles.push({
           year,
           p10: yearValues[Math.floor(numSims * 0.1)],
@@ -324,6 +394,28 @@ export const PortfolioOptimizer = () => {
         });
       }
       
+      // Calculate yearly income results (median values)
+      const yearlyIncome: YearlyIncome[] = [];
+      let cumIncome = 0;
+      for (let year = 0; year <= years; year++) {
+        const sortedDivs = [...yearlyIncomeAcc[year].dividends].sort((a, b) => a - b);
+        const sortedVals = [...yearlyIncomeAcc[year].values].sort((a, b) => a - b);
+        const sortedDrip = [...yearlyIncomeAcc[year].dripValues].sort((a, b) => a - b);
+        
+        const medianDiv = sortedDivs[Math.floor(numSims * 0.5)] || 0;
+        cumIncome += medianDiv;
+        
+        yearlyIncome.push({
+          year,
+          dividendIncome: medianDiv,
+          portfolioValue: sortedVals[Math.floor(numSims * 0.5)],
+          cumulativeIncome: cumIncome,
+          reinvestedValue: sortedDrip[Math.floor(numSims * 0.5)],
+        });
+      }
+      
+      setYearlyIncomeResults(yearlyIncome);
+      
       // Calculate statistics
       finalValues.sort((a, b) => a - b);
       const medianFinal = finalValues[Math.floor(numSims * 0.5)];
@@ -333,7 +425,8 @@ export const PortfolioOptimizer = () => {
       
       // Calculate max drawdown across all paths
       let maxDrawdown = 0;
-      for (const path of paths.slice(0, 100)) { // Sample for performance
+      const pathsToCheck = enableDRIP ? pathsWithDRIP : paths;
+      for (const path of pathsToCheck.slice(0, 100)) { // Sample for performance
         let peak = path[0];
         for (const value of path) {
           if (value > peak) peak = value;
@@ -343,13 +436,13 @@ export const PortfolioOptimizer = () => {
       }
       
       setMonteCarloResults({
-        paths: paths.slice(0, 50), // Keep 50 sample paths for visualization
+        paths: pathsToCheck.slice(0, 50), // Keep 50 sample paths for visualization
         percentiles,
         stats: { medianFinal, meanFinal, probabilityProfit, probabilityDoubling, maxDrawdown: maxDrawdown * 100 }
       });
       
       setIsRunningMonteCarlo(false);
-      toast.success(`Completed ${numSims.toLocaleString()} simulations`);
+      toast.success(`Completed ${numSims.toLocaleString()} simulations${enableDRIP ? ' with DRIP' : ''}`);
     }, 50);
   };
 
@@ -431,7 +524,7 @@ export const PortfolioOptimizer = () => {
     }
   };
 
-  // Run stress test scenarios
+  // Run stress test scenarios (including custom scenarios)
   const runStressTests = () => {
     if (!optimalPortfolio || stocks.length < 2) {
       toast.error('Need optimal portfolio to run stress tests');
@@ -441,7 +534,8 @@ export const PortfolioOptimizer = () => {
     setIsRunningStressTest(true);
     
     setTimeout(() => {
-      const scenariosToTest = STRESS_SCENARIOS.filter(s => selectedScenarios.includes(s.id));
+      const allScenarios = getAllScenarios();
+      const scenariosToTest = allScenarios.filter(s => selectedScenarios.includes(s.id));
       const weights = optimalPortfolio.weights;
       const volatilities = stocks.map(s => s.volatility / 100);
       
@@ -634,10 +728,58 @@ export const PortfolioOptimizer = () => {
     setStocks([...stocks, {
       symbol: newStock.symbol.toUpperCase(),
       expectedReturn: parseFloat(newStock.expectedReturn),
-      volatility: parseFloat(newStock.volatility)
+      volatility: parseFloat(newStock.volatility),
+      dividendYield: newStock.dividendYield ? parseFloat(newStock.dividendYield) : 0
     }]);
-    setNewStock({ symbol: '', expectedReturn: '', volatility: '' });
+    setNewStock({ symbol: '', expectedReturn: '', volatility: '', dividendYield: '' });
     toast.success(`Added ${newStock.symbol.toUpperCase()}`);
+  };
+  
+  // Add custom stress scenario
+  const addCustomScenario = () => {
+    if (!newCustomScenario.name?.trim()) {
+      toast.error('Please enter a scenario name');
+      return;
+    }
+    
+    const scenario: CustomScenario = {
+      id: `custom-${Date.now()}`,
+      name: newCustomScenario.name.trim(),
+      description: newCustomScenario.description || 'Custom stress scenario',
+      marketDrop: newCustomScenario.marketDrop || -30,
+      volatilitySpike: newCustomScenario.volatilitySpike || 2.5,
+      correlationIncrease: newCustomScenario.correlationIncrease || 0.75,
+      durationMonths: newCustomScenario.durationMonths || 6,
+      recoveryMonths: newCustomScenario.recoveryMonths || 12,
+    };
+    
+    setCustomScenarios(prev => [...prev, scenario]);
+    setSelectedScenarios(prev => [...prev, scenario.id]);
+    setNewCustomScenario({
+      name: '',
+      description: '',
+      marketDrop: -30,
+      volatilitySpike: 2.5,
+      correlationIncrease: 0.75,
+      durationMonths: 6,
+      recoveryMonths: 12,
+    });
+    setShowCustomScenarioBuilder(false);
+    toast.success(`Added custom scenario "${scenario.name}"`);
+  };
+  
+  const deleteCustomScenario = (id: string) => {
+    setCustomScenarios(prev => prev.filter(s => s.id !== id));
+    setSelectedScenarios(prev => prev.filter(s => s !== id));
+    toast.success('Deleted custom scenario');
+  };
+  
+  // Get all available scenarios (predefined + custom)
+  const getAllScenarios = (): (StressScenario | (CustomScenario & { period: string }))[] => {
+    return [
+      ...STRESS_SCENARIOS,
+      ...customScenarios.map(s => ({ ...s, period: 'Custom' }))
+    ];
   };
 
   const removeStock = (symbol: string) => {
@@ -797,7 +939,7 @@ export const PortfolioOptimizer = () => {
             <CardDescription>Add stocks with expected returns and volatility</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               <div>
                 <Label className="text-xs">Symbol</Label>
                 <Input
@@ -827,6 +969,16 @@ export const PortfolioOptimizer = () => {
                   className="h-8"
                 />
               </div>
+              <div>
+                <Label className="text-xs">Div %</Label>
+                <Input
+                  type="number"
+                  value={newStock.dividendYield}
+                  onChange={(e) => setNewStock({ ...newStock, dividendYield: e.target.value })}
+                  placeholder="2.5"
+                  className="h-8"
+                />
+              </div>
             </div>
             <Button onClick={addStock} size="sm" className="w-full">
               <Plus className="h-4 w-4 mr-1" /> Add Asset
@@ -839,9 +991,12 @@ export const PortfolioOptimizer = () => {
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                     <span className="font-medium">{stock.symbol}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>{stock.expectedReturn}% ret</span>
-                    <span>{stock.volatility}% vol</span>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{stock.expectedReturn}%r</span>
+                    <span>{stock.volatility}%v</span>
+                    {(stock.dividendYield || 0) > 0 && (
+                      <span className="text-green-600">{stock.dividendYield}%d</span>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
@@ -1177,7 +1332,7 @@ export const PortfolioOptimizer = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                   <div>
                     <Label className="text-xs">Initial Investment ($)</Label>
                     <Input
@@ -1213,6 +1368,20 @@ export const PortfolioOptimizer = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div>
+                    <Label className="text-xs flex items-center gap-1">
+                      <Coins className="h-3 w-3" /> DRIP Enabled
+                    </Label>
+                    <div className="flex items-center h-9">
+                      <Switch
+                        checked={enableDRIP}
+                        onCheckedChange={setEnableDRIP}
+                      />
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {enableDRIP ? 'Reinvest' : 'Cash'}
+                      </span>
+                    </div>
+                  </div>
                   <div className="flex items-end">
                     <Button
                       onClick={runMonteCarloSimulation}
@@ -1233,6 +1402,25 @@ export const PortfolioOptimizer = () => {
                     </Button>
                   </div>
                 </div>
+                
+                {/* Portfolio Dividend Yield Info */}
+                {optimalPortfolio && (
+                  <div className="flex flex-wrap gap-4 p-3 bg-muted/50 rounded-lg mb-4">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-green-600" />
+                      <span className="text-sm">
+                        Portfolio Dividend Yield: <span className="font-medium">
+                          {(optimalPortfolio.weights.reduce((sum, w, i) => sum + w * (stocks[i]?.dividendYield || 0), 0)).toFixed(2)}%
+                        </span>
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Est. Annual Income: <span className="font-medium text-green-600">
+                        ${(initialInvestment * optimalPortfolio.weights.reduce((sum, w, i) => sum + w * (stocks[i]?.dividendYield || 0), 0) / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {!optimalPortfolio && (
                   <p className="text-center text-muted-foreground py-4">
@@ -1404,6 +1592,87 @@ export const PortfolioOptimizer = () => {
                     </div>
                   </CardContent>
                 </Card>
+                
+                {/* Yearly Income Table */}
+                {yearlyIncomeResults && yearlyIncomeResults.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <DollarSign className="h-5 w-5 text-green-600" />
+                        Yearly Income Projection
+                      </CardTitle>
+                      <CardDescription>
+                        Projected dividend income for each year {enableDRIP ? '(DRIP enabled - dividends reinvested)' : '(dividends paid as cash)'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="max-h-80 overflow-y-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-16">Year</TableHead>
+                              <TableHead>Portfolio Value</TableHead>
+                              <TableHead>Dividend Income</TableHead>
+                              <TableHead>Cumulative Income</TableHead>
+                              {enableDRIP && <TableHead>Value with DRIP</TableHead>}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {yearlyIncomeResults.map((year) => (
+                              <TableRow key={year.year}>
+                                <TableCell className="font-medium">{year.year}</TableCell>
+                                <TableCell>${year.portfolioValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
+                                <TableCell className="text-green-600">
+                                  ${year.dividendIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                </TableCell>
+                                <TableCell className="font-medium text-green-600">
+                                  ${year.cumulativeIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                </TableCell>
+                                {enableDRIP && (
+                                  <TableCell className="font-medium text-primary">
+                                    ${year.reinvestedValue?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                  </TableCell>
+                                )}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      
+                      {/* Income Summary */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
+                        <div className="p-3 bg-green-500/10 rounded-lg">
+                          <div className="text-xs text-muted-foreground">Total Income ({monteCarloYears}yr)</div>
+                          <div className="text-lg font-bold text-green-600">
+                            ${yearlyIncomeResults[yearlyIncomeResults.length - 1]?.cumulativeIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          </div>
+                        </div>
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                          <div className="text-xs text-muted-foreground">Avg Annual Income</div>
+                          <div className="text-lg font-bold">
+                            ${(yearlyIncomeResults.reduce((sum, y) => sum + y.dividendIncome, 0) / monteCarloYears).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          </div>
+                        </div>
+                        {enableDRIP && (
+                          <>
+                            <div className="p-3 bg-primary/10 rounded-lg">
+                              <div className="text-xs text-muted-foreground">Final Value (DRIP)</div>
+                              <div className="text-lg font-bold text-primary">
+                                ${yearlyIncomeResults[yearlyIncomeResults.length - 1]?.reinvestedValue?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                              </div>
+                            </div>
+                            <div className="p-3 bg-chart-2/10 rounded-lg">
+                              <div className="text-xs text-muted-foreground">DRIP Bonus</div>
+                              <div className="text-lg font-bold text-chart-2">
+                                +${((yearlyIncomeResults[yearlyIncomeResults.length - 1]?.reinvestedValue || 0) - yearlyIncomeResults[yearlyIncomeResults.length - 1]?.portfolioValue).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </>
             )}
           </div>
@@ -1424,6 +1693,7 @@ export const PortfolioOptimizer = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Predefined Scenarios */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                   {STRESS_SCENARIOS.map((scenario) => (
                     <div
@@ -1456,6 +1726,161 @@ export const PortfolioOptimizer = () => {
                     </div>
                   ))}
                 </div>
+                
+                {/* Custom Scenarios Section */}
+                {customScenarios.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                      <Target className="h-4 w-4" />
+                      Custom Scenarios
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {customScenarios.map((scenario) => (
+                        <div
+                          key={scenario.id}
+                          className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                            selectedScenarios.includes(scenario.id)
+                              ? 'border-chart-2 bg-chart-2/5'
+                              : 'border-border hover:border-chart-2/50'
+                          }`}
+                          onClick={() => {
+                            if (selectedScenarios.includes(scenario.id)) {
+                              setSelectedScenarios(prev => prev.filter(id => id !== scenario.id));
+                            } else {
+                              setSelectedScenarios(prev => [...prev, scenario.id]);
+                            }
+                          }}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <h4 className="font-medium text-sm">{scenario.name}</h4>
+                            <div className="flex gap-1">
+                              <Badge variant="outline" className="text-xs">{scenario.marketDrop}%</Badge>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteCustomScenario(scenario.id);
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">{scenario.description}</p>
+                          <div className="text-xs text-muted-foreground">
+                            <span>Duration: {scenario.durationMonths}mo</span>
+                            <span className="mx-2">•</span>
+                            <span>Recovery: {scenario.recoveryMonths}mo</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Custom Scenario Builder */}
+                <Dialog open={showCustomScenarioBuilder} onOpenChange={setShowCustomScenarioBuilder}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="mb-6">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Custom Scenario
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle>Create Custom Stress Scenario</DialogTitle>
+                      <DialogDescription>
+                        Define your own hypothetical market crash parameters
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2">
+                          <Label>Scenario Name</Label>
+                          <Input
+                            value={newCustomScenario.name || ''}
+                            onChange={(e) => setNewCustomScenario(prev => ({ ...prev, name: e.target.value }))}
+                            placeholder="e.g., Severe Recession"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <Label>Description</Label>
+                          <Input
+                            value={newCustomScenario.description || ''}
+                            onChange={(e) => setNewCustomScenario(prev => ({ ...prev, description: e.target.value }))}
+                            placeholder="Brief description of the scenario"
+                          />
+                        </div>
+                        <div>
+                          <Label>Market Drop (%)</Label>
+                          <Input
+                            type="number"
+                            value={newCustomScenario.marketDrop || -30}
+                            onChange={(e) => setNewCustomScenario(prev => ({ ...prev, marketDrop: parseFloat(e.target.value) || -30 }))}
+                            max={0}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">Negative value (e.g., -40)</p>
+                        </div>
+                        <div>
+                          <Label>Volatility Spike (x)</Label>
+                          <Input
+                            type="number"
+                            value={newCustomScenario.volatilitySpike || 2.5}
+                            onChange={(e) => setNewCustomScenario(prev => ({ ...prev, volatilitySpike: parseFloat(e.target.value) || 2.5 }))}
+                            min={1}
+                            max={10}
+                            step={0.5}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">Multiplier (1-10x)</p>
+                        </div>
+                        <div>
+                          <Label>Correlation Increase</Label>
+                          <Input
+                            type="number"
+                            value={newCustomScenario.correlationIncrease || 0.75}
+                            onChange={(e) => setNewCustomScenario(prev => ({ ...prev, correlationIncrease: parseFloat(e.target.value) || 0.75 }))}
+                            min={0}
+                            max={1}
+                            step={0.05}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">0-1 (assets move together)</p>
+                        </div>
+                        <div>
+                          <Label>Duration (months)</Label>
+                          <Input
+                            type="number"
+                            value={newCustomScenario.durationMonths || 6}
+                            onChange={(e) => setNewCustomScenario(prev => ({ ...prev, durationMonths: parseInt(e.target.value) || 6 }))}
+                            min={1}
+                            max={60}
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <Label>Recovery Time (months)</Label>
+                          <Input
+                            type="number"
+                            value={newCustomScenario.recoveryMonths || 12}
+                            onChange={(e) => setNewCustomScenario(prev => ({ ...prev, recoveryMonths: parseInt(e.target.value) || 12 }))}
+                            min={1}
+                            max={120}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="p-3 bg-muted/50 rounded-lg text-xs space-y-1">
+                        <p className="font-medium">Scenario Preview:</p>
+                        <p>A {Math.abs(newCustomScenario.marketDrop || 30)}% market decline over {newCustomScenario.durationMonths || 6} months</p>
+                        <p>Recovery to pre-crash levels in ~{newCustomScenario.recoveryMonths || 12} months</p>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowCustomScenarioBuilder(false)}>Cancel</Button>
+                      <Button onClick={addCustomScenario}>Create Scenario</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
                 
                 <div className="flex items-center gap-4">
                   <div className="flex-1">
