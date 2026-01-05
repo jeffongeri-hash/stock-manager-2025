@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle, Loader2, GitMerge, Calendar, Shield, Activity, History } from 'lucide-react';
+import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle, Loader2, GitMerge, Calendar, Shield, Activity, History, LogIn } from 'lucide-react';
 import { NaturalLanguageRuleBuilder } from '@/components/trading/NaturalLanguageRuleBuilder';
 import { StrategyTemplateLibrary, StrategyTemplate } from '@/components/trading/StrategyTemplateLibrary';
 import { RuleBacktester } from '@/components/trading/RuleBacktester';
@@ -74,7 +75,8 @@ const defaultRules: TradingRule[] = [
 ];
 
 const TradingAutomation = () => {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
   const [rules, setRules] = useState<TradingRule[]>(defaultRules);
   const [showNewRule, setShowNewRule] = useState(false);
   const [brokerConnections, setBrokerConnections] = useState<BrokerConnection[]>([]);
@@ -94,6 +96,13 @@ const TradingAutomation = () => {
     condition: { type: 'price_above', symbol: '', value: 0, timeframe: '1D' },
     action: { type: 'alert', quantity: 0, orderType: 'market' }
   });
+
+  // Redirect to auth if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      // Don't redirect immediately, show message instead
+    }
+  }, [authLoading, isAuthenticated, navigate]);
 
   // Load broker connections from database
   useEffect(() => {
@@ -140,7 +149,7 @@ const TradingAutomation = () => {
     setIsConnectingTD(true);
     try {
       const { data, error } = await supabase.functions.invoke('td-callback', {
-        body: { code, userId: user.id }
+        body: { code }
       });
 
       if (error) throw error;
@@ -209,7 +218,6 @@ const TradingAutomation = () => {
     try {
       const { data, error } = await supabase.functions.invoke('td-execute-order', {
         body: {
-          userId: user.id,
           accountId: tdConnection.accountId,
           symbol,
           quantity,
@@ -342,6 +350,58 @@ const TradingAutomation = () => {
   };
 
   const hasLiveBroker = brokerConnections.some(c => c.status === 'connected');
+
+  // Show auth required screen for non-authenticated users
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <PageLayout title="Trading Automation">
+        <Card className="max-w-md mx-auto mt-8">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <LogIn className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle>Authentication Required</CardTitle>
+            <CardDescription>
+              Sign in to access automated trading features and connect your broker accounts.
+              Your trading rules, broker connections, and order history are securely stored per account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-sm text-muted-foreground space-y-2">
+              <p className="font-medium">With an account you can:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Connect Interactive Brokers & TD Ameritrade</li>
+                <li>Create and manage automated trading rules</li>
+                <li>Execute live trades through connected brokers</li>
+                <li>Track your order history and performance</li>
+                <li>Set up risk management controls</li>
+              </ul>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate('/auth')} className="flex-1">
+                <LogIn className="h-4 w-4 mr-2" />
+                Sign In
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/auth')} className="flex-1">
+                Create Account
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </PageLayout>
+    );
+  }
+
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <PageLayout title="Trading Automation">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout title="Trading Automation">

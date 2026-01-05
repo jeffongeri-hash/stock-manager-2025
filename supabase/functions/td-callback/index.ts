@@ -12,7 +12,37 @@ serve(async (req) => {
   }
 
   try {
-    const { code, userId } = await req.json();
+    // Validate authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    // Create client with user's auth to validate the token
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    // Validate the JWT token and get user
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: userError } = await userSupabase.auth.getUser(token);
+    
+    if (userError || !userData?.user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const authenticatedUserId = userData.user.id;
+
+    const { code } = await req.json();
 
     if (!code) {
       return new Response(
@@ -79,31 +109,28 @@ serve(async (req) => {
       accounts = await accountsResponse.json();
     }
 
-    // Store tokens in Supabase if userId is provided
-    if (userId) {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
+    // Store tokens in Supabase using authenticated user ID
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-      // Store the broker connection with encrypted tokens
-      const { error: dbError } = await supabase
-        .from('broker_connections')
-        .upsert({
-          user_id: userId,
-          broker_type: 'td_ameritrade',
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-          accounts: accounts,
-          status: 'connected',
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id,broker_type'
-        });
+    // Store the broker connection with encrypted tokens
+    const { error: dbError } = await supabase
+      .from('broker_connections')
+      .upsert({
+        user_id: authenticatedUserId,
+        broker_type: 'td_ameritrade',
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+        accounts: accounts,
+        status: 'connected',
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'user_id,broker_type'
+      });
 
-      if (dbError) {
-        console.error('Failed to store broker connection:', dbError);
-      }
+    if (dbError) {
+      console.error('Failed to store broker connection:', dbError);
     }
 
     return new Response(
