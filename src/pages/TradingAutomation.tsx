@@ -9,13 +9,17 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle, Loader2 } from 'lucide-react';
+import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle, Loader2, GitMerge, Calendar, Shield, Activity } from 'lucide-react';
 import { NaturalLanguageRuleBuilder } from '@/components/trading/NaturalLanguageRuleBuilder';
 import { StrategyTemplateLibrary, StrategyTemplate } from '@/components/trading/StrategyTemplateLibrary';
 import { RuleBacktester } from '@/components/trading/RuleBacktester';
 import { StrategyComparison } from '@/components/trading/StrategyComparison';
 import { StrategyOptimizer } from '@/components/trading/StrategyOptimizer';
 import { WalkForwardAnalysis } from '@/components/trading/WalkForwardAnalysis';
+import { MultiConditionRuleBuilder } from '@/components/trading/MultiConditionRuleBuilder';
+import { StrategyScheduler } from '@/components/trading/StrategyScheduler';
+import { RiskManagement } from '@/components/trading/RiskManagement';
+import { PerformanceAnalytics } from '@/components/trading/PerformanceAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -397,10 +401,26 @@ const TradingAutomation = () => {
       </div>
 
       <Tabs defaultValue="ai-builder" className="space-y-6">
-        <TabsList className="flex-wrap h-auto">
+        <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="ai-builder" className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
-            AI Rule Builder
+            AI Builder
+          </TabsTrigger>
+          <TabsTrigger value="multi-condition" className="flex items-center gap-2">
+            <GitMerge className="h-4 w-4" />
+            Multi-Condition
+          </TabsTrigger>
+          <TabsTrigger value="scheduler" className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Scheduler
+          </TabsTrigger>
+          <TabsTrigger value="risk" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Risk
+          </TabsTrigger>
+          <TabsTrigger value="performance" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Performance
           </TabsTrigger>
           <TabsTrigger value="templates" className="flex items-center gap-2">
             <Star className="h-4 w-4" />
@@ -422,9 +442,9 @@ const TradingAutomation = () => {
             <Shuffle className="h-4 w-4" />
             Walk-Forward
           </TabsTrigger>
-          <TabsTrigger value="rules">Trading Rules</TabsTrigger>
-          <TabsTrigger value="brokers">Broker Connections</TabsTrigger>
-          <TabsTrigger value="capitalise">Capitalise.ai Setup</TabsTrigger>
+          <TabsTrigger value="rules">Rules</TabsTrigger>
+          <TabsTrigger value="brokers">Brokers</TabsTrigger>
+          <TabsTrigger value="capitalise">Capitalise.ai</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ai-builder">
@@ -436,6 +456,24 @@ const TradingAutomation = () => {
             }}
             onRuleTextChange={handleRuleTextChange}
           />
+        </TabsContent>
+
+        <TabsContent value="multi-condition">
+          <MultiConditionRuleBuilder onRuleSaved={() => {
+            toast.success('Rule created! You can now schedule it.');
+          }} />
+        </TabsContent>
+
+        <TabsContent value="scheduler">
+          <StrategyScheduler />
+        </TabsContent>
+
+        <TabsContent value="risk">
+          <RiskManagement />
+        </TabsContent>
+
+        <TabsContent value="performance">
+          <PerformanceAnalytics />
         </TabsContent>
 
         <TabsContent value="templates">
