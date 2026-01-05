@@ -89,20 +89,53 @@ serve(async (req) => {
   }
 
   try {
+    // Validate authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    // Create client with user's auth to validate the token
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    // Validate the JWT token and get user claims
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await userSupabase.auth.getUser(token);
+    
+    if (claimsError || !claimsData?.user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const authenticatedUserId = claimsData.user.id;
+    
     const orderRequest: OrderRequest = await req.json();
     
-    const { userId, accountId, symbol, quantity, orderType, instruction, price, stopPrice, duration = 'DAY' } = orderRequest;
+    const { accountId, symbol, quantity, orderType, instruction, price, stopPrice, duration = 'DAY' } = orderRequest;
 
-    if (!userId || !accountId || !symbol || !quantity || !instruction) {
+    // Use authenticated user ID instead of request body userId
+    const userId = authenticatedUserId;
+
+    if (!accountId || !symbol || !quantity || !instruction) {
       return new Response(
         JSON.stringify({ error: 'Missing required order parameters' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Use service role for database operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get fresh access token
     const accessToken = await refreshToken(supabase, userId);
