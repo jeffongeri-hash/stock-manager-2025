@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle, Loader2, GitMerge, Calendar, Shield, Activity } from 'lucide-react';
+import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle, Loader2, GitMerge, Calendar, Shield, Activity, History } from 'lucide-react';
 import { NaturalLanguageRuleBuilder } from '@/components/trading/NaturalLanguageRuleBuilder';
 import { StrategyTemplateLibrary, StrategyTemplate } from '@/components/trading/StrategyTemplateLibrary';
 import { RuleBacktester } from '@/components/trading/RuleBacktester';
@@ -20,6 +20,7 @@ import { MultiConditionRuleBuilder } from '@/components/trading/MultiConditionRu
 import { StrategyScheduler } from '@/components/trading/StrategyScheduler';
 import { RiskManagement } from '@/components/trading/RiskManagement';
 import { PerformanceAnalytics } from '@/components/trading/PerformanceAnalytics';
+import { RuleExecutionLog } from '@/components/trading/RuleExecutionLog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -422,6 +423,10 @@ const TradingAutomation = () => {
             <Activity className="h-4 w-4" />
             Performance
           </TabsTrigger>
+          <TabsTrigger value="logs" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            Execution Log
+          </TabsTrigger>
           <TabsTrigger value="templates" className="flex items-center gap-2">
             <Star className="h-4 w-4" />
             Templates
@@ -474,6 +479,10 @@ const TradingAutomation = () => {
 
         <TabsContent value="performance">
           <PerformanceAnalytics />
+        </TabsContent>
+
+        <TabsContent value="logs">
+          <RuleExecutionLog />
         </TabsContent>
 
         <TabsContent value="templates">
