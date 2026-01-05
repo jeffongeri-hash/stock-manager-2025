@@ -9,6 +9,7 @@ import { Bell, BellOff, Trash2, Plus, TrendingUp, TrendingDown, Percent, DollarS
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { priceAlertSchema, percentAlertSchema } from '@/lib/validations';
 
 // Check if browser notifications are supported
 const notificationsSupported = 'Notification' in window;
@@ -42,6 +43,7 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     notificationsSupported ? Notification.permission : 'denied'
   );
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [newAlert, setNewAlert] = useState({
     symbol: '',
     target_value: '',
@@ -176,36 +178,40 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
   };
 
   const addAlert = async () => {
-    const symbol = newAlert.symbol.trim().toUpperCase();
-    const targetValue = parseFloat(newAlert.target_value);
+    // Validate based on alert type
+    const schema = alertType === 'price' ? priceAlertSchema : percentAlertSchema;
+    const result = schema.safeParse({
+      symbol: newAlert.symbol,
+      condition: newAlert.condition,
+      target_value: newAlert.target_value,
+    });
 
-    if (!symbol) {
-      toast.error('Please enter a stock symbol');
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.issues.forEach(err => {
+        if (err.path[0]) {
+          errors[err.path[0] as string] = err.message;
+        }
+      });
+      setFormErrors(errors);
+      
+      // Show first error as toast
+      const firstError = result.error.issues[0];
+      toast.error(firstError.message);
       return;
     }
 
-    if (isNaN(targetValue) || targetValue <= 0) {
-      toast.error(alertType === 'price' ? 'Please enter a valid target price' : 'Please enter a valid percentage');
-      return;
-    }
-
-    if (symbol.length > 10) {
-      toast.error('Symbol must be 10 characters or less');
-      return;
-    }
-
-    if (alertType === 'percent' && targetValue > 100) {
-      toast.error('Percentage must be 100 or less');
-      return;
-    }
+    setFormErrors({});
+    const validated = result.data;
+    const targetValue = parseFloat(validated.target_value);
 
     const { error } = await supabase
       .from('alerts')
       .insert({
         user_id: userId,
-        symbol,
+        symbol: validated.symbol,
         target_value: targetValue,
-        condition: newAlert.condition,
+        condition: validated.condition,
         alert_type: alertType,
         is_active: true,
       });
@@ -214,7 +220,7 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
       console.error('Error creating alert:', error);
       toast.error('Failed to create alert');
     } else {
-      toast.success(`${alertType === 'price' ? 'Price' : 'Percentage'} alert created for ${symbol}`);
+      toast.success(`${alertType === 'price' ? 'Price' : 'Percentage'} alert created for ${validated.symbol}`);
       setNewAlert({ symbol: '', target_value: '', condition: alertType === 'price' ? 'above' : 'up' });
       fetchAlerts();
     }
@@ -265,17 +271,17 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
   };
 
   const renderAlertTable = (alertList: Alert[]) => (
-    <div className="overflow-x-auto">
-      <table className="w-full">
+    <div className="overflow-x-auto -mx-3 sm:mx-0 scrollbar-hide">
+      <table className="w-full min-w-[600px] sm:min-w-0">
         <thead>
           <tr className="border-b">
-            <th className="text-left py-2 px-4">Symbol</th>
-            <th className="text-left py-2 px-4">Type</th>
-            <th className="text-left py-2 px-4">Condition</th>
-            <th className="text-right py-2 px-4">Target</th>
-            <th className="text-right py-2 px-4">Current Price</th>
-            <th className="text-center py-2 px-4">Status</th>
-            <th className="text-center py-2 px-4">Actions</th>
+            <th className="text-left py-2 px-2 sm:px-4 text-sm">Symbol</th>
+            <th className="text-left py-2 px-2 sm:px-4 text-sm hidden sm:table-cell">Type</th>
+            <th className="text-left py-2 px-2 sm:px-4 text-sm">Condition</th>
+            <th className="text-right py-2 px-2 sm:px-4 text-sm">Target</th>
+            <th className="text-right py-2 px-2 sm:px-4 text-sm hidden sm:table-cell">Current</th>
+            <th className="text-center py-2 px-2 sm:px-4 text-sm">Status</th>
+            <th className="text-center py-2 px-2 sm:px-4 text-sm">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -284,9 +290,9 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
 
             return (
               <tr key={alert.id} className="border-b">
-                <td className="py-3 px-4 font-medium">{alert.symbol}</td>
-                <td className="py-3 px-4">
-                  <Badge variant="outline" className="gap-1">
+                <td className="py-2 sm:py-3 px-2 sm:px-4 font-medium text-sm">{alert.symbol}</td>
+                <td className="py-2 sm:py-3 px-2 sm:px-4 hidden sm:table-cell">
+                  <Badge variant="outline" className="gap-1 text-xs">
                     {alert.alert_type === 'price' ? (
                       <><DollarSign className="h-3 w-3" /> Price</>
                     ) : (
@@ -294,34 +300,36 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
                     )}
                   </Badge>
                 </td>
-                <td className="py-3 px-4">
-                  <span className="flex items-center gap-1">
+                <td className="py-2 sm:py-3 px-2 sm:px-4">
+                  <span className="flex items-center gap-1 text-sm">
                     {(alert.condition === 'above' || alert.condition === 'up') ? (
-                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                     ) : (
-                      <TrendingDown className="h-4 w-4 text-red-500" />
+                      <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
                     )}
-                    {getConditionLabel(alert)}
+                    <span className="hidden sm:inline">{getConditionLabel(alert)}</span>
+                    <span className="sm:hidden">{alert.condition}</span>
                   </span>
                 </td>
-                <td className="py-3 px-4 text-right font-medium">{getTargetLabel(alert)}</td>
-                <td className="py-3 px-4 text-right">
+                <td className="py-2 sm:py-3 px-2 sm:px-4 text-right font-medium text-sm">{getTargetLabel(alert)}</td>
+                <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-sm hidden sm:table-cell">
                   {currentPrice ? `$${currentPrice.toFixed(2)}` : '-'}
                 </td>
-                <td className="py-3 px-4 text-center">
+                <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
                   {alert.triggered_at ? (
-                    <Badge variant="secondary">Triggered</Badge>
+                    <Badge variant="secondary" className="text-xs">Done</Badge>
                   ) : alert.is_active ? (
-                    <Badge variant="default" className="bg-primary">Active</Badge>
+                    <Badge variant="default" className="bg-primary text-xs">Active</Badge>
                   ) : (
-                    <Badge variant="outline">Paused</Badge>
+                    <Badge variant="outline" className="text-xs">Off</Badge>
                   )}
                 </td>
-                <td className="py-3 px-4 text-center">
-                  <div className="flex items-center justify-center gap-2">
+                <td className="py-2 sm:py-3 px-2 sm:px-4 text-center">
+                  <div className="flex items-center justify-center gap-1">
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
+                      className="h-8 w-8"
                       onClick={() => toggleAlert(alert)}
                       disabled={!!alert.triggered_at}
                       title={alert.is_active ? 'Pause alert' : 'Resume alert'}
@@ -334,7 +342,8 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
                     </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
+                      className="h-8 w-8"
                       onClick={() => deleteAlert(alert.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -351,8 +360,8 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
 
   return (
     <Card className="mb-6">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
           <Bell className="h-5 w-5" />
           Price Alerts
         </CardTitle>
@@ -398,15 +407,20 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
           </TabsList>
 
           <TabsContent value="price">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div className="space-y-2">
                 <Label>Symbol</Label>
                 <Input
                   value={newAlert.symbol}
-                  onChange={(e) => setNewAlert({ ...newAlert, symbol: e.target.value.toUpperCase() })}
+                  onChange={(e) => {
+                    setNewAlert({ ...newAlert, symbol: e.target.value.toUpperCase() });
+                    if (formErrors.symbol) setFormErrors({ ...formErrors, symbol: '' });
+                  }}
                   placeholder="AAPL"
                   maxLength={10}
+                  className={formErrors.symbol ? 'border-destructive' : ''}
                 />
+                {formErrors.symbol && <p className="text-xs text-destructive">{formErrors.symbol}</p>}
               </div>
 
               <div className="space-y-2">
@@ -442,30 +456,40 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
                   step="0.01"
                   min="0.01"
                   value={newAlert.target_value}
-                  onChange={(e) => setNewAlert({ ...newAlert, target_value: e.target.value })}
+                  onChange={(e) => {
+                    setNewAlert({ ...newAlert, target_value: e.target.value });
+                    if (formErrors.target_value) setFormErrors({ ...formErrors, target_value: '' });
+                  }}
                   placeholder="150.00"
+                  className={formErrors.target_value ? 'border-destructive' : ''}
                 />
+                {formErrors.target_value && <p className="text-xs text-destructive">{formErrors.target_value}</p>}
               </div>
 
               <div className="flex items-end">
                 <Button onClick={addAlert} className="w-full">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Price Alert
+                  Add Alert
                 </Button>
               </div>
             </div>
           </TabsContent>
 
           <TabsContent value="percent">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div className="space-y-2">
                 <Label>Symbol</Label>
                 <Input
                   value={newAlert.symbol}
-                  onChange={(e) => setNewAlert({ ...newAlert, symbol: e.target.value.toUpperCase() })}
+                  onChange={(e) => {
+                    setNewAlert({ ...newAlert, symbol: e.target.value.toUpperCase() });
+                    if (formErrors.symbol) setFormErrors({ ...formErrors, symbol: '' });
+                  }}
                   placeholder="AAPL"
                   maxLength={10}
+                  className={formErrors.symbol ? 'border-destructive' : ''}
                 />
+                {formErrors.symbol && <p className="text-xs text-destructive">{formErrors.symbol}</p>}
               </div>
 
               <div className="space-y-2">
@@ -502,15 +526,20 @@ export const PriceAlerts: React.FC<PriceAlertsProps> = ({ userId, currentPrices,
                   min="0.1"
                   max="100"
                   value={newAlert.target_value}
-                  onChange={(e) => setNewAlert({ ...newAlert, target_value: e.target.value })}
+                  onChange={(e) => {
+                    setNewAlert({ ...newAlert, target_value: e.target.value });
+                    if (formErrors.target_value) setFormErrors({ ...formErrors, target_value: '' });
+                  }}
                   placeholder="5"
+                  className={formErrors.target_value ? 'border-destructive' : ''}
                 />
+                {formErrors.target_value && <p className="text-xs text-destructive">{formErrors.target_value}</p>}
               </div>
 
               <div className="flex items-end">
                 <Button onClick={addAlert} className="w-full">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add % Alert
+                  Add Alert
                 </Button>
               </div>
             </div>

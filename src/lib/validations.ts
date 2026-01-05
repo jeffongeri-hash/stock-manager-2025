@@ -54,7 +54,43 @@ export const tradeJournalSchema = z.object({
 
 export type TradeJournalFormData = z.infer<typeof tradeJournalSchema>;
 
-// Alert validation
+// Alert validation - for price alerts
+export const priceAlertSchema = z.object({
+  symbol: z
+    .string()
+    .min(1, 'Symbol is required')
+    .max(10, 'Symbol must be 10 characters or less')
+    .regex(symbolPattern, 'Symbol must contain only letters and numbers')
+    .transform(val => val.toUpperCase()),
+  condition: z.enum(['above', 'below']),
+  target_value: z
+    .string()
+    .min(1, 'Target price is required')
+    .refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Target price must be a positive number')
+    .refine(val => parseFloat(val) <= 1000000, 'Target price must be less than 1,000,000'),
+});
+
+export type PriceAlertFormData = z.infer<typeof priceAlertSchema>;
+
+// Alert validation - for percent alerts
+export const percentAlertSchema = z.object({
+  symbol: z
+    .string()
+    .min(1, 'Symbol is required')
+    .max(10, 'Symbol must be 10 characters or less')
+    .regex(symbolPattern, 'Symbol must contain only letters and numbers')
+    .transform(val => val.toUpperCase()),
+  condition: z.enum(['up', 'down']),
+  target_value: z
+    .string()
+    .min(1, 'Percentage is required')
+    .refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Percentage must be a positive number')
+    .refine(val => parseFloat(val) <= 100, 'Percentage must be 100 or less'),
+});
+
+export type PercentAlertFormData = z.infer<typeof percentAlertSchema>;
+
+// Legacy Alert validation (keeping for backward compatibility)
 export const alertSchema = z.object({
   symbol: z
     .string()
@@ -69,8 +105,6 @@ export const alertSchema = z.object({
     .min(0.0001, 'Target value must be positive')
     .max(1000000, 'Target value must be less than 1,000,000'),
 });
-
-export type AlertFormData = z.infer<typeof alertSchema>;
 
 // Trade Idea validation
 export const tradeIdeaSchema = z.object({

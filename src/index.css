@@ -271,4 +271,50 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Mobile-first responsive utilities */
+  .mobile-scroll-x {
+    @apply overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 sm:overflow-visible;
+  }
+
+  /* Touch-friendly tap targets */
+  @media (max-width: 640px) {
+    button, 
+    [role="button"],
+    a {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Improve form element sizes on mobile */
+    input, 
+    select, 
+    textarea {
+      font-size: 16px !important; /* Prevent iOS zoom on focus */
+    }
+    
+    /* Better card padding on mobile */
+    .card {
+      @apply p-3;
+    }
+    
+    /* Mobile table improvements */
+    table {
+      @apply text-sm;
+    }
+    
+    th, td {
+      @apply px-2 py-2;
+    }
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
