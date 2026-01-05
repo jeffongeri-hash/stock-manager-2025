@@ -1,9 +1,10 @@
 import React from 'react';
-import { Search, User, LogOut, Menu, Moon, Sun } from 'lucide-react';
+import { Search, User, LogOut, Menu, Moon, Sun, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -16,14 +17,14 @@ interface NavbarProps {
 }
 
 export function Navbar({ className }: NavbarProps) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isGuestMode } = useAuth();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
 
   const handleSignOut = async () => {
     await signOut();
     toast.success('Signed out successfully');
-    navigate('/auth');
+    navigate('/');
   };
 
   return (
@@ -84,6 +85,16 @@ export function Navbar({ className }: NavbarProps) {
                 <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </>
+          ) : isGuestMode ? (
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="hidden sm:flex items-center gap-1 text-xs">
+                <UserCircle className="h-3 w-3" />
+                Guest
+              </Badge>
+              <Button variant="default" size="sm" onClick={() => navigate('/auth')} className="text-xs sm:text-sm">
+                Sign In
+              </Button>
+            </div>
           ) : (
             <Button variant="ghost" onClick={() => navigate('/auth')}>
               Sign In

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { GuestModeBanner } from '@/components/layout/GuestModeBanner';
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ export function PageLayout({ children, title }: PageLayoutProps) {
   
   return (
     <div className="min-h-screen flex flex-col">
+      <GuestModeBanner />
       <Navbar />
       
       <div className="flex-1 flex">
