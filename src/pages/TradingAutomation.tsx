@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle, Loader2, GitMerge, Calendar, Shield, Activity, History, LogIn } from 'lucide-react';
+import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle, Loader2, GitMerge, Calendar, Shield, Activity, History, LogIn, Lock } from 'lucide-react';
 import { NaturalLanguageRuleBuilder } from '@/components/trading/NaturalLanguageRuleBuilder';
 import { StrategyTemplateLibrary, StrategyTemplate } from '@/components/trading/StrategyTemplateLibrary';
 import { RuleBacktester } from '@/components/trading/RuleBacktester';
@@ -23,6 +23,9 @@ import { RiskManagement } from '@/components/trading/RiskManagement';
 import { PerformanceAnalytics } from '@/components/trading/PerformanceAnalytics';
 import { RuleExecutionLog } from '@/components/trading/RuleExecutionLog';
 import PortfolioGrowthChart from '@/components/trading/PortfolioGrowthChart';
+import { TwoFactorSetup } from '@/components/trading/TwoFactorSetup';
+import { TwoFactorVerification } from '@/components/trading/TwoFactorVerification';
+import { useTwoFactorAuth } from '@/hooks/useTwoFactorAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -77,6 +80,7 @@ const defaultRules: TradingRule[] = [
 const TradingAutomation = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const { is2FAEnabled } = useTwoFactorAuth();
   const [rules, setRules] = useState<TradingRule[]>(defaultRules);
   const [showNewRule, setShowNewRule] = useState(false);
   const [brokerConnections, setBrokerConnections] = useState<BrokerConnection[]>([]);
@@ -96,6 +100,16 @@ const TradingAutomation = () => {
     condition: { type: 'price_above', symbol: '', value: 0, timeframe: '1D' },
     action: { type: 'alert', quantity: 0, orderType: 'market' }
   });
+  
+  // 2FA verification state
+  const [show2FAVerification, setShow2FAVerification] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState<{
+    symbol: string;
+    quantity: number;
+    instruction: 'BUY' | 'SELL';
+    orderType: 'MARKET' | 'LIMIT';
+    price?: number;
+  } | null>(null);
 
   // Redirect to auth if not authenticated
   useEffect(() => {
@@ -203,12 +217,31 @@ const TradingAutomation = () => {
     }
   };
 
-  const executeOrder = async (symbol: string, quantity: number, instruction: 'BUY' | 'SELL', orderType: 'MARKET' | 'LIMIT' = 'MARKET', price?: number) => {
+  // Request to execute an order - checks for 2FA first
+  const requestExecuteOrder = useCallback((symbol: string, quantity: number, instruction: 'BUY' | 'SELL', orderType: 'MARKET' | 'LIMIT' = 'MARKET', price?: number) => {
     if (!user) {
       toast.error('Please sign in to execute trades');
       return;
     }
 
+    const tdConnection = brokerConnections.find(c => c.type === 'td_ameritrade' && c.status === 'connected');
+    if (!tdConnection || !tdConnection.accountId) {
+      toast.error('No connected TD Ameritrade account found');
+      return;
+    }
+
+    // If 2FA is enabled, show verification dialog
+    if (is2FAEnabled) {
+      setPendingOrder({ symbol, quantity, instruction, orderType, price });
+      setShow2FAVerification(true);
+    } else {
+      // Execute directly if 2FA is not enabled
+      executeOrderDirect(symbol, quantity, instruction, orderType, price);
+    }
+  }, [user, brokerConnections, is2FAEnabled]);
+
+  // Execute order directly (after 2FA verification or if 2FA is disabled)
+  const executeOrderDirect = async (symbol: string, quantity: number, instruction: 'BUY' | 'SELL', orderType: 'MARKET' | 'LIMIT' = 'MARKET', price?: number) => {
     const tdConnection = brokerConnections.find(c => c.type === 'td_ameritrade' && c.status === 'connected');
     if (!tdConnection || !tdConnection.accountId) {
       toast.error('No connected TD Ameritrade account found');
@@ -240,6 +273,20 @@ const TradingAutomation = () => {
       toast.error('Failed to execute order: ' + error.message);
     }
   };
+
+  // Handle 2FA verification completion
+  const handle2FAVerified = useCallback(() => {
+    if (pendingOrder) {
+      executeOrderDirect(
+        pendingOrder.symbol,
+        pendingOrder.quantity,
+        pendingOrder.instruction,
+        pendingOrder.orderType,
+        pendingOrder.price
+      );
+      setPendingOrder(null);
+    }
+  }, [pendingOrder]);
 
   const handleTemplateSelect = (template: StrategyTemplate) => {
     setSelectedTemplateText(template.ruleText);
@@ -510,6 +557,10 @@ const TradingAutomation = () => {
           </TabsTrigger>
           <TabsTrigger value="rules">Rules</TabsTrigger>
           <TabsTrigger value="brokers">Brokers</TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            Security
+          </TabsTrigger>
           <TabsTrigger value="capitalise">Capitalise.ai</TabsTrigger>
         </TabsList>
 
@@ -1128,7 +1179,88 @@ const TradingAutomation = () => {
             </Card>
           </div>
         </TabsContent>
+
+        <TabsContent value="security">
+          <div className="space-y-6">
+            <TwoFactorSetup />
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Security Status
+                </CardTitle>
+                <CardDescription>
+                  Overview of your trading account security settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {is2FAEnabled ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-yellow-500" />
+                      )}
+                      <div>
+                        <p className="font-medium">Live Trade Protection</p>
+                        <p className="text-sm text-muted-foreground">
+                          {is2FAEnabled 
+                            ? 'All live trades require 2FA verification' 
+                            : '2FA recommended for live trading'}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={is2FAEnabled ? 'default' : 'secondary'}>
+                      {is2FAEnabled ? 'Protected' : 'Not Protected'}
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {hasLiveBroker ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-muted-foreground" />
+                      )}
+                      <div>
+                        <p className="font-medium">Broker Connection</p>
+                        <p className="text-sm text-muted-foreground">
+                          {hasLiveBroker 
+                            ? 'Connected to live broker' 
+                            : 'No live broker connected (paper trading mode)'}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={hasLiveBroker ? 'default' : 'outline'}>
+                      {hasLiveBroker ? 'Live' : 'Paper'}
+                    </Badge>
+                  </div>
+                </div>
+
+                {!is2FAEnabled && hasLiveBroker && (
+                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                    <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                      <AlertCircle className="h-4 w-4 inline mr-1" />
+                      <strong>Recommendation:</strong> Enable 2FA above to protect your live trades. 
+                      Without 2FA, anyone with access to your session can execute trades.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
+
+      {/* 2FA Verification Dialog */}
+      <TwoFactorVerification
+        open={show2FAVerification}
+        onOpenChange={setShow2FAVerification}
+        onVerified={handle2FAVerified}
+        action={pendingOrder ? `execute ${pendingOrder.instruction} order for ${pendingOrder.quantity} shares of ${pendingOrder.symbol}` : 'execute trade'}
+      />
     </PageLayout>
   );
 };
