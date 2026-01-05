@@ -50,6 +50,77 @@ export type Database = {
         }
         Relationships: []
       }
+      automated_trade_performance: {
+        Row: {
+          created_at: string
+          entry_price: number
+          entry_time: string
+          execution_strategy: string | null
+          exit_price: number | null
+          exit_time: string | null
+          fees: number | null
+          id: string
+          instruction: string
+          notes: string | null
+          quantity: number
+          realized_pnl: number | null
+          rule_id: string | null
+          slippage: number | null
+          status: string
+          symbol: string
+          unrealized_pnl: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entry_price: number
+          entry_time?: string
+          execution_strategy?: string | null
+          exit_price?: number | null
+          exit_time?: string | null
+          fees?: number | null
+          id?: string
+          instruction: string
+          notes?: string | null
+          quantity: number
+          realized_pnl?: number | null
+          rule_id?: string | null
+          slippage?: number | null
+          status?: string
+          symbol: string
+          unrealized_pnl?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entry_price?: number
+          entry_time?: string
+          execution_strategy?: string | null
+          exit_price?: number | null
+          exit_time?: string | null
+          fees?: number | null
+          id?: string
+          instruction?: string
+          notes?: string | null
+          quantity?: number
+          realized_pnl?: number | null
+          rule_id?: string | null
+          slippage?: number | null
+          status?: string
+          symbol?: string
+          unrealized_pnl?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automated_trade_performance_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "trading_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backtest_results: {
         Row: {
           created_at: string
@@ -347,6 +418,116 @@ export type Database = {
         }
         Relationships: []
       }
+      risk_settings: {
+        Row: {
+          created_at: string
+          current_daily_pnl: number | null
+          current_weekly_pnl: number | null
+          halt_reason: string | null
+          id: string
+          is_trading_halted: boolean | null
+          max_daily_loss: number | null
+          max_open_positions: number | null
+          max_position_percent: number | null
+          max_position_size: number | null
+          max_weekly_loss: number | null
+          pnl_reset_date: string | null
+          stop_loss_percent: number | null
+          take_profit_percent: number | null
+          trailing_stop_enabled: boolean | null
+          trailing_stop_percent: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_daily_pnl?: number | null
+          current_weekly_pnl?: number | null
+          halt_reason?: string | null
+          id?: string
+          is_trading_halted?: boolean | null
+          max_daily_loss?: number | null
+          max_open_positions?: number | null
+          max_position_percent?: number | null
+          max_position_size?: number | null
+          max_weekly_loss?: number | null
+          pnl_reset_date?: string | null
+          stop_loss_percent?: number | null
+          take_profit_percent?: number | null
+          trailing_stop_enabled?: boolean | null
+          trailing_stop_percent?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_daily_pnl?: number | null
+          current_weekly_pnl?: number | null
+          halt_reason?: string | null
+          id?: string
+          is_trading_halted?: boolean | null
+          max_daily_loss?: number | null
+          max_open_positions?: number | null
+          max_position_percent?: number | null
+          max_position_size?: number | null
+          max_weekly_loss?: number | null
+          pnl_reset_date?: string | null
+          stop_loss_percent?: number | null
+          take_profit_percent?: number | null
+          trailing_stop_enabled?: boolean | null
+          trailing_stop_percent?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rule_schedules: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          next_run_at: string | null
+          rule_id: string | null
+          schedule_config: Json
+          schedule_type: string
+          timezone: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          rule_id?: string | null
+          schedule_config?: Json
+          schedule_type: string
+          timezone?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          rule_id?: string | null
+          schedule_config?: Json
+          schedule_type?: string
+          timezone?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rule_schedules_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "trading_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_trades: {
         Row: {
           created_at: string
@@ -560,6 +741,57 @@ export type Database = {
           symbol?: string
           total_value?: number
           type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trading_rules: {
+        Row: {
+          action: Json
+          conditions: Json
+          created_at: string
+          description: string | null
+          execution_params: Json | null
+          execution_strategy: string | null
+          id: string
+          is_active: boolean
+          last_triggered_at: string | null
+          logic_operator: string
+          name: string
+          trigger_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action: Json
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          execution_params?: Json | null
+          execution_strategy?: string | null
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          logic_operator?: string
+          name: string
+          trigger_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action?: Json
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          execution_params?: Json | null
+          execution_strategy?: string | null
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          logic_operator?: string
+          name?: string
+          trigger_count?: number
           updated_at?: string
           user_id?: string
         }
