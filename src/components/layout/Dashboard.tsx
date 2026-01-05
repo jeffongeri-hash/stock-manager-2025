@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { generatePriceHistory } from '@/utils/stocksApi';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { GuestModeBanner } from '@/components/layout/GuestModeBanner';
 import { StockCard } from '@/components/stocks/StockCard';
 import { AnimatedStatsCard } from '@/components/ui/AnimatedStatsCard';
 import { TradingToolCard } from '@/components/dashboard/TradingToolCard';
@@ -287,6 +288,7 @@ export function Dashboard() {
   
   return (
     <div className="min-h-screen flex flex-col">
+      <GuestModeBanner />
       <Navbar />
       
       <div className="flex-1 flex relative">
