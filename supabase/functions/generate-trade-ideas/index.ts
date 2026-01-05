@@ -11,7 +11,24 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Missing authorization header' }), 
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { marketData } = await req.json();
+    
+    // Input validation
+    if (!marketData || typeof marketData !== 'object') {
+      return new Response(
+        JSON.stringify({ error: 'Valid market data is required' }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {

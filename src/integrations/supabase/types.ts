@@ -659,6 +659,7 @@ export type Database = {
           entry_price: number | null
           id: string
           idea_type: string
+          is_public: boolean | null
           likes_count: number | null
           stop_loss: number | null
           symbol: string
@@ -673,6 +674,7 @@ export type Database = {
           entry_price?: number | null
           id?: string
           idea_type: string
+          is_public?: boolean | null
           likes_count?: number | null
           stop_loss?: number | null
           symbol: string
@@ -687,6 +689,7 @@ export type Database = {
           entry_price?: number | null
           id?: string
           idea_type?: string
+          is_public?: boolean | null
           likes_count?: number | null
           stop_loss?: number | null
           symbol?: string

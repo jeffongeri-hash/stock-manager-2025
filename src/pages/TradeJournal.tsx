@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Plus, Trash2, GraduationCap, Sparkles } from 'lucide-react';
+import { tradeJournalSchema } from '@/lib/validations';
 
 interface JournalEntry {
   id: string;
@@ -35,6 +36,7 @@ const TradeJournal = () => {
   const [grading, setGrading] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [newEntry, setNewEntry] = useState({
     symbol: '',
     entry_date: new Date().toISOString().split('T')[0],
@@ -67,24 +69,37 @@ const TradeJournal = () => {
   };
 
   const addEntry = async () => {
-    if (!newEntry.symbol || !newEntry.entry_date) {
-      toast.error('Please fill in symbol and entry date');
+    // Validate with zod
+    const result = tradeJournalSchema.safeParse(newEntry);
+    
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.issues.forEach(err => {
+        if (err.path[0]) {
+          errors[err.path[0] as string] = err.message;
+        }
+      });
+      setFormErrors(errors);
+      toast.error('Please fix the validation errors');
       return;
     }
+
+    setFormErrors({});
+    const validated = result.data;
 
     const { error } = await supabase
       .from('trade_journal')
       .insert({
         user_id: user?.id,
-        symbol: newEntry.symbol.toUpperCase(),
-        entry_date: newEntry.entry_date,
-        exit_date: newEntry.exit_date || null,
-        strategy: newEntry.strategy || null,
-        notes: newEntry.notes || null,
-        emotions: newEntry.emotions || null,
-        lessons_learned: newEntry.lessons_learned || null,
-        tags: newEntry.tags ? newEntry.tags.split(',').map(t => t.trim()) : null,
-        profit_loss: newEntry.profit_loss ? parseFloat(newEntry.profit_loss) : null
+        symbol: validated.symbol,
+        entry_date: validated.entry_date,
+        exit_date: validated.exit_date || null,
+        strategy: validated.strategy || null,
+        notes: validated.notes || null,
+        emotions: validated.emotions || null,
+        lessons_learned: validated.lessons_learned || null,
+        tags: validated.tags ? validated.tags.split(',').map(t => t.trim()).filter(t => t.length > 0) : null,
+        profit_loss: validated.profit_loss ? parseFloat(validated.profit_loss) : null
       });
 
     if (error) {
@@ -94,17 +109,7 @@ const TradeJournal = () => {
 
     toast.success('Journal entry added');
     setIsAddingEntry(false);
-    setNewEntry({
-      symbol: '',
-      entry_date: new Date().toISOString().split('T')[0],
-      exit_date: '',
-      strategy: '',
-      notes: '',
-      emotions: '',
-      lessons_learned: '',
-      tags: '',
-      profit_loss: ''
-    });
+    setFormErrors({});
     fetchEntries();
   };
 
@@ -206,7 +211,10 @@ const TradeJournal = () => {
                       value={newEntry.symbol}
                       onChange={(e) => setNewEntry({ ...newEntry, symbol: e.target.value.toUpperCase() })}
                       placeholder="AAPL"
+                      maxLength={10}
+                      className={formErrors.symbol ? 'border-destructive' : ''}
                     />
+                    {formErrors.symbol && <p className="text-sm text-destructive mt-1">{formErrors.symbol}</p>}
                   </div>
                   <div>
                     <Label>Entry Date*</Label>
@@ -214,7 +222,9 @@ const TradeJournal = () => {
                       type="date"
                       value={newEntry.entry_date}
                       onChange={(e) => setNewEntry({ ...newEntry, entry_date: e.target.value })}
+                      className={formErrors.entry_date ? 'border-destructive' : ''}
                     />
+                    {formErrors.entry_date && <p className="text-sm text-destructive mt-1">{formErrors.entry_date}</p>}
                   </div>
                   <div>
                     <Label>Exit Date</Label>
@@ -232,7 +242,9 @@ const TradeJournal = () => {
                       value={newEntry.profit_loss}
                       onChange={(e) => setNewEntry({ ...newEntry, profit_loss: e.target.value })}
                       placeholder="150.00"
+                      className={formErrors.profit_loss ? 'border-destructive' : ''}
                     />
+                    {formErrors.profit_loss && <p className="text-sm text-destructive mt-1">{formErrors.profit_loss}</p>}
                   </div>
                   <div>
                     <Label>Strategy</Label>
@@ -240,6 +252,7 @@ const TradeJournal = () => {
                       value={newEntry.strategy}
                       onChange={(e) => setNewEntry({ ...newEntry, strategy: e.target.value })}
                       placeholder="Iron Condor, Call Spread, etc."
+                      maxLength={100}
                     />
                   </div>
                   <div>
@@ -248,6 +261,7 @@ const TradeJournal = () => {
                       value={newEntry.tags}
                       onChange={(e) => setNewEntry({ ...newEntry, tags: e.target.value })}
                       placeholder="earnings, momentum, breakout"
+                      maxLength={200}
                     />
                   </div>
                 </div>
@@ -267,6 +281,7 @@ const TradeJournal = () => {
                     onChange={(e) => setNewEntry({ ...newEntry, emotions: e.target.value })}
                     placeholder="How did you feel entering/exiting this trade?"
                     rows={2}
+                    maxLength={500}
                   />
                 </div>
                 <div>
@@ -276,6 +291,7 @@ const TradeJournal = () => {
                     onChange={(e) => setNewEntry({ ...newEntry, lessons_learned: e.target.value })}
                     placeholder="What would you do differently?"
                     rows={2}
+                    maxLength={1000}
                   />
                 </div>
                 <div className="flex gap-2">
