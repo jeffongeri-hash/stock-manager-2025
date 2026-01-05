@@ -9,9 +9,10 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useStockData } from '@/hooks/useStockData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, CheckCircle2, XCircle, BarChart3 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, XCircle, BarChart3, PieChart } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import MonteCarloComparison from '@/components/trading/MonteCarloComparison';
+import { PortfolioOptimizer } from '@/components/trading/PortfolioOptimizer';
 
 const TradingToolkit = () => {
   const [symbol, setSymbol] = useState('AAPL');
@@ -166,7 +167,7 @@ const TradingToolkit = () => {
   return (
     <PageLayout title="Trading Toolkit">
       <Tabs defaultValue="position-sizing" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
           <TabsTrigger value="position-sizing">Position Sizing</TabsTrigger>
           <TabsTrigger value="trading-rules">Trading Rules</TabsTrigger>
           <TabsTrigger value="greeks">Greeks</TabsTrigger>
@@ -174,6 +175,10 @@ const TradingToolkit = () => {
           <TabsTrigger value="monte-carlo" className="flex items-center gap-1">
             <BarChart3 className="h-3 w-3" />
             <span className="hidden lg:inline">Monte Carlo</span>
+          </TabsTrigger>
+          <TabsTrigger value="optimizer" className="flex items-center gap-1">
+            <PieChart className="h-3 w-3" />
+            <span className="hidden lg:inline">Optimizer</span>
           </TabsTrigger>
         </TabsList>
 
@@ -621,6 +626,10 @@ const TradingToolkit = () => {
 
         <TabsContent value="monte-carlo">
           <MonteCarloComparison />
+        </TabsContent>
+
+        <TabsContent value="optimizer">
+          <PortfolioOptimizer />
         </TabsContent>
       </Tabs>
     </PageLayout>
