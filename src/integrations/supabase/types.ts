@@ -481,6 +481,62 @@ export type Database = {
         }
         Relationships: []
       }
+      rule_execution_logs: {
+        Row: {
+          action_taken: Json
+          conditions_met: Json
+          created_at: string
+          error_message: string | null
+          execution_result: Json | null
+          execution_status: string
+          execution_time_ms: number | null
+          id: string
+          rule_id: string | null
+          rule_name: string
+          symbol: string | null
+          triggered_at: string
+          user_id: string
+        }
+        Insert: {
+          action_taken: Json
+          conditions_met?: Json
+          created_at?: string
+          error_message?: string | null
+          execution_result?: Json | null
+          execution_status?: string
+          execution_time_ms?: number | null
+          id?: string
+          rule_id?: string | null
+          rule_name: string
+          symbol?: string | null
+          triggered_at?: string
+          user_id: string
+        }
+        Update: {
+          action_taken?: Json
+          conditions_met?: Json
+          created_at?: string
+          error_message?: string | null
+          execution_result?: Json | null
+          execution_status?: string
+          execution_time_ms?: number | null
+          id?: string
+          rule_id?: string | null
+          rule_name?: string
+          symbol?: string | null
+          triggered_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rule_execution_logs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "trading_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rule_schedules: {
         Row: {
           created_at: string
