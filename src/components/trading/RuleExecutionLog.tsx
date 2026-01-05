@@ -51,6 +51,34 @@ export const RuleExecutionLog: React.FC = () => {
   useEffect(() => {
     if (user) {
       loadLogs();
+
+      // Subscribe to realtime updates
+      const channel = supabase
+        .channel('rule-execution-logs-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'rule_execution_logs',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('New execution log:', payload);
+            const newLog = payload.new as any;
+            setLogs(prev => [{
+              ...newLog,
+              conditions_met: Array.isArray(newLog.conditions_met) ? newLog.conditions_met : [],
+              action_taken: newLog.action_taken || {},
+              execution_result: newLog.execution_result || null,
+            }, ...prev]);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
