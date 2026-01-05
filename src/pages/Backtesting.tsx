@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Play, Trash2 } from 'lucide-react';
+import PortfolioGrowthChart from '@/components/trading/PortfolioGrowthChart';
 
 interface BacktestResult {
   id: string;
@@ -371,6 +372,11 @@ const Backtesting = () => {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Portfolio Growth Chart */}
+      <div className="mt-6">
+        <PortfolioGrowthChart mode="backtest" />
       </div>
 
       <Card className="mt-6">

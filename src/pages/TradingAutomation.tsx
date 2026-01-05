@@ -21,6 +21,7 @@ import { StrategyScheduler } from '@/components/trading/StrategyScheduler';
 import { RiskManagement } from '@/components/trading/RiskManagement';
 import { PerformanceAnalytics } from '@/components/trading/PerformanceAnalytics';
 import { RuleExecutionLog } from '@/components/trading/RuleExecutionLog';
+import PortfolioGrowthChart from '@/components/trading/PortfolioGrowthChart';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -478,7 +479,10 @@ const TradingAutomation = () => {
         </TabsContent>
 
         <TabsContent value="performance">
-          <PerformanceAnalytics />
+          <div className="space-y-6">
+            <PortfolioGrowthChart mode="live" />
+            <PerformanceAnalytics />
+          </div>
         </TabsContent>
 
         <TabsContent value="logs">
