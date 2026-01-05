@@ -37,6 +37,7 @@ import TradingViewWebhook from "./pages/TradingViewWebhook";
 import TradingAutomation from "./pages/TradingAutomation";
 import Watchlist from "./pages/Watchlist";
 import Install from "./pages/Install";
+import StockResearch from "./pages/StockResearch";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,7 @@ const App = () => (
             <Route path="/trading-automation" element={<TradingAutomation />} />
             <Route path="/watchlist" element={<Watchlist />} />
             <Route path="/install" element={<Install />} />
+            <Route path="/stock-research" element={<StockResearch />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

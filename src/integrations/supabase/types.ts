@@ -175,11 +175,13 @@ export type Database = {
       broker_connections: {
         Row: {
           access_token: string | null
+          access_token_encrypted: string | null
           accounts: Json | null
           broker_type: string
           created_at: string
           id: string
           refresh_token: string | null
+          refresh_token_encrypted: string | null
           status: string
           token_expires_at: string | null
           updated_at: string
@@ -187,11 +189,13 @@ export type Database = {
         }
         Insert: {
           access_token?: string | null
+          access_token_encrypted?: string | null
           accounts?: Json | null
           broker_type: string
           created_at?: string
           id?: string
           refresh_token?: string | null
+          refresh_token_encrypted?: string | null
           status?: string
           token_expires_at?: string | null
           updated_at?: string
@@ -199,11 +203,13 @@ export type Database = {
         }
         Update: {
           access_token?: string | null
+          access_token_encrypted?: string | null
           accounts?: Json | null
           broker_type?: string
           created_at?: string
           id?: string
           refresh_token?: string | null
+          refresh_token_encrypted?: string | null
           status?: string
           token_expires_at?: string | null
           updated_at?: string
@@ -906,6 +912,10 @@ export type Database = {
       current_user_has_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
+      }
+      decrypt_broker_token: {
+        Args: { encrypted_token: string; user_id_param: string }
+        Returns: string
       }
       has_role: {
         Args: {

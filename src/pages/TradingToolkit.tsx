@@ -9,8 +9,9 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useStockData } from '@/hooks/useStockData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, XCircle, BarChart3 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import MonteCarloComparison from '@/components/trading/MonteCarloComparison';
 
 const TradingToolkit = () => {
   const [symbol, setSymbol] = useState('AAPL');
@@ -165,11 +166,15 @@ const TradingToolkit = () => {
   return (
     <PageLayout title="Trading Toolkit">
       <Tabs defaultValue="position-sizing" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
           <TabsTrigger value="position-sizing">Position Sizing</TabsTrigger>
           <TabsTrigger value="trading-rules">Trading Rules</TabsTrigger>
-          <TabsTrigger value="greeks">Greeks Simulator</TabsTrigger>
+          <TabsTrigger value="greeks">Greeks</TabsTrigger>
           <TabsTrigger value="exit-strategy">Exit Strategy</TabsTrigger>
+          <TabsTrigger value="monte-carlo" className="flex items-center gap-1">
+            <BarChart3 className="h-3 w-3" />
+            <span className="hidden lg:inline">Monte Carlo</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="position-sizing">
@@ -612,6 +617,10 @@ const TradingToolkit = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="monte-carlo">
+          <MonteCarloComparison />
         </TabsContent>
       </Tabs>
     </PageLayout>
