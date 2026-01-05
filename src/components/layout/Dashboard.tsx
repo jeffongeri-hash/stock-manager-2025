@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { generatePriceHistory } from '@/utils/stocksApi';
 import { Navbar } from '@/components/layout/Navbar';
@@ -9,10 +9,12 @@ import { TradingToolCard } from '@/components/dashboard/TradingToolCard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PullToRefresh } from '@/components/mobile/PullToRefresh';
 import { BarChart3, TrendingDown, TrendingUp, Wallet2, Calculator, Target, Shield, DollarSign, TrendingUpIcon, Activity, Plus, X, BookOpen, Clock, Newspaper, PieChart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StockData {
   symbol: string;
@@ -28,6 +30,7 @@ interface StockData {
 
 export function Dashboard() {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [stocks, setStocks] = useState<StockData[]>([]);
   const [selectedStock, setSelectedStock] = useState<StockData | null>(null);
@@ -40,6 +43,13 @@ export function Dashboard() {
     winRate: 0,
     totalTrades: 0
   });
+
+  const handleRefresh = useCallback(async () => {
+    if (user) {
+      await Promise.all([fetchWatchlist(), fetchTradeStats()]);
+      toast.success('Data refreshed');
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -285,9 +295,10 @@ export function Dashboard() {
           <Sidebar isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
         </div>
         
-        <main className="flex-1 transition-all duration-300 w-full">
-          <div className="container max-w-full p-3 sm:p-4 lg:p-6 animate-fade-in">
-            <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Market Dashboard</h1>
+        <main className="flex-1 transition-all duration-300 w-full overflow-hidden">
+          <PullToRefresh onRefresh={handleRefresh} className="h-full overflow-y-auto">
+            <div className="container max-w-full p-3 sm:p-4 lg:p-6 animate-fade-in">
+              <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Market Dashboard</h1>
             
             {/* Stats Row - Trading Performance with Sparklines */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6 stagger-animation">
@@ -503,6 +514,7 @@ export function Dashboard() {
               </div>
             </div>
           </div>
+          </PullToRefresh>
         </main>
       </div>
     </div>
