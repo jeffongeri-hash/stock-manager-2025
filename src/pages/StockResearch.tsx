@@ -7,9 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Search, TrendingUp, TrendingDown, BarChart3, MessageSquare, LineChart, Loader2, X } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, BarChart3, MessageSquare, LineChart, Loader2, X, Plus, Check } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import ReactMarkdown from 'react-markdown';
+import { useAuth } from '@/hooks/useAuth';
 
 interface StockData {
   symbol: string;
@@ -39,6 +40,9 @@ export default function StockResearch() {
   const [symbolInput, setSymbolInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<StockResearchResult[]>([]);
+  const [addingToWatchlist, setAddingToWatchlist] = useState<string | null>(null);
+  const [addedSymbols, setAddedSymbols] = useState<Set<string>>(new Set());
+  const { user } = useAuth();
 
   const formatNumber = (num: number) => {
     if (!num || isNaN(num)) return 'N/A';
@@ -156,6 +160,44 @@ export default function StockResearch() {
     return metrics?.[key] || 'N/A';
   };
 
+  const addToWatchlist = async (symbol: string) => {
+    if (!user) {
+      toast.error('Please sign in to add to watchlist');
+      return;
+    }
+
+    setAddingToWatchlist(symbol);
+    try {
+      // Check if already in watchlist
+      const { data: existing } = await supabase
+        .from('watchlist')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('symbol', symbol)
+        .single();
+
+      if (existing) {
+        toast.info(`${symbol} is already in your watchlist`);
+        setAddedSymbols(prev => new Set(prev).add(symbol));
+        return;
+      }
+
+      const { error } = await supabase
+        .from('watchlist')
+        .insert({ user_id: user.id, symbol });
+
+      if (error) throw error;
+
+      setAddedSymbols(prev => new Set(prev).add(symbol));
+      toast.success(`${symbol} added to watchlist`);
+    } catch (error: any) {
+      console.error('Watchlist error:', error);
+      toast.error('Failed to add to watchlist');
+    } finally {
+      setAddingToWatchlist(null);
+    }
+  };
+
   return (
     <PageLayout title="Multi-Stock Research">
       <div className="space-y-6">
@@ -204,16 +246,32 @@ export default function StockResearch() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {results.map((result) => (
                 <Card key={result.data.symbol} className="relative">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => removeResult(result.data.symbol)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => addToWatchlist(result.data.symbol)}
+                      disabled={addingToWatchlist === result.data.symbol || addedSymbols.has(result.data.symbol)}
+                      title={addedSymbols.has(result.data.symbol) ? 'Added to watchlist' : 'Add to watchlist'}
+                    >
+                      {addingToWatchlist === result.data.symbol ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : addedSymbols.has(result.data.symbol) ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Plus className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeResult(result.data.symbol)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between pr-16">
                       <div>
                         <CardTitle className="text-lg">{result.data.symbol}</CardTitle>
                         <CardDescription className="text-xs line-clamp-1">{result.data.name}</CardDescription>
