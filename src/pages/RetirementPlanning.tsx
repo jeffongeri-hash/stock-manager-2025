@@ -26,6 +26,8 @@ import { WithdrawalStrategyPlanner } from '@/components/retirement/WithdrawalStr
 import { HSACalculator } from '@/components/retirement/HSACalculator';
 import { FireProgressBar } from '@/components/retirement/FireProgressBar';
 import { SpendingBreakdownCalculator } from '@/components/retirement/SpendingBreakdownCalculator';
+import { TaxAwareWithdrawalOptimizer } from '@/components/retirement/TaxAwareWithdrawalOptimizer';
+import { ScenarioComparison } from '@/components/retirement/ScenarioComparison';
 import { useUserSettings } from '@/hooks/useUserSettings';
 
 interface RetirementSettings {
