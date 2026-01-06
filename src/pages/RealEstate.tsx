@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Calculator, TrendingUp, DollarSign, Home, Percent, MapPin, Loader2, Send, Bot } from 'lucide-react';
+import { Building2, Calculator, TrendingUp, DollarSign, Home, Percent, MapPin, Loader2, Send, Bot, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
@@ -57,6 +57,14 @@ export default function RealEstate() {
   const [buyDown, setBuyDown] = useState('20');
   const [buyRate, setBuyRate] = useState('6.5');
   const [investmentReturn, setInvestmentReturn] = useState('7');
+
+  // Home Affordability Calculator State
+  const [annualIncome, setAnnualIncome] = useState('100000');
+  const [monthlyDebts, setMonthlyDebts] = useState('500');
+  const [affordDownPayment, setAffordDownPayment] = useState('50000');
+  const [affordRate, setAffordRate] = useState('6.5');
+  const [affordTerm, setAffordTerm] = useState('30');
+  const [dtiLimit, setDtiLimit] = useState('36');
 
   // Calculate Investment Returns
   const calculateInvestment = () => {
@@ -230,6 +238,57 @@ export default function RealEstate() {
     return { comparisonData, monthlyMortgage };
   };
 
+  // Calculate Home Affordability
+  const calculateAffordability = () => {
+    const income = parseFloat(annualIncome) || 0;
+    const debts = parseFloat(monthlyDebts) || 0;
+    const down = parseFloat(affordDownPayment) || 0;
+    const rate = parseFloat(affordRate) / 100 / 12;
+    const term = parseFloat(affordTerm) * 12;
+    const maxDti = parseFloat(dtiLimit) / 100;
+
+    const monthlyIncome = income / 12;
+    const maxTotalDebt = monthlyIncome * maxDti;
+    const maxHousingPayment = maxTotalDebt - debts;
+    
+    // Conservative estimate (28% front-end ratio)
+    const conservativePayment = monthlyIncome * 0.28;
+    
+    // Calculate max loan from payment
+    const calculateLoanFromPayment = (payment: number) => {
+      if (payment <= 0 || rate <= 0) return 0;
+      return payment * ((Math.pow(1 + rate, term) - 1) / (rate * Math.pow(1 + rate, term)));
+    };
+
+    const maxLoan = calculateLoanFromPayment(maxHousingPayment);
+    const conservativeLoan = calculateLoanFromPayment(conservativePayment);
+    
+    const maxHomePrice = maxLoan + down;
+    const conservativePrice = conservativeLoan + down;
+
+    // Monthly costs breakdown for max price
+    const estimatedTax = (maxHomePrice * 0.012) / 12;
+    const estimatedInsurance = 150;
+    const estimatedPMI = down < maxHomePrice * 0.2 ? (maxLoan * 0.005) / 12 : 0;
+    
+    return {
+      maxHomePrice,
+      conservativePrice,
+      maxLoan,
+      maxHousingPayment,
+      conservativePayment,
+      monthlyIncome,
+      currentDti: ((debts / monthlyIncome) * 100),
+      projectedDti: (((debts + maxHousingPayment) / monthlyIncome) * 100),
+      breakdown: {
+        principal: maxHousingPayment - estimatedTax - estimatedInsurance - estimatedPMI,
+        tax: estimatedTax,
+        insurance: estimatedInsurance,
+        pmi: estimatedPMI
+      }
+    };
+  };
+
   // AI Property Analysis
   const analyzeProperty = async () => {
     if (!zipCode) {
@@ -262,11 +321,12 @@ export default function RealEstate() {
   const investment = calculateInvestment();
   const mortgage = calculateMortgage();
   const rentVsBuy = calculateRentVsBuy();
+  const affordability = calculateAffordability();
 
   return (
     <PageLayout title="Real Estate Investment">
       <Tabs defaultValue="investment" className="space-y-6">
-        <TabsList className="grid grid-cols-2 lg:grid-cols-5 gap-2">
+        <TabsList className="grid grid-cols-3 lg:grid-cols-6 gap-2">
           <TabsTrigger value="investment" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             <span className="hidden sm:inline">Investment</span>
@@ -274,6 +334,10 @@ export default function RealEstate() {
           <TabsTrigger value="mortgage" className="flex items-center gap-2">
             <Home className="h-4 w-4" />
             <span className="hidden sm:inline">Mortgage</span>
+          </TabsTrigger>
+          <TabsTrigger value="affordability" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Affordability</span>
           </TabsTrigger>
           <TabsTrigger value="comparison" className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
@@ -469,6 +533,146 @@ export default function RealEstate() {
                       <Bar dataKey="interest" name="Interest" fill="hsl(var(--destructive))" stackId="a" />
                     </BarChart>
                   </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Affordability Calculator Tab */}
+        <TabsContent value="affordability" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Your Finances
+                </CardTitle>
+                <CardDescription>
+                  Calculate how much home you can afford
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Annual Income ($)</Label>
+                  <Input type="number" value={annualIncome} onChange={(e) => setAnnualIncome(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Monthly Debts ($)</Label>
+                  <Input type="number" value={monthlyDebts} onChange={(e) => setMonthlyDebts(e.target.value)} placeholder="Car, student loans, credit cards" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Down Payment Available ($)</Label>
+                  <Input type="number" value={affordDownPayment} onChange={(e) => setAffordDownPayment(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Interest Rate (%)</Label>
+                  <Input type="number" step="0.125" value={affordRate} onChange={(e) => setAffordRate(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Loan Term</Label>
+                  <Select value={affordTerm} onValueChange={setAffordTerm}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">15 Years</SelectItem>
+                      <SelectItem value="20">20 Years</SelectItem>
+                      <SelectItem value="30">30 Years</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Max DTI Ratio (%)</Label>
+                  <Select value={dtiLimit} onValueChange={setDtiLimit}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="28">28% (Conservative)</SelectItem>
+                      <SelectItem value="36">36% (Standard)</SelectItem>
+                      <SelectItem value="43">43% (Aggressive)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>How Much Home Can You Afford?</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-6 rounded-lg bg-primary/10 border-2 border-primary">
+                    <p className="text-sm text-muted-foreground">Maximum Home Price</p>
+                    <p className="text-3xl font-bold text-primary">${affordability.maxHomePrice.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Based on {dtiLimit}% DTI limit</p>
+                  </div>
+                  <div className="p-6 rounded-lg bg-green-500/10 border-2 border-green-500">
+                    <p className="text-sm text-muted-foreground">Conservative Price</p>
+                    <p className="text-3xl font-bold text-green-500">${affordability.conservativePrice.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Based on 28% front-end ratio</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 rounded-lg bg-muted">
+                    <p className="text-sm text-muted-foreground">Max Loan Amount</p>
+                    <p className="text-xl font-bold">${affordability.maxLoan.toLocaleString()}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted">
+                    <p className="text-sm text-muted-foreground">Monthly Payment</p>
+                    <p className="text-xl font-bold">${affordability.maxHousingPayment.toFixed(0)}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted">
+                    <p className="text-sm text-muted-foreground">Current DTI</p>
+                    <p className="text-xl font-bold">{affordability.currentDti.toFixed(1)}%</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted">
+                    <p className="text-sm text-muted-foreground">Projected DTI</p>
+                    <p className={`text-xl font-bold ${affordability.projectedDti > 43 ? 'text-destructive' : 'text-green-500'}`}>
+                      {affordability.projectedDti.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Monthly Payment Breakdown</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between p-2 bg-muted rounded">
+                        <span>Principal & Interest</span>
+                        <span className="font-bold">${affordability.breakdown.principal.toFixed(0)}</span>
+                      </div>
+                      <div className="flex justify-between p-2 bg-muted rounded">
+                        <span>Property Tax (est.)</span>
+                        <span className="font-bold">${affordability.breakdown.tax.toFixed(0)}</span>
+                      </div>
+                      <div className="flex justify-between p-2 bg-muted rounded">
+                        <span>Homeowners Insurance (est.)</span>
+                        <span className="font-bold">${affordability.breakdown.insurance.toFixed(0)}</span>
+                      </div>
+                      {affordability.breakdown.pmi > 0 && (
+                        <div className="flex justify-between p-2 bg-muted rounded">
+                          <span>PMI (less than 20% down)</span>
+                          <span className="font-bold">${affordability.breakdown.pmi.toFixed(0)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between p-2 bg-primary/10 rounded font-bold">
+                        <span>Total Monthly Payment</span>
+                        <span>${affordability.maxHousingPayment.toFixed(0)}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">💡 Affordability Tips</p>
+                  <ul className="text-sm space-y-1">
+                    <li>• Lenders typically prefer a DTI ratio below 36%</li>
+                    <li>• Consider leaving room for maintenance costs (1-2% of home value/year)</li>
+                    <li>• A larger down payment reduces monthly payments and may eliminate PMI</li>
+                    <li>• Don't forget closing costs (typically 2-5% of home price)</li>
+                  </ul>
                 </div>
               </CardContent>
             </Card>
