@@ -133,24 +133,14 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/stock-research',
     },
     {
-      title: 'Trade Journal',
-      icon: BookOpen,
-      href: '/trade-journal',
-    },
-    {
-      title: 'Backtesting',
-      icon: TestTube,
-      href: '/backtesting',
-    },
-    {
-      title: 'Trade Ideas',
-      icon: Users,
-      href: '/trade-ideas',
-    },
-    {
       title: 'Market Scanner',
       icon: Radar,
       href: '/market-scanner',
+    },
+    {
+      title: 'Reports',
+      icon: FileText,
+      href: '/reports',
     },
     {
       title: 'Reports',
@@ -186,11 +176,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Risk Metrics',
       icon: Shield,
       href: '/risk-metrics',
-    },
-    {
-      title: 'Market News',
-      icon: Newspaper,
-      href: '/market-news',
     },
     {
       title: 'Portfolio Rebalancing',

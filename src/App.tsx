@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { BottomNavigation } from "@/components/mobile/BottomNavigation";
 import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
+import { SwipeNavigation } from "@/components/mobile/SwipeNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Lazy load all page components for code splitting
@@ -21,9 +22,6 @@ const ZeroDTE = lazy(() => import("./pages/ZeroDTE"));
 const Fundamentals = lazy(() => import("./pages/Fundamentals"));
 const Auth = lazy(() => import("./pages/Auth"));
 const TradingToolkit = lazy(() => import("./pages/TradingToolkit"));
-const TradeJournal = lazy(() => import("./pages/TradeJournal"));
-const Backtesting = lazy(() => import("./pages/Backtesting"));
-const TradeIdeas = lazy(() => import("./pages/TradeIdeas"));
 const MarketScanner = lazy(() => import("./pages/MarketScanner"));
 const Reports = lazy(() => import("./pages/Reports"));
 const CreditOptionsGuide = lazy(() => import("./pages/CreditOptionsGuide"));
@@ -35,7 +33,6 @@ const DividendTracker = lazy(() => import("./pages/DividendTracker"));
 const EconomicCalendar = lazy(() => import("./pages/EconomicCalendar"));
 const CorrelationMatrix = lazy(() => import("./pages/CorrelationMatrix"));
 const RiskMetrics = lazy(() => import("./pages/RiskMetrics"));
-const MarketNews = lazy(() => import("./pages/MarketNews"));
 const PortfolioRebalancing = lazy(() => import("./pages/PortfolioRebalancing"));
 const TradingViewWebhook = lazy(() => import("./pages/TradingViewWebhook"));
 const TradingAutomation = lazy(() => import("./pages/TradingAutomation"));
@@ -72,50 +69,48 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <div className="pb-16 lg:pb-0">
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/portfolio" element={<Portfolio />} />
-              <Route path="/performance" element={<Performance />} />
-              <Route path="/analysis" element={<Analysis />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/trading-toolkit" element={<TradingToolkit />} />
-              
-              <Route path="/options-portfolio" element={<OptionsPortfolio />} />
-              <Route path="/zero-dte" element={<ZeroDTE />} />
-              <Route path="/fundamentals" element={<Fundamentals />} />
-              <Route path="/trade-journal" element={<TradeJournal />} />
-              <Route path="/backtesting" element={<Backtesting />} />
-              <Route path="/trade-ideas" element={<TradeIdeas />} />
-              <Route path="/market-scanner" element={<MarketScanner />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/credit-options-guide" element={<CreditOptionsGuide />} />
-              <Route path="/fundamental-analysis-guide" element={<FundamentalAnalysisGuide />} />
-              <Route path="/alert-history" element={<AlertHistory />} />
-              <Route path="/trade-assistant" element={<TradeAssistant />} />
-              
-              <Route path="/dividend-tracker" element={<DividendTracker />} />
-              <Route path="/economic-calendar" element={<EconomicCalendar />} />
-              <Route path="/correlation-matrix" element={<CorrelationMatrix />} />
-              <Route path="/risk-metrics" element={<RiskMetrics />} />
-              <Route path="/market-news" element={<MarketNews />} />
-              <Route path="/portfolio-rebalancing" element={<PortfolioRebalancing />} />
-              <Route path="/tradingview-webhook" element={<TradingViewWebhook />} />
-              <Route path="/trading-automation" element={<TradingAutomation />} />
-              <Route path="/watchlist" element={<Watchlist />} />
-              <Route path="/install" element={<Install />} />
-              <Route path="/stock-research" element={<StockResearch />} />
-              <Route path="/retirement-planning" element={<RetirementPlanning />} />
-              <Route path="/saved-data" element={<SavedData />} />
-              <Route path="/real-estate" element={<RealEstate />} />
-              <Route path="/car-finance" element={<CarFinance />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </div>
+        <SwipeNavigation>
+          <div className="pb-16 lg:pb-0">
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/portfolio" element={<Portfolio />} />
+                <Route path="/performance" element={<Performance />} />
+                <Route path="/analysis" element={<Analysis />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/trading-toolkit" element={<TradingToolkit />} />
+                
+                <Route path="/options-portfolio" element={<OptionsPortfolio />} />
+                <Route path="/zero-dte" element={<ZeroDTE />} />
+                <Route path="/fundamentals" element={<Fundamentals />} />
+                <Route path="/market-scanner" element={<MarketScanner />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/credit-options-guide" element={<CreditOptionsGuide />} />
+                <Route path="/fundamental-analysis-guide" element={<FundamentalAnalysisGuide />} />
+                <Route path="/alert-history" element={<AlertHistory />} />
+                <Route path="/trade-assistant" element={<TradeAssistant />} />
+                
+                <Route path="/dividend-tracker" element={<DividendTracker />} />
+                <Route path="/economic-calendar" element={<EconomicCalendar />} />
+                <Route path="/correlation-matrix" element={<CorrelationMatrix />} />
+                <Route path="/risk-metrics" element={<RiskMetrics />} />
+                <Route path="/portfolio-rebalancing" element={<PortfolioRebalancing />} />
+                <Route path="/tradingview-webhook" element={<TradingViewWebhook />} />
+                <Route path="/trading-automation" element={<TradingAutomation />} />
+                <Route path="/watchlist" element={<Watchlist />} />
+                <Route path="/install" element={<Install />} />
+                <Route path="/stock-research" element={<StockResearch />} />
+                <Route path="/retirement-planning" element={<RetirementPlanning />} />
+                <Route path="/saved-data" element={<SavedData />} />
+                <Route path="/real-estate" element={<RealEstate />} />
+                <Route path="/car-finance" element={<CarFinance />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </div>
+        </SwipeNavigation>
         <FloatingActionButton />
         <BottomNavigation />
       </BrowserRouter>

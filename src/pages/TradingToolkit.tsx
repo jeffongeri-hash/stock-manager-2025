@@ -9,10 +9,12 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useStockData } from '@/hooks/useStockData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, CheckCircle2, XCircle, BarChart3, PieChart, TrendingUp, RefreshCw } from 'lucide-react';
+import { AlertCircle, CheckCircle2, XCircle, BarChart3, PieChart, TrendingUp, RefreshCw, BookOpen, Lightbulb } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import MonteCarloComparison from '@/components/trading/MonteCarloComparison';
 import { PortfolioOptimizer } from '@/components/trading/PortfolioOptimizer';
+import { TradeIdeasPanel } from '@/components/trading/TradeIdeasPanel';
+import { TradeJournalPanel } from '@/components/trading/TradeJournalPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -206,7 +208,7 @@ const TradingToolkit = () => {
   return (
     <PageLayout title="Trading Toolkit">
       <Tabs defaultValue="position-sizing" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
+        <TabsList className="flex flex-wrap h-auto gap-1 w-full">
           <TabsTrigger value="position-sizing">Position Sizing</TabsTrigger>
           <TabsTrigger value="expected-move" className="flex items-center gap-1">
             <TrendingUp className="h-3 w-3" />
@@ -222,6 +224,14 @@ const TradingToolkit = () => {
           <TabsTrigger value="optimizer" className="flex items-center gap-1">
             <PieChart className="h-3 w-3" />
             <span className="hidden lg:inline">Optimizer</span>
+          </TabsTrigger>
+          <TabsTrigger value="trade-ideas" className="flex items-center gap-1">
+            <Lightbulb className="h-3 w-3" />
+            <span className="hidden lg:inline">Trade Ideas</span>
+          </TabsTrigger>
+          <TabsTrigger value="trade-journal" className="flex items-center gap-1">
+            <BookOpen className="h-3 w-3" />
+            <span className="hidden lg:inline">Journal</span>
           </TabsTrigger>
         </TabsList>
 
@@ -819,6 +829,14 @@ const TradingToolkit = () => {
 
         <TabsContent value="optimizer">
           <PortfolioOptimizer />
+        </TabsContent>
+
+        <TabsContent value="trade-ideas">
+          <TradeIdeasPanel />
+        </TabsContent>
+
+        <TabsContent value="trade-journal">
+          <TradeJournalPanel />
         </TabsContent>
       </Tabs>
     </PageLayout>

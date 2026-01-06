@@ -295,6 +295,9 @@ const RetirementPlanning = () => {
             <p className="text-muted-foreground">
               Calculate your crossover point, use the wealth multiplier, and project your retirement portfolio
             </p>
+            <div className="p-3 bg-primary/10 border border-primary/30 rounded-lg text-sm">
+              <strong>What is FIRE?</strong> FIRE stands for <strong>Financial Independence, Retire Early</strong> — a movement focused on saving and investing aggressively to achieve financial freedom and the option to retire much earlier than traditional retirement age (often in your 40s or 50s instead of 65+).
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {lastSaved && (
