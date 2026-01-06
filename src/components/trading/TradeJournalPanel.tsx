@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +27,7 @@ interface JournalEntry {
   ai_grade?: string | null;
 }
 
-const TradeJournal = () => {
+export function TradeJournalPanel() {
   const { user } = useAuth();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isAddingEntry, setIsAddingEntry] = useState(false);
@@ -69,7 +68,6 @@ const TradeJournal = () => {
   };
 
   const addEntry = async () => {
-    // Validate with zod
     const result = tradeJournalSchema.safeParse(newEntry);
     
     if (!result.success) {
@@ -110,6 +108,17 @@ const TradeJournal = () => {
     toast.success('Journal entry added');
     setIsAddingEntry(false);
     setFormErrors({});
+    setNewEntry({
+      symbol: '',
+      entry_date: new Date().toISOString().split('T')[0],
+      exit_date: '',
+      strategy: '',
+      notes: '',
+      emotions: '',
+      lessons_learned: '',
+      tags: '',
+      profit_loss: ''
+    });
     fetchEntries();
   };
 
@@ -162,7 +171,6 @@ const TradeJournal = () => {
         } else {
           toast.error('Failed to grade trades');
         }
-        console.error('Error grading trades:', error);
         setGrading(false);
         return;
       }
@@ -171,7 +179,6 @@ const TradeJournal = () => {
       setShowAnalysis(true);
       toast.success('Trade analysis complete!');
     } catch (error) {
-      console.error('Error:', error);
       toast.error('Failed to grade trades');
     } finally {
       setGrading(false);
@@ -179,146 +186,92 @@ const TradeJournal = () => {
   };
 
   return (
-    <PageLayout title="Trade Journal">
-      <div className="space-y-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Journal Entries</CardTitle>
-            <div className="flex gap-2">
-              {selectedEntries.size > 0 && (
-                <Button 
-                  onClick={() => gradeTrades(Array.from(selectedEntries))} 
-                  disabled={grading}
-                  variant="secondary"
-                >
-                  <GraduationCap className="h-4 w-4 mr-2" />
-                  {grading ? 'Grading...' : `Grade ${selectedEntries.size} Trade${selectedEntries.size > 1 ? 's' : ''}`}
-                </Button>
-              )}
-              <Button onClick={() => setIsAddingEntry(!isAddingEntry)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Entry
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Journal Entries</CardTitle>
+          <div className="flex gap-2">
+            {selectedEntries.size > 0 && (
+              <Button 
+                onClick={() => gradeTrades(Array.from(selectedEntries))} 
+                disabled={grading}
+                variant="secondary"
+                size="sm"
+              >
+                <GraduationCap className="h-4 w-4 mr-2" />
+                Grade {selectedEntries.size}
               </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isAddingEntry && (
-              <div className="mb-6 p-4 border rounded-lg space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Symbol*</Label>
-                    <Input
-                      value={newEntry.symbol}
-                      onChange={(e) => setNewEntry({ ...newEntry, symbol: e.target.value.toUpperCase() })}
-                      placeholder="AAPL"
-                      maxLength={10}
-                      className={formErrors.symbol ? 'border-destructive' : ''}
-                    />
-                    {formErrors.symbol && <p className="text-sm text-destructive mt-1">{formErrors.symbol}</p>}
-                  </div>
-                  <div>
-                    <Label>Entry Date*</Label>
-                    <Input
-                      type="date"
-                      value={newEntry.entry_date}
-                      onChange={(e) => setNewEntry({ ...newEntry, entry_date: e.target.value })}
-                      className={formErrors.entry_date ? 'border-destructive' : ''}
-                    />
-                    {formErrors.entry_date && <p className="text-sm text-destructive mt-1">{formErrors.entry_date}</p>}
-                  </div>
-                  <div>
-                    <Label>Exit Date</Label>
-                    <Input
-                      type="date"
-                      value={newEntry.exit_date}
-                      onChange={(e) => setNewEntry({ ...newEntry, exit_date: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>P&L</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={newEntry.profit_loss}
-                      onChange={(e) => setNewEntry({ ...newEntry, profit_loss: e.target.value })}
-                      placeholder="150.00"
-                      className={formErrors.profit_loss ? 'border-destructive' : ''}
-                    />
-                    {formErrors.profit_loss && <p className="text-sm text-destructive mt-1">{formErrors.profit_loss}</p>}
-                  </div>
-                  <div>
-                    <Label>Strategy</Label>
-                    <Input
-                      value={newEntry.strategy}
-                      onChange={(e) => setNewEntry({ ...newEntry, strategy: e.target.value })}
-                      placeholder="Iron Condor, Call Spread, etc."
-                      maxLength={100}
-                    />
-                  </div>
-                  <div>
-                    <Label>Tags (comma separated)</Label>
-                    <Input
-                      value={newEntry.tags}
-                      onChange={(e) => setNewEntry({ ...newEntry, tags: e.target.value })}
-                      placeholder="earnings, momentum, breakout"
-                      maxLength={200}
-                    />
-                  </div>
-                </div>
+            )}
+            <Button onClick={() => setIsAddingEntry(!isAddingEntry)} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Entry
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isAddingEntry && (
+            <div className="mb-6 p-4 border rounded-lg space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label>Notes</Label>
-                  <Textarea
-                    value={newEntry.notes}
-                    onChange={(e) => setNewEntry({ ...newEntry, notes: e.target.value })}
-                    placeholder="What was your thesis? Market conditions?"
-                    rows={3}
+                  <Label>Symbol*</Label>
+                  <Input
+                    value={newEntry.symbol}
+                    onChange={(e) => setNewEntry({ ...newEntry, symbol: e.target.value.toUpperCase() })}
+                    placeholder="AAPL"
+                    className={formErrors.symbol ? 'border-destructive' : ''}
                   />
                 </div>
                 <div>
-                  <Label>Emotions</Label>
-                  <Textarea
-                    value={newEntry.emotions}
-                    onChange={(e) => setNewEntry({ ...newEntry, emotions: e.target.value })}
-                    placeholder="How did you feel entering/exiting this trade?"
-                    rows={2}
-                    maxLength={500}
+                  <Label>Entry Date*</Label>
+                  <Input
+                    type="date"
+                    value={newEntry.entry_date}
+                    onChange={(e) => setNewEntry({ ...newEntry, entry_date: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label>Lessons Learned</Label>
-                  <Textarea
-                    value={newEntry.lessons_learned}
-                    onChange={(e) => setNewEntry({ ...newEntry, lessons_learned: e.target.value })}
-                    placeholder="What would you do differently?"
-                    rows={2}
-                    maxLength={1000}
+                  <Label>P&L</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={newEntry.profit_loss}
+                    onChange={(e) => setNewEntry({ ...newEntry, profit_loss: e.target.value })}
+                    placeholder="150.00"
                   />
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={addEntry}>Save Entry</Button>
-                  <Button variant="outline" onClick={() => setIsAddingEntry(false)}>Cancel</Button>
                 </div>
               </div>
-            )}
+              <div>
+                <Label>Notes</Label>
+                <Textarea
+                  value={newEntry.notes}
+                  onChange={(e) => setNewEntry({ ...newEntry, notes: e.target.value })}
+                  placeholder="What was your thesis?"
+                  rows={2}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={addEntry} size="sm">Save Entry</Button>
+                <Button variant="outline" size="sm" onClick={() => setIsAddingEntry(false)}>Cancel</Button>
+              </div>
+            </div>
+          )}
 
-            {entries.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No journal entries yet. Add your first trade!</p>
-            ) : (
+          {entries.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No journal entries yet. Add your first trade!</p>
+          ) : (
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12"></TableHead>
                     <TableHead>Symbol</TableHead>
-                    <TableHead>Entry Date</TableHead>
-                    <TableHead>Exit Date</TableHead>
-                    <TableHead>Strategy</TableHead>
+                    <TableHead>Date</TableHead>
                     <TableHead>P&L</TableHead>
-                    <TableHead>Tags</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {entries.map((entry) => (
+                  {entries.slice(0, 10).map((entry) => (
                     <TableRow key={entry.id}>
                       <TableCell>
                         <Checkbox
@@ -328,20 +281,11 @@ const TradeJournal = () => {
                       </TableCell>
                       <TableCell className="font-medium">{entry.symbol}</TableCell>
                       <TableCell>{new Date(entry.entry_date).toLocaleDateString()}</TableCell>
-                      <TableCell>{entry.exit_date ? new Date(entry.exit_date).toLocaleDateString() : '-'}</TableCell>
-                      <TableCell>{entry.strategy || '-'}</TableCell>
                       <TableCell className={entry.profit_loss ? (entry.profit_loss >= 0 ? 'text-green-500' : 'text-red-500') : ''}>
                         {entry.profit_loss ? `$${entry.profit_loss.toFixed(2)}` : '-'}
                       </TableCell>
                       <TableCell>
-                        {entry.tags?.map((tag, i) => (
-                          <span key={i} className="inline-block bg-primary/10 text-primary px-2 py-1 rounded text-xs mr-1">
-                            {tag}
-                          </span>
-                        ))}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           <Button 
                             variant="ghost" 
                             size="sm" 
@@ -359,32 +303,31 @@ const TradeJournal = () => {
                   ))}
                 </TableBody>
               </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* AI Analysis Dialog */}
-        <Dialog open={showAnalysis} onOpenChange={setShowAnalysis}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <GraduationCap className="h-5 w-5" />
-                AI Trade Analysis
-              </DialogTitle>
-              <DialogDescription>
-                Expert feedback on your trading performance
-              </DialogDescription>
-            </DialogHeader>
-            <div className="prose dark:prose-invert max-w-none">
-              <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg">
-                {aiAnalysis}
-              </pre>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </PageLayout>
-  );
-};
+          )}
+        </CardContent>
+      </Card>
 
-export default TradeJournal;
+      <Dialog open={showAnalysis} onOpenChange={setShowAnalysis}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5" />
+              AI Trade Analysis
+            </DialogTitle>
+            <DialogDescription>
+              Expert feedback on your trading performance
+            </DialogDescription>
+          </DialogHeader>
+          <div className="prose dark:prose-invert max-w-none">
+            <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg">
+              {aiAnalysis}
+            </pre>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+export default TradeJournalPanel;

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Play, Trash2, Save, RotateCcw, Loader2 } from 'lucide-react';
+import { Play, Trash2, Save, RotateCcw, Loader2, Plus } from 'lucide-react';
 import PortfolioGrowthChart from '@/components/trading/PortfolioGrowthChart';
 import { useUserSettings } from '@/hooks/useUserSettings';
 
@@ -35,6 +35,10 @@ interface BacktestSettings {
   end_date: string;
   initial_capital: string;
   strategy_type: string;
+  custom_entry_trigger: string;
+  custom_exit_trigger: string;
+  custom_entry_conditions: string;
+  custom_exit_conditions: string;
 }
 
 const defaultSettings: BacktestSettings = {
@@ -44,9 +48,32 @@ const defaultSettings: BacktestSettings = {
   end_date: new Date().toISOString().split('T')[0],
   initial_capital: '10000',
   strategy_type: 'buy_hold',
+  custom_entry_trigger: '',
+  custom_exit_trigger: '',
+  custom_entry_conditions: '',
+  custom_exit_conditions: '',
 };
 
-const Backtesting = () => {
+const predefinedStrategies = [
+  { value: 'buy_hold', label: 'Buy & Hold' },
+  { value: 'iron_condor', label: 'Iron Condor' },
+  { value: 'vertical_spread', label: 'Vertical Spread' },
+  { value: 'straddle', label: 'Straddle' },
+  { value: 'strangle', label: 'Strangle' },
+  { value: 'butterfly', label: 'Butterfly Spread' },
+  { value: 'covered_call', label: 'Covered Call' },
+  { value: 'covered_put', label: 'Covered Put' },
+  { value: 'bull_call_spread', label: 'Bull Call Spread' },
+  { value: 'bear_put_spread', label: 'Bear Put Spread' },
+  { value: 'calendar_spread', label: 'Calendar Spread' },
+  { value: 'bollinger_bands', label: 'Bollinger Bands' },
+  { value: 'ma_crossover', label: 'Moving Average Crossover' },
+  { value: 'macd', label: 'MACD Divergence' },
+  { value: 'rsi', label: 'RSI Divergence' },
+  { value: 'custom', label: '🛠️ Custom Strategy' },
+];
+
+export function CustomStrategyBacktester() {
   const { user } = useAuth();
   const [results, setResults] = useState<BacktestResult[]>([]);
   const [running, setRunning] = useState(false);
@@ -84,66 +111,76 @@ const Backtesting = () => {
     setResults(data || []);
   };
 
+  const getStrategyTriggers = (type: string) => {
+    const triggers: { [key: string]: { entry: string; exit: string; entryConditions: string; exitConditions: string } } = {
+      buy_hold: {
+        entry: 'Market Open',
+        exit: 'Market Close / Target Date',
+        entryConditions: 'Buy at start date market open price',
+        exitConditions: 'Sell at end date market close price or when target is reached'
+      },
+      iron_condor: {
+        entry: 'IV > 50th Percentile',
+        exit: '50% Max Profit or 21 DTE',
+        entryConditions: 'Sell OTM call spread & put spread when IV is elevated (>50th percentile). Delta ~0.16 per leg.',
+        exitConditions: 'Close at 50% max profit, 21 DTE, or if position reaches 2x max profit in loss'
+      },
+      vertical_spread: {
+        entry: 'Directional Signal + IV',
+        exit: '50% Max Profit or Expiration',
+        entryConditions: 'Buy lower strike, sell higher strike (call) or reverse (put). Enter on trend confirmation.',
+        exitConditions: 'Exit at 50% max profit, expiration, or if underlying moves against position >5%'
+      },
+      straddle: {
+        entry: 'IV < 30th Percentile',
+        exit: 'IV Expansion or 30 DTE',
+        entryConditions: 'Buy ATM call and put when IV is low, expecting volatility expansion',
+        exitConditions: 'Exit when IV expands >20 points, at 30 DTE, or 50% loss'
+      },
+      ma_crossover: {
+        entry: 'Fast MA Crosses Above Slow MA',
+        exit: 'Fast MA Crosses Below Slow MA',
+        entryConditions: 'Enter long when 20-day MA crosses above 50-day MA (bullish crossover)',
+        exitConditions: 'Exit when 20-day MA crosses below 50-day MA (bearish crossover) or -2% stop loss'
+      },
+      rsi: {
+        entry: 'RSI < 30 (Oversold)',
+        exit: 'RSI > 70 (Overbought)',
+        entryConditions: 'Buy when RSI(14) crosses below 30, indicating oversold conditions',
+        exitConditions: 'Sell when RSI(14) crosses above 70 or -3% stop loss triggered'
+      },
+      custom: {
+        entry: backtest.custom_entry_trigger || 'Custom Entry',
+        exit: backtest.custom_exit_trigger || 'Custom Exit',
+        entryConditions: backtest.custom_entry_conditions || 'Custom entry conditions',
+        exitConditions: backtest.custom_exit_conditions || 'Custom exit conditions'
+      }
+    };
+    return triggers[type] || triggers.buy_hold;
+  };
+
   const runBacktest = async () => {
     if (!backtest.strategy_name || !backtest.symbol || !backtest.start_date) {
       toast.error('Please fill in all required fields');
       return;
     }
 
+    if (backtest.strategy_type === 'custom' && (!backtest.custom_entry_trigger || !backtest.custom_exit_trigger)) {
+      toast.error('Please define entry and exit triggers for your custom strategy');
+      return;
+    }
+
     setRunning(true);
 
-    // Simulate backtesting (in production, this would be a real backtest)
+    // Simulate backtesting
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     const initial = parseFloat(backtest.initial_capital);
-    const randomReturn = (Math.random() * 0.6) - 0.2; // -20% to +40% return
+    const randomReturn = (Math.random() * 0.6) - 0.2;
     const final = initial * (1 + randomReturn);
     const trades = Math.floor(Math.random() * 50) + 10;
-    const winning = Math.floor(trades * (0.4 + Math.random() * 0.3)); // 40-70% win rate
+    const winning = Math.floor(trades * (0.4 + Math.random() * 0.3));
     const winRate = (winning / trades) * 100;
-
-    // Generate entry/exit triggers based on strategy type
-    const getStrategyTriggers = (type: string) => {
-      const triggers: { [key: string]: { entry: string; exit: string; entryConditions: string; exitConditions: string } } = {
-        buy_hold: {
-          entry: 'Market Open',
-          exit: 'Market Close / Target Date',
-          entryConditions: 'Buy at start date market open price',
-          exitConditions: 'Sell at end date market close price or when target is reached'
-        },
-        iron_condor: {
-          entry: 'IV > 50th Percentile',
-          exit: '50% Max Profit or 21 DTE',
-          entryConditions: 'Sell OTM call spread & put spread when IV is elevated (>50th percentile). Delta ~0.16 per leg.',
-          exitConditions: 'Close at 50% max profit, 21 DTE, or if position reaches 2x max profit in loss'
-        },
-        vertical_spread: {
-          entry: 'Directional Signal + IV',
-          exit: '50% Max Profit or Expiration',
-          entryConditions: 'Buy lower strike, sell higher strike (call) or reverse (put). Enter on trend confirmation.',
-          exitConditions: 'Exit at 50% max profit, expiration, or if underlying moves against position >5%'
-        },
-        straddle: {
-          entry: 'IV < 30th Percentile',
-          exit: 'IV Expansion or 30 DTE',
-          entryConditions: 'Buy ATM call and put when IV is low, expecting volatility expansion',
-          exitConditions: 'Exit when IV expands >20 points, at 30 DTE, or 50% loss'
-        },
-        ma_crossover: {
-          entry: 'Fast MA Crosses Above Slow MA',
-          exit: 'Fast MA Crosses Below Slow MA',
-          entryConditions: 'Enter long when 20-day MA crosses above 50-day MA (bullish crossover)',
-          exitConditions: 'Exit when 20-day MA crosses below 50-day MA (bearish crossover) or -2% stop loss'
-        },
-        rsi: {
-          entry: 'RSI < 30 (Oversold)',
-          exit: 'RSI > 70 (Overbought)',
-          entryConditions: 'Buy when RSI(14) crosses below 30, indicating oversold conditions',
-          exitConditions: 'Sell when RSI(14) crosses above 70 or -3% stop loss triggered'
-        }
-      };
-      return triggers[type] || triggers.buy_hold;
-    };
 
     const strategyTriggers = getStrategyTriggers(backtest.strategy_type);
 
@@ -165,7 +202,8 @@ const Backtesting = () => {
           entry_trigger: strategyTriggers.entry,
           exit_trigger: strategyTriggers.exit,
           entry_conditions: strategyTriggers.entryConditions,
-          exit_conditions: strategyTriggers.exitConditions
+          exit_conditions: strategyTriggers.exitConditions,
+          is_custom: backtest.strategy_type === 'custom'
         }
       });
 
@@ -195,9 +233,11 @@ const Backtesting = () => {
     fetchResults();
   };
 
+  const isCustomStrategy = backtest.strategy_type === 'custom';
+
   return (
-    <PageLayout title="Strategy Backtesting">
-      <div className="flex justify-end gap-2 mb-4">
+    <div className="space-y-6">
+      <div className="flex justify-end gap-2">
         {lastSaved && (
           <span className="text-xs text-muted-foreground self-center">
             Last saved: {lastSaved.toLocaleDateString()}
@@ -230,13 +270,13 @@ const Backtesting = () => {
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Run Backtest</CardTitle>
-            <CardDescription>Test your strategy against historical data</CardDescription>
+            <CardDescription>Test predefined or custom strategies against historical data</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <Label>Strategy Name*</Label>
               <Input
-                placeholder="My Iron Condor Strategy"
+                placeholder="My Custom Strategy"
                 value={backtest.strategy_name}
                 onChange={(e) => updateSetting('strategy_name', e.target.value)}
               />
@@ -256,24 +296,62 @@ const Backtesting = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="buy_hold">Buy & Hold</SelectItem>
-                  <SelectItem value="iron_condor">Iron Condor</SelectItem>
-                  <SelectItem value="vertical_spread">Vertical Spread</SelectItem>
-                  <SelectItem value="straddle">Straddle</SelectItem>
-                  <SelectItem value="strangle">Strangle</SelectItem>
-                  <SelectItem value="butterfly">Butterfly Spread</SelectItem>
-                  <SelectItem value="covered_call">Covered Call</SelectItem>
-                  <SelectItem value="covered_put">Covered Put</SelectItem>
-                  <SelectItem value="bull_call_spread">Bull Call Spread</SelectItem>
-                  <SelectItem value="bear_put_spread">Bear Put Spread</SelectItem>
-                  <SelectItem value="calendar_spread">Calendar Spread</SelectItem>
-                  <SelectItem value="bollinger_bands">Bollinger Bands</SelectItem>
-                  <SelectItem value="ma_crossover">Moving Average Crossover</SelectItem>
-                  <SelectItem value="macd">MACD Divergence</SelectItem>
-                  <SelectItem value="rsi">RSI Divergence</SelectItem>
+                  {predefinedStrategies.map((strategy) => (
+                    <SelectItem key={strategy.value} value={strategy.value}>
+                      {strategy.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {isCustomStrategy && (
+              <Card className="border-primary/30 bg-primary/5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Custom Strategy Definition
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <Label>Entry Trigger*</Label>
+                    <Input
+                      placeholder="e.g., RSI < 25 AND Price > 200 SMA"
+                      value={backtest.custom_entry_trigger}
+                      onChange={(e) => updateSetting('custom_entry_trigger', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Exit Trigger*</Label>
+                    <Input
+                      placeholder="e.g., RSI > 75 OR 5% Profit"
+                      value={backtest.custom_exit_trigger}
+                      onChange={(e) => updateSetting('custom_exit_trigger', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Entry Conditions (detailed)</Label>
+                    <Textarea
+                      placeholder="Describe when to enter the trade..."
+                      value={backtest.custom_entry_conditions}
+                      onChange={(e) => updateSetting('custom_entry_conditions', e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                  <div>
+                    <Label>Exit Conditions (detailed)</Label>
+                    <Textarea
+                      placeholder="Describe when to exit the trade..."
+                      value={backtest.custom_exit_conditions}
+                      onChange={(e) => updateSetting('custom_exit_conditions', e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <div>
               <Label>Start Date*</Label>
               <Input
@@ -338,7 +416,12 @@ const Backtesting = () => {
                             className="cursor-pointer hover:bg-muted/50"
                             onClick={() => setExpandedRow(isExpanded ? null : result.id)}
                           >
-                            <TableCell className="font-medium">{result.strategy_name}</TableCell>
+                            <TableCell className="font-medium">
+                              {result.strategy_name}
+                              {params?.is_custom && (
+                                <span className="ml-2 text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded">Custom</span>
+                              )}
+                            </TableCell>
                             <TableCell>{result.symbol}</TableCell>
                             <TableCell className="text-sm">
                               {new Date(result.start_date).toLocaleDateString()} - {new Date(result.end_date).toLocaleDateString()}
@@ -425,37 +508,9 @@ const Backtesting = () => {
         </Card>
       </div>
 
-      {/* Portfolio Growth Chart */}
-      <div className="mt-6">
-        <PortfolioGrowthChart mode="backtest" />
-      </div>
-
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>About Backtesting</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 text-sm text-muted-foreground">
-          <p>
-            Backtesting allows you to test your trading strategies against historical market data to see how they would have performed.
-            This helps you refine your approach before risking real capital.
-          </p>
-          <div>
-            <h4 className="font-semibold text-foreground mb-2">Key Metrics</h4>
-            <ul className="list-disc list-inside space-y-1">
-              <li><strong>Total Return:</strong> Overall profit/loss from the strategy</li>
-              <li><strong>Win Rate:</strong> Percentage of profitable trades</li>
-              <li><strong>Total Trades:</strong> Number of trades executed during the period</li>
-            </ul>
-          </div>
-          <div className="bg-yellow-500/10 p-3 rounded">
-            <p className="text-sm text-yellow-700 dark:text-yellow-400">
-              ⚠️ Past performance does not guarantee future results. Use backtesting as one tool in your analysis, not the only one.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </PageLayout>
+      <PortfolioGrowthChart mode="backtest" />
+    </div>
   );
-};
+}
 
-export default Backtesting;
+export default CustomStrategyBacktester;
