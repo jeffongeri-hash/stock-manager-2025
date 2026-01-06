@@ -19,6 +19,8 @@ import {
 import { SocialSecurityEstimator } from '@/components/retirement/SocialSecurityEstimator';
 import { RetirementIncomeBreakdown } from '@/components/retirement/RetirementIncomeBreakdown';
 import { FireTypesCalculator } from '@/components/retirement/FireTypesCalculator';
+import { RothConversionCalculator } from '@/components/retirement/RothConversionCalculator';
+import { RMDCalculator } from '@/components/retirement/RMDCalculator';
 
 // Money Guy Show Wealth Multiplier Table
 const WEALTH_MULTIPLIERS: Record<number, number> = {
@@ -290,13 +292,15 @@ const RetirementPlanning = () => {
         </div>
 
         <Tabs defaultValue="crossover" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="crossover">Crossover</TabsTrigger>
             <TabsTrigger value="multiplier">Wealth Multiplier</TabsTrigger>
             <TabsTrigger value="projection">Projection</TabsTrigger>
             <TabsTrigger value="social-security">Social Security</TabsTrigger>
             <TabsTrigger value="income">Income Sources</TabsTrigger>
             <TabsTrigger value="fire">FIRE Types</TabsTrigger>
+            <TabsTrigger value="roth">Roth Conversion</TabsTrigger>
+            <TabsTrigger value="rmd">RMD</TabsTrigger>
             <TabsTrigger value="calculators">Calculators</TabsTrigger>
           </TabsList>
 
@@ -816,6 +820,16 @@ const RetirementPlanning = () => {
           {/* FIRE Types Tab */}
           <TabsContent value="fire" className="space-y-4">
             <FireTypesCalculator />
+          </TabsContent>
+
+          {/* Roth Conversion Tab */}
+          <TabsContent value="roth" className="space-y-4">
+            <RothConversionCalculator />
+          </TabsContent>
+
+          {/* RMD Tab */}
+          <TabsContent value="rmd" className="space-y-4">
+            <RMDCalculator />
           </TabsContent>
         </Tabs>
       </div>
