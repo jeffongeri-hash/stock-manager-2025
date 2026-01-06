@@ -43,6 +43,8 @@ const Install = lazy(() => import("./pages/Install"));
 const StockResearch = lazy(() => import("./pages/StockResearch"));
 const RetirementPlanning = lazy(() => import("./pages/RetirementPlanning"));
 const SavedData = lazy(() => import("./pages/SavedData"));
+const RealEstate = lazy(() => import("./pages/RealEstate"));
+const CarFinance = lazy(() => import("./pages/CarFinance"));
 
 const queryClient = new QueryClient();
 
@@ -106,6 +108,8 @@ const App = () => (
               <Route path="/stock-research" element={<StockResearch />} />
               <Route path="/retirement-planning" element={<RetirementPlanning />} />
               <Route path="/saved-data" element={<SavedData />} />
+              <Route path="/real-estate" element={<RealEstate />} />
+              <Route path="/car-finance" element={<CarFinance />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
