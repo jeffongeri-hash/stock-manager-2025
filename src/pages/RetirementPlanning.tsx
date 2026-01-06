@@ -27,6 +27,8 @@ import { HSACalculator } from '@/components/retirement/HSACalculator';
 import { useUserSettings } from '@/hooks/useUserSettings';
 
 interface RetirementSettings {
+  // Annual Spending Post-Retirement (drives FIRE & projection calculations)
+  annualSpendingPostRetirement: number;
   // Crossover Point
   monthlyExpenses: number;
   monthlyInvestment: number;
@@ -47,6 +49,7 @@ interface RetirementSettings {
 }
 
 const defaultSettings: RetirementSettings = {
+  annualSpendingPostRetirement: 60000,
   monthlyExpenses: 5000,
   monthlyInvestment: 1500,
   currentSavings: 50000,
@@ -131,6 +134,7 @@ const RetirementPlanning = () => {
 
   // Destructure settings for easier access
   const {
+    annualSpendingPostRetirement,
     monthlyExpenses,
     monthlyInvestment,
     currentSavings,
@@ -203,7 +207,7 @@ const RetirementPlanning = () => {
     return { data, multiplier, futureValue };
   }, [currentAge, retirementAge, annualContribution]);
 
-  // Calculate retirement projection
+  // Calculate retirement projection - now uses annualSpendingPostRetirement
   const retirementProjection = useMemo(() => {
     const data = [];
     let savings = projCurrentSavings;
@@ -225,17 +229,18 @@ const RetirementPlanning = () => {
           savings = savings * (1 + monthlyReturn) + projMonthlyContrib;
         }
       } else {
-        // Retirement phase - 4% withdrawal adjusted for inflation
-        const withdrawal = savings * 0.04;
-        savings = (savings - withdrawal) * (1 + (realReturn / 100));
+        // Retirement phase - use user-defined annual spending adjusted for inflation
+        const yearsRetired = age - projRetirementAge;
+        const adjustedSpending = annualSpendingPostRetirement * Math.pow(1 + projInflation / 100, yearsRetired);
+        savings = (savings - adjustedSpending) * (1 + (realReturn / 100));
         if (savings < 0) savings = 0;
       }
     }
     
     return data;
-  }, [projCurrentAge, projRetirementAge, projCurrentSavings, projMonthlyContrib, projExpectedReturn, projInflation]);
+  }, [projCurrentAge, projRetirementAge, projCurrentSavings, projMonthlyContrib, projExpectedReturn, projInflation, annualSpendingPostRetirement]);
 
-  // Calculate retirement readiness metrics
+  // Calculate retirement readiness metrics - now uses user's spending goal
   const retirementMetrics = useMemo(() => {
     const yearsToRetirement = projRetirementAge - projCurrentAge;
     const monthlyReturn = projExpectedReturn / 100 / 12;
@@ -245,21 +250,24 @@ const RetirementPlanning = () => {
       futureValue = futureValue * (1 + monthlyReturn) + projMonthlyContrib;
     }
     
-    const safeWithdrawal = futureValue * 0.04;
-    const monthlyIncome = safeWithdrawal / 12;
+    // Use user's annual spending goal instead of 4% withdrawal
+    const annualWithdrawal = annualSpendingPostRetirement;
+    const monthlyIncome = annualWithdrawal / 12;
+    const portfolioCanSupport = futureValue >= annualSpendingPostRetirement * 25;
     
     return {
       portfolioAtRetirement: futureValue,
-      annualWithdrawal: safeWithdrawal,
+      annualWithdrawal,
       monthlyIncome,
-      yearsToRetirement
+      yearsToRetirement,
+      portfolioCanSupport
     };
-  }, [projCurrentAge, projRetirementAge, projCurrentSavings, projMonthlyContrib, projExpectedReturn]);
+  }, [projCurrentAge, projRetirementAge, projCurrentSavings, projMonthlyContrib, projExpectedReturn, annualSpendingPostRetirement]);
 
-  // FIRE number calculation
+  // FIRE number calculation - now based on post-retirement spending
   const fireNumber = useMemo(() => {
-    return monthlyExpenses * 12 * 25; // 25x annual expenses (4% rule)
-  }, [monthlyExpenses]);
+    return annualSpendingPostRetirement * 25; // 25x annual expenses (4% rule)
+  }, [annualSpendingPostRetirement]);
 
   const formatCurrency = (value: number) => {
     if (value >= 1000000) {
@@ -374,6 +382,57 @@ const RetirementPlanning = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Annual Spending Goal Section */}
+        <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Wallet className="h-5 w-5 text-primary" />
+              Annual Spending in Retirement
+            </CardTitle>
+            <CardDescription>
+              Set your expected annual spending to calculate your savings goals. This drives your FIRE number and portfolio projection.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+              <div className="space-y-2">
+                <Label htmlFor="annualSpending">Annual Spending Goal</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">$</span>
+                  <Input
+                    id="annualSpending"
+                    type="number"
+                    value={annualSpendingPostRetirement}
+                    onChange={(e) => updateSetting('annualSpendingPostRetirement', Number(e.target.value))}
+                    className="text-lg font-semibold"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Monthly: {formatCurrency(annualSpendingPostRetirement / 12)}
+                </p>
+              </div>
+              
+              <div className="p-4 bg-muted rounded-lg text-center">
+                <p className="text-xs text-muted-foreground mb-1">FIRE Number (25x)</p>
+                <p className="text-xl font-bold text-primary">{formatCurrency(fireNumber)}</p>
+                <p className="text-xs text-muted-foreground">Target savings</p>
+              </div>
+              
+              <div className="p-4 bg-muted rounded-lg text-center">
+                <p className="text-xs text-muted-foreground mb-1">Lean FIRE (20x)</p>
+                <p className="text-xl font-bold text-green-600 dark:text-green-400">{formatCurrency(annualSpendingPostRetirement * 20)}</p>
+                <p className="text-xs text-muted-foreground">5% withdrawal</p>
+              </div>
+              
+              <div className="p-4 bg-muted rounded-lg text-center">
+                <p className="text-xs text-muted-foreground mb-1">Fat FIRE (33x)</p>
+                <p className="text-xl font-bold text-purple-600 dark:text-purple-400">{formatCurrency(annualSpendingPostRetirement * 33.33)}</p>
+                <p className="text-xs text-muted-foreground">3% withdrawal</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Tabs defaultValue="crossover" className="space-y-4">
           <TabsList className="flex flex-wrap h-auto gap-1">
@@ -906,7 +965,7 @@ const RetirementPlanning = () => {
 
           {/* FIRE Types Tab */}
           <TabsContent value="fire" className="space-y-4">
-            <FireTypesCalculator />
+            <FireTypesCalculator annualSpendingPostRetirement={annualSpendingPostRetirement} />
           </TabsContent>
 
           {/* Roth Conversion Tab */}
