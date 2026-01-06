@@ -298,17 +298,11 @@
   /* Mobile-first responsive utilities */
   .mobile-scroll-x {
     @apply overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 sm:overflow-visible;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Touch-friendly tap targets */
   @media (max-width: 640px) {
-    button, 
-    [role="button"],
-    a {
-      min-height: 44px;
-      min-width: 44px;
-    }
-    
     /* Improve form element sizes on mobile */
     input, 
     select, 
@@ -339,5 +333,57 @@
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Mobile-optimized card styles */
+  .mobile-card {
+    @apply rounded-xl p-4 transition-all duration-200 active:scale-[0.98];
+  }
+
+  /* Swipe-friendly horizontal scroll */
+  .swipe-scroll {
+    @apply flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .swipe-scroll > * {
+    @apply snap-start shrink-0;
+  }
+
+  /* Better touch feedback */
+  .touch-feedback {
+    @apply transition-transform duration-150 active:scale-95;
+  }
+
+  /* Full-width mobile buttons */
+  @media (max-width: 640px) {
+    .mobile-full-width {
+      @apply w-full;
+    }
+  }
+
+  /* Floating action button */
+  .fab {
+    @apply fixed bottom-20 right-4 z-40 lg:bottom-6 h-14 w-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-90;
+  }
+
+  /* Mobile modal/sheet improvements */
+  .mobile-sheet {
+    @apply rounded-t-2xl max-h-[85vh] overflow-y-auto;
+  }
+
+  /* Gesture hint indicator */
+  .sheet-handle {
+    @apply w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4;
+  }
+
+  /* Mobile grid helpers */
+  .mobile-grid-2 {
+    @apply grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4;
+  }
+
+  /* Sticky header for mobile */
+  .mobile-sticky-header {
+    @apply sticky top-0 z-20 bg-background/95 backdrop-blur-md py-3 -mx-3 px-3 sm:static sm:bg-transparent sm:backdrop-blur-none sm:mx-0 sm:px-0;
   }
 }

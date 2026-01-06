@@ -28,22 +28,24 @@ export function Navbar({ className }: NavbarProps) {
   };
 
   return (
-    <header className={cn("bg-background/95 backdrop-blur-sm sticky top-0 z-30 border-b", className)}>
+    <header className={cn("bg-background/95 backdrop-blur-md sticky top-0 z-30 border-b safe-area-top", className)}>
       <div className="container flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4">
         <div className="flex items-center gap-2 lg:gap-4">
           {/* Mobile menu button */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden h-9 w-9">
+              <Button variant="ghost" size="icon" className="lg:hidden h-10 w-10 touch-feedback">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
-              <Sidebar isCollapsed={false} onToggle={() => {}} />
+            <SheetContent side="left" className="w-72 p-0 safe-area-left">
+              <div className="h-full overflow-y-auto">
+                <Sidebar isCollapsed={false} onToggle={() => {}} />
+              </div>
             </SheetContent>
           </Sheet>
           
-          <h1 className="text-base sm:text-lg font-semibold tracking-tight lg:text-xl">Profit Pathway</h1>
+          <h1 className="text-base sm:text-lg font-semibold tracking-tight lg:text-xl truncate max-w-[150px] sm:max-w-none">Profit Pathway</h1>
           
           <div className="relative hidden md:flex items-center h-9 rounded-md px-3 text-muted-foreground focus-within:text-foreground bg-muted/50">
             <Search className="h-4 w-4 mr-2" />

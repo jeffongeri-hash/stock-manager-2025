@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface StockData {
   symbol: string;
@@ -298,56 +299,68 @@ export function Dashboard() {
         </div>
         
         <main className="flex-1 transition-all duration-300 w-full overflow-hidden">
-          <PullToRefresh onRefresh={handleRefresh} className="h-full overflow-y-auto">
-            <div className="container max-w-full p-3 sm:p-4 lg:p-6 animate-fade-in">
-              <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Market Dashboard</h1>
+          <PullToRefresh onRefresh={handleRefresh} className="h-full overflow-y-auto pb-20 lg:pb-0">
+            <div className="w-full p-3 sm:p-4 lg:p-6 animate-fade-in">
+              <div className="mobile-sticky-header mb-4">
+                <h1 className="text-xl sm:text-2xl font-bold">Market Dashboard</h1>
+              </div>
             
-            {/* Stats Row - Trading Performance with Sparklines */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6 stagger-animation">
-              <AnimatedStatsCard 
-                title="Total P&L" 
-                value={`$${tradeStats.totalPnL.toFixed(2)}`}
-                trend={tradeStats.totalPnL}
-                trendLabel="all time"
-                icon={<DollarSign className="h-full w-full" />}
-                variant={tradeStats.totalPnL >= 0 ? "success" : "danger"}
-                sparklineData={generatePriceHistory(20, Math.abs(tradeStats.totalPnL) || 100, 5)}
-                delay={0}
-              />
-              <AnimatedStatsCard 
-                title="Unrealized P&L" 
-                value={`$${tradeStats.unrealizedPnL.toFixed(2)}`}
-                description="Open positions"
-                icon={<TrendingUpIcon className="h-full w-full" />}
-                variant={tradeStats.unrealizedPnL >= 0 ? "success" : "danger"}
-                sparklineData={generatePriceHistory(20, Math.abs(tradeStats.unrealizedPnL) || 50, 3)}
-                delay={50}
-              />
-              <AnimatedStatsCard 
-                title="Open Positions" 
-                value={tradeStats.openPositions.toString()}
-                description="Active trades"
-                icon={<Activity className="h-full w-full" />}
-                variant="primary"
-                delay={100}
-              />
-              <AnimatedStatsCard 
-                title="Win Rate" 
-                value={`${tradeStats.winRate.toFixed(1)}%`}
-                description="Success rate"
-                icon={<Target className="h-full w-full" />}
-                variant={tradeStats.winRate >= 50 ? "success" : "warning"}
-                sparklineData={generatePriceHistory(15, tradeStats.winRate || 50, 10)}
-                delay={150}
-              />
-              <AnimatedStatsCard 
-                title="Total Trades" 
-                value={tradeStats.totalTrades.toString()}
-                description="All time"
-                icon={<BarChart3 className="h-full w-full" />}
-                variant="primary"
-                delay={200}
-              />
+            {/* Stats Row - Swipeable on mobile */}
+            <div className="swipe-scroll lg:grid lg:grid-cols-5 lg:gap-4 mb-4 sm:mb-6 -mx-3 px-3 lg:mx-0 lg:px-0">
+              <div className="w-[140px] sm:w-auto lg:w-auto shrink-0 lg:shrink">
+                <AnimatedStatsCard 
+                  title="Total P&L" 
+                  value={`$${tradeStats.totalPnL.toFixed(2)}`}
+                  trend={tradeStats.totalPnL}
+                  trendLabel="all time"
+                  icon={<DollarSign className="h-full w-full" />}
+                  variant={tradeStats.totalPnL >= 0 ? "success" : "danger"}
+                  sparklineData={generatePriceHistory(20, Math.abs(tradeStats.totalPnL) || 100, 5)}
+                  delay={0}
+                />
+              </div>
+              <div className="w-[140px] sm:w-auto lg:w-auto shrink-0 lg:shrink">
+                <AnimatedStatsCard 
+                  title="Unrealized P&L" 
+                  value={`$${tradeStats.unrealizedPnL.toFixed(2)}`}
+                  description="Open positions"
+                  icon={<TrendingUpIcon className="h-full w-full" />}
+                  variant={tradeStats.unrealizedPnL >= 0 ? "success" : "danger"}
+                  sparklineData={generatePriceHistory(20, Math.abs(tradeStats.unrealizedPnL) || 50, 3)}
+                  delay={50}
+                />
+              </div>
+              <div className="w-[140px] sm:w-auto lg:w-auto shrink-0 lg:shrink">
+                <AnimatedStatsCard 
+                  title="Open Positions" 
+                  value={tradeStats.openPositions.toString()}
+                  description="Active trades"
+                  icon={<Activity className="h-full w-full" />}
+                  variant="primary"
+                  delay={100}
+                />
+              </div>
+              <div className="w-[140px] sm:w-auto lg:w-auto shrink-0 lg:shrink">
+                <AnimatedStatsCard 
+                  title="Win Rate" 
+                  value={`${tradeStats.winRate.toFixed(1)}%`}
+                  description="Success rate"
+                  icon={<Target className="h-full w-full" />}
+                  variant={tradeStats.winRate >= 50 ? "success" : "warning"}
+                  sparklineData={generatePriceHistory(15, tradeStats.winRate || 50, 10)}
+                  delay={150}
+                />
+              </div>
+              <div className="w-[140px] sm:w-auto lg:w-auto shrink-0 lg:shrink">
+                <AnimatedStatsCard 
+                  title="Total Trades" 
+                  value={tradeStats.totalTrades.toString()}
+                  description="All time"
+                  icon={<BarChart3 className="h-full w-full" />}
+                  variant="primary"
+                  delay={200}
+                />
+              </div>
             </div>
             
             {/* Main Content Layout */}
@@ -377,14 +390,17 @@ export function Dashboard() {
                 ) : stocks.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">Add stocks to your watchlist</p>
                 ) : (
-                  <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-2 sm:space-y-3">
                     {stocks.map((stock) => (
-                      <div key={stock.symbol} className="relative group">
+                      <div key={stock.symbol} className="relative group touch-feedback">
                         <StockCard 
                           stock={stock} 
                           priceHistory={stock.priceHistory || []}
                           onClick={() => setSelectedStock(stock)}
-                          className={selectedStock?.symbol === stock.symbol ? "ring-2 ring-primary" : ""}
+                          className={cn(
+                            "cursor-pointer",
+                            selectedStock?.symbol === stock.symbol && "ring-2 ring-primary"
+                          )}
                         />
                         <Button
                           variant="ghost"
@@ -393,7 +409,7 @@ export function Dashboard() {
                             e.stopPropagation();
                             removeFromWatchlist(stock.symbol);
                           }}
-                          className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-2 right-2 h-8 w-8 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm"
                         >
                           <X className="h-4 w-4" />
                         </Button>
