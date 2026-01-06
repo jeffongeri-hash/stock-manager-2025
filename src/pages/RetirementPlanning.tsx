@@ -415,6 +415,9 @@ const RetirementPlanning = () => {
                 <p className="text-xs text-muted-foreground">
                   Monthly: {formatCurrency(annualSpendingPostRetirement / 12)}
                 </p>
+                <p className="text-xs text-orange-600 dark:text-orange-400">
+                  Inflation-adjusted ({projRetirementAge - projCurrentAge} yrs): {formatCurrency((annualSpendingPostRetirement / 12) * Math.pow(1 + projInflation / 100, projRetirementAge - projCurrentAge))}/mo
+                </p>
               </div>
               
               <div className="p-4 bg-muted rounded-lg text-center">
@@ -969,15 +972,34 @@ const RetirementPlanning = () => {
 
           {/* Additional Calculators Tab */}
           <TabsContent value="calculators" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Compound Interest Calculator */}
-              <CompoundInterestCalculator />
-              
-              {/* Rule of 72 */}
-              <RuleOf72Calculator />
-              
-              {/* Coast FIRE Calculator */}
-              <CoastFireCalculator />
+            {/* Personal Finance Calculators */}
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Wallet className="h-5 w-5" />
+                Personal Finance Calculators
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <CompoundInterestCalculator />
+                <RuleOf72Calculator />
+                <SavingsRateCalculator />
+                <EmergencyFundCalculator inflationRate={projInflation} />
+                <DebtPayoffCalculator />
+                <NetWorthCalculator />
+              </div>
+            </div>
+
+            {/* Investing Calculators */}
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Investing Calculators
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <CoastFireCalculator />
+                <InvestmentReturnsCalculator />
+                <DividendCalculator />
+                <DollarCostAverageCalculator />
+              </div>
             </div>
           </TabsContent>
 
@@ -1279,6 +1301,515 @@ const CoastFireCalculator = () => {
           <p className="text-xs text-muted-foreground mt-1">
             Save this much, then let compound growth do the rest!
           </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Savings Rate Calculator
+const SavingsRateCalculator = () => {
+  const [income, setIncome] = useState(75000);
+  const [expenses, setExpenses] = useState(50000);
+  const [savings, setSavings] = useState(25000);
+
+  const savingsRate = useMemo(() => {
+    if (income === 0) return 0;
+    return (savings / income) * 100;
+  }, [income, savings]);
+
+  const yearsToFire = useMemo(() => {
+    if (savingsRate <= 0) return null;
+    // Based on the math from "The Shockingly Simple Math Behind Early Retirement"
+    const rate = savingsRate / 100;
+    if (rate >= 1) return 0;
+    const years = Math.log(1 + (25 * (1 - rate) / rate)) / Math.log(1.07);
+    return years;
+  }, [savingsRate]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Percent className="h-5 w-5" />
+          Savings Rate
+        </CardTitle>
+        <CardDescription className="text-xs">
+          Your path to FIRE depends on savings rate
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label className="text-xs">Annual Income</Label>
+            <Input
+              type="number"
+              value={income}
+              onChange={(e) => {
+                setIncome(Number(e.target.value));
+                setSavings(Number(e.target.value) - expenses);
+              }}
+              className="h-8"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Annual Expenses</Label>
+            <Input
+              type="number"
+              value={expenses}
+              onChange={(e) => {
+                setExpenses(Number(e.target.value));
+                setSavings(income - Number(e.target.value));
+              }}
+              className="h-8"
+            />
+          </div>
+        </div>
+        
+        <div className="p-3 bg-primary/10 rounded-lg space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>Savings Rate:</span>
+            <span className={`font-bold ${savingsRate >= 50 ? 'text-green-500' : savingsRate >= 25 ? 'text-yellow-500' : 'text-red-500'}`}>
+              {savingsRate.toFixed(1)}%
+            </span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Annual Savings:</span>
+            <span className="font-bold">${savings.toLocaleString()}</span>
+          </div>
+          {yearsToFire !== null && (
+            <div className="border-t border-primary/20 pt-2">
+              <p className="text-xs text-muted-foreground text-center">Estimated years to FIRE</p>
+              <p className="text-2xl font-bold text-center">{yearsToFire.toFixed(1)} years</p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Emergency Fund Calculator
+const EmergencyFundCalculator = ({ inflationRate = 2.5 }: { inflationRate?: number }) => {
+  const [monthlyExpenses, setMonthlyExpenses] = useState(5000);
+  const [monthsCovered, setMonthsCovered] = useState(6);
+
+  const emergencyFund = useMemo(() => {
+    return monthlyExpenses * monthsCovered;
+  }, [monthlyExpenses, monthsCovered]);
+
+  const inflationAdjusted = useMemo(() => {
+    // 5-year inflation adjustment
+    return emergencyFund * Math.pow(1 + inflationRate / 100, 5);
+  }, [emergencyFund, inflationRate]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <PiggyBank className="h-5 w-5" />
+          Emergency Fund
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-1">
+          <Label className="text-xs">Monthly Expenses</Label>
+          <Input
+            type="number"
+            value={monthlyExpenses}
+            onChange={(e) => setMonthlyExpenses(Number(e.target.value))}
+            className="h-8"
+          />
+        </div>
+        
+        <div className="space-y-1">
+          <Label className="text-xs">Months to Cover: {monthsCovered}</Label>
+          <Slider
+            value={[monthsCovered]}
+            onValueChange={(value) => setMonthsCovered(value[0])}
+            min={3}
+            max={24}
+            step={1}
+          />
+        </div>
+        
+        <div className="p-3 bg-primary/10 rounded-lg space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>Target Fund:</span>
+            <span className="font-bold">${emergencyFund.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-xs text-orange-600 dark:text-orange-400">
+            <span>In 5 years ({inflationRate}% inflation):</span>
+            <span>${inflationAdjusted.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Debt Payoff Calculator
+const DebtPayoffCalculator = () => {
+  const [balance, setBalance] = useState(25000);
+  const [interestRate, setInterestRate] = useState(18);
+  const [monthlyPayment, setMonthlyPayment] = useState(500);
+
+  const payoffTime = useMemo(() => {
+    const monthlyRate = interestRate / 100 / 12;
+    if (monthlyPayment <= balance * monthlyRate) {
+      return null; // Payment too low
+    }
+    const months = -Math.log(1 - (balance * monthlyRate / monthlyPayment)) / Math.log(1 + monthlyRate);
+    return months;
+  }, [balance, interestRate, monthlyPayment]);
+
+  const totalInterest = useMemo(() => {
+    if (!payoffTime) return null;
+    return (monthlyPayment * payoffTime) - balance;
+  }, [monthlyPayment, payoffTime, balance]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <DollarSign className="h-5 w-5" />
+          Debt Payoff
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label className="text-xs">Debt Balance</Label>
+            <Input
+              type="number"
+              value={balance}
+              onChange={(e) => setBalance(Number(e.target.value))}
+              className="h-8"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Monthly Payment</Label>
+            <Input
+              type="number"
+              value={monthlyPayment}
+              onChange={(e) => setMonthlyPayment(Number(e.target.value))}
+              className="h-8"
+            />
+          </div>
+        </div>
+        
+        <div className="space-y-1">
+          <Label className="text-xs">Interest Rate: {interestRate}%</Label>
+          <Slider
+            value={[interestRate]}
+            onValueChange={(value) => setInterestRate(value[0])}
+            min={0}
+            max={30}
+            step={0.5}
+          />
+        </div>
+        
+        <div className="p-3 bg-primary/10 rounded-lg space-y-2">
+          {payoffTime !== null ? (
+            <>
+              <div className="flex justify-between text-sm">
+                <span>Payoff Time:</span>
+                <span className="font-bold">{Math.ceil(payoffTime)} months ({(payoffTime / 12).toFixed(1)} yrs)</span>
+              </div>
+              <div className="flex justify-between text-xs text-red-500">
+                <span>Total Interest:</span>
+                <span>${totalInterest?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-red-500 text-center">Payment too low to pay off debt!</p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Net Worth Calculator
+const NetWorthCalculator = () => {
+  const [assets, setAssets] = useState(150000);
+  const [liabilities, setLiabilities] = useState(50000);
+
+  const netWorth = useMemo(() => {
+    return assets - liabilities;
+  }, [assets, liabilities]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calculator className="h-5 w-5" />
+          Net Worth
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label className="text-xs">Total Assets</Label>
+            <Input
+              type="number"
+              value={assets}
+              onChange={(e) => setAssets(Number(e.target.value))}
+              className="h-8"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Total Liabilities</Label>
+            <Input
+              type="number"
+              value={liabilities}
+              onChange={(e) => setLiabilities(Number(e.target.value))}
+              className="h-8"
+            />
+          </div>
+        </div>
+        
+        <div className={`p-3 rounded-lg text-center ${netWorth >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+          <p className="text-xs text-muted-foreground">Net Worth</p>
+          <p className={`text-3xl font-bold ${netWorth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            ${netWorth.toLocaleString()}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Investment Returns Calculator
+const InvestmentReturnsCalculator = () => {
+  const [initialInvestment, setInitialInvestment] = useState(10000);
+  const [finalValue, setFinalValue] = useState(25000);
+  const [years, setYears] = useState(10);
+
+  const cagr = useMemo(() => {
+    if (initialInvestment <= 0 || years <= 0) return 0;
+    return (Math.pow(finalValue / initialInvestment, 1 / years) - 1) * 100;
+  }, [initialInvestment, finalValue, years]);
+
+  const totalReturn = useMemo(() => {
+    return ((finalValue - initialInvestment) / initialInvestment) * 100;
+  }, [initialInvestment, finalValue]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          Investment Returns
+        </CardTitle>
+        <CardDescription className="text-xs">
+          Calculate CAGR from investment growth
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label className="text-xs">Initial Investment</Label>
+            <Input
+              type="number"
+              value={initialInvestment}
+              onChange={(e) => setInitialInvestment(Number(e.target.value))}
+              className="h-8"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Final Value</Label>
+            <Input
+              type="number"
+              value={finalValue}
+              onChange={(e) => setFinalValue(Number(e.target.value))}
+              className="h-8"
+            />
+          </div>
+        </div>
+        
+        <div className="space-y-1">
+          <Label className="text-xs">Years: {years}</Label>
+          <Slider
+            value={[years]}
+            onValueChange={(value) => setYears(value[0])}
+            min={1}
+            max={40}
+            step={1}
+          />
+        </div>
+        
+        <div className="p-3 bg-primary/10 rounded-lg space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>CAGR:</span>
+            <span className={`font-bold ${cagr >= 7 ? 'text-green-500' : cagr >= 4 ? 'text-yellow-500' : 'text-red-500'}`}>
+              {cagr.toFixed(2)}%
+            </span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Total Return:</span>
+            <span className="font-bold">{totalReturn.toFixed(1)}%</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Dividend Calculator
+const DividendCalculator = () => {
+  const [investedAmount, setInvestedAmount] = useState(100000);
+  const [dividendYield, setDividendYield] = useState(3);
+  const [growthRate, setGrowthRate] = useState(5);
+
+  const results = useMemo(() => {
+    const annualDividend = investedAmount * (dividendYield / 100);
+    const monthlyDividend = annualDividend / 12;
+    
+    // Project 10 years of dividend growth
+    let year10Dividend = annualDividend;
+    for (let i = 0; i < 10; i++) {
+      year10Dividend *= (1 + growthRate / 100);
+    }
+    
+    return { annualDividend, monthlyDividend, year10Dividend };
+  }, [investedAmount, dividendYield, growthRate]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <DollarSign className="h-5 w-5" />
+          Dividend Income
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-1">
+          <Label className="text-xs">Invested Amount</Label>
+          <Input
+            type="number"
+            value={investedAmount}
+            onChange={(e) => setInvestedAmount(Number(e.target.value))}
+            className="h-8"
+          />
+        </div>
+        
+        <div className="space-y-1">
+          <Label className="text-xs">Dividend Yield: {dividendYield}%</Label>
+          <Slider
+            value={[dividendYield]}
+            onValueChange={(value) => setDividendYield(value[0])}
+            min={0.5}
+            max={10}
+            step={0.1}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <Label className="text-xs">Dividend Growth Rate: {growthRate}%</Label>
+          <Slider
+            value={[growthRate]}
+            onValueChange={(value) => setGrowthRate(value[0])}
+            min={0}
+            max={15}
+            step={0.5}
+          />
+        </div>
+        
+        <div className="p-3 bg-primary/10 rounded-lg space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>Annual Dividends:</span>
+            <span className="font-bold">${results.annualDividend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Monthly:</span>
+            <span>${results.monthlyDividend.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+          </div>
+          <div className="border-t border-primary/20 pt-2 flex justify-between text-xs text-green-600 dark:text-green-400">
+            <span>Year 10 (w/ growth):</span>
+            <span>${results.year10Dividend.toLocaleString(undefined, { maximumFractionDigits: 0 })}/yr</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Dollar Cost Average Calculator
+const DollarCostAverageCalculator = () => {
+  const [monthlyInvestment, setMonthlyInvestment] = useState(500);
+  const [years, setYears] = useState(20);
+  const [expectedReturn, setExpectedReturn] = useState(7);
+
+  const results = useMemo(() => {
+    const monthlyRate = expectedReturn / 100 / 12;
+    const months = years * 12;
+    
+    // Future value of annuity formula
+    const futureValue = monthlyInvestment * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
+    const totalContributions = monthlyInvestment * months;
+    const earnings = futureValue - totalContributions;
+    
+    return { futureValue, totalContributions, earnings };
+  }, [monthlyInvestment, years, expectedReturn]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          Dollar Cost Average
+        </CardTitle>
+        <CardDescription className="text-xs">
+          Power of consistent monthly investing
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-1">
+          <Label className="text-xs">Monthly Investment</Label>
+          <Input
+            type="number"
+            value={monthlyInvestment}
+            onChange={(e) => setMonthlyInvestment(Number(e.target.value))}
+            className="h-8"
+          />
+        </div>
+        
+        <div className="space-y-1">
+          <Label className="text-xs">Years: {years}</Label>
+          <Slider
+            value={[years]}
+            onValueChange={(value) => setYears(value[0])}
+            min={1}
+            max={40}
+            step={1}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <Label className="text-xs">Expected Return: {expectedReturn}%</Label>
+          <Slider
+            value={[expectedReturn]}
+            onValueChange={(value) => setExpectedReturn(value[0])}
+            min={1}
+            max={15}
+            step={0.5}
+          />
+        </div>
+        
+        <div className="p-3 bg-primary/10 rounded-lg space-y-2">
+          <div className="text-center mb-2">
+            <p className="text-xs text-muted-foreground">Future Value</p>
+            <p className="text-2xl font-bold">${results.futureValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Contributions:</span>
+            <span>${results.totalContributions.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-xs text-green-600 dark:text-green-400">
+            <span>Investment Earnings:</span>
+            <span>${results.earnings.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+          </div>
         </div>
       </CardContent>
     </Card>
