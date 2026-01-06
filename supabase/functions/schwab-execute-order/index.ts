@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 interface OrderRequest {
-  userId: string;
   accountId: string;
   symbol: string;
   quantity: number;
@@ -18,12 +17,12 @@ interface OrderRequest {
   duration?: 'DAY' | 'GOOD_TILL_CANCEL' | 'FILL_OR_KILL';
 }
 
-async function refreshToken(supabase: any, userId: string): Promise<string | null> {
+async function refreshToken(supabase: any, userId: string, clientId: string, clientSecret: string): Promise<string | null> {
   const { data: connection } = await supabase
     .from('broker_connections')
     .select('*')
     .eq('user_id', userId)
-    .eq('broker_type', 'td_ameritrade')
+    .eq('broker_type', 'schwab')
     .single();
 
   if (!connection) {
@@ -40,23 +39,18 @@ async function refreshToken(supabase: any, userId: string): Promise<string | nul
   }
 
   // Refresh the token
-  const clientId = Deno.env.get('TD_AMERITRADE_CLIENT_ID');
-  const clientSecret = Deno.env.get('TD_AMERITRADE_CLIENT_SECRET');
+  const encodedCredentials = btoa(`${clientId}:${clientSecret}`);
 
   const tokenBody = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: connection.refresh_token,
-    client_id: `${clientId}@AMER.OAUTHAP`,
   });
 
-  if (clientSecret) {
-    tokenBody.append('client_secret', clientSecret);
-  }
-
-  const tokenResponse = await fetch('https://api.tdameritrade.com/v1/oauth2/token', {
+  const tokenResponse = await fetch('https://api.schwabapi.com/v1/oauth/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${encodedCredentials}`,
     },
     body: tokenBody.toString(),
   });
@@ -78,7 +72,7 @@ async function refreshToken(supabase: any, userId: string): Promise<string | nul
       updated_at: new Date().toISOString(),
     })
     .eq('user_id', userId)
-    .eq('broker_type', 'td_ameritrade');
+    .eq('broker_type', 'schwab');
 
   return tokens.access_token;
 }
@@ -118,14 +112,11 @@ serve(async (req) => {
       );
     }
     
-    const authenticatedUserId = claimsData.user.id;
+    const userId = claimsData.user.id;
     
     const orderRequest: OrderRequest = await req.json();
     
     const { accountId, symbol, quantity, orderType, instruction, price, stopPrice, duration = 'DAY' } = orderRequest;
-
-    // Use authenticated user ID instead of request body userId
-    const userId = authenticatedUserId;
 
     if (!accountId || !symbol || !quantity || !instruction) {
       return new Response(
@@ -134,20 +125,31 @@ serve(async (req) => {
       );
     }
 
+    const clientId = Deno.env.get('SCHWAB_APP_KEY');
+    const clientSecret = Deno.env.get('SCHWAB_APP_SECRET');
+
+    if (!clientId || !clientSecret) {
+      return new Response(
+        JSON.stringify({ error: 'Schwab API credentials not configured' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Use service role for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get fresh access token
-    const accessToken = await refreshToken(supabase, userId);
+    const accessToken = await refreshToken(supabase, userId, clientId, clientSecret);
 
     if (!accessToken) {
       return new Response(
-        JSON.stringify({ error: 'No valid TD Ameritrade connection found. Please reconnect your account.' }),
+        JSON.stringify({ error: 'No valid Schwab connection found. Please reconnect your account.' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Build order payload for TD Ameritrade API
+    // Build order payload for Schwab API
+    // https://developer.schwab.com/products/trader-api--individual/details/specifications/Retail%20Trader%20API%20Production
     const orderPayload: any = {
       orderType: orderType,
       session: 'NORMAL',
@@ -175,9 +177,11 @@ serve(async (req) => {
       orderPayload.stopPrice = stopPrice.toFixed(2);
     }
 
-    // Submit order to TD Ameritrade
+    console.log('Submitting order to Schwab:', { symbol, quantity, orderType, instruction });
+
+    // Submit order to Schwab
     const orderResponse = await fetch(
-      `https://api.tdameritrade.com/v1/accounts/${accountId}/orders`,
+      `https://api.schwabapi.com/trader/v1/accounts/${accountId}/orders`,
       {
         method: 'POST',
         headers: {
@@ -191,6 +195,25 @@ serve(async (req) => {
     if (!orderResponse.ok) {
       const errorText = await orderResponse.text();
       console.error('Order submission failed:', errorText);
+      
+      // Log the failed order
+      await supabase
+        .from('order_executions')
+        .insert({
+          user_id: userId,
+          broker_type: 'schwab',
+          account_id: accountId,
+          symbol: symbol,
+          quantity: quantity,
+          order_type: orderType,
+          instruction: instruction,
+          price: price,
+          stop_price: stopPrice,
+          status: 'failed',
+          error_message: errorText,
+          created_at: new Date().toISOString(),
+        });
+
       return new Response(
         JSON.stringify({ 
           error: 'Failed to submit order',
@@ -205,12 +228,12 @@ serve(async (req) => {
     const locationHeader = orderResponse.headers.get('Location');
     const orderId = locationHeader ? locationHeader.split('/').pop() : null;
 
-    // Log the order execution
+    // Log the successful order execution
     await supabase
       .from('order_executions')
       .insert({
         user_id: userId,
-        broker_type: 'td_ameritrade',
+        broker_type: 'schwab',
         account_id: accountId,
         symbol: symbol,
         quantity: quantity,
@@ -222,6 +245,8 @@ serve(async (req) => {
         status: 'submitted',
         created_at: new Date().toISOString(),
       });
+
+    console.log('Order submitted successfully:', orderId);
 
     return new Response(
       JSON.stringify({ 
