@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { BottomNavigation } from "@/components/mobile/BottomNavigation";
+import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Lazy load all page components for code splitting
@@ -115,6 +116,7 @@ const App = () => (
             </Routes>
           </Suspense>
         </div>
+        <FloatingActionButton />
         <BottomNavigation />
       </BrowserRouter>
     </TooltipProvider>
