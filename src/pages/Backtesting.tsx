@@ -9,8 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Play, Trash2 } from 'lucide-react';
+import { Play, Trash2, Save, RotateCcw, Loader2 } from 'lucide-react';
 import PortfolioGrowthChart from '@/components/trading/PortfolioGrowthChart';
+import { useUserSettings } from '@/hooks/useUserSettings';
 
 interface BacktestResult {
   id: string;
@@ -27,21 +28,42 @@ interface BacktestResult {
   parameters?: any;
 }
 
+interface BacktestSettings {
+  strategy_name: string;
+  symbol: string;
+  start_date: string;
+  end_date: string;
+  initial_capital: string;
+  strategy_type: string;
+}
+
+const defaultSettings: BacktestSettings = {
+  strategy_name: '',
+  symbol: '',
+  start_date: '',
+  end_date: new Date().toISOString().split('T')[0],
+  initial_capital: '10000',
+  strategy_type: 'buy_hold',
+};
+
 const Backtesting = () => {
   const { user } = useAuth();
   const [results, setResults] = useState<BacktestResult[]>([]);
   const [running, setRunning] = useState(false);
-  const [backtest, setBacktest] = useState({
-    strategy_name: '',
-    symbol: '',
-    start_date: '',
-    end_date: new Date().toISOString().split('T')[0],
-    initial_capital: '10000',
-    strategy_type: 'buy_hold',
-    entry_trigger: '',
-    exit_trigger: ''
-  });
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+
+  const {
+    settings: backtest,
+    updateSetting,
+    saveSettings,
+    resetSettings,
+    isLoading,
+    isSaving,
+    lastSaved
+  } = useUserSettings<BacktestSettings>({
+    pageName: 'backtesting',
+    defaultSettings
+  });
 
   useEffect(() => {
     if (user) {
@@ -175,6 +197,35 @@ const Backtesting = () => {
 
   return (
     <PageLayout title="Strategy Backtesting">
+      <div className="flex justify-end gap-2 mb-4">
+        {lastSaved && (
+          <span className="text-xs text-muted-foreground self-center">
+            Last saved: {lastSaved.toLocaleDateString()}
+          </span>
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={resetSettings}
+          disabled={isLoading}
+        >
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Reset
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => saveSettings(backtest)}
+          disabled={isSaving || isLoading}
+        >
+          {isSaving ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4 mr-2" />
+          )}
+          Save Settings
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
           <CardHeader>
@@ -187,7 +238,7 @@ const Backtesting = () => {
               <Input
                 placeholder="My Iron Condor Strategy"
                 value={backtest.strategy_name}
-                onChange={(e) => setBacktest({ ...backtest, strategy_name: e.target.value })}
+                onChange={(e) => updateSetting('strategy_name', e.target.value)}
               />
             </div>
             <div>
@@ -195,12 +246,12 @@ const Backtesting = () => {
               <Input
                 placeholder="SPY"
                 value={backtest.symbol}
-                onChange={(e) => setBacktest({ ...backtest, symbol: e.target.value.toUpperCase() })}
+                onChange={(e) => updateSetting('symbol', e.target.value.toUpperCase())}
               />
             </div>
             <div>
               <Label>Strategy Type</Label>
-              <Select value={backtest.strategy_type} onValueChange={(value) => setBacktest({ ...backtest, strategy_type: value })}>
+              <Select value={backtest.strategy_type} onValueChange={(value) => updateSetting('strategy_type', value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -228,7 +279,7 @@ const Backtesting = () => {
               <Input
                 type="date"
                 value={backtest.start_date}
-                onChange={(e) => setBacktest({ ...backtest, start_date: e.target.value })}
+                onChange={(e) => updateSetting('start_date', e.target.value)}
               />
             </div>
             <div>
@@ -236,7 +287,7 @@ const Backtesting = () => {
               <Input
                 type="date"
                 value={backtest.end_date}
-                onChange={(e) => setBacktest({ ...backtest, end_date: e.target.value })}
+                onChange={(e) => updateSetting('end_date', e.target.value)}
               />
             </div>
             <div>
@@ -244,7 +295,7 @@ const Backtesting = () => {
               <Input
                 type="number"
                 value={backtest.initial_capital}
-                onChange={(e) => setBacktest({ ...backtest, initial_capital: e.target.value })}
+                onChange={(e) => updateSetting('initial_capital', e.target.value)}
               />
             </div>
             <Button onClick={runBacktest} disabled={running} className="w-full">
