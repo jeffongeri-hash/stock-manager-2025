@@ -109,7 +109,7 @@ const TradingViewWebhook = () => {
   ];
 
   return (
-    <PageLayout title="TradingView Charts">
+    <PageLayout title="TradingView Integration">
       <div className={`space-y-6 ${isFullscreen ? 'fixed inset-0 z-50 bg-background p-4' : ''}`}>
         {/* Controls */}
         <Card className={isFullscreen ? 'mb-2' : ''}>

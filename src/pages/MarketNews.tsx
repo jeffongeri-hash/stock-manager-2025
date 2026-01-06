@@ -30,14 +30,14 @@ const generateMockNews = (): NewsItem[] => {
   return [
     {
       id: "1",
-      title: "Fed Signals Potential Rate Cut in 2025, Markets Rally",
+      title: "Fed Signals Potential Rate Cut in 2026, Markets Rally",
       summary: "Federal Reserve officials indicate that easing inflation may allow for monetary policy adjustments in the coming quarters, sending stocks higher.",
       source: "Reuters",
       category: "macro",
       sentiment: "bullish",
       impact: "high",
       publishedAt: subMinutes(now, 15),
-      url: "#",
+      url: "https://www.reuters.com/markets/",
     },
     {
       id: "2",
@@ -49,7 +49,7 @@ const generateMockNews = (): NewsItem[] => {
       impact: "high",
       publishedAt: subMinutes(now, 45),
       symbols: ["NVDA"],
-      url: "#",
+      url: "https://www.bloomberg.com/quote/NVDA:US",
     },
     {
       id: "3",
@@ -61,7 +61,7 @@ const generateMockNews = (): NewsItem[] => {
       impact: "medium",
       publishedAt: subHours(now, 2),
       symbols: ["TSLA"],
-      url: "#",
+      url: "https://www.cnbc.com/quotes/TSLA",
     },
     {
       id: "4",
@@ -72,7 +72,7 @@ const generateMockNews = (): NewsItem[] => {
       sentiment: "bearish",
       impact: "medium",
       publishedAt: subHours(now, 3),
-      url: "#",
+      url: "https://www.ft.com/markets",
     },
     {
       id: "5",
@@ -84,7 +84,7 @@ const generateMockNews = (): NewsItem[] => {
       impact: "high",
       publishedAt: subHours(now, 4),
       symbols: ["AAPL"],
-      url: "#",
+      url: "https://www.wsj.com/market-data/quotes/AAPL",
     },
     {
       id: "6",
@@ -96,7 +96,7 @@ const generateMockNews = (): NewsItem[] => {
       impact: "high",
       publishedAt: subHours(now, 5),
       symbols: ["XOM", "CVX"],
-      url: "#",
+      url: "https://www.reuters.com/business/energy/",
     },
     {
       id: "7",
@@ -108,7 +108,7 @@ const generateMockNews = (): NewsItem[] => {
       impact: "medium",
       publishedAt: subHours(now, 6),
       symbols: ["MSFT"],
-      url: "#",
+      url: "https://techcrunch.com/tag/microsoft/",
     },
     {
       id: "8",
@@ -119,7 +119,7 @@ const generateMockNews = (): NewsItem[] => {
       sentiment: "bullish",
       impact: "medium",
       publishedAt: subHours(now, 8),
-      url: "#",
+      url: "https://www.marketwatch.com/",
     },
     {
       id: "9",
@@ -131,7 +131,7 @@ const generateMockNews = (): NewsItem[] => {
       impact: "medium",
       publishedAt: subHours(now, 10),
       symbols: ["AMZN"],
-      url: "#",
+      url: "https://www.bloomberg.com/quote/AMZN:US",
     },
     {
       id: "10",
@@ -143,7 +143,7 @@ const generateMockNews = (): NewsItem[] => {
       impact: "high",
       publishedAt: subDays(now, 1),
       symbols: ["JPM", "BAC", "WFC"],
-      url: "#",
+      url: "https://www.ft.com/companies/banks",
     },
   ];
 };
@@ -355,9 +355,14 @@ const MarketNews = () => {
                     </div>
                   </div>
 
-                  <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
+                  <a 
+                    href={item.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors hover:underline block"
+                  >
                     {item.title}
-                  </h3>
+                  </a>
                   <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                     {item.summary}
                   </p>
@@ -370,15 +375,25 @@ const MarketNews = () => {
                         {formatTimeAgo(item.publishedAt)}
                       </span>
                     </div>
-                    {item.symbols && item.symbols.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        {item.symbols.map((symbol) => (
-                          <Badge key={symbol} variant="outline" className="text-xs font-mono">
-                            ${symbol}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {item.symbols && item.symbols.length > 0 && (
+                        <div className="flex items-center gap-1">
+                          {item.symbols.map((symbol) => (
+                            <Badge key={symbol} variant="outline" className="text-xs font-mono">
+                              ${symbol}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-primary hover:underline"
+                      >
+                        Read more <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

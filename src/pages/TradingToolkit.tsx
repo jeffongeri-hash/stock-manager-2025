@@ -9,10 +9,12 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useStockData } from '@/hooks/useStockData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, CheckCircle2, XCircle, BarChart3, PieChart } from 'lucide-react';
+import { AlertCircle, CheckCircle2, XCircle, BarChart3, PieChart, TrendingUp, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import MonteCarloComparison from '@/components/trading/MonteCarloComparison';
 import { PortfolioOptimizer } from '@/components/trading/PortfolioOptimizer';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const TradingToolkit = () => {
   const [symbol, setSymbol] = useState('AAPL');
@@ -56,6 +58,43 @@ const TradingToolkit = () => {
     timeBasedExit: 30,
     trailingStopPercent: 10
   });
+
+  // Expected move state
+  const [expectedMoveData, setExpectedMoveData] = useState({
+    daysToExpiry: 30,
+    volatility: 0.25
+  });
+  const [optionsData, setOptionsData] = useState<any>(null);
+  const [expectedMoveLoading, setExpectedMoveLoading] = useState(false);
+
+  const fetchExpectedMove = async () => {
+    if (!currentPrice) {
+      toast.error('Please enter a valid symbol');
+      return;
+    }
+
+    setExpectedMoveLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-options-data', {
+        body: {
+          symbol,
+          stockPrice: currentPrice,
+          strikePrice: currentPrice,
+          daysToExpiry: expectedMoveData.daysToExpiry,
+          volatility: expectedMoveData.volatility,
+          optionType: 'call'
+        }
+      });
+
+      if (error) throw error;
+      setOptionsData(data);
+    } catch (err) {
+      console.error('Error fetching expected move:', err);
+      toast.error('Failed to calculate expected move');
+    } finally {
+      setExpectedMoveLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (currentPrice > 0) {
@@ -167,8 +206,12 @@ const TradingToolkit = () => {
   return (
     <PageLayout title="Trading Toolkit">
       <Tabs defaultValue="position-sizing" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
           <TabsTrigger value="position-sizing">Position Sizing</TabsTrigger>
+          <TabsTrigger value="expected-move" className="flex items-center gap-1">
+            <TrendingUp className="h-3 w-3" />
+            <span className="hidden lg:inline">Expected Move</span>
+          </TabsTrigger>
           <TabsTrigger value="trading-rules">Trading Rules</TabsTrigger>
           <TabsTrigger value="greeks">Greeks</TabsTrigger>
           <TabsTrigger value="exit-strategy">Exit Strategy</TabsTrigger>
@@ -288,6 +331,152 @@ const TradingToolkit = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="expected-move">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Expected Move Calculator
+                </CardTitle>
+                <CardDescription>Calculate expected price movement based on implied volatility</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Stock Symbol</Label>
+                  <Input
+                    type="text"
+                    value={symbol}
+                    onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                    placeholder="AAPL"
+                  />
+                  {currentPrice > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Current Price: ${currentPrice.toFixed(2)}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Days to Expiration</Label>
+                  <Input
+                    type="number"
+                    value={expectedMoveData.daysToExpiry}
+                    onChange={(e) => setExpectedMoveData({...expectedMoveData, daysToExpiry: Number(e.target.value)})}
+                    placeholder="30"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Implied Volatility (decimal)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={expectedMoveData.volatility}
+                    onChange={(e) => setExpectedMoveData({...expectedMoveData, volatility: Number(e.target.value)})}
+                    placeholder="0.25"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    0.25 = 25% IV
+                  </p>
+                </div>
+
+                <Button onClick={fetchExpectedMove} disabled={expectedMoveLoading} className="w-full">
+                  {expectedMoveLoading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Calculate Expected Move
+                </Button>
+              </CardContent>
+            </Card>
+
+            {optionsData ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Expected Price Movement for {symbol}</CardTitle>
+                  <CardDescription>One standard deviation move (68% probability)</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-card rounded-lg border text-center">
+                      <p className="text-sm text-muted-foreground mb-2">Current Price</p>
+                      <p className="text-2xl font-bold">${currentPrice.toFixed(2)}</p>
+                    </div>
+
+                    <div className="p-4 bg-green-500/10 border-green-500/50 rounded-lg border text-center">
+                      <p className="text-sm text-muted-foreground mb-2">Upper Bound</p>
+                      <p className="text-2xl font-bold text-green-500">
+                        ${optionsData.expectedMove?.upperBound}
+                      </p>
+                    </div>
+
+                    <div className="p-4 bg-red-500/10 border-red-500/50 rounded-lg border text-center">
+                      <p className="text-sm text-muted-foreground mb-2">Lower Bound</p>
+                      <p className="text-2xl font-bold text-red-500">
+                        ${optionsData.expectedMove?.lowerBound}
+                      </p>
+                    </div>
+
+                    <div className="p-4 bg-primary/10 border-primary/50 rounded-lg border text-center">
+                      <p className="text-sm text-muted-foreground mb-2">Expected Move</p>
+                      <p className="text-2xl font-bold">±${optionsData.expectedMove?.amount}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        ±{optionsData.expectedMove?.percent}%
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <h4 className="font-semibold mb-2">What This Means:</h4>
+                    <ul className="text-sm space-y-1 text-muted-foreground">
+                      <li>• There's a 68% probability the stock will stay between ${optionsData.expectedMove?.lowerBound} and ${optionsData.expectedMove?.upperBound}</li>
+                      <li>• Based on {(expectedMoveData.volatility * 100).toFixed(0)}% implied volatility over {expectedMoveData.daysToExpiry} days</li>
+                      <li>• Use this to size option positions and set strike prices</li>
+                      <li>• Higher volatility = larger expected moves</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold mb-3">Suggested Trading Strategies</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="p-3 bg-card rounded-lg border">
+                        <h5 className="font-medium text-green-600 mb-1">Bullish</h5>
+                        <p className="text-sm text-muted-foreground">
+                          Sell put spreads below ${optionsData.expectedMove?.lowerBound}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-card rounded-lg border">
+                        <h5 className="font-medium text-red-600 mb-1">Bearish</h5>
+                        <p className="text-sm text-muted-foreground">
+                          Sell call spreads above ${optionsData.expectedMove?.upperBound}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-card rounded-lg border">
+                        <h5 className="font-medium text-blue-600 mb-1">Neutral</h5>
+                        <p className="text-sm text-muted-foreground">
+                          Iron condor with short strikes outside expected move
+                        </p>
+                      </div>
+                      <div className="p-3 bg-card rounded-lg border">
+                        <h5 className="font-medium text-purple-600 mb-1">High Volatility</h5>
+                        <p className="text-sm text-muted-foreground">
+                          Straddles if expecting move beyond ±{optionsData.expectedMove?.percent}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="flex items-center justify-center h-full min-h-[300px]">
+                  <p className="text-muted-foreground text-center">
+                    Enter a symbol and calculate to see expected move data
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
 

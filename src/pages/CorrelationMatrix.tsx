@@ -1,11 +1,14 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RefreshCw, Info, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { RefreshCw, Info, TrendingUp, TrendingDown, Minus, Download } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const portfolioStocks = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "JPM", "V", "UNH"];
 
@@ -46,11 +49,38 @@ const getCorrelationBg = (value: number): string => {
 };
 
 const CorrelationMatrix = () => {
+  const { user } = useAuth();
+  const [portfolioStocks, setPortfolioStocks] = useState<string[]>(["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "JPM", "V", "UNH"]);
   const [timeframe, setTimeframe] = useState("1Y");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCell, setSelectedCell] = useState<{ i: number; j: number } | null>(null);
 
-  const correlationData = useMemo(() => generateCorrelationMatrix(portfolioStocks), []);
+  // Import from portfolio
+  useEffect(() => {
+    if (user) {
+      importFromPortfolio();
+    }
+  }, [user]);
+
+  const importFromPortfolio = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('stock_trades')
+      .select('symbol')
+      .eq('user_id', user.id)
+      .is('exit_date', null);
+
+    if (data && data.length > 0) {
+      const symbols = [...new Set(data.map(t => t.symbol))];
+      if (symbols.length >= 2) {
+        setPortfolioStocks(symbols);
+        toast.success(`Loaded ${symbols.length} stocks from your portfolio`);
+      }
+    }
+  };
+
+  const correlationData = useMemo(() => generateCorrelationMatrix(portfolioStocks), [portfolioStocks]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -281,22 +311,54 @@ const CorrelationMatrix = () => {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Info className="h-5 w-5 text-primary" />
-              Interpretation Guide
+              Understanding Correlation
             </CardTitle>
+            <CardDescription>
+              What the correlation numbers mean and how to use them
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div className="p-4 rounded-xl bg-chart-1/10 border border-chart-1/20">
                 <h4 className="font-semibold text-chart-1 mb-2">Strong Positive (0.7 to 1.0)</h4>
-                <p className="text-muted-foreground">Stocks move together. High correlation may indicate sector concentration risk.</p>
+                <p className="text-muted-foreground mb-2">Stocks move together. High correlation may indicate sector concentration risk.</p>
+                <p className="text-xs text-muted-foreground italic">Example: Two tech stocks often move in the same direction.</p>
               </div>
               <div className="p-4 rounded-xl bg-muted/30 border border-border">
                 <h4 className="font-semibold text-foreground mb-2">Low Correlation (-0.3 to 0.3)</h4>
-                <p className="text-muted-foreground">Stocks move independently. Good for diversification.</p>
+                <p className="text-muted-foreground mb-2">Stocks move independently. Good for diversification.</p>
+                <p className="text-xs text-muted-foreground italic">Example: A tech stock and a utility stock may have low correlation.</p>
               </div>
               <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20">
                 <h4 className="font-semibold text-destructive mb-2">Strong Negative (-0.7 to -1.0)</h4>
-                <p className="text-muted-foreground">Stocks move in opposite directions. Natural hedge positions.</p>
+                <p className="text-muted-foreground mb-2">Stocks move in opposite directions. Natural hedge positions.</p>
+                <p className="text-xs text-muted-foreground italic">Example: Gold stocks often move opposite to the market.</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <h4 className="font-semibold mb-2">How Correlation is Calculated</h4>
+              <p className="text-sm text-muted-foreground mb-2">
+                <strong>Pearson Correlation Coefficient (r)</strong> measures the linear relationship between two stocks' returns. 
+                The formula compares how much each stock deviates from its average return.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 text-sm">
+                <div>
+                  <p className="font-medium">What It Tells You:</p>
+                  <ul className="text-muted-foreground space-y-1 mt-1">
+                    <li>• r = 1: Perfect positive relationship</li>
+                    <li>• r = 0: No linear relationship</li>
+                    <li>• r = -1: Perfect negative relationship</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium">Practical Use:</p>
+                  <ul className="text-muted-foreground space-y-1 mt-1">
+                    <li>• Diversify with low/negative correlations</li>
+                    <li>• Avoid overconcentration in high correlations</li>
+                    <li>• Correlations can change over time</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </CardContent>

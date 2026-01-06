@@ -38,6 +38,7 @@ const PortfolioRebalancing = () => {
   const [newSymbol, setNewSymbol] = useState('');
   const [newTargetPercent, setNewTargetPercent] = useState('');
   const [cashBalance, setCashBalance] = useState(10000);
+  const [importedFromPortfolio, setImportedFromPortfolio] = useState(false);
 
   const activeSymbols = useMemo(() => {
     return [...new Set(trades.filter(t => !t.exit_date).map(t => t.symbol))];
@@ -63,6 +64,18 @@ const PortfolioRebalancing = () => {
       return;
     }
     setTrades(data || []);
+  };
+
+  const importFromPortfolio = () => {
+    // Import positions from portfolio as target allocations
+    const totalValue = Object.values(currentHoldings).reduce((sum, h) => sum + h.currentValue, 0) + cashBalance;
+    const newTargets = currentAllocations.map(a => ({
+      symbol: a.symbol,
+      targetPercent: Math.round(a.currentPercent)
+    }));
+    setTargetAllocations(newTargets);
+    setImportedFromPortfolio(true);
+    toast.success(`Imported ${newTargets.length} positions from portfolio`);
   };
 
   const currentHoldings = useMemo(() => {
@@ -313,11 +326,18 @@ const PortfolioRebalancing = () => {
       {/* Set Target Allocations */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Target Allocations
-          </CardTitle>
-          <CardDescription>Define your ideal portfolio allocation</CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Target Allocations
+              </CardTitle>
+              <CardDescription>Define your ideal portfolio allocation</CardDescription>
+            </div>
+            <Button variant="outline" onClick={importFromPortfolio} disabled={currentAllocations.length === 0}>
+              Import from Portfolio
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3 mb-4">

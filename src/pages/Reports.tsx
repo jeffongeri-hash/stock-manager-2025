@@ -243,6 +243,68 @@ const Reports = () => {
             </CardContent>
           </Card>
 
+          {/* Email Example */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Example Report Email</CardTitle>
+              <CardDescription>Preview of what your automated reports will look like</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="border rounded-lg p-4 bg-muted/30">
+                <div className="border-b pb-3 mb-3">
+                  <p className="text-xs text-muted-foreground">From: Profit Pathway &lt;reports@profitpathway.com&gt;</p>
+                  <p className="text-xs text-muted-foreground">Subject: 📈 Your Daily Trading Report - January 6, 2026</p>
+                </div>
+                <div className="space-y-4">
+                  <p className="font-semibold">Good evening, Trader!</p>
+                  <p className="text-sm text-muted-foreground">Here's your daily performance summary for Monday, January 6, 2026:</p>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/30">
+                      <p className="text-xs text-muted-foreground">Daily P&L</p>
+                      <p className="text-lg font-bold text-green-500">+$1,247.50</p>
+                    </div>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-xs text-muted-foreground">Win Rate</p>
+                      <p className="text-lg font-bold">75%</p>
+                    </div>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-xs text-muted-foreground">Trades Executed</p>
+                      <p className="text-lg font-bold">8</p>
+                    </div>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-xs text-muted-foreground">Best Trade</p>
+                      <p className="text-lg font-bold">NVDA +$520</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-sm mb-2">📊 Top Performers Today:</p>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• NVDA: +$520.00 (3.2%)</li>
+                      <li>• AAPL: +$380.25 (2.1%)</li>
+                      <li>• MSFT: +$247.25 (1.8%)</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-sm mb-2">📈 Active Positions:</p>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• TSLA: 50 shares @ $248.50 (unrealized: +$125.00)</li>
+                      <li>• AMD: 100 shares @ $145.20 (unrealized: +$78.00)</li>
+                    </ul>
+                  </div>
+
+                  <div className="pt-3 border-t">
+                    <p className="text-xs text-muted-foreground italic">
+                      This report was generated automatically. View your full dashboard at profitpathway.com
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Zapier Use Cases</CardTitle>
