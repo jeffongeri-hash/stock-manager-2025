@@ -455,6 +455,8 @@ const RetirementPlanning = () => {
             <TabsTrigger value="multiplier">Wealth Multiplier</TabsTrigger>
             <TabsTrigger value="projection">Projection</TabsTrigger>
             <TabsTrigger value="spending">Spending Breakdown</TabsTrigger>
+            <TabsTrigger value="scenarios">Scenarios</TabsTrigger>
+            <TabsTrigger value="tax-optimizer">Tax Optimizer</TabsTrigger>
             <TabsTrigger value="social-security">Social Security</TabsTrigger>
             <TabsTrigger value="income">Income Sources</TabsTrigger>
             <TabsTrigger value="fire">FIRE Types</TabsTrigger>
@@ -1017,6 +1019,16 @@ const RetirementPlanning = () => {
           {/* HSA Tab */}
           <TabsContent value="hsa" className="space-y-4">
             <HSACalculator />
+          </TabsContent>
+
+          {/* Scenario Comparison Tab */}
+          <TabsContent value="scenarios" className="space-y-4">
+            <ScenarioComparison />
+          </TabsContent>
+
+          {/* Tax-Aware Withdrawal Optimizer Tab */}
+          <TabsContent value="tax-optimizer" className="space-y-4">
+            <TaxAwareWithdrawalOptimizer />
           </TabsContent>
         </Tabs>
       </div>
