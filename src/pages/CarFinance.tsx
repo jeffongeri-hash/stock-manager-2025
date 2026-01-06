@@ -54,6 +54,13 @@ export default function CarFinance() {
   const [purchaseValue, setPurchaseValue] = useState('35000');
   const [carAge, setCarAge] = useState('0');
   const [carType, setCarType] = useState('sedan');
+  const [depMake, setDepMake] = useState('');
+  const [depModel, setDepModel] = useState('');
+  const [depYear, setDepYear] = useState(String(new Date().getFullYear()));
+  const [depMileage, setDepMileage] = useState('');
+  const [depCondition, setDepCondition] = useState('good');
+  const [isAnalyzingDep, setIsAnalyzingDep] = useState(false);
+  const [depAnalysis, setDepAnalysis] = useState<any>(null);
 
   // Lease vs Buy State
   const [leaseMonthly, setLeaseMonthly] = useState('400');
@@ -143,6 +150,38 @@ export default function CarFinance() {
     }
 
     return projections;
+  };
+
+  // AI Depreciation Analysis
+  const analyzeDepreciation = async () => {
+    if (!depMake || !depModel) {
+      toast.error('Please enter make and model');
+      return;
+    }
+
+    setIsAnalyzingDep(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-car-depreciation', {
+        body: {
+          make: depMake,
+          model: depModel,
+          year: parseInt(depYear),
+          mileage: depMileage ? parseInt(depMileage) : null,
+          condition: depCondition,
+          purchasePrice: parseFloat(purchaseValue)
+        }
+      });
+
+      if (error) throw error;
+
+      setDepAnalysis(data);
+      toast.success('Depreciation analysis complete!');
+    } catch (error: any) {
+      console.error('Depreciation analysis error:', error);
+      toast.error(error.message || 'Failed to analyze depreciation');
+    } finally {
+      setIsAnalyzingDep(false);
+    }
   };
 
   // Calculate Lease vs Buy
@@ -476,31 +515,75 @@ export default function CarFinance() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingDown className="h-5 w-5" />
-                  Depreciation Calculator
+                  <Bot className="h-5 w-5" />
+                  AI Depreciation Analysis
                 </CardTitle>
+                <CardDescription>Get AI-powered depreciation insights for any vehicle</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label>Make *</Label>
+                    <Input placeholder="e.g., Toyota" value={depMake} onChange={(e) => setDepMake(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Model *</Label>
+                    <Input placeholder="e.g., Camry" value={depModel} onChange={(e) => setDepModel(e.target.value)} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label>Year</Label>
+                    <Input type="number" value={depYear} onChange={(e) => setDepYear(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Mileage</Label>
+                    <Input type="number" placeholder="Optional" value={depMileage} onChange={(e) => setDepMileage(e.target.value)} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Condition</Label>
+                  <Select value={depCondition} onValueChange={setDepCondition}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="excellent">Excellent</SelectItem>
+                      <SelectItem value="good">Good</SelectItem>
+                      <SelectItem value="fair">Fair</SelectItem>
+                      <SelectItem value="poor">Poor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-2">
                   <Label>Purchase Price ($)</Label>
                   <Input type="number" value={purchaseValue} onChange={(e) => setPurchaseValue(e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Current Age (Years)</Label>
-                  <Input type="number" value={carAge} onChange={(e) => setCarAge(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Vehicle Type</Label>
-                  <Select value={carType} onValueChange={setCarType}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sedan">Sedan</SelectItem>
-                      <SelectItem value="suv">SUV / Crossover</SelectItem>
-                      <SelectItem value="truck">Truck</SelectItem>
-                      <SelectItem value="luxury">Luxury</SelectItem>
-                      <SelectItem value="electric">Electric</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <Button onClick={analyzeDepreciation} disabled={isAnalyzingDep} className="w-full">
+                  {isAnalyzingDep ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Analyzing...</>
+                  ) : (
+                    <><Bot className="h-4 w-4 mr-2" /> Analyze with AI</>
+                  )}
+                </Button>
+
+                <div className="border-t pt-4 mt-4">
+                  <p className="text-sm font-medium mb-2">Quick Estimate (Generic)</p>
+                  <div className="space-y-2">
+                    <Label>Vehicle Type</Label>
+                    <Select value={carType} onValueChange={setCarType}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sedan">Sedan</SelectItem>
+                        <SelectItem value="suv">SUV / Crossover</SelectItem>
+                        <SelectItem value="truck">Truck</SelectItem>
+                        <SelectItem value="luxury">Luxury</SelectItem>
+                        <SelectItem value="electric">Electric</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 mt-2">
+                    <Label>Current Age (Years)</Label>
+                    <Input type="number" value={carAge} onChange={(e) => setCarAge(e.target.value)} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -509,24 +592,81 @@ export default function CarFinance() {
               <CardHeader>
                 <CardTitle>Value Over Time</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="h-[350px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={depreciation}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="year" label={{ value: 'Year', position: 'bottom' }} />
-                      <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
-                      <Tooltip 
-                        formatter={(value: number, name: string) => [
-                          name === 'value' ? `$${value.toLocaleString()}` : `${value}%`,
-                          name === 'value' ? 'Value' : 'Remaining %'
-                        ]} 
-                      />
-                      <Legend />
-                      <Line type="monotone" dataKey="value" name="Vehicle Value" stroke="hsl(var(--primary))" strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+              <CardContent className="space-y-4">
+                {depAnalysis ? (
+                  <>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="p-4 rounded-lg bg-primary/10">
+                        <p className="text-sm text-muted-foreground">Current Value</p>
+                        <p className="text-2xl font-bold text-primary">${depAnalysis.currentValue?.toLocaleString()}</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted">
+                        <p className="text-sm text-muted-foreground">Original MSRP</p>
+                        <p className="text-2xl font-bold">${depAnalysis.originalMsrp?.toLocaleString()}</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted">
+                        <p className="text-sm text-muted-foreground">Total Depreciation</p>
+                        <p className="text-2xl font-bold text-destructive">${depAnalysis.totalDepreciation?.toLocaleString()}</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted">
+                        <p className="text-sm text-muted-foreground">Depreciation %</p>
+                        <p className="text-2xl font-bold">{depAnalysis.depreciationPercent?.toFixed(1)}%</p>
+                      </div>
+                    </div>
+
+                    <div className="h-[200px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={depAnalysis.projections}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                          <XAxis dataKey="year" />
+                          <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                          <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                          <Line type="monotone" dataKey="value" name="Value" stroke="hsl(var(--primary))" strokeWidth={2} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm">Value Factors</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-sm space-y-2">
+                          <p><strong>Mileage:</strong> {depAnalysis.factors?.mileageImpact}</p>
+                          <p><strong>Condition:</strong> {depAnalysis.factors?.conditionImpact}</p>
+                          <p><strong>Market Demand:</strong> {depAnalysis.factors?.marketDemand}</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm">AI Recommendation</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-sm">
+                          <p>{depAnalysis.recommendation}</p>
+                          <p className="mt-2 text-muted-foreground"><strong>Best Time to Sell:</strong> {depAnalysis.bestTimeToSell}</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={depreciation}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="year" label={{ value: 'Year', position: 'bottom' }} />
+                        <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                        <Tooltip 
+                          formatter={(value: number, name: string) => [
+                            name === 'value' ? `$${value.toLocaleString()}` : `${value}%`,
+                            name === 'value' ? 'Value' : 'Remaining %'
+                          ]} 
+                        />
+                        <Legend />
+                        <Line type="monotone" dataKey="value" name="Vehicle Value" stroke="hsl(var(--primary))" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
