@@ -51,37 +51,37 @@ serve(async (req) => {
       );
     }
 
-    const clientId = Deno.env.get('TD_AMERITRADE_CLIENT_ID');
-    const clientSecret = Deno.env.get('TD_AMERITRADE_CLIENT_SECRET');
-    const redirectUri = Deno.env.get('TD_AMERITRADE_REDIRECT_URI');
+    const clientId = Deno.env.get('SCHWAB_APP_KEY');
+    const clientSecret = Deno.env.get('SCHWAB_APP_SECRET');
+    const redirectUri = Deno.env.get('SCHWAB_REDIRECT_URI');
 
-    if (!clientId || !redirectUri) {
+    if (!clientId || !clientSecret || !redirectUri) {
       return new Response(
-        JSON.stringify({ error: 'TD Ameritrade API credentials not configured' }),
+        JSON.stringify({ error: 'Schwab API credentials not configured' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Schwab requires Basic Auth header with base64 encoded credentials
+    const encodedCredentials = btoa(`${clientId}:${clientSecret}`);
+
     // Exchange authorization code for access token
-    const tokenUrl = 'https://api.tdameritrade.com/v1/oauth2/token';
+    // https://developer.schwab.com/user-guides/get-started/authenticate-with-oauth
+    const tokenUrl = 'https://api.schwabapi.com/v1/oauth/token';
     
     const tokenBody = new URLSearchParams({
       grant_type: 'authorization_code',
-      access_type: 'offline',
-      code: decodeURIComponent(code),
-      client_id: `${clientId}@AMER.OAUTHAP`,
+      code: code,
       redirect_uri: redirectUri,
     });
 
-    // Add client secret if available (for confidential clients)
-    if (clientSecret) {
-      tokenBody.append('client_secret', clientSecret);
-    }
+    console.log('Exchanging code for token with Schwab API');
 
     const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${encodedCredentials}`,
       },
       body: tokenBody.toString(),
     });
@@ -96,9 +96,10 @@ serve(async (req) => {
     }
 
     const tokens = await tokenResponse.json();
+    console.log('Token exchange successful, fetching accounts');
 
-    // Get account info
-    const accountsResponse = await fetch('https://api.tdameritrade.com/v1/accounts', {
+    // Get account info using the Schwab Trader API
+    const accountsResponse = await fetch('https://api.schwabapi.com/trader/v1/accounts', {
       headers: {
         'Authorization': `Bearer ${tokens.access_token}`,
       },
@@ -107,6 +108,9 @@ serve(async (req) => {
     let accounts = [];
     if (accountsResponse.ok) {
       accounts = await accountsResponse.json();
+      console.log('Fetched accounts:', accounts.length);
+    } else {
+      console.error('Failed to fetch accounts:', await accountsResponse.text());
     }
 
     // Store tokens in Supabase using authenticated user ID
@@ -118,7 +122,7 @@ serve(async (req) => {
       .from('broker_connections')
       .upsert({
         user_id: authenticatedUserId,
-        broker_type: 'td_ameritrade',
+        broker_type: 'schwab',
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
         token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
@@ -144,7 +148,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: unknown) {
-    console.error('Error in TD callback:', error);
+    console.error('Error in Schwab callback:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: message }),

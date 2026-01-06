@@ -22,3 +22,30 @@ verify_jwt = false
 [functions.parse-trading-rule]
 
 [functions.fetch-historical-data]
+
+[functions.schwab-auth]
+verify_jwt = false
+
+[functions.schwab-callback]
+verify_jwt = false
+
+[functions.schwab-refresh-token]
+verify_jwt = false
+
+[functions.schwab-accounts]
+verify_jwt = false
+
+[functions.schwab-execute-order]
+verify_jwt = false
+
+[functions.ibkr-auth]
+verify_jwt = false
+
+[functions.ibkr-callback]
+verify_jwt = false
+
+[functions.ibkr-accounts]
+verify_jwt = false
+
+[functions.ibkr-refresh-token]
+verify_jwt = false

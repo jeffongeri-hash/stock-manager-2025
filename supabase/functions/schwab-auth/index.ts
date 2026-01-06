@@ -12,30 +12,32 @@ serve(async (req) => {
   }
 
   try {
-    const clientId = Deno.env.get('TD_AMERITRADE_CLIENT_ID');
-    const redirectUri = Deno.env.get('TD_AMERITRADE_REDIRECT_URI');
+    const clientId = Deno.env.get('SCHWAB_APP_KEY');
+    const redirectUri = Deno.env.get('SCHWAB_REDIRECT_URI');
 
     if (!clientId || !redirectUri) {
       return new Response(
         JSON.stringify({ 
-          error: 'TD Ameritrade API credentials not configured',
-          message: 'Please add TD_AMERITRADE_CLIENT_ID and TD_AMERITRADE_REDIRECT_URI to your secrets'
+          error: 'Schwab API credentials not configured',
+          message: 'Please add SCHWAB_APP_KEY and SCHWAB_REDIRECT_URI to your secrets'
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // TD Ameritrade OAuth URL (Schwab API since they merged)
-    // https://developer.schwab.com/products/trader-api--individual
-    const authUrl = new URL('https://auth.tdameritrade.com/auth');
+    // Schwab OAuth authorization URL
+    // https://developer.schwab.com/user-guides/get-started/authenticate-with-oauth
+    const authUrl = new URL('https://api.schwabapi.com/v1/oauth/authorize');
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('redirect_uri', redirectUri);
-    authUrl.searchParams.set('client_id', `${clientId}@AMER.OAUTHAP`);
+    authUrl.searchParams.set('client_id', clientId);
+
+    console.log('Generated Schwab auth URL for client:', clientId);
 
     return new Response(
       JSON.stringify({ 
         authUrl: authUrl.toString(),
-        message: 'Redirect user to this URL to authenticate with TD Ameritrade'
+        message: 'Redirect user to this URL to authenticate with Schwab'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

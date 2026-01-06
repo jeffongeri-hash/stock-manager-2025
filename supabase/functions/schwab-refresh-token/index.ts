@@ -30,41 +30,42 @@ serve(async (req) => {
       .from('broker_connections')
       .select('*')
       .eq('user_id', userId)
-      .eq('broker_type', 'td_ameritrade')
+      .eq('broker_type', 'schwab')
       .single();
 
     if (fetchError || !connection) {
       return new Response(
-        JSON.stringify({ error: 'No TD Ameritrade connection found' }),
+        JSON.stringify({ error: 'No Schwab connection found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const clientId = Deno.env.get('TD_AMERITRADE_CLIENT_ID');
-    const clientSecret = Deno.env.get('TD_AMERITRADE_CLIENT_SECRET');
+    const clientId = Deno.env.get('SCHWAB_APP_KEY');
+    const clientSecret = Deno.env.get('SCHWAB_APP_SECRET');
 
-    if (!clientId) {
+    if (!clientId || !clientSecret) {
       return new Response(
-        JSON.stringify({ error: 'TD Ameritrade client ID not configured' }),
+        JSON.stringify({ error: 'Schwab API credentials not configured' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Schwab requires Basic Auth header with base64 encoded credentials
+    const encodedCredentials = btoa(`${clientId}:${clientSecret}`);
 
     // Refresh the token
     const tokenBody = new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: connection.refresh_token,
-      client_id: `${clientId}@AMER.OAUTHAP`,
     });
 
-    if (clientSecret) {
-      tokenBody.append('client_secret', clientSecret);
-    }
+    console.log('Refreshing Schwab token for user:', userId);
 
-    const tokenResponse = await fetch('https://api.tdameritrade.com/v1/oauth2/token', {
+    const tokenResponse = await fetch('https://api.schwabapi.com/v1/oauth/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${encodedCredentials}`,
       },
       body: tokenBody.toString(),
     });
@@ -81,11 +82,11 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', userId)
-        .eq('broker_type', 'td_ameritrade');
+        .eq('broker_type', 'schwab');
 
       return new Response(
         JSON.stringify({ 
-          error: 'Token refresh failed. Please reconnect your TD Ameritrade account.',
+          error: 'Token refresh failed. Please reconnect your Schwab account.',
           requiresReauth: true
         }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -93,6 +94,7 @@ serve(async (req) => {
     }
 
     const tokens = await tokenResponse.json();
+    console.log('Token refresh successful');
 
     // Update stored tokens
     const { error: updateError } = await supabase
@@ -105,7 +107,7 @@ serve(async (req) => {
         updated_at: new Date().toISOString(),
       })
       .eq('user_id', userId)
-      .eq('broker_type', 'td_ameritrade');
+      .eq('broker_type', 'schwab');
 
     if (updateError) {
       console.error('Failed to update tokens:', updateError);
