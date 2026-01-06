@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Bell, Globe, Lock, User, Settings as SettingsIcon } from 'lucide-react';
+import { Bell, Globe, Lock, User, Settings as SettingsIcon, Landmark } from 'lucide-react';
 import { toast } from 'sonner';
+import { IBKRConnection } from '@/components/brokers/IBKRConnection';
 
-type SettingsTab = 'account' | 'notifications' | 'security' | 'regional' | 'preferences';
+type SettingsTab = 'account' | 'notifications' | 'security' | 'regional' | 'preferences' | 'brokers';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('account');
@@ -82,6 +83,15 @@ const Settings = () => {
               >
                 <SettingsIcon className="mr-2 h-5 w-5" />
                 Preferences
+              </Button>
+              <Button 
+                variant={activeTab === 'brokers' ? 'secondary' : 'ghost'} 
+                className="w-full justify-start" 
+                size="lg"
+                onClick={() => setActiveTab('brokers')}
+              >
+                <Landmark className="mr-2 h-5 w-5" />
+                Broker Connections
               </Button>
             </nav>
           </div>
@@ -279,6 +289,24 @@ const Settings = () => {
                   
                   <div className="pt-4 border-t">
                     <Button onClick={handleSave}>Save Changes</Button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeTab === 'brokers' && (
+              <>
+                <h2 className="text-xl font-semibold mb-6">Broker Connections</h2>
+                <div className="space-y-6">
+                  <IBKRConnection />
+                  
+                  <div className="text-sm text-muted-foreground border-t pt-4">
+                    <p>Connect your brokerage accounts to:</p>
+                    <ul className="list-disc list-inside mt-2 space-y-1">
+                      <li>View live portfolio positions and balances</li>
+                      <li>Execute trades directly from the app</li>
+                      <li>Sync your trading activity automatically</li>
+                    </ul>
                   </div>
                 </div>
               </>
