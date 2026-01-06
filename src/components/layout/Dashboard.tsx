@@ -7,6 +7,7 @@ import { GuestModeBanner } from '@/components/layout/GuestModeBanner';
 import { StockCard } from '@/components/stocks/StockCard';
 import { AnimatedStatsCard } from '@/components/ui/AnimatedStatsCard';
 import { TradingToolCard } from '@/components/dashboard/TradingToolCard';
+import { LiveMarketNews } from '@/components/news/LiveMarketNews';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -460,6 +461,14 @@ export function Dashboard() {
                     </CardContent>
                   </Card>
                 )}
+              </div>
+
+              {/* Live Market News */}
+              <div className="mt-4 sm:mt-6 animate-slide-up" style={{ '--delay': '400ms' } as React.CSSProperties}>
+                <LiveMarketNews 
+                  symbols={stocks.map(s => s.symbol)} 
+                  maxItems={5}
+                />
               </div>
             </div>
             
