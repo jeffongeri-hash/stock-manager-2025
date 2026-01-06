@@ -113,11 +113,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/trading-toolkit',
     },
     {
-      title: 'Expected Move',
-      icon: TrendingUp,
-      href: '/expected-move',
-    },
-    {
       title: 'Options Portfolio',
       icon: FolderKanban,
       href: '/options-portfolio',
@@ -173,11 +168,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/trade-assistant',
     },
     {
-      title: 'Sector Heatmap',
-      icon: Grid3X3,
-      href: '/sector-heatmap',
-    },
-    {
       title: 'Dividend Tracker',
       icon: DollarSign,
       href: '/dividend-tracker',
@@ -208,7 +198,7 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/portfolio-rebalancing',
     },
     {
-      title: 'TradingView Webhook',
+      title: 'TradingView Integration',
       icon: Webhook,
       href: '/tradingview-webhook',
     },

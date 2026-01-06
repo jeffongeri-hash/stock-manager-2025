@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Shield, AlertTriangle, TrendingUp, TrendingDown, Activity, 
-  Target, RefreshCw, Info, ChevronRight, BarChart3
+  Target, RefreshCw, Info, ChevronRight, BarChart3, Download
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, ReferenceLine } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const drawdownData = Array.from({ length: 60 }, (_, i) => {
   const date = new Date();
@@ -59,8 +62,35 @@ const stressScenarios = [
 ];
 
 const RiskMetrics = () => {
+  const { user } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const portfolioValue = 125000;
+  const [portfolioValue, setPortfolioValue] = useState(125000);
+
+  // Import portfolio value from holdings
+  useEffect(() => {
+    if (user) {
+      importFromPortfolio();
+    }
+  }, [user]);
+
+  const importFromPortfolio = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('stock_trades')
+      .select('*')
+      .eq('user_id', user.id)
+      .is('exit_date', null);
+
+    if (data && data.length > 0) {
+      // Calculate approximate portfolio value
+      const totalValue = data.reduce((sum, trade) => sum + (trade.entry_price * trade.quantity), 0);
+      if (totalValue > 0) {
+        setPortfolioValue(totalValue);
+        toast.success('Portfolio data loaded');
+      }
+    }
+  };
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -220,20 +250,24 @@ const RiskMetrics = () => {
                     <Shield className="h-5 w-5 text-primary" />
                     Risk-Adjusted Returns
                   </CardTitle>
+                  <CardDescription>
+                    Metrics that compare returns to the risk taken
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
-                    { name: "Sharpe Ratio", value: riskMetrics.sharpeRatio, benchmark: 1.0, description: "Risk-adjusted return" },
-                    { name: "Sortino Ratio", value: riskMetrics.sortinoRatio, benchmark: 1.5, description: "Downside risk-adjusted" },
-                    { name: "Calmar Ratio", value: riskMetrics.calmarRatio, benchmark: 1.0, description: "Return vs max drawdown" },
-                    { name: "Treynor Ratio", value: riskMetrics.treynorRatio, benchmark: 0.1, description: "Excess return per beta" },
-                    { name: "Information Ratio", value: riskMetrics.informationRatio, benchmark: 0.3, description: "Active return vs tracking error" },
+                    { name: "Sharpe Ratio", value: riskMetrics.sharpeRatio, benchmark: 1.0, description: "Risk-adjusted return", explanation: "Measures excess return per unit of volatility. Higher is better." },
+                    { name: "Sortino Ratio", value: riskMetrics.sortinoRatio, benchmark: 1.5, description: "Downside risk-adjusted", explanation: "Like Sharpe but only considers downside volatility." },
+                    { name: "Calmar Ratio", value: riskMetrics.calmarRatio, benchmark: 1.0, description: "Return vs max drawdown", explanation: "Annual return divided by maximum drawdown." },
+                    { name: "Treynor Ratio", value: riskMetrics.treynorRatio, benchmark: 0.1, description: "Excess return per beta", explanation: "Measures return above risk-free rate per unit of market risk." },
+                    { name: "Information Ratio", value: riskMetrics.informationRatio, benchmark: 0.3, description: "Active return vs tracking error", explanation: "Measures consistency of outperformance vs benchmark." },
                   ].map((metric) => (
                     <div key={metric.name} className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <div>
                           <span className="text-sm font-medium text-foreground">{metric.name}</span>
                           <p className="text-xs text-muted-foreground">{metric.description}</p>
+                          <p className="text-xs text-muted-foreground italic">{metric.explanation}</p>
                         </div>
                         <span className={`text-lg font-bold ${metric.value >= metric.benchmark ? "text-chart-1" : "text-destructive"}`}>
                           {metric.value.toFixed(2)}

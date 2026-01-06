@@ -14,7 +14,7 @@ const Portfolio = lazy(() => import("./pages/Portfolio"));
 const Performance = lazy(() => import("./pages/Performance"));
 const Analysis = lazy(() => import("./pages/Analysis"));
 const Settings = lazy(() => import("./pages/Settings"));
-const ExpectedMove = lazy(() => import("./pages/ExpectedMove"));
+
 const OptionsPortfolio = lazy(() => import("./pages/OptionsPortfolio"));
 const ZeroDTE = lazy(() => import("./pages/ZeroDTE"));
 const Fundamentals = lazy(() => import("./pages/Fundamentals"));
@@ -29,7 +29,7 @@ const CreditOptionsGuide = lazy(() => import("./pages/CreditOptionsGuide"));
 const FundamentalAnalysisGuide = lazy(() => import("./pages/FundamentalAnalysisGuide"));
 const AlertHistory = lazy(() => import("./pages/AlertHistory"));
 const TradeAssistant = lazy(() => import("./pages/TradeAssistant"));
-const SectorHeatmap = lazy(() => import("./pages/SectorHeatmap"));
+
 const DividendTracker = lazy(() => import("./pages/DividendTracker"));
 const EconomicCalendar = lazy(() => import("./pages/EconomicCalendar"));
 const CorrelationMatrix = lazy(() => import("./pages/CorrelationMatrix"));
@@ -81,7 +81,7 @@ const App = () => (
               <Route path="/analysis" element={<Analysis />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/trading-toolkit" element={<TradingToolkit />} />
-              <Route path="/expected-move" element={<ExpectedMove />} />
+              
               <Route path="/options-portfolio" element={<OptionsPortfolio />} />
               <Route path="/zero-dte" element={<ZeroDTE />} />
               <Route path="/fundamentals" element={<Fundamentals />} />
@@ -94,7 +94,7 @@ const App = () => (
               <Route path="/fundamental-analysis-guide" element={<FundamentalAnalysisGuide />} />
               <Route path="/alert-history" element={<AlertHistory />} />
               <Route path="/trade-assistant" element={<TradeAssistant />} />
-              <Route path="/sector-heatmap" element={<SectorHeatmap />} />
+              
               <Route path="/dividend-tracker" element={<DividendTracker />} />
               <Route path="/economic-calendar" element={<EconomicCalendar />} />
               <Route path="/correlation-matrix" element={<CorrelationMatrix />} />

@@ -10,8 +10,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import { 
-  Flame, Leaf, Crown, Scale, ExternalLink, BookOpen, Target, 
-  TrendingUp, DollarSign, CheckCircle2, Circle
+  Flame, Leaf, Crown, Scale, Target, 
+  TrendingUp, DollarSign, CheckCircle2
 } from 'lucide-react';
 
 interface FireType {
@@ -72,38 +72,6 @@ const FIRE_TYPES: FireType[] = [
   }
 ];
 
-const FIRE_RESOURCES = [
-  {
-    title: 'Mr. Money Mustache',
-    url: 'https://www.mrmoneymustache.com/',
-    description: 'The godfather of FIRE blogging - focuses on frugality and mustachian principles'
-  },
-  {
-    title: 'ChooseFI',
-    url: 'https://www.choosefi.com/',
-    description: 'Podcast and community focused on practical FIRE strategies'
-  },
-  {
-    title: 'The Simple Path to Wealth',
-    url: 'https://jlcollinsnh.com/',
-    description: 'JL Collins\' blog on simple, effective investing for FIRE'
-  },
-  {
-    title: 'Mad Fientist',
-    url: 'https://www.madfientist.com/',
-    description: 'Tax optimization and financial strategies for early retirement'
-  },
-  {
-    title: 'Early Retirement Now',
-    url: 'https://earlyretirementnow.com/',
-    description: 'Deep dive into safe withdrawal rates and the 4% rule'
-  },
-  {
-    title: 'r/financialindependence',
-    url: 'https://www.reddit.com/r/financialindependence/',
-    description: 'Active Reddit community discussing FIRE strategies'
-  }
-];
 
 interface FireTypesCalculatorProps {
   annualSpendingPostRetirement?: number;
@@ -464,77 +432,6 @@ export const FireTypesCalculator: React.FC<FireTypesCalculatorProps> = ({
         </CardContent>
       </Card>
 
-      {/* FIRE Resources */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
-            FIRE Movement Resources
-          </CardTitle>
-          <CardDescription>
-            Essential reading and communities for your financial independence journey
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {FIRE_RESOURCES.map((resource, index) => (
-              <a 
-                key={index}
-                href={resource.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium group-hover:text-primary transition-colors">
-                    {resource.title}
-                  </h4>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-                <p className="text-sm text-muted-foreground">{resource.description}</p>
-              </a>
-            ))}
-          </div>
-
-          {/* Additional FIRE Concepts */}
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <h4 className="font-medium mb-3 flex items-center gap-2">
-              <Flame className="h-4 w-4" />
-              Key FIRE Concepts
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="font-medium text-primary">The 4% Rule</p>
-                <p className="text-muted-foreground">
-                  Withdraw 4% of your portfolio annually (adjusted for inflation) with a high probability 
-                  of not running out of money over 30 years.
-                </p>
-              </div>
-              <div>
-                <p className="font-medium text-primary">25x Rule</p>
-                <p className="text-muted-foreground">
-                  Multiply your annual expenses by 25 to find your FIRE number. 
-                  This is the inverse of the 4% withdrawal rate.
-                </p>
-              </div>
-              <div>
-                <p className="font-medium text-primary">Savings Rate</p>
-                <p className="text-muted-foreground">
-                  Your savings rate is the most important factor in how quickly you reach FIRE. 
-                  A 50% savings rate can lead to retirement in ~17 years.
-                </p>
-              </div>
-              <div>
-                <p className="font-medium text-primary">Sequence of Returns Risk</p>
-                <p className="text-muted-foreground">
-                  Poor market returns early in retirement can significantly impact portfolio longevity. 
-                  Consider flexible withdrawal strategies.
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
