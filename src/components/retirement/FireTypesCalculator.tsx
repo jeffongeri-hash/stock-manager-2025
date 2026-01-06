@@ -105,12 +105,25 @@ const FIRE_RESOURCES = [
   }
 ];
 
-export const FireTypesCalculator: React.FC = () => {
-  const [annualExpenses, setAnnualExpenses] = useState(60000);
+interface FireTypesCalculatorProps {
+  annualSpendingPostRetirement?: number;
+}
+
+export const FireTypesCalculator: React.FC<FireTypesCalculatorProps> = ({ 
+  annualSpendingPostRetirement 
+}) => {
+  const [annualExpenses, setAnnualExpenses] = useState(annualSpendingPostRetirement || 60000);
   const [currentSavings, setCurrentSavings] = useState(200000);
   const [monthlyContribution, setMonthlyContribution] = useState(2000);
   const [expectedReturn, setExpectedReturn] = useState(7);
   const [currentAge, setCurrentAge] = useState(30);
+
+  // Sync with parent prop when it changes
+  React.useEffect(() => {
+    if (annualSpendingPostRetirement !== undefined) {
+      setAnnualExpenses(annualSpendingPostRetirement);
+    }
+  }, [annualSpendingPostRetirement]);
 
   const calculations = useMemo(() => {
     const leanExpenses = 30000;
