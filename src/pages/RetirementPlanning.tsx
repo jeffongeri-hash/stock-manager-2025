@@ -22,6 +22,8 @@ import { FireTypesCalculator } from '@/components/retirement/FireTypesCalculator
 import { RothConversionCalculator } from '@/components/retirement/RothConversionCalculator';
 import { RMDCalculator } from '@/components/retirement/RMDCalculator';
 import { HealthcareCostEstimator } from '@/components/retirement/HealthcareCostEstimator';
+import { WithdrawalStrategyPlanner } from '@/components/retirement/WithdrawalStrategyPlanner';
+import { HSACalculator } from '@/components/retirement/HSACalculator';
 
 // Money Guy Show Wealth Multiplier Table
 const WEALTH_MULTIPLIERS: Record<number, number> = {
@@ -303,6 +305,8 @@ const RetirementPlanning = () => {
             <TabsTrigger value="roth">Roth Conversion</TabsTrigger>
             <TabsTrigger value="rmd">RMD</TabsTrigger>
             <TabsTrigger value="healthcare">Healthcare</TabsTrigger>
+            <TabsTrigger value="withdrawal">Withdrawal Strategy</TabsTrigger>
+            <TabsTrigger value="hsa">HSA</TabsTrigger>
             <TabsTrigger value="calculators">Calculators</TabsTrigger>
           </TabsList>
 
@@ -837,6 +841,16 @@ const RetirementPlanning = () => {
           {/* Healthcare Tab */}
           <TabsContent value="healthcare" className="space-y-4">
             <HealthcareCostEstimator />
+          </TabsContent>
+
+          {/* Withdrawal Strategy Tab */}
+          <TabsContent value="withdrawal" className="space-y-4">
+            <WithdrawalStrategyPlanner />
+          </TabsContent>
+
+          {/* HSA Tab */}
+          <TabsContent value="hsa" className="space-y-4">
+            <HSACalculator />
           </TabsContent>
         </Tabs>
       </div>
