@@ -5,7 +5,7 @@ import {
   TrendingUp, FolderKanban, Zap, BookOpen, Activity,
   TestTube, Users, Radar, FileText, BarChart3, BookMarked, BellRing,
   Bot, Grid3X3, DollarSign, CalendarDays, GitCompare, Shield, Newspaper,
-  Scale, Webhook, Cpu, Eye, FlaskConical, Target
+  Scale, Webhook, Cpu, Eye, FlaskConical, Target, Building2, Car
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -226,6 +226,16 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Retirement Planning',
       icon: Target,
       href: '/retirement-planning',
+    },
+    {
+      title: 'Real Estate',
+      icon: Building2,
+      href: '/real-estate',
+    },
+    {
+      title: 'Car Finance',
+      icon: Car,
+      href: '/car-finance',
     },
     {
       title: 'Credit Options Guide',
