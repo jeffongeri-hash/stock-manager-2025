@@ -837,6 +837,168 @@ export default function RealEstate() {
 
         {/* More Tools Tab */}
         <TabsContent value="more" className="space-y-6">
+          {/* FHA Calculator */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Home className="h-5 w-5" />
+                FHA Loan Calculator
+              </CardTitle>
+              <CardDescription>
+                Calculate FHA loan requirements including down payment, mortgage insurance (MIP), and loan limits
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Home Price ($)</Label>
+                  <Input 
+                    type="number" 
+                    value={purchasePrice} 
+                    onChange={(e) => setPurchasePrice(e.target.value)}
+                    placeholder="300000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Credit Score Range</Label>
+                  <Select defaultValue="620+">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="580-619">580-619 (10% down required)</SelectItem>
+                      <SelectItem value="620+">620+ (3.5% down eligible)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Loan Term</Label>
+                  <Select value={loanTerm} onValueChange={setLoanTerm}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">15 Years</SelectItem>
+                      <SelectItem value="30">30 Years</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {(() => {
+                const price = parseFloat(purchasePrice) || 300000;
+                const fhaDownPercent = 3.5;
+                const fhaDown = price * (fhaDownPercent / 100);
+                const fhaLoanAmount = price - fhaDown;
+                const upfrontMIP = fhaLoanAmount * 0.0175; // 1.75% upfront MIP
+                const totalLoan = fhaLoanAmount + upfrontMIP;
+                const monthlyRate = (parseFloat(interestRate) / 100) / 12;
+                const numPayments = parseFloat(loanTerm) * 12;
+                const baseMortgage = totalLoan * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1);
+                const annualMIP = fhaLoanAmount * 0.0055; // 0.55% annual MIP for loans > 15 years with LTV > 95%
+                const monthlyMIP = annualMIP / 12;
+                const totalMonthly = baseMortgage + monthlyMIP;
+                
+                // 2024 FHA loan limits (national baseline)
+                const fhaLimitLow = 498257;
+                const fhaLimitHigh = 1149825;
+
+                return (
+                  <div className="space-y-6">
+                    {/* FHA Loan Limits Info */}
+                    <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                      <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-2">2024 FHA Loan Limits</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Low-Cost Areas (Floor)</p>
+                          <p className="font-medium">${fhaLimitLow.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">High-Cost Areas (Ceiling)</p>
+                          <p className="font-medium">${fhaLimitHigh.toLocaleString()}</p>
+                        </div>
+                      </div>
+                      {price > fhaLimitHigh && (
+                        <p className="mt-2 text-red-500 text-sm">⚠️ This price exceeds FHA limits. Consider conventional financing.</p>
+                      )}
+                    </div>
+
+                    {/* Down Payment Requirements */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">Minimum Down Payment (3.5%)</p>
+                        <p className="text-2xl font-bold text-green-600">${fhaDown.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground mt-1">For credit score 620+</p>
+                      </div>
+                      <div className="p-4 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">10% Down Payment Option</p>
+                        <p className="text-2xl font-bold">${(price * 0.10).toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground mt-1">For credit score 580-619</p>
+                      </div>
+                    </div>
+
+                    {/* MIP Breakdown */}
+                    <div>
+                      <h4 className="font-medium mb-3">Mortgage Insurance Premium (MIP)</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="p-4 bg-muted rounded-lg">
+                          <p className="text-sm text-muted-foreground">Upfront MIP (1.75%)</p>
+                          <p className="text-xl font-bold">${upfrontMIP.toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">Added to loan balance</p>
+                        </div>
+                        <div className="p-4 bg-muted rounded-lg">
+                          <p className="text-sm text-muted-foreground">Annual MIP (0.55%)</p>
+                          <p className="text-xl font-bold">${annualMIP.toLocaleString()}/yr</p>
+                          <p className="text-xs text-muted-foreground">${monthlyMIP.toFixed(2)}/month</p>
+                        </div>
+                        <div className="p-4 bg-primary/10 rounded-lg">
+                          <p className="text-sm text-muted-foreground">Total Monthly MIP</p>
+                          <p className="text-xl font-bold">${monthlyMIP.toFixed(2)}</p>
+                          <p className="text-xs text-muted-foreground">Included in payment</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Total Payment Breakdown */}
+                    <div>
+                      <h4 className="font-medium mb-3">Monthly Payment Breakdown</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between p-3 bg-muted rounded">
+                          <span>Principal & Interest (on ${totalLoan.toLocaleString()} loan)</span>
+                          <span className="font-medium">${baseMortgage.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between p-3 bg-muted rounded">
+                          <span>Monthly MIP</span>
+                          <span className="font-medium">${monthlyMIP.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between p-3 bg-muted rounded">
+                          <span>Est. Property Tax (1.2%)</span>
+                          <span className="font-medium">${((price * 0.012) / 12).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between p-3 bg-muted rounded">
+                          <span>Est. Homeowners Insurance</span>
+                          <span className="font-medium">${(parseFloat(insuranceAnnual) / 12).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between p-3 bg-primary/10 rounded font-bold text-lg">
+                          <span>Total Est. Monthly Payment</span>
+                          <span>${(totalMonthly + ((price * 0.012) / 12) + (parseFloat(insuranceAnnual) / 12)).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* FHA Requirements Summary */}
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <h4 className="font-medium mb-2">FHA Loan Requirements</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>✓ Minimum credit score: 580 (3.5% down) or 500 (10% down)</li>
+                        <li>✓ Debt-to-income ratio: Typically max 43%, up to 50% with compensating factors</li>
+                        <li>✓ Must be primary residence (no investment properties)</li>
+                        <li>✓ Property must meet FHA minimum property standards</li>
+                        <li>✓ MIP required for life of loan (if LTV &gt; 90%)</li>
+                      </ul>
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Closing Costs Calculator */}
             <Card>
