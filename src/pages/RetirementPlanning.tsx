@@ -13,8 +13,12 @@ import {
 } from 'recharts';
 import { 
   Target, TrendingUp, DollarSign, Calculator, PiggyBank, 
-  Clock, Percent, ArrowRight, CheckCircle2, AlertCircle, Sparkles
+  Clock, Percent, ArrowRight, CheckCircle2, AlertCircle, Sparkles,
+  Landmark, Wallet, Flame
 } from 'lucide-react';
+import { SocialSecurityEstimator } from '@/components/retirement/SocialSecurityEstimator';
+import { RetirementIncomeBreakdown } from '@/components/retirement/RetirementIncomeBreakdown';
+import { FireTypesCalculator } from '@/components/retirement/FireTypesCalculator';
 
 // Money Guy Show Wealth Multiplier Table
 const WEALTH_MULTIPLIERS: Record<number, number> = {
@@ -286,10 +290,13 @@ const RetirementPlanning = () => {
         </div>
 
         <Tabs defaultValue="crossover" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="crossover">Crossover Point</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="crossover">Crossover</TabsTrigger>
             <TabsTrigger value="multiplier">Wealth Multiplier</TabsTrigger>
-            <TabsTrigger value="projection">Portfolio Projection</TabsTrigger>
+            <TabsTrigger value="projection">Projection</TabsTrigger>
+            <TabsTrigger value="social-security">Social Security</TabsTrigger>
+            <TabsTrigger value="income">Income Sources</TabsTrigger>
+            <TabsTrigger value="fire">FIRE Types</TabsTrigger>
             <TabsTrigger value="calculators">Calculators</TabsTrigger>
           </TabsList>
 
@@ -794,6 +801,21 @@ const RetirementPlanning = () => {
               {/* Coast FIRE Calculator */}
               <CoastFireCalculator />
             </div>
+          </TabsContent>
+
+          {/* Social Security Tab */}
+          <TabsContent value="social-security" className="space-y-4">
+            <SocialSecurityEstimator />
+          </TabsContent>
+
+          {/* Income Sources Tab */}
+          <TabsContent value="income" className="space-y-4">
+            <RetirementIncomeBreakdown />
+          </TabsContent>
+
+          {/* FIRE Types Tab */}
+          <TabsContent value="fire" className="space-y-4">
+            <FireTypesCalculator />
           </TabsContent>
         </Tabs>
       </div>
