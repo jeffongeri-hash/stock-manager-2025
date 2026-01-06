@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import {
 import { 
   Target, TrendingUp, DollarSign, Calculator, PiggyBank, 
   Clock, Percent, ArrowRight, CheckCircle2, AlertCircle, Sparkles,
-  Landmark, Wallet, Flame
+  Landmark, Wallet, Flame, Save, RotateCcw, Loader2
 } from 'lucide-react';
 import { SocialSecurityEstimator } from '@/components/retirement/SocialSecurityEstimator';
 import { RetirementIncomeBreakdown } from '@/components/retirement/RetirementIncomeBreakdown';
@@ -24,6 +24,44 @@ import { RMDCalculator } from '@/components/retirement/RMDCalculator';
 import { HealthcareCostEstimator } from '@/components/retirement/HealthcareCostEstimator';
 import { WithdrawalStrategyPlanner } from '@/components/retirement/WithdrawalStrategyPlanner';
 import { HSACalculator } from '@/components/retirement/HSACalculator';
+import { useUserSettings } from '@/hooks/useUserSettings';
+
+interface RetirementSettings {
+  // Crossover Point
+  monthlyExpenses: number;
+  monthlyInvestment: number;
+  currentSavings: number;
+  expectedReturn: number;
+  withdrawalRate: number;
+  // Wealth Multiplier
+  currentAge: number;
+  retirementAge: number;
+  annualContribution: number;
+  // Retirement Projections
+  projCurrentAge: number;
+  projRetirementAge: number;
+  projCurrentSavings: number;
+  projMonthlyContrib: number;
+  projExpectedReturn: number;
+  projInflation: number;
+}
+
+const defaultSettings: RetirementSettings = {
+  monthlyExpenses: 5000,
+  monthlyInvestment: 1500,
+  currentSavings: 50000,
+  expectedReturn: 7,
+  withdrawalRate: 4,
+  currentAge: 30,
+  retirementAge: 65,
+  annualContribution: 10000,
+  projCurrentAge: 30,
+  projRetirementAge: 65,
+  projCurrentSavings: 50000,
+  projMonthlyContrib: 1000,
+  projExpectedReturn: 7,
+  projInflation: 2.5,
+};
 
 // Money Guy Show Wealth Multiplier Table
 const WEALTH_MULTIPLIERS: Record<number, number> = {
@@ -76,25 +114,38 @@ const WEALTH_MULTIPLIERS: Record<number, number> = {
 };
 
 const RetirementPlanning = () => {
-  // Crossover Point State
-  const [monthlyExpenses, setMonthlyExpenses] = useState(5000);
-  const [monthlyInvestment, setMonthlyInvestment] = useState(1500);
-  const [currentSavings, setCurrentSavings] = useState(50000);
-  const [expectedReturn, setExpectedReturn] = useState(7);
-  const [withdrawalRate, setWithdrawalRate] = useState(4);
+  // Use the settings hook for persistence
+  const {
+    settings,
+    updateSetting,
+    saveSettings,
+    resetSettings,
+    isLoading,
+    isSaving,
+    lastSaved,
+    isAuthenticated
+  } = useUserSettings<RetirementSettings>({
+    pageName: 'retirement-planning',
+    defaultSettings
+  });
 
-  // Wealth Multiplier State
-  const [currentAge, setCurrentAge] = useState(30);
-  const [retirementAge, setRetirementAge] = useState(65);
-  const [annualContribution, setAnnualContribution] = useState(10000);
-
-  // Retirement Projections State
-  const [projCurrentAge, setProjCurrentAge] = useState(30);
-  const [projRetirementAge, setProjRetirementAge] = useState(65);
-  const [projCurrentSavings, setProjCurrentSavings] = useState(50000);
-  const [projMonthlyContrib, setProjMonthlyContrib] = useState(1000);
-  const [projExpectedReturn, setProjExpectedReturn] = useState(7);
-  const [projInflation, setProjInflation] = useState(2.5);
+  // Destructure settings for easier access
+  const {
+    monthlyExpenses,
+    monthlyInvestment,
+    currentSavings,
+    expectedReturn,
+    withdrawalRate,
+    currentAge,
+    retirementAge,
+    annualContribution,
+    projCurrentAge,
+    projRetirementAge,
+    projCurrentSavings,
+    projMonthlyContrib,
+    projExpectedReturn,
+    projInflation
+  } = settings;
 
   // Calculate crossover point data
   const crossoverData = useMemo(() => {
@@ -223,14 +274,44 @@ const RetirementPlanning = () => {
     <PageLayout title="Retirement Planning">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Target className="h-8 w-8 text-primary" />
-            Retirement Planning
-          </h1>
-          <p className="text-muted-foreground">
-            Calculate your crossover point, use the wealth multiplier, and project your retirement portfolio
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+              <Target className="h-8 w-8 text-primary" />
+              Retirement Planning
+            </h1>
+            <p className="text-muted-foreground">
+              Calculate your crossover point, use the wealth multiplier, and project your retirement portfolio
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {lastSaved && (
+              <span className="text-xs text-muted-foreground">
+                Last saved: {lastSaved.toLocaleDateString()}
+              </span>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={resetSettings}
+              disabled={isLoading}
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => saveSettings(settings)}
+              disabled={isSaving || isLoading}
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save
+            </Button>
+          </div>
         </div>
 
         {/* Quick Stats */}
@@ -331,7 +412,7 @@ const RetirementPlanning = () => {
                       <Input
                         type="number"
                         value={monthlyExpenses}
-                        onChange={(e) => setMonthlyExpenses(Number(e.target.value))}
+                        onChange={(e) => updateSetting('monthlyExpenses', Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -343,7 +424,7 @@ const RetirementPlanning = () => {
                       <Input
                         type="number"
                         value={monthlyInvestment}
-                        onChange={(e) => setMonthlyInvestment(Number(e.target.value))}
+                        onChange={(e) => updateSetting('monthlyInvestment', Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -355,7 +436,7 @@ const RetirementPlanning = () => {
                       <Input
                         type="number"
                         value={currentSavings}
-                        onChange={(e) => setCurrentSavings(Number(e.target.value))}
+                        onChange={(e) => updateSetting('currentSavings', Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -364,7 +445,7 @@ const RetirementPlanning = () => {
                     <Label>Expected Annual Return: {expectedReturn}%</Label>
                     <Slider
                       value={[expectedReturn]}
-                      onValueChange={(value) => setExpectedReturn(value[0])}
+                      onValueChange={(value) => updateSetting('expectedReturn', value[0])}
                       min={1}
                       max={15}
                       step={0.5}
@@ -375,7 +456,7 @@ const RetirementPlanning = () => {
                     <Label>Safe Withdrawal Rate: {withdrawalRate}%</Label>
                     <Slider
                       value={[withdrawalRate]}
-                      onValueChange={(value) => setWithdrawalRate(value[0])}
+                      onValueChange={(value) => updateSetting('withdrawalRate', value[0])}
                       min={2}
                       max={6}
                       step={0.25}
@@ -499,7 +580,7 @@ const RetirementPlanning = () => {
                     <Label>Your Current Age: {currentAge}</Label>
                     <Slider
                       value={[currentAge]}
-                      onValueChange={(value) => setCurrentAge(value[0])}
+                      onValueChange={(value) => updateSetting('currentAge', value[0])}
                       min={20}
                       max={65}
                       step={1}
@@ -510,7 +591,7 @@ const RetirementPlanning = () => {
                     <Label>Retirement Age: {retirementAge}</Label>
                     <Slider
                       value={[retirementAge]}
-                      onValueChange={(value) => setRetirementAge(value[0])}
+                      onValueChange={(value) => updateSetting('retirementAge', value[0])}
                       min={55}
                       max={75}
                       step={1}
@@ -524,7 +605,7 @@ const RetirementPlanning = () => {
                       <Input
                         type="number"
                         value={annualContribution}
-                        onChange={(e) => setAnnualContribution(Number(e.target.value))}
+                        onChange={(e) => updateSetting('annualContribution', Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -669,7 +750,7 @@ const RetirementPlanning = () => {
                     <Label>Current Age: {projCurrentAge}</Label>
                     <Slider
                       value={[projCurrentAge]}
-                      onValueChange={(value) => setProjCurrentAge(value[0])}
+                      onValueChange={(value) => updateSetting('projCurrentAge', value[0])}
                       min={18}
                       max={60}
                       step={1}
@@ -680,7 +761,7 @@ const RetirementPlanning = () => {
                     <Label>Retirement Age: {projRetirementAge}</Label>
                     <Slider
                       value={[projRetirementAge]}
-                      onValueChange={(value) => setProjRetirementAge(value[0])}
+                      onValueChange={(value) => updateSetting('projRetirementAge', value[0])}
                       min={50}
                       max={75}
                       step={1}
@@ -694,7 +775,7 @@ const RetirementPlanning = () => {
                       <Input
                         type="number"
                         value={projCurrentSavings}
-                        onChange={(e) => setProjCurrentSavings(Number(e.target.value))}
+                        onChange={(e) => updateSetting('projCurrentSavings', Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -706,7 +787,7 @@ const RetirementPlanning = () => {
                       <Input
                         type="number"
                         value={projMonthlyContrib}
-                        onChange={(e) => setProjMonthlyContrib(Number(e.target.value))}
+                        onChange={(e) => updateSetting('projMonthlyContrib', Number(e.target.value))}
                       />
                     </div>
                   </div>
@@ -715,7 +796,7 @@ const RetirementPlanning = () => {
                     <Label>Expected Return: {projExpectedReturn}%</Label>
                     <Slider
                       value={[projExpectedReturn]}
-                      onValueChange={(value) => setProjExpectedReturn(value[0])}
+                      onValueChange={(value) => updateSetting('projExpectedReturn', value[0])}
                       min={3}
                       max={12}
                       step={0.5}
@@ -726,7 +807,7 @@ const RetirementPlanning = () => {
                     <Label>Inflation Rate: {projInflation}%</Label>
                     <Slider
                       value={[projInflation]}
-                      onValueChange={(value) => setProjInflation(value[0])}
+                      onValueChange={(value) => updateSetting('projInflation', value[0])}
                       min={1}
                       max={5}
                       step={0.5}
