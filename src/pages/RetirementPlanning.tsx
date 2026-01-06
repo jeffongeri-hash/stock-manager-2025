@@ -24,6 +24,8 @@ import { RMDCalculator } from '@/components/retirement/RMDCalculator';
 import { HealthcareCostEstimator } from '@/components/retirement/HealthcareCostEstimator';
 import { WithdrawalStrategyPlanner } from '@/components/retirement/WithdrawalStrategyPlanner';
 import { HSACalculator } from '@/components/retirement/HSACalculator';
+import { FireProgressBar } from '@/components/retirement/FireProgressBar';
+import { SpendingBreakdownCalculator } from '@/components/retirement/SpendingBreakdownCalculator';
 import { useUserSettings } from '@/hooks/useUserSettings';
 
 interface RetirementSettings {
@@ -434,11 +436,23 @@ const RetirementPlanning = () => {
           </CardContent>
         </Card>
 
+        {/* FIRE Progress Bar */}
+        <FireProgressBar
+          currentSavings={projCurrentSavings}
+          fireNumber={fireNumber}
+          leanFireNumber={annualSpendingPostRetirement * 20}
+          fatFireNumber={annualSpendingPostRetirement * 33.33}
+          yearsToRetirement={projRetirementAge - projCurrentAge}
+          projectedAtRetirement={retirementMetrics.portfolioAtRetirement}
+          inflationRate={projInflation}
+        />
+
         <Tabs defaultValue="crossover" className="space-y-4">
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="crossover">Crossover</TabsTrigger>
             <TabsTrigger value="multiplier">Wealth Multiplier</TabsTrigger>
             <TabsTrigger value="projection">Projection</TabsTrigger>
+            <TabsTrigger value="spending">Spending Breakdown</TabsTrigger>
             <TabsTrigger value="social-security">Social Security</TabsTrigger>
             <TabsTrigger value="income">Income Sources</TabsTrigger>
             <TabsTrigger value="fire">FIRE Types</TabsTrigger>
@@ -937,6 +951,16 @@ const RetirementPlanning = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Spending Breakdown Tab */}
+          <TabsContent value="spending" className="space-y-4">
+            <SpendingBreakdownCalculator
+              annualSpending={annualSpendingPostRetirement}
+              onSpendingChange={(total) => updateSetting('annualSpendingPostRetirement', total)}
+              generalInflationRate={projInflation}
+              yearsToRetirement={projRetirementAge - projCurrentAge}
+            />
           </TabsContent>
 
           {/* Additional Calculators Tab */}
