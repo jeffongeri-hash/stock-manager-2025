@@ -176,6 +176,18 @@ export const FireTypesCalculator: React.FC<FireTypesCalculatorProps> = ({
       (prev.progress > curr.progress) ? prev : curr
     );
 
+    // Calculate Coast FIRE by age (what you need at each age to coast to regular FIRE by 65)
+    const coastFireByAge = [];
+    for (let age = 20; age <= 55; age++) {
+      const yearsToGrow = 65 - age;
+      const coastAmount = regularFIRE / Math.pow(1 + (expectedReturn / 100), yearsToGrow);
+      coastFireByAge.push({
+        age,
+        coastAmount: Math.round(coastAmount),
+        yearsToGrow
+      });
+    }
+
     return {
       fireNumbers,
       yearsToFIRE,
@@ -185,7 +197,8 @@ export const FireTypesCalculator: React.FC<FireTypesCalculatorProps> = ({
       regularFIRE,
       fatFIRE,
       coastFIRE,
-      baristaFIRE
+      baristaFIRE,
+      coastFireByAge
     };
   }, [annualExpenses, currentSavings, monthlyContribution, expectedReturn, currentAge]);
 
@@ -365,6 +378,91 @@ export const FireTypesCalculator: React.FC<FireTypesCalculatorProps> = ({
           </CardContent>
         </Card>
       </div>
+
+      {/* Coast FIRE by Age Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-cyan-500" />
+            Coast FIRE by Age
+          </CardTitle>
+          <CardDescription>
+            How much you need invested at each age to reach your FIRE number ({formatCurrency(calculations.regularFIRE)}) by age 65, assuming {expectedReturn}% annual returns
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            {calculations.coastFireByAge
+              .filter(item => item.age % 5 === 0 || item.age === currentAge)
+              .map((item) => (
+                <div 
+                  key={item.age}
+                  className={`p-3 rounded-lg text-center border ${
+                    item.age === currentAge 
+                      ? 'border-cyan-500 bg-cyan-500/10' 
+                      : currentSavings >= item.coastAmount && item.age <= currentAge
+                        ? 'border-green-500 bg-green-500/10'
+                        : 'border-muted bg-muted/30'
+                  }`}
+                >
+                  <p className="text-xs text-muted-foreground">Age {item.age}</p>
+                  <p className={`text-lg font-bold ${
+                    item.age === currentAge ? 'text-cyan-500' : 
+                    currentSavings >= item.coastAmount && item.age <= currentAge ? 'text-green-500' : ''
+                  }`}>
+                    {formatCurrency(item.coastAmount)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{item.yearsToGrow} yrs to grow</p>
+                </div>
+              ))}
+          </div>
+          
+          {/* Current status indicator */}
+          <div className="mt-4 p-4 bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 rounded-lg">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">Your Coast FIRE Status (Age {currentAge})</p>
+                <p className="text-xs text-muted-foreground">
+                  You need {formatCurrency(calculations.coastFIRE)} to coast to retirement
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Current Savings</p>
+                <p className="text-2xl font-bold">{formatCurrency(currentSavings)}</p>
+                {currentSavings >= calculations.coastFIRE ? (
+                  <Badge variant="default" className="bg-green-500 mt-1">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Coast FIRE Achieved!
+                  </Badge>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {formatCurrency(calculations.coastFIRE - currentSavings)} more needed
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Example milestones */}
+          <div className="mt-4 p-4 bg-muted rounded-lg">
+            <h4 className="font-medium mb-2 text-sm">Coast FIRE Milestones (at {expectedReturn}% returns)</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">At age 25:</span>
+                <span className="font-medium">{formatCurrency(calculations.coastFireByAge.find(c => c.age === 25)?.coastAmount || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">At age 30:</span>
+                <span className="font-medium">{formatCurrency(calculations.coastFireByAge.find(c => c.age === 30)?.coastAmount || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">At age 35:</span>
+                <span className="font-medium">{formatCurrency(calculations.coastFireByAge.find(c => c.age === 35)?.coastAmount || 0)}</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* FIRE Resources */}
       <Card>
