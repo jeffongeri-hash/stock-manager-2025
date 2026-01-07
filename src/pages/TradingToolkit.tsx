@@ -9,12 +9,13 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useStockData } from '@/hooks/useStockData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, CheckCircle2, XCircle, BarChart3, PieChart, TrendingUp, RefreshCw, BookOpen, Lightbulb } from 'lucide-react';
+import { AlertCircle, CheckCircle2, XCircle, BarChart3, PieChart, TrendingUp, RefreshCw, BookOpen, Lightbulb, Bot } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import MonteCarloComparison from '@/components/trading/MonteCarloComparison';
 import { PortfolioOptimizer } from '@/components/trading/PortfolioOptimizer';
 import { TradeIdeasPanel } from '@/components/trading/TradeIdeasPanel';
 import { TradeJournalPanel } from '@/components/trading/TradeJournalPanel';
+import { AIAssistantPanel } from '@/components/trading/AIAssistantPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -232,6 +233,10 @@ const TradingToolkit = () => {
           <TabsTrigger value="trade-journal" className="flex items-center gap-1">
             <BookOpen className="h-3 w-3" />
             <span className="hidden lg:inline">Journal</span>
+          </TabsTrigger>
+          <TabsTrigger value="ai-assistant" className="flex items-center gap-1">
+            <Bot className="h-3 w-3" />
+            <span className="hidden lg:inline">AI Assistant</span>
           </TabsTrigger>
         </TabsList>
 
@@ -837,6 +842,10 @@ const TradingToolkit = () => {
 
         <TabsContent value="trade-journal">
           <TradeJournalPanel />
+        </TabsContent>
+
+        <TabsContent value="ai-assistant">
+          <AIAssistantPanel />
         </TabsContent>
       </Tabs>
     </PageLayout>

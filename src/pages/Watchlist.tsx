@@ -9,11 +9,13 @@ import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useStockData } from '@/hooks/useStockData';
 import { toast } from 'sonner';
-import { Eye, Plus, Trash2, Bell, BellRing, TrendingUp, TrendingDown, RefreshCw, AlertCircle, Volume2 } from 'lucide-react';
+import { Eye, Plus, Trash2, Bell, BellRing, TrendingUp, TrendingDown, RefreshCw, AlertCircle, Volume2, Clock } from 'lucide-react';
+import { AlertHistoryPanel } from '@/components/watchlist/AlertHistoryPanel';
 
 interface WatchlistItem {
   id: string;
@@ -240,7 +242,20 @@ const Watchlist = () => {
   const activeAlertsCount = alerts.filter(a => a.active && !a.triggered).length;
 
   return (
-    <PageLayout title="Watchlist & Price Alerts">
+    <PageLayout title="Watchlist & Alerts">
+      <Tabs defaultValue="watchlist" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="watchlist" className="flex items-center gap-2">
+            <Eye className="h-4 w-4" />
+            Watchlist
+          </TabsTrigger>
+          <TabsTrigger value="alert-history" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Alert History
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="watchlist">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardHeader className="pb-2">
@@ -512,6 +527,12 @@ const Watchlist = () => {
           </div>
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        <TabsContent value="alert-history">
+          <AlertHistoryPanel />
+        </TabsContent>
+      </Tabs>
     </PageLayout>
   );
 };

@@ -3,8 +3,8 @@ import {
   PieChart, Wallet, LineChart, 
   Settings, ChevronRight, ChevronLeft, Home, Calculator,
   TrendingUp, FolderKanban, Zap, BookOpen, Activity,
-  TestTube, Users, Radar, FileText, BarChart3, BookMarked, BellRing,
-  Bot, Grid3X3, DollarSign, CalendarDays, GitCompare, Shield, Newspaper,
+  TestTube, Users, Radar, FileText, BookMarked,
+  Grid3X3, DollarSign, CalendarDays, GitCompare, Shield, Newspaper,
   Scale, Webhook, Cpu, Eye, FlaskConical, Target, Building2, Car
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -123,11 +123,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/zero-dte',
     },
     {
-      title: 'Fundamentals',
-      icon: BarChart3,
-      href: '/fundamentals',
-    },
-    {
       title: 'Multi-Stock Research',
       icon: FlaskConical,
       href: '/stock-research',
@@ -141,21 +136,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Reports',
       icon: FileText,
       href: '/reports',
-    },
-    {
-      title: 'Reports',
-      icon: FileText,
-      href: '/reports',
-    },
-    {
-      title: 'Alert History',
-      icon: BellRing,
-      href: '/alert-history',
-    },
-    {
-      title: 'AI Trade Assistant',
-      icon: Bot,
-      href: '/trade-assistant',
     },
     {
       title: 'Dividend Tracker',
