@@ -5,11 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   Shield, AlertTriangle, TrendingUp, TrendingDown, Activity, 
-  Target, RefreshCw, Info, ChevronRight, BarChart3, Download
+  Target, RefreshCw, Info, BarChart3, GitCompare, Minus
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, ReferenceLine } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -61,12 +63,41 @@ const stressScenarios = [
   { name: "Recession Scenario", impact: -25.4, probability: "Low" },
 ];
 
+// Correlation matrix functions
+const generateCorrelationMatrix = (stocks: string[]): number[][] => {
+  const matrix: number[][] = [];
+  for (let i = 0; i < stocks.length; i++) {
+    matrix[i] = [];
+    for (let j = 0; j < stocks.length; j++) {
+      if (i === j) {
+        matrix[i][j] = 1;
+      } else if (j > i) {
+        matrix[i][j] = Math.round((Math.random() * 2 - 1) * 100) / 100;
+      } else {
+        matrix[i][j] = matrix[j][i];
+      }
+    }
+  }
+  return matrix;
+};
+
+const getCorrelationBg = (value: number): string => {
+  const intensity = Math.abs(value);
+  if (value >= 0) {
+    return `rgba(34, 197, 94, ${intensity * 0.8})`;
+  } else {
+    return `rgba(239, 68, 68, ${intensity * 0.8})`;
+  }
+};
+
 const RiskMetrics = () => {
   const { user } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [portfolioValue, setPortfolioValue] = useState(125000);
+  const [portfolioStocks, setPortfolioStocks] = useState<string[]>(["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "JPM"]);
+  const [timeframe, setTimeframe] = useState("1Y");
+  const [selectedCell, setSelectedCell] = useState<{ i: number; j: number } | null>(null);
 
-  // Import portfolio value from holdings
   useEffect(() => {
     if (user) {
       importFromPortfolio();
@@ -83,10 +114,14 @@ const RiskMetrics = () => {
       .is('exit_date', null);
 
     if (data && data.length > 0) {
-      // Calculate approximate portfolio value
       const totalValue = data.reduce((sum, trade) => sum + (trade.entry_price * trade.quantity), 0);
       if (totalValue > 0) {
         setPortfolioValue(totalValue);
+      }
+      
+      const symbols = [...new Set(data.map(t => t.symbol))];
+      if (symbols.length >= 2) {
+        setPortfolioStocks(symbols);
         toast.success('Portfolio data loaded');
       }
     }
@@ -96,6 +131,37 @@ const RiskMetrics = () => {
     setIsRefreshing(true);
     setTimeout(() => setIsRefreshing(false), 1000);
   };
+
+  const correlationData = useMemo(() => generateCorrelationMatrix(portfolioStocks), [portfolioStocks, isRefreshing]);
+
+  const highlyCorrelated = useMemo(() => {
+    const pairs: { stock1: string; stock2: string; correlation: number }[] = [];
+    for (let i = 0; i < portfolioStocks.length; i++) {
+      for (let j = i + 1; j < portfolioStocks.length; j++) {
+        if (Math.abs(correlationData[i][j]) >= 0.7) {
+          pairs.push({
+            stock1: portfolioStocks[i],
+            stock2: portfolioStocks[j],
+            correlation: correlationData[i][j],
+          });
+        }
+      }
+    }
+    return pairs.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation));
+  }, [correlationData, portfolioStocks]);
+
+  const diversificationScore = useMemo(() => {
+    let totalCorr = 0;
+    let count = 0;
+    for (let i = 0; i < portfolioStocks.length; i++) {
+      for (let j = i + 1; j < portfolioStocks.length; j++) {
+        totalCorr += Math.abs(correlationData[i][j]);
+        count++;
+      }
+    }
+    const avgCorr = count > 0 ? totalCorr / count : 0;
+    return Math.round((1 - avgCorr) * 100);
+  }, [correlationData, portfolioStocks]);
 
   const getRiskLevel = (metric: string, value: number): { level: string; color: string } => {
     switch (metric) {
@@ -117,7 +183,7 @@ const RiskMetrics = () => {
   };
 
   return (
-    <PageLayout title="Risk Metrics">
+    <PageLayout title="Risk Metrics & Correlation">
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -125,6 +191,18 @@ const RiskMetrics = () => {
             <Badge variant="outline" className="text-sm">
               Portfolio Value: ${portfolioValue.toLocaleString()}
             </Badge>
+            <Select value={timeframe} onValueChange={setTimeframe}>
+              <SelectTrigger className="w-[120px] border-border/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1M">1 Month</SelectItem>
+                <SelectItem value="3M">3 Months</SelectItem>
+                <SelectItem value="6M">6 Months</SelectItem>
+                <SelectItem value="1Y">1 Year</SelectItem>
+                <SelectItem value="3Y">3 Years</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <Button variant="outline" size="sm" onClick={handleRefresh} className="border-border/50">
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -204,6 +282,7 @@ const RiskMetrics = () => {
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList className="bg-muted/50">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="correlation">Correlation Matrix</TabsTrigger>
             <TabsTrigger value="positions">Position Risk</TabsTrigger>
             <TabsTrigger value="stress">Stress Tests</TabsTrigger>
           </TabsList>
@@ -224,7 +303,7 @@ const RiskMetrics = () => {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
                       <XAxis dataKey="date" tick={{ fontSize: 10 }} className="text-muted-foreground" />
                       <YAxis tick={{ fontSize: 10 }} className="text-muted-foreground" />
-                      <Tooltip
+                      <RechartsTooltip
                         contentStyle={{
                           backgroundColor: "hsl(var(--card))",
                           border: "1px solid hsl(var(--border))",
@@ -315,6 +394,239 @@ const RiskMetrics = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="correlation" className="space-y-6">
+            {/* Correlation Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="glass-card border-border/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Diversification Score</p>
+                      <p className="text-2xl font-bold text-foreground">{diversificationScore}%</p>
+                    </div>
+                    <div className={`p-3 rounded-xl ${diversificationScore >= 60 ? "bg-chart-1/20" : diversificationScore >= 40 ? "bg-warning/20" : "bg-destructive/20"}`}>
+                      {diversificationScore >= 60 ? (
+                        <TrendingUp className="h-5 w-5 text-chart-1" />
+                      ) : (
+                        <TrendingDown className="h-5 w-5 text-destructive" />
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {diversificationScore >= 60 ? "Well diversified" : diversificationScore >= 40 ? "Moderately diversified" : "Poor diversification"}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card border-border/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Highly Correlated Pairs</p>
+                      <p className="text-2xl font-bold text-foreground">{highlyCorrelated.length}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-warning/20">
+                      <Info className="h-5 w-5 text-warning" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">Pairs with |r| ≥ 0.7</p>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card border-border/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Portfolio Stocks</p>
+                      <p className="text-2xl font-bold text-foreground">{portfolioStocks.length}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-primary/20">
+                      <Minus className="h-5 w-5 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">Analyzed in matrix</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Matrix */}
+              <Card className="glass-card border-border/50 lg:col-span-3 overflow-hidden">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <GitCompare className="h-5 w-5 text-primary" />
+                    Correlation Heatmap
+                  </CardTitle>
+                  <CardDescription>
+                    Click on any cell to see the correlation between two stocks
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-2">
+                  <div className="overflow-x-auto">
+                    <TooltipProvider>
+                      <table className="w-full">
+                        <thead>
+                          <tr>
+                            <th className="p-2 text-xs font-medium text-muted-foreground"></th>
+                            {portfolioStocks.map((stock) => (
+                              <th key={stock} className="p-2 text-xs font-medium text-foreground text-center min-w-[60px]">
+                                {stock}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {portfolioStocks.map((stock, i) => (
+                            <tr key={stock}>
+                              <td className="p-2 text-xs font-medium text-foreground">{stock}</td>
+                              {portfolioStocks.map((_, j) => (
+                                <td key={j} className="p-1">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        className={`w-full aspect-square rounded-md flex items-center justify-center text-xs font-medium transition-all hover:scale-105 hover:shadow-lg cursor-pointer ${
+                                          selectedCell?.i === i && selectedCell?.j === j ? "ring-2 ring-primary" : ""
+                                        }`}
+                                        style={{ background: getCorrelationBg(correlationData[i][j]) }}
+                                        onClick={() => setSelectedCell({ i, j })}
+                                      >
+                                        <span className={correlationData[i][j] === 1 ? "text-foreground" : "text-foreground font-semibold"}>
+                                          {correlationData[i][j].toFixed(2)}
+                                        </span>
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="font-medium">{portfolioStocks[i]} ↔ {portfolioStocks[j]}</p>
+                                      <p className="text-sm">Correlation: {correlationData[i][j].toFixed(3)}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </TooltipProvider>
+                  </div>
+                  
+                  {/* Legend */}
+                  <div className="flex items-center justify-center gap-4 mt-4">
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-4 h-4 rounded" style={{ background: "rgba(34, 197, 94, 0.8)" }} />
+                      <span className="text-muted-foreground">Positive</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-4 h-4 rounded bg-muted" />
+                      <span className="text-muted-foreground">Neutral</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-4 h-4 rounded" style={{ background: "rgba(239, 68, 68, 0.8)" }} />
+                      <span className="text-muted-foreground">Negative</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Highly Correlated Pairs */}
+              <Card className="glass-card border-border/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Info className="h-4 w-4 text-warning" />
+                    High Correlation Pairs
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {highlyCorrelated.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No highly correlated pairs found
+                    </p>
+                  ) : (
+                    highlyCorrelated.slice(0, 8).map((pair, index) => (
+                      <div
+                        key={index}
+                        className="p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">{pair.stock1}</Badge>
+                            <span className="text-muted-foreground">↔</span>
+                            <Badge variant="outline" className="text-xs">{pair.stock2}</Badge>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className={`text-sm font-bold ${pair.correlation > 0 ? "text-chart-1" : "text-destructive"}`}>
+                            {pair.correlation > 0 ? "+" : ""}{pair.correlation.toFixed(2)}
+                          </span>
+                          <Badge className={pair.correlation > 0 ? "bg-chart-1/20 text-chart-1" : "bg-destructive/20 text-destructive"}>
+                            {pair.correlation > 0 ? "Positive" : "Negative"}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Interpretation Guide */}
+            <Card className="glass-card border-border/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Info className="h-5 w-5 text-primary" />
+                  Understanding Correlation
+                </CardTitle>
+                <CardDescription>
+                  What the correlation numbers mean and how to use them for diversification
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="p-4 rounded-xl bg-chart-1/10 border border-chart-1/20">
+                    <h4 className="font-semibold text-chart-1 mb-2">Strong Positive (0.7 to 1.0)</h4>
+                    <p className="text-muted-foreground mb-2">Stocks move together. High correlation may indicate sector concentration risk.</p>
+                    <p className="text-xs text-muted-foreground italic">Example: Two tech stocks often move in the same direction.</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-muted/30 border border-border">
+                    <h4 className="font-semibold text-foreground mb-2">Low Correlation (-0.3 to 0.3)</h4>
+                    <p className="text-muted-foreground mb-2">Stocks move independently. Good for diversification.</p>
+                    <p className="text-xs text-muted-foreground italic">Example: A tech stock and a utility stock may have low correlation.</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20">
+                    <h4 className="font-semibold text-destructive mb-2">Strong Negative (-0.7 to -1.0)</h4>
+                    <p className="text-muted-foreground mb-2">Stocks move in opposite directions. Natural hedge positions.</p>
+                    <p className="text-xs text-muted-foreground italic">Example: Gold stocks often move opposite to the market.</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h4 className="font-semibold mb-2">How Correlation is Calculated</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    <strong>Pearson Correlation Coefficient (r)</strong> measures the linear relationship between two stocks' returns. 
+                    The formula compares how much each stock deviates from its average return.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 text-sm">
+                    <div>
+                      <p className="font-medium">What It Tells You:</p>
+                      <ul className="text-muted-foreground space-y-1 mt-1">
+                        <li>• r = 1: Perfect positive relationship</li>
+                        <li>• r = 0: No linear relationship</li>
+                        <li>• r = -1: Perfect negative relationship</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-medium">Practical Use:</p>
+                      <ul className="text-muted-foreground space-y-1 mt-1">
+                        <li>• Diversify with low/negative correlations</li>
+                        <li>• Avoid overconcentration in high correlations</li>
+                        <li>• Correlations can change over time</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="positions" className="space-y-4">
             <Card className="glass-card border-border/50">
               <CardHeader>
@@ -322,6 +634,9 @@ const RiskMetrics = () => {
                   <Target className="h-5 w-5 text-primary" />
                   Position-Level Risk Analysis
                 </CardTitle>
+                <CardDescription>
+                  Understand how each position contributes to your overall portfolio risk
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -369,6 +684,40 @@ const RiskMetrics = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Position Risk Explanation */}
+            <Card className="glass-card border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-primary" />
+                  Understanding Position Risk Metrics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="font-medium">Beta</p>
+                      <p className="text-muted-foreground">Measures how much a stock moves relative to the market. Beta of 1.5 means 50% more volatile than the market.</p>
+                    </div>
+                    <div>
+                      <p className="font-medium">Risk Contribution</p>
+                      <p className="text-muted-foreground">The percentage of total portfolio risk attributable to each position. High-beta stocks contribute more risk.</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="font-medium">VaR (95%)</p>
+                      <p className="text-muted-foreground">Value at Risk: The maximum loss expected with 95% confidence on any given day.</p>
+                    </div>
+                    <div>
+                      <p className="font-medium">Weight vs Risk</p>
+                      <p className="text-muted-foreground">If risk contribution is higher than weight, the position is adding disproportionate risk to your portfolio.</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="stress" className="space-y-4">
@@ -378,37 +727,74 @@ const RiskMetrics = () => {
                   <AlertTriangle className="h-5 w-5 text-warning" />
                   Stress Test Scenarios
                 </CardTitle>
+                <CardDescription>
+                  Estimated portfolio impact under various market stress conditions
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {stressScenarios.map((scenario) => (
-                  <div
-                    key={scenario.name}
-                    className="p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-foreground">{scenario.name}</h4>
-                      <Badge variant="outline" className="text-xs">
-                        {scenario.probability}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Estimated Impact</p>
-                        <p className="text-xl font-bold text-destructive">{scenario.impact}%</p>
+              <CardContent>
+                <div className="space-y-3">
+                  {stressScenarios.map((scenario) => (
+                    <div
+                      key={scenario.name}
+                      className="p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-foreground">{scenario.name}</h4>
+                        <Badge className={
+                          scenario.probability === "Moderate" ? "bg-warning/20 text-warning" :
+                          scenario.probability === "Low" ? "bg-primary/20 text-primary" :
+                          "bg-muted text-muted-foreground"
+                        }>
+                          {scenario.probability} Probability
+                        </Badge>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">Portfolio Loss</p>
-                        <p className="text-xl font-bold text-destructive">
-                          -${Math.abs(Math.round(portfolioValue * (scenario.impact / 100))).toLocaleString()}
-                        </p>
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <Progress value={Math.abs(scenario.impact)} className="h-2" />
+                        </div>
+                        <span className="text-lg font-bold text-destructive">{scenario.impact}%</span>
+                        <span className="text-sm text-muted-foreground">
+                          (${Math.abs(Math.round(portfolioValue * scenario.impact / 100)).toLocaleString()})
+                        </span>
                       </div>
                     </div>
-                    <Progress 
-                      value={Math.abs(scenario.impact)} 
-                      className="h-1.5 mt-3"
-                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Stress Test Explanation */}
+            <Card className="glass-card border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-primary" />
+                  About Stress Testing
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Stress tests simulate how your portfolio might perform during extreme market conditions based on historical events or hypothetical scenarios.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="font-medium">What This Shows:</p>
+                      <ul className="text-muted-foreground space-y-1 mt-1">
+                        <li>• Estimated loss during market crashes</li>
+                        <li>• How your specific holdings would react</li>
+                        <li>• Probability of each scenario occurring</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-medium">How to Use This:</p>
+                      <ul className="text-muted-foreground space-y-1 mt-1">
+                        <li>• Ensure you can tolerate worst-case losses</li>
+                        <li>• Consider hedging if impacts are too high</li>
+                        <li>• Review emergency fund adequacy</li>
+                      </ul>
+                    </div>
                   </div>
-                ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

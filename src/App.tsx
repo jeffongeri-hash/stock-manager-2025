@@ -28,7 +28,6 @@ const FundamentalAnalysisGuide = lazy(() => import("./pages/FundamentalAnalysisG
 
 const DividendTracker = lazy(() => import("./pages/DividendTracker"));
 const EconomicCalendar = lazy(() => import("./pages/EconomicCalendar"));
-const CorrelationMatrix = lazy(() => import("./pages/CorrelationMatrix"));
 const RiskMetrics = lazy(() => import("./pages/RiskMetrics"));
 const PortfolioRebalancing = lazy(() => import("./pages/PortfolioRebalancing"));
 const TradingViewWebhook = lazy(() => import("./pages/TradingViewWebhook"));
@@ -87,7 +86,6 @@ const App = () => (
                 
                 <Route path="/dividend-tracker" element={<DividendTracker />} />
                 <Route path="/economic-calendar" element={<EconomicCalendar />} />
-                <Route path="/correlation-matrix" element={<CorrelationMatrix />} />
                 <Route path="/risk-metrics" element={<RiskMetrics />} />
                 <Route path="/portfolio-rebalancing" element={<PortfolioRebalancing />} />
                 <Route path="/tradingview-webhook" element={<TradingViewWebhook />} />
