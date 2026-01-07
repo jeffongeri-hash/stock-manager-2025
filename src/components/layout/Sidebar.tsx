@@ -148,12 +148,7 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/economic-calendar',
     },
     {
-      title: 'Correlation Matrix',
-      icon: GitCompare,
-      href: '/correlation-matrix',
-    },
-    {
-      title: 'Risk Metrics',
+      title: 'Risk & Correlation',
       icon: Shield,
       href: '/risk-metrics',
     },
