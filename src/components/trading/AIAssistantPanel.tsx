@@ -1,6 +1,4 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,7 +22,7 @@ const SUGGESTED_PROMPTS = [
   { icon: Sparkles, text: "Trade ideas", prompt: "Based on current market conditions, what trade opportunities should I consider?" },
 ];
 
-export default function TradeAssistant() {
+export function AIAssistantPanel() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -182,116 +180,112 @@ export default function TradeAssistant() {
   };
 
   return (
-    <PageLayout title="AI Trade Assistant">
-      <div className="max-w-4xl mx-auto space-y-4">
-        <Card className="glass-card border-primary/20">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10">
-                <Bot className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Trade Assistant</CardTitle>
-                <CardDescription>AI-powered portfolio analysis and trade recommendations</CardDescription>
+    <Card className="glass-card border-primary/20">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary/10">
+            <Bot className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <CardTitle>AI Trade Assistant</CardTitle>
+            <CardDescription>AI-powered portfolio analysis and trade recommendations</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {/* Chat Area */}
+        <ScrollArea className="h-[400px] pr-4 mb-4" ref={scrollRef}>
+          {messages.length === 0 ? (
+            <div className="space-y-4">
+              <p className="text-center text-muted-foreground py-8">
+                Ask me anything about your portfolio, market conditions, or trading strategies.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {SUGGESTED_PROMPTS.map((item, i) => (
+                  <Button
+                    key={i}
+                    variant="outline"
+                    className="h-auto p-4 justify-start text-left hover:bg-primary/5 hover:border-primary/30"
+                    onClick={() => sendMessage(item.prompt)}
+                  >
+                    <item.icon className="h-5 w-5 mr-3 text-primary shrink-0" />
+                    <span className="text-sm">{item.text}</span>
+                  </Button>
+                ))}
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            {/* Chat Area */}
-            <ScrollArea className="h-[400px] pr-4 mb-4" ref={scrollRef}>
-              {messages.length === 0 ? (
-                <div className="space-y-4">
-                  <p className="text-center text-muted-foreground py-8">
-                    Ask me anything about your portfolio, market conditions, or trading strategies.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {SUGGESTED_PROMPTS.map((item, i) => (
-                      <Button
-                        key={i}
-                        variant="outline"
-                        className="h-auto p-4 justify-start text-left hover:bg-primary/5 hover:border-primary/30"
-                        onClick={() => sendMessage(item.prompt)}
-                      >
-                        <item.icon className="h-5 w-5 mr-3 text-primary shrink-0" />
-                        <span className="text-sm">{item.text}</span>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {messages.map((message, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        'flex gap-3 animate-fade-in',
-                        message.role === 'user' ? 'justify-end' : 'justify-start'
-                      )}
-                    >
-                      {message.role === 'assistant' && (
-                        <div className="p-2 rounded-full bg-primary/10 h-fit">
-                          <Bot className="h-4 w-4 text-primary" />
-                        </div>
-                      )}
-                      <div
-                        className={cn(
-                          'rounded-2xl px-4 py-3 max-w-[80%]',
-                          message.role === 'user'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
-                        )}
-                      >
-                        {message.role === 'assistant' ? (
-                          <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <ReactMarkdown>{message.content}</ReactMarkdown>
-                          </div>
-                        ) : (
-                          <p className="text-sm">{message.content}</p>
-                        )}
-                      </div>
-                      {message.role === 'user' && (
-                        <div className="p-2 rounded-full bg-secondary h-fit">
-                          <User className="h-4 w-4" />
-                        </div>
-                      )}
+          ) : (
+            <div className="space-y-4">
+              {messages.map((message, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    'flex gap-3 animate-fade-in',
+                    message.role === 'user' ? 'justify-end' : 'justify-start'
+                  )}
+                >
+                  {message.role === 'assistant' && (
+                    <div className="p-2 rounded-full bg-primary/10 h-fit">
+                      <Bot className="h-4 w-4 text-primary" />
                     </div>
-                  ))}
-                  {isLoading && messages[messages.length - 1]?.role === 'user' && (
-                    <div className="flex gap-3 justify-start animate-fade-in">
-                      <div className="p-2 rounded-full bg-primary/10 h-fit">
-                        <Bot className="h-4 w-4 text-primary" />
+                  )}
+                  <div
+                    className={cn(
+                      'rounded-2xl px-4 py-3 max-w-[80%]',
+                      message.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted'
+                    )}
+                  >
+                    {message.role === 'assistant' ? (
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
                       </div>
-                      <div className="bg-muted rounded-2xl px-4 py-3">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      </div>
+                    ) : (
+                      <p className="text-sm">{message.content}</p>
+                    )}
+                  </div>
+                  {message.role === 'user' && (
+                    <div className="p-2 rounded-full bg-secondary h-fit">
+                      <User className="h-4 w-4" />
                     </div>
                   )}
                 </div>
+              ))}
+              {isLoading && messages[messages.length - 1]?.role === 'user' && (
+                <div className="flex gap-3 justify-start animate-fade-in">
+                  <div className="p-2 rounded-full bg-primary/10 h-fit">
+                    <Bot className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="bg-muted rounded-2xl px-4 py-3">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                </div>
               )}
-            </ScrollArea>
-
-            {/* Input Area */}
-            <div className="flex gap-2">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask about your portfolio, market analysis, or trade ideas..."
-                className="min-h-[60px] resize-none"
-                disabled={isLoading}
-              />
-              <Button
-                onClick={() => sendMessage(input)}
-                disabled={!input.trim() || isLoading}
-                size="icon"
-                className="h-[60px] w-[60px] shrink-0"
-              >
-                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-              </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </PageLayout>
+          )}
+        </ScrollArea>
+
+        {/* Input Area */}
+        <div className="flex gap-2">
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask about your portfolio, market analysis, or trade ideas..."
+            className="min-h-[60px] resize-none"
+            disabled={isLoading}
+          />
+          <Button
+            onClick={() => sendMessage(input)}
+            disabled={!input.trim() || isLoading}
+            size="icon"
+            className="h-[60px] w-[60px] shrink-0"
+          >
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
