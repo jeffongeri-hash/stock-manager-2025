@@ -11,9 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useStockData } from '@/hooks/useStockData';
+import { usePortfolioReturns } from '@/hooks/usePortfolioReturns';
 import { toast } from 'sonner';
-import { Scale, Target, TrendingUp, TrendingDown, RefreshCw, Plus, Trash2, CheckCircle2, BarChart3, Info, Dice5 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { Scale, Target, TrendingUp, TrendingDown, RefreshCw, Plus, Trash2, CheckCircle2, BarChart3, Info, Dice5, AlertCircle, History } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line } from 'recharts';
 
 interface TargetAllocation {
   symbol: string;
@@ -65,6 +66,8 @@ const PortfolioRebalancing = () => {
   const [isRunningMC, setIsRunningMC] = useState(false);
   const [riskFreeRate] = useState(0.05); // 5% risk-free rate
 
+  // Use real portfolio returns from trade history
+  const portfolioReturns = usePortfolioReturns(riskFreeRate);
   const activeSymbols = useMemo(() => {
     return [...new Set(trades.filter(t => !t.exit_date).map(t => t.symbol))];
   }, [trades]);
@@ -134,39 +137,46 @@ const PortfolioRebalancing = () => {
 
   const cashAllocation = (cashBalance / totalPortfolioValue) * 100;
 
-  // Calculate portfolio returns and risk metrics
+  // Portfolio metrics from real trade history
   const portfolioMetrics = useMemo(() => {
-    // Mock historical returns for demonstration
-    // In production, you'd fetch actual historical price data
-    const mockDailyReturns: number[] = [];
-    for (let i = 0; i < 252; i++) { // 252 trading days
-      mockDailyReturns.push(gaussianRandom(0.0004, 0.015)); // ~10% annual return, 15% vol
+    // Use real data if available, otherwise generate sample data for demonstration
+    if (portfolioReturns.hasRealData && !portfolioReturns.isLoading) {
+      return {
+        annualizedReturn: portfolioReturns.annualizedReturn,
+        annualizedVolatility: portfolioReturns.annualizedVolatility,
+        sharpeRatio: portfolioReturns.sharpeRatio,
+        sortinoRatio: portfolioReturns.sortinoRatio,
+        dailyVolatility: portfolioReturns.annualizedVolatility / Math.sqrt(252),
+        maxDrawdown: portfolioReturns.maxDrawdown,
+        totalPnL: portfolioReturns.totalPnL,
+        totalTrades: portfolioReturns.totalTrades,
+        winRate: portfolioReturns.winRate,
+        averageWin: portfolioReturns.averageWin,
+        averageLoss: portfolioReturns.averageLoss,
+        profitFactor: portfolioReturns.profitFactor,
+        calmarRatio: portfolioReturns.calmarRatio,
+        hasRealData: true
+      };
     }
     
-    const meanReturn = mockDailyReturns.reduce((a, b) => a + b, 0) / mockDailyReturns.length;
-    const annualizedReturn = meanReturn * 252;
-    
-    const variance = mockDailyReturns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) / (mockDailyReturns.length - 1);
-    const dailyVolatility = Math.sqrt(variance);
-    const annualizedVolatility = dailyVolatility * Math.sqrt(252);
-    
-    // Sharpe Ratio = (Portfolio Return - Risk-Free Rate) / Portfolio Volatility
-    const sharpeRatio = (annualizedReturn - riskFreeRate) / annualizedVolatility;
-    
-    // Downside returns for Sortino
-    const downsideReturns = mockDailyReturns.filter(r => r < 0);
-    const downsideVariance = downsideReturns.reduce((sum, r) => sum + Math.pow(r, 2), 0) / downsideReturns.length;
-    const downsideDeviation = Math.sqrt(downsideVariance) * Math.sqrt(252);
-    const sortinoRatio = (annualizedReturn - riskFreeRate) / downsideDeviation;
-    
+    // Fallback to sample data for demonstration when no trades exist
     return {
-      annualizedReturn: annualizedReturn * 100,
-      annualizedVolatility: annualizedVolatility * 100,
-      sharpeRatio,
-      sortinoRatio,
-      dailyVolatility: dailyVolatility * 100
+      annualizedReturn: 12.5,
+      annualizedVolatility: 18.0,
+      sharpeRatio: 0.42,
+      sortinoRatio: 0.58,
+      dailyVolatility: 1.13,
+      maxDrawdown: 15.0,
+      totalPnL: 0,
+      totalTrades: 0,
+      winRate: 0,
+      averageWin: 0,
+      averageLoss: 0,
+      profitFactor: 0,
+      calmarRatio: 0,
+      hasRealData: false
     };
-  }, [riskFreeRate, totalPortfolioValue]);
+  }, [portfolioReturns]);
 
   // Run Monte Carlo simulation
   const runMonteCarloSimulation = () => {
@@ -602,6 +612,35 @@ const PortfolioRebalancing = () => {
         </TabsContent>
 
         <TabsContent value="risk" className="space-y-6">
+          {/* Data Source Indicator */}
+          {!portfolioMetrics.hasRealData && (
+            <Card className="border-warning/50 bg-warning/5">
+              <CardContent className="p-4 flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-warning" />
+                <div>
+                  <p className="text-sm font-medium">Using Sample Data</p>
+                  <p className="text-xs text-muted-foreground">
+                    Add closed trades to your portfolio to see real Sharpe/Sortino ratios calculated from your actual trading history.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {portfolioMetrics.hasRealData && (
+            <Card className="border-chart-1/50 bg-chart-1/5">
+              <CardContent className="p-4 flex items-center gap-3">
+                <History className="h-5 w-5 text-chart-1" />
+                <div>
+                  <p className="text-sm font-medium">Real Portfolio Data</p>
+                  <p className="text-xs text-muted-foreground">
+                    Metrics calculated from {portfolioMetrics.totalTrades} actual trades with ${portfolioMetrics.totalPnL.toLocaleString(undefined, { maximumFractionDigits: 2 })} total P&L.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Key Risk Metrics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="glass-card border-border/50">
@@ -646,8 +685,10 @@ const PortfolioRebalancing = () => {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Annual Return</p>
-                    <p className="text-xl font-bold text-foreground">{portfolioMetrics.annualizedReturn.toFixed(1)}%</p>
-                    <p className="text-xs text-muted-foreground mt-1">Expected</p>
+                    <p className={`text-xl font-bold ${portfolioMetrics.annualizedReturn >= 0 ? 'text-chart-1' : 'text-destructive'}`}>
+                      {portfolioMetrics.annualizedReturn >= 0 ? '+' : ''}{portfolioMetrics.annualizedReturn.toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">{portfolioMetrics.hasRealData ? 'From trades' : 'Expected'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -668,6 +709,104 @@ const PortfolioRebalancing = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Additional Trade Statistics when real data exists */}
+          {portfolioMetrics.hasRealData && (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <Card className="glass-card border-border/50">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Win Rate</p>
+                  <p className={`text-xl font-bold ${portfolioMetrics.winRate >= 50 ? 'text-chart-1' : 'text-destructive'}`}>
+                    {portfolioMetrics.winRate.toFixed(1)}%
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card border-border/50">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Avg Win</p>
+                  <p className="text-xl font-bold text-chart-1">
+                    ${portfolioMetrics.averageWin.toFixed(0)}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card border-border/50">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Avg Loss</p>
+                  <p className="text-xl font-bold text-destructive">
+                    ${portfolioMetrics.averageLoss.toFixed(0)}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card border-border/50">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Profit Factor</p>
+                  <p className={`text-xl font-bold ${portfolioMetrics.profitFactor >= 1 ? 'text-chart-1' : 'text-destructive'}`}>
+                    {isFinite(portfolioMetrics.profitFactor) ? portfolioMetrics.profitFactor.toFixed(2) : '∞'}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card border-border/50">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Max Drawdown</p>
+                  <p className="text-xl font-bold text-destructive">
+                    {portfolioMetrics.maxDrawdown.toFixed(1)}%
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Cumulative Returns Chart */}
+          {portfolioReturns.hasRealData && portfolioReturns.dailyReturns.length > 1 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  Cumulative P&L from Trade History
+                </CardTitle>
+                <CardDescription>Your actual portfolio performance over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={portfolioReturns.dailyReturns}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        className="text-xs"
+                      />
+                      <YAxis 
+                        tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                        className="text-xs"
+                      />
+                      <Tooltip 
+                        labelFormatter={(d) => new Date(d).toLocaleDateString()}
+                        formatter={(v: number) => [`$${v.toFixed(2)}`, 'Cumulative P&L']}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="cumulativePnl" 
+                        stroke="hsl(var(--chart-1))" 
+                        fill="hsl(var(--chart-1))" 
+                        fillOpacity={0.2}
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Explanation Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
