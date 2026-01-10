@@ -62,6 +62,50 @@ interface LeapsFilters {
   maxIV: number;
 }
 
+interface FilterPreset {
+  name: string;
+  description: string;
+  filters: Partial<LeapsFilters>;
+}
+
+const leapsPresets: FilterPreset[] = [
+  {
+    name: 'Deep ITM Calls',
+    description: 'Delta 0.70+ for stock replacement',
+    filters: { optionType: 'call', minDelta: 0.70, maxDelta: 1, minOpenInterest: 100 }
+  },
+  {
+    name: 'ATM Calls',
+    description: 'Delta 0.45-0.55 for balanced risk/reward',
+    filters: { optionType: 'call', minDelta: 0.45, maxDelta: 0.55, minOpenInterest: 50 }
+  },
+  {
+    name: 'OTM Calls',
+    description: 'Delta 0.20-0.40 for leveraged upside',
+    filters: { optionType: 'call', minDelta: 0.20, maxDelta: 0.40, minOpenInterest: 100 }
+  },
+  {
+    name: 'Conservative Puts',
+    description: 'Delta -0.30 to -0.40 for income',
+    filters: { optionType: 'put', minDelta: 0.30, maxDelta: 0.40, minOpenInterest: 50 }
+  },
+  {
+    name: 'Protective Puts',
+    description: 'Delta -0.15 to -0.25 for portfolio hedge',
+    filters: { optionType: 'put', minDelta: 0.15, maxDelta: 0.25, minOpenInterest: 100 }
+  },
+  {
+    name: 'High Liquidity',
+    description: 'Open Interest 500+ for easy fills',
+    filters: { optionType: 'all', minOpenInterest: 500, minDelta: 0, maxDelta: 1 }
+  },
+  {
+    name: 'Low IV',
+    description: 'IV under 40% for cheaper options',
+    filters: { optionType: 'all', maxIV: 40, minDelta: 0, maxDelta: 1 }
+  }
+];
+
 interface CoveredCallFilters {
   minAnnualizedReturn: number;
   minOpenInterest: number;
@@ -236,6 +280,20 @@ const MarketScanner = () => {
     return 'text-muted-foreground';
   };
 
+  const applyLeapsPreset = (preset: FilterPreset) => {
+    setLeapsFilters(prev => ({
+      ...prev,
+      optionType: preset.filters.optionType ?? prev.optionType,
+      minDelta: preset.filters.minDelta ?? prev.minDelta,
+      maxDelta: preset.filters.maxDelta ?? prev.maxDelta,
+      minOpenInterest: preset.filters.minOpenInterest ?? prev.minOpenInterest,
+      minAnnualizedReturn: preset.filters.minAnnualizedReturn ?? prev.minAnnualizedReturn,
+      maxIV: preset.filters.maxIV ?? prev.maxIV
+    }));
+    setShowLeapsFilters(true);
+    toast.success(`Applied "${preset.name}" preset`);
+  };
+
   const resetLeapsFilters = () => {
     setLeapsFilters({
       optionType: 'all',
@@ -339,6 +397,32 @@ const MarketScanner = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Strategy Presets */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Quick Presets
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {leapsPresets.map((preset) => (
+                  <Button
+                    key={preset.name}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-auto py-1.5 px-3"
+                    onClick={() => applyLeapsPreset(preset)}
+                    title={preset.description}
+                  >
+                    {preset.name}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* LEAPS Filters */}
           <Collapsible open={showLeapsFilters} onOpenChange={setShowLeapsFilters}>
