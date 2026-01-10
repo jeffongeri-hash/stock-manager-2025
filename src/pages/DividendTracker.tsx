@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,11 +10,13 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AnimatedStatsCard } from '@/components/ui/AnimatedStatsCard';
-import { DollarSign, TrendingUp, Calendar, Plus, Trash2, RefreshCw, PiggyBank, LineChart, ChevronLeft, ChevronRight, CalendarDays, Banknote } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, Plus, Trash2, RefreshCw, PiggyBank, LineChart, ChevronLeft, ChevronRight, CalendarDays, Banknote, Calculator, GitCompare, Clock } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO, addDays, isSameDay } from 'date-fns';
+import { WhatIfScenarioBuilder } from '@/components/dividends/WhatIfScenarioBuilder';
+import { ReverseDividendCalculator } from '@/components/dividends/ReverseDividendCalculator';
 
 interface DividendStock {
   id: string;
@@ -435,9 +437,94 @@ export default function DividendTracker() {
   const finalValue = dripProjection[dripProjection.length - 1]?.value || 0;
   const totalGrowth = ((finalValue - totals.totalCost) / totals.totalCost) * 100;
 
+  // Live dividend counter
+  const [dividendCounter, setDividendCounter] = useState(0);
+  const dividendsPerSecond = totals.annualIncome / (365 * 24 * 60 * 60);
+  
+  useEffect(() => {
+    // Initialize with current year-to-date estimate
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+    const now = new Date();
+    const secondsSinceYearStart = (now.getTime() - startOfYear.getTime()) / 1000;
+    setDividendCounter(dividendsPerSecond * secondsSinceYearStart);
+    
+    const interval = setInterval(() => {
+      setDividendCounter(prev => prev + dividendsPerSecond);
+    }, 100);
+    
+    return () => clearInterval(interval);
+  }, [dividendsPerSecond]);
+
+  // Total dividends collected this year (simulated)
+  const totalDividendsThisYear = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    let total = 0;
+    
+    stocks.forEach(stock => {
+      const dividendPerPayment = stock.frequency === 'monthly' 
+        ? (stock.annualDividend * stock.shares) / 12
+        : stock.frequency === 'quarterly'
+          ? (stock.annualDividend * stock.shares) / 4
+          : stock.annualDividend * stock.shares;
+      
+      if (stock.frequency === 'monthly') {
+        total += dividendPerPayment * currentMonth;
+      } else if (stock.frequency === 'quarterly') {
+        const quartersPassed = Math.floor(currentMonth / 3);
+        total += dividendPerPayment * quartersPassed;
+      }
+    });
+    
+    return total;
+  }, [stocks]);
+
+  // Total dividend payments count
+  const totalDividendPayments = useMemo(() => {
+    return stocks.reduce((sum, stock) => {
+      if (stock.frequency === 'monthly') return sum + 12;
+      if (stock.frequency === 'quarterly') return sum + 4;
+      return sum + 1;
+    }, 0);
+  }, [stocks]);
+
   return (
     <PageLayout title="Dividend Tracker">
       <div className="space-y-6">
+        {/* Live Dividend Counter */}
+        <Card className="border-2 border-success/30 bg-gradient-to-r from-success/5 to-transparent overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-success/5 via-transparent to-success/5 animate-pulse" />
+          <CardContent className="py-4 relative">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-full bg-success/20">
+                  <Clock className="h-6 w-6 text-success animate-pulse" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Dividends Earned (YTD Live Counter)</p>
+                  <p className="text-3xl font-bold text-success font-mono">
+                    ${dividendCounter.toFixed(4)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-6">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Collected This Year</p>
+                  <p className="text-xl font-bold text-success">${totalDividendsThisYear.toFixed(2)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Payments/Year</p>
+                  <p className="text-xl font-bold">{totalDividendPayments}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Per Second</p>
+                  <p className="text-xl font-bold text-muted-foreground">${dividendsPerSecond.toFixed(6)}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Summary Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger-animation">
           <AnimatedStatsCard
@@ -475,11 +562,19 @@ export default function DividendTracker() {
         </div>
 
         <Tabs defaultValue="holdings" className="space-y-4">
-          <TabsList className="grid w-full max-w-xl grid-cols-4">
+          <TabsList className="grid w-full max-w-3xl grid-cols-6">
             <TabsTrigger value="holdings">Holdings</TabsTrigger>
             <TabsTrigger value="growth">Growth & DRIP</TabsTrigger>
             <TabsTrigger value="projections">Projections</TabsTrigger>
             <TabsTrigger value="calendar">Calendar</TabsTrigger>
+            <TabsTrigger value="what-if" className="flex items-center gap-1">
+              <GitCompare className="h-3 w-3" />
+              What-If
+            </TabsTrigger>
+            <TabsTrigger value="calculator" className="flex items-center gap-1">
+              <Calculator className="h-3 w-3" />
+              Calculator
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="holdings" className="space-y-4">
@@ -1283,6 +1378,20 @@ export default function DividendTracker() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* What-If Scenario Builder Tab */}
+          <TabsContent value="what-if">
+            <WhatIfScenarioBuilder 
+              initialPortfolioValue={totals.totalCost}
+              initialAnnualIncome={totals.annualIncome}
+              currentYield={totals.avgYield}
+            />
+          </TabsContent>
+
+          {/* Reverse Dividend Calculator Tab */}
+          <TabsContent value="calculator">
+            <ReverseDividendCalculator />
           </TabsContent>
         </Tabs>
       </div>
