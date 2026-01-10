@@ -39,6 +39,10 @@ const SAMPLE_STOCKS: DividendStock[] = [
   { id: '2', symbol: 'VYM', shares: 50, costBasis: 5500, annualDividend: 3.21, dividendYield: 2.92, frequency: 'quarterly', nextExDate: '2026-03-20', dripEnabled: true },
   { id: '3', symbol: 'O', shares: 75, costBasis: 4125, annualDividend: 3.08, dividendYield: 5.60, frequency: 'monthly', nextExDate: '2026-01-31', dripEnabled: false },
   { id: '4', symbol: 'JNJ', shares: 30, costBasis: 4500, annualDividend: 4.76, dividendYield: 3.17, frequency: 'quarterly', nextExDate: '2026-02-18', dripEnabled: true },
+  // High-yield income ETFs
+  { id: '5', symbol: 'QYLD', shares: 200, costBasis: 3400, annualDividend: 2.04, dividendYield: 12.0, frequency: 'monthly', nextExDate: '2026-01-20', dripEnabled: true },
+  { id: '6', symbol: 'JEPI', shares: 100, costBasis: 5400, annualDividend: 4.32, dividendYield: 8.0, frequency: 'monthly', nextExDate: '2026-01-05', dripEnabled: true },
+  { id: '7', symbol: 'JEPQ', shares: 80, costBasis: 4000, annualDividend: 4.50, dividendYield: 9.0, frequency: 'monthly', nextExDate: '2026-01-05', dripEnabled: true },
 ];
 
 export default function DividendTracker() {

@@ -9,11 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Plus, Trash2, TrendingUp, TrendingDown, BarChart3, PieChart, Scale, Info, RefreshCw, Loader2, Save, FolderOpen, Star } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, BarChart3, PieChart, Scale, Info, RefreshCw, Loader2, Save, FolderOpen, Star, Shield } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 
 interface ETFData {
@@ -218,7 +220,7 @@ const normalizeETFData = (raw: any): ETFData => {
   };
 };
 
-const ETFComparison = () => {
+const ETFComparisonContent = () => {
   const { user } = useAuth();
   const [selectedETFs, setSelectedETFs] = useState<string[]>(['SPY', 'QQQ']);
   const [newETF, setNewETF] = useState('');
@@ -227,6 +229,7 @@ const ETFComparison = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isLiveData, setIsLiveData] = useState(false);
+  const [safeMode, setSafeMode] = useState(false);
   
   // Saved comparisons state
   const [savedComparisons, setSavedComparisons] = useState<SavedComparison[]>([]);
@@ -315,10 +318,27 @@ const ETFComparison = () => {
     }
   };
 
-  const fetchETFData = useCallback(async (symbols: string[]) => {
+  const fetchETFData = useCallback(async (symbols: string[], forceFallback = false) => {
     if (symbols.length === 0) return;
 
     setIsLoading(true);
+    
+    // If safe mode is on or forceFallback, skip API and use cached data
+    if (safeMode || forceFallback) {
+      const fallbackData = symbols
+        .map(symbol => fallbackETFData[symbol])
+        .filter(Boolean)
+        .map(normalizeETFData);
+      setEtfData(fallbackData);
+      setIsLiveData(false);
+      setLastUpdated(new Date());
+      setIsLoading(false);
+      if (safeMode) {
+        toast.info('Safe mode: Using cached data');
+      }
+      return;
+    }
+    
     try {
       const { data, error } = await supabase.functions.invoke('fetch-etf-data', {
         body: { symbols }
@@ -347,7 +367,7 @@ const ETFComparison = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [safeMode]);
 
   useEffect(() => {
     fetchETFData(selectedETFs);
@@ -450,6 +470,26 @@ const ETFComparison = () => {
           </TabsList>
           
           <div className="flex gap-2 items-center flex-wrap">
+            {/* Safe Mode Toggle */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-md border">
+              <Shield className={`h-4 w-4 ${safeMode ? 'text-warning' : 'text-muted-foreground'}`} />
+              <Label htmlFor="safe-mode" className="text-xs font-medium cursor-pointer">Safe Mode</Label>
+              <Switch
+                id="safe-mode"
+                checked={safeMode}
+                onCheckedChange={(checked) => {
+                  setSafeMode(checked);
+                  if (checked) {
+                    toast.info('Safe mode enabled - using cached data only');
+                    fetchETFData(selectedETFs, true);
+                  } else {
+                    toast.info('Safe mode disabled - fetching live data');
+                    fetchETFData(selectedETFs);
+                  }
+                }}
+              />
+            </div>
+            
             <Input
               placeholder="Add ETF (e.g., VOO)"
               value={newETF}
@@ -465,6 +505,7 @@ const ETFComparison = () => {
               size="sm" 
               variant="outline"
               disabled={isLoading}
+              title={safeMode ? 'Safe mode: Using cached data' : 'Refresh data'}
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -1001,6 +1042,21 @@ const ETFComparison = () => {
         </TabsContent>
       </Tabs>
     </PageLayout>
+  );
+};
+
+// Wrapper component with Error Boundary
+const ETFComparison = () => {
+  const [resetKey, setResetKey] = useState(0);
+  
+  return (
+    <ErrorBoundary
+      fallbackTitle="ETF Comparison Error"
+      fallbackDescription="Something went wrong loading the ETF comparison. Try enabling Safe Mode to use cached data."
+      onReset={() => setResetKey(prev => prev + 1)}
+    >
+      <ETFComparisonContent key={resetKey} />
+    </ErrorBoundary>
   );
 };
 
