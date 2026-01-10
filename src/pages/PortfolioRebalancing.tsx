@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useStockData } from '@/hooks/useStockData';
 import { usePortfolioReturns } from '@/hooks/usePortfolioReturns';
 import { toast } from 'sonner';
-import { Scale, Target, TrendingUp, TrendingDown, RefreshCw, Plus, Trash2, CheckCircle2, BarChart3, Info, Dice5, AlertCircle, History } from 'lucide-react';
+import { Scale, Target, TrendingUp, TrendingDown, RefreshCw, Plus, Trash2, CheckCircle2, BarChart3, Info, Dice5, AlertCircle, History, Settings } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line } from 'recharts';
 
 interface TargetAllocation {
@@ -64,7 +64,7 @@ const PortfolioRebalancing = () => {
   const [mcSimulations, setMcSimulations] = useState(1000);
   const [mcResults, setMcResults] = useState<MonteCarloResult[]>([]);
   const [isRunningMC, setIsRunningMC] = useState(false);
-  const [riskFreeRate] = useState(0.05); // 5% risk-free rate
+  const [riskFreeRate, setRiskFreeRate] = useState(0.05); // 5% risk-free rate (customizable)
 
   // Use real portfolio returns from trade history
   const portfolioReturns = usePortfolioReturns(riskFreeRate);
@@ -612,6 +612,50 @@ const PortfolioRebalancing = () => {
         </TabsContent>
 
         <TabsContent value="risk" className="space-y-6">
+          {/* Risk-Free Rate Setting */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Risk-Free Rate Setting
+              </CardTitle>
+              <CardDescription>
+                Set the risk-free rate used in Sharpe and Sortino ratio calculations. Common benchmarks include 
+                the 10-year Treasury yield (currently ~4-5%) or 3-month T-bill rate.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="flex-1 min-w-[150px] max-w-[200px]">
+                  <Label>Risk-Free Rate (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.25"
+                    min="0"
+                    max="20"
+                    value={(riskFreeRate * 100).toFixed(2)}
+                    onChange={(e) => setRiskFreeRate(parseFloat(e.target.value) / 100 || 0)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setRiskFreeRate(0.0425)}>
+                    4.25% (10Y T-Note)
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setRiskFreeRate(0.052)}>
+                    5.2% (3M T-Bill)
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setRiskFreeRate(0.05)}>
+                    5% (Default)
+                  </Button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Current rate: <span className="font-medium">{(riskFreeRate * 100).toFixed(2)}%</span> • 
+                This affects Sharpe Ratio = (Portfolio Return - Risk-Free Rate) / Portfolio Volatility
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Data Source Indicator */}
           {!portfolioMetrics.hasRealData && (
             <Card className="border-warning/50 bg-warning/5">

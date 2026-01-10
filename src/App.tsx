@@ -39,6 +39,7 @@ const RetirementPlanning = lazy(() => import("./pages/RetirementPlanning"));
 const SavedData = lazy(() => import("./pages/SavedData"));
 const RealEstate = lazy(() => import("./pages/RealEstate"));
 const CarFinance = lazy(() => import("./pages/CarFinance"));
+const ETFComparison = lazy(() => import("./pages/ETFComparison"));
 
 const queryClient = new QueryClient();
 
@@ -97,6 +98,7 @@ const App = () => (
                 <Route path="/saved-data" element={<SavedData />} />
                 <Route path="/real-estate" element={<RealEstate />} />
                 <Route path="/car-finance" element={<CarFinance />} />
+                <Route path="/etf-comparison" element={<ETFComparison />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
