@@ -805,8 +805,8 @@ const ETFComparison = () => {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">1Y Return</p>
-                      <p className={`text-lg font-bold ${etf.performance['1Y'] >= 0 ? 'text-chart-1' : 'text-destructive'}`}>
-                        {etf.performance['1Y'] >= 0 ? '+' : ''}{etf.performance['1Y'].toFixed(1)}%
+                      <p className={`text-lg font-bold ${(etf.performance?.['1Y'] ?? 0) >= 0 ? 'text-chart-1' : 'text-destructive'}`}>
+                        {(etf.performance?.['1Y'] ?? 0) >= 0 ? '+' : ''}{(etf.performance?.['1Y'] ?? 0).toFixed(1)}%
                       </p>
                     </div>
                   </div>
@@ -858,7 +858,7 @@ const ETFComparison = () => {
                     <TableCell className="font-medium">Top Holding</TableCell>
                     {etfData.map(etf => (
                       <TableCell key={etf.symbol}>
-                        {etf.holdings[0]?.symbol} ({etf.holdings[0]?.weight.toFixed(1)}%)
+                        {etf.holdings?.[0]?.symbol ?? 'N/A'} ({etf.holdings?.[0]?.weight != null ? etf.holdings[0].weight.toFixed(1) : '0'}%)
                       </TableCell>
                     ))}
                   </TableRow>
