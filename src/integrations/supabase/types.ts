@@ -590,6 +590,33 @@ export type Database = {
           },
         ]
       }
+      saved_etf_comparisons: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          symbols: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          symbols: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          symbols?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       stock_trades: {
         Row: {
           created_at: string
