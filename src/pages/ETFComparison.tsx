@@ -120,6 +120,76 @@ const fallbackETFData: { [key: string]: ETFData } = {
       { symbol: 'META', name: 'Meta Platforms Inc.', weight: 3.5 },
     ],
     performance: { 'YTD': 16.5, '1Y': 38.2, '2Y': 10.5, '3Y': 38.5, '5Y': 115.2, '10Y': 295.8, 'All': 580.2 }
+  },
+  'IVV': {
+    symbol: 'IVV',
+    name: 'iShares Core S&P 500 ETF',
+    price: 482.35,
+    expenseRatio: 0.03,
+    holdings: [
+      { symbol: 'AAPL', name: 'Apple Inc.', weight: 7.1 },
+      { symbol: 'MSFT', name: 'Microsoft Corp.', weight: 6.9 },
+      { symbol: 'AMZN', name: 'Amazon.com Inc.', weight: 3.5 },
+      { symbol: 'NVDA', name: 'NVIDIA Corp.', weight: 3.3 },
+      { symbol: 'GOOGL', name: 'Alphabet Inc.', weight: 2.2 },
+    ],
+    performance: { 'YTD': 12.4, '1Y': 24.6, '2Y': 8.1, '3Y': 32.2, '5Y': 78.2, '10Y': 214.8, 'All': 425.6 }
+  },
+  'SCHD': {
+    symbol: 'SCHD',
+    name: 'Schwab U.S. Dividend Equity ETF',
+    price: 81.45,
+    expenseRatio: 0.06,
+    holdings: [
+      { symbol: 'ABBV', name: 'AbbVie Inc.', weight: 4.5 },
+      { symbol: 'MRK', name: 'Merck & Co. Inc.', weight: 4.3 },
+      { symbol: 'HD', name: 'Home Depot Inc.', weight: 4.2 },
+      { symbol: 'AMGN', name: 'Amgen Inc.', weight: 4.1 },
+      { symbol: 'PEP', name: 'PepsiCo Inc.', weight: 4.0 },
+    ],
+    performance: { 'YTD': 8.5, '1Y': 15.2, '2Y': 5.8, '3Y': 22.4, '5Y': 58.5, '10Y': 168.2, 'All': 285.4 }
+  },
+  'VYM': {
+    symbol: 'VYM',
+    name: 'Vanguard High Dividend Yield ETF',
+    price: 118.62,
+    expenseRatio: 0.06,
+    holdings: [
+      { symbol: 'JPM', name: 'JPMorgan Chase & Co.', weight: 3.8 },
+      { symbol: 'AVGO', name: 'Broadcom Inc.', weight: 3.6 },
+      { symbol: 'XOM', name: 'Exxon Mobil Corp.', weight: 3.2 },
+      { symbol: 'JNJ', name: 'Johnson & Johnson', weight: 2.9 },
+      { symbol: 'PG', name: 'Procter & Gamble Co.', weight: 2.8 },
+    ],
+    performance: { 'YTD': 9.2, '1Y': 16.8, '2Y': 6.5, '3Y': 24.8, '5Y': 52.4, '10Y': 145.6, 'All': 265.8 }
+  },
+  'DIA': {
+    symbol: 'DIA',
+    name: 'SPDR Dow Jones Industrial Average ETF',
+    price: 398.25,
+    expenseRatio: 0.16,
+    holdings: [
+      { symbol: 'GS', name: 'Goldman Sachs Group Inc.', weight: 8.2 },
+      { symbol: 'UNH', name: 'UnitedHealth Group Inc.', weight: 7.8 },
+      { symbol: 'HD', name: 'Home Depot Inc.', weight: 6.5 },
+      { symbol: 'MSFT', name: 'Microsoft Corp.', weight: 5.8 },
+      { symbol: 'CAT', name: 'Caterpillar Inc.', weight: 5.2 },
+    ],
+    performance: { 'YTD': 10.8, '1Y': 18.5, '2Y': 7.2, '3Y': 28.4, '5Y': 62.5, '10Y': 175.2, 'All': 385.6 }
+  },
+  'ARKK': {
+    symbol: 'ARKK',
+    name: 'ARK Innovation ETF',
+    price: 52.18,
+    expenseRatio: 0.75,
+    holdings: [
+      { symbol: 'TSLA', name: 'Tesla Inc.', weight: 12.5 },
+      { symbol: 'COIN', name: 'Coinbase Global Inc.', weight: 8.8 },
+      { symbol: 'ROKU', name: 'Roku Inc.', weight: 7.5 },
+      { symbol: 'SQ', name: 'Block Inc.', weight: 6.2 },
+      { symbol: 'PATH', name: 'UiPath Inc.', weight: 5.8 },
+    ],
+    performance: { 'YTD': 22.5, '1Y': 45.2, '2Y': -15.8, '3Y': -25.4, '5Y': 28.5, '10Y': 0, 'All': 125.8 }
   }
 };
 
