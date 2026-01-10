@@ -1,13 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { RefreshCw, TrendingUp, TrendingDown, Activity, Clock, DollarSign, Loader2, Info, Shield } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { 
+  RefreshCw, TrendingUp, TrendingDown, Activity, Clock, DollarSign, 
+  Loader2, Info, Shield, Filter, Plus, Star, ChevronDown, ChevronUp 
+} from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface LeapsOption {
   symbol: string;
@@ -44,13 +53,111 @@ interface CoveredCallOption {
   impliedVolatility: number;
 }
 
+interface LeapsFilters {
+  optionType: 'all' | 'call' | 'put';
+  minDelta: number;
+  maxDelta: number;
+  minOpenInterest: number;
+  minAnnualizedReturn: number;
+  maxIV: number;
+}
+
+interface CoveredCallFilters {
+  minAnnualizedReturn: number;
+  minOpenInterest: number;
+  minProtection: number;
+  maxDaysToExpiry: number;
+  minDaysToExpiry: number;
+  maxStockPrice: number;
+}
+
 const MarketScanner = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('leaps');
   const [scanning, setScanning] = useState(false);
   const [leapsData, setLeapsData] = useState<LeapsOption[]>([]);
   const [coveredCallsData, setCoveredCallsData] = useState<CoveredCallOption[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isLiveData, setIsLiveData] = useState(false);
+  const [showLeapsFilters, setShowLeapsFilters] = useState(false);
+  const [showCCFilters, setShowCCFilters] = useState(false);
+  const [watchlist, setWatchlist] = useState<string[]>([]);
+  const [addingToWatchlist, setAddingToWatchlist] = useState<string | null>(null);
+
+  // LEAPS Filters
+  const [leapsFilters, setLeapsFilters] = useState<LeapsFilters>({
+    optionType: 'all',
+    minDelta: 0,
+    maxDelta: 1,
+    minOpenInterest: 0,
+    minAnnualizedReturn: 0,
+    maxIV: 200
+  });
+
+  // Covered Call Filters
+  const [ccFilters, setCCFilters] = useState<CoveredCallFilters>({
+    minAnnualizedReturn: 0,
+    minOpenInterest: 0,
+    minProtection: 0,
+    maxDaysToExpiry: 45,
+    minDaysToExpiry: 14,
+    maxStockPrice: 20
+  });
+
+  // Fetch user's watchlist
+  const fetchWatchlist = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('watchlist')
+        .select('symbol')
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      setWatchlist(data?.map(item => item.symbol) || []);
+    } catch (error) {
+      console.error('Error fetching watchlist:', error);
+    }
+  }, [user]);
+
+  // Add to watchlist
+  const addToWatchlist = async (symbol: string) => {
+    if (!user) {
+      toast.error('Please sign in to add to watchlist');
+      return;
+    }
+
+    setAddingToWatchlist(symbol);
+    try {
+      if (watchlist.includes(symbol)) {
+        // Remove from watchlist
+        const { error } = await supabase
+          .from('watchlist')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('symbol', symbol);
+        
+        if (error) throw error;
+        setWatchlist(prev => prev.filter(s => s !== symbol));
+        toast.success(`${symbol} removed from watchlist`);
+      } else {
+        // Add to watchlist
+        const { error } = await supabase
+          .from('watchlist')
+          .insert({ user_id: user.id, symbol });
+        
+        if (error) throw error;
+        setWatchlist(prev => [...prev, symbol]);
+        toast.success(`${symbol} added to watchlist`);
+      }
+    } catch (error) {
+      console.error('Error updating watchlist:', error);
+      toast.error('Failed to update watchlist');
+    } finally {
+      setAddingToWatchlist(null);
+    }
+  };
 
   const scanOptions = useCallback(async (scanType: 'leaps' | 'covered_calls') => {
     setScanning(true);
@@ -85,7 +192,34 @@ const MarketScanner = () => {
   useEffect(() => {
     scanOptions('leaps');
     scanOptions('covered_calls');
-  }, []);
+    fetchWatchlist();
+  }, [fetchWatchlist]);
+
+  // Filtered LEAPS data
+  const filteredLeapsData = useMemo(() => {
+    return leapsData.filter(option => {
+      if (leapsFilters.optionType !== 'all' && option.optionType !== leapsFilters.optionType) return false;
+      const absDelta = Math.abs(option.delta);
+      if (absDelta < leapsFilters.minDelta || absDelta > leapsFilters.maxDelta) return false;
+      if (option.openInterest < leapsFilters.minOpenInterest) return false;
+      if (option.annualizedReturn < leapsFilters.minAnnualizedReturn) return false;
+      if (option.impliedVolatility > leapsFilters.maxIV) return false;
+      return true;
+    });
+  }, [leapsData, leapsFilters]);
+
+  // Filtered Covered Calls data
+  const filteredCCData = useMemo(() => {
+    return coveredCallsData.filter(option => {
+      if (option.annualizedReturn < ccFilters.minAnnualizedReturn) return false;
+      if (option.openInterest < ccFilters.minOpenInterest) return false;
+      if (option.downProtection < ccFilters.minProtection) return false;
+      if (option.daysToExpiry > ccFilters.maxDaysToExpiry) return false;
+      if (option.daysToExpiry < ccFilters.minDaysToExpiry) return false;
+      if (option.stockPrice > ccFilters.maxStockPrice) return false;
+      return true;
+    });
+  }, [coveredCallsData, ccFilters]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', { 
@@ -100,6 +234,28 @@ const MarketScanner = () => {
     if (value >= 25) return 'text-primary font-semibold';
     if (value >= 15) return 'text-foreground';
     return 'text-muted-foreground';
+  };
+
+  const resetLeapsFilters = () => {
+    setLeapsFilters({
+      optionType: 'all',
+      minDelta: 0,
+      maxDelta: 1,
+      minOpenInterest: 0,
+      minAnnualizedReturn: 0,
+      maxIV: 200
+    });
+  };
+
+  const resetCCFilters = () => {
+    setCCFilters({
+      minAnnualizedReturn: 0,
+      minOpenInterest: 0,
+      minProtection: 0,
+      maxDaysToExpiry: 45,
+      minDaysToExpiry: 14,
+      maxStockPrice: 20
+    });
   };
 
   return (
@@ -184,6 +340,112 @@ const MarketScanner = () => {
             </Card>
           </div>
 
+          {/* LEAPS Filters */}
+          <Collapsible open={showLeapsFilters} onOpenChange={setShowLeapsFilters}>
+            <Card>
+              <CardHeader className="pb-2">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Filter className="h-4 w-4" />
+                      Filters
+                      {(leapsFilters.optionType !== 'all' || leapsFilters.minDelta > 0 || leapsFilters.maxDelta < 1 || leapsFilters.minOpenInterest > 0 || leapsFilters.minAnnualizedReturn > 0 || leapsFilters.maxIV < 200) && (
+                        <Badge variant="secondary" className="ml-2">Active</Badge>
+                      )}
+                    </CardTitle>
+                    {showLeapsFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </CollapsibleTrigger>
+              </CardHeader>
+              <CollapsibleContent>
+                <CardContent className="pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="space-y-2">
+                      <Label>Option Type</Label>
+                      <Select 
+                        value={leapsFilters.optionType} 
+                        onValueChange={(value: 'all' | 'call' | 'put') => 
+                          setLeapsFilters(prev => ({ ...prev, optionType: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Types</SelectItem>
+                          <SelectItem value="call">Calls Only</SelectItem>
+                          <SelectItem value="put">Puts Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Min Delta: {leapsFilters.minDelta.toFixed(2)}</Label>
+                      <Slider
+                        value={[leapsFilters.minDelta]}
+                        onValueChange={([value]) => setLeapsFilters(prev => ({ ...prev, minDelta: value }))}
+                        min={0}
+                        max={1}
+                        step={0.05}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Max Delta: {leapsFilters.maxDelta.toFixed(2)}</Label>
+                      <Slider
+                        value={[leapsFilters.maxDelta]}
+                        onValueChange={([value]) => setLeapsFilters(prev => ({ ...prev, maxDelta: value }))}
+                        min={0}
+                        max={1}
+                        step={0.05}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Min Open Interest</Label>
+                      <Input
+                        type="number"
+                        value={leapsFilters.minOpenInterest}
+                        onChange={(e) => setLeapsFilters(prev => ({ ...prev, minOpenInterest: Number(e.target.value) }))}
+                        min={0}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Min Ann. Return %</Label>
+                      <Input
+                        type="number"
+                        value={leapsFilters.minAnnualizedReturn}
+                        onChange={(e) => setLeapsFilters(prev => ({ ...prev, minAnnualizedReturn: Number(e.target.value) }))}
+                        min={0}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Max IV %</Label>
+                      <Input
+                        type="number"
+                        value={leapsFilters.maxIV}
+                        onChange={(e) => setLeapsFilters(prev => ({ ...prev, maxIV: Number(e.target.value) }))}
+                        min={0}
+                        max={500}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-4">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {filteredLeapsData.length} of {leapsData.length} results
+                    </p>
+                    <Button variant="outline" size="sm" onClick={resetLeapsFilters}>
+                      Reset Filters
+                    </Button>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -195,13 +457,15 @@ const MarketScanner = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {leapsData.length === 0 ? (
+              {filteredLeapsData.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   {scanning ? (
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-5 w-5 animate-spin" />
                       Scanning for LEAPS opportunities...
                     </div>
+                  ) : leapsData.length > 0 ? (
+                    'No results match your filters. Try adjusting the filter criteria.'
                   ) : (
                     'No LEAPS data available. Click Refresh to scan.'
                   )}
@@ -211,6 +475,7 @@ const MarketScanner = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-10"></TableHead>
                         <TableHead>Symbol</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Stock</TableHead>
@@ -220,13 +485,31 @@ const MarketScanner = () => {
                         <TableHead>Bid/Ask</TableHead>
                         <TableHead>IV</TableHead>
                         <TableHead>Delta</TableHead>
+                        <TableHead>OI</TableHead>
                         <TableHead>Breakeven</TableHead>
                         <TableHead>Ann. Return</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {leapsData.slice(0, 30).map((option, index) => (
+                      {filteredLeapsData.slice(0, 30).map((option, index) => (
                         <TableRow key={index}>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => addToWatchlist(option.symbol)}
+                              disabled={addingToWatchlist === option.symbol}
+                            >
+                              {addingToWatchlist === option.symbol ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : watchlist.includes(option.symbol) ? (
+                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              ) : (
+                                <Plus className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </TableCell>
                           <TableCell className="font-bold">{option.symbol}</TableCell>
                           <TableCell>
                             <Badge className={option.optionType === 'call' ? 'bg-chart-1/20 text-chart-1' : 'bg-destructive/20 text-destructive'}>
@@ -246,6 +529,7 @@ const MarketScanner = () => {
                           <TableCell className={option.delta > 0 ? 'text-chart-1' : 'text-destructive'}>
                             {option.delta.toFixed(2)}
                           </TableCell>
+                          <TableCell>{option.openInterest.toLocaleString()}</TableCell>
                           <TableCell>${option.breakeven.toFixed(2)}</TableCell>
                           <TableCell className={getReturnColor(option.annualizedReturn)}>
                             {option.annualizedReturn.toFixed(1)}%
@@ -303,24 +587,122 @@ const MarketScanner = () => {
             </Card>
           </div>
 
+          {/* Covered Call Filters */}
+          <Collapsible open={showCCFilters} onOpenChange={setShowCCFilters}>
+            <Card>
+              <CardHeader className="pb-2">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Filter className="h-4 w-4" />
+                      Filters
+                      {(ccFilters.minAnnualizedReturn > 0 || ccFilters.minOpenInterest > 0 || ccFilters.minProtection > 0 || ccFilters.maxDaysToExpiry !== 45 || ccFilters.minDaysToExpiry !== 14 || ccFilters.maxStockPrice !== 20) && (
+                        <Badge variant="secondary" className="ml-2">Active</Badge>
+                      )}
+                    </CardTitle>
+                    {showCCFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </CollapsibleTrigger>
+              </CardHeader>
+              <CollapsibleContent>
+                <CardContent className="pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="space-y-2">
+                      <Label>Min Ann. Return %</Label>
+                      <Input
+                        type="number"
+                        value={ccFilters.minAnnualizedReturn}
+                        onChange={(e) => setCCFilters(prev => ({ ...prev, minAnnualizedReturn: Number(e.target.value) }))}
+                        min={0}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Min Open Interest</Label>
+                      <Input
+                        type="number"
+                        value={ccFilters.minOpenInterest}
+                        onChange={(e) => setCCFilters(prev => ({ ...prev, minOpenInterest: Number(e.target.value) }))}
+                        min={0}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Min Protection %</Label>
+                      <Input
+                        type="number"
+                        value={ccFilters.minProtection}
+                        onChange={(e) => setCCFilters(prev => ({ ...prev, minProtection: Number(e.target.value) }))}
+                        min={0}
+                        step={0.5}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Min Days to Expiry</Label>
+                      <Input
+                        type="number"
+                        value={ccFilters.minDaysToExpiry}
+                        onChange={(e) => setCCFilters(prev => ({ ...prev, minDaysToExpiry: Number(e.target.value) }))}
+                        min={1}
+                        max={ccFilters.maxDaysToExpiry}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Max Days to Expiry</Label>
+                      <Input
+                        type="number"
+                        value={ccFilters.maxDaysToExpiry}
+                        onChange={(e) => setCCFilters(prev => ({ ...prev, maxDaysToExpiry: Number(e.target.value) }))}
+                        min={ccFilters.minDaysToExpiry}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Max Stock Price $</Label>
+                      <Input
+                        type="number"
+                        value={ccFilters.maxStockPrice}
+                        onChange={(e) => setCCFilters(prev => ({ ...prev, maxStockPrice: Number(e.target.value) }))}
+                        min={1}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-4">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {filteredCCData.length} of {coveredCallsData.length} results
+                    </p>
+                    <Button variant="outline" size="sm" onClick={resetCCFilters}>
+                      Reset Filters
+                    </Button>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                Covered Call Opportunities (Stocks &lt;$20)
+                Covered Call Opportunities (Stocks &lt;${ccFilters.maxStockPrice})
               </CardTitle>
               <CardDescription>
-                OTM calls on affordable stocks • 14-45 days to expiration • Sorted by annualized return
+                OTM calls on affordable stocks • {ccFilters.minDaysToExpiry}-{ccFilters.maxDaysToExpiry} days to expiration • Sorted by annualized return
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {coveredCallsData.length === 0 ? (
+              {filteredCCData.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   {scanning ? (
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-5 w-5 animate-spin" />
                       Scanning for covered call opportunities...
                     </div>
+                  ) : coveredCallsData.length > 0 ? (
+                    'No results match your filters. Try adjusting the filter criteria.'
                   ) : (
                     'No covered call data available. Click Refresh to scan.'
                   )}
@@ -330,6 +712,7 @@ const MarketScanner = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-10"></TableHead>
                         <TableHead>Symbol</TableHead>
                         <TableHead>Stock Price</TableHead>
                         <TableHead>Strike</TableHead>
@@ -340,12 +723,30 @@ const MarketScanner = () => {
                         <TableHead>Ann. Return</TableHead>
                         <TableHead>Protection</TableHead>
                         <TableHead>Max Profit</TableHead>
+                        <TableHead>OI</TableHead>
                         <TableHead>IV</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {coveredCallsData.slice(0, 30).map((option, index) => (
+                      {filteredCCData.slice(0, 30).map((option, index) => (
                         <TableRow key={index}>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => addToWatchlist(option.symbol)}
+                              disabled={addingToWatchlist === option.symbol}
+                            >
+                              {addingToWatchlist === option.symbol ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : watchlist.includes(option.symbol) ? (
+                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              ) : (
+                                <Plus className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </TableCell>
                           <TableCell className="font-bold">{option.symbol}</TableCell>
                           <TableCell>${option.stockPrice.toFixed(2)}</TableCell>
                           <TableCell>${option.strike.toFixed(2)}</TableCell>
@@ -366,6 +767,7 @@ const MarketScanner = () => {
                           <TableCell>
                             ${option.maxProfit.toFixed(2)} ({option.maxProfitPercent.toFixed(1)}%)
                           </TableCell>
+                          <TableCell>{option.openInterest.toLocaleString()}</TableCell>
                           <TableCell>{option.impliedVolatility.toFixed(1)}%</TableCell>
                         </TableRow>
                       ))}
