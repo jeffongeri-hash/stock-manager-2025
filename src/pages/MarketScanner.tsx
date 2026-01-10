@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   RefreshCw, TrendingUp, TrendingDown, Activity, Clock, DollarSign, 
-  Loader2, Info, Shield, Filter, Plus, Star, ChevronDown, ChevronUp 
+  Loader2, Info, Shield, Filter, Plus, Star, ChevronDown, ChevronUp, ArrowUpDown, ArrowUp, ArrowDown 
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -166,6 +166,10 @@ interface CoveredCallFilters {
   maxIV: number;
 }
 
+type LeapsSortField = 'symbol' | 'stockPrice' | 'strike' | 'daysToExpiry' | 'bid' | 'ask' | 'impliedVolatility' | 'delta' | 'openInterest' | 'volume' | 'breakeven' | 'annualizedReturn';
+type CCSortField = 'symbol' | 'stockPrice' | 'strike' | 'daysToExpiry' | 'premium' | 'premiumPercent' | 'annualizedReturn' | 'downProtection' | 'maxProfit' | 'openInterest' | 'impliedVolatility';
+type SortDirection = 'asc' | 'desc';
+
 const MarketScanner = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('leaps');
@@ -178,6 +182,12 @@ const MarketScanner = () => {
   const [showCCFilters, setShowCCFilters] = useState(false);
   const [watchlist, setWatchlist] = useState<string[]>([]);
   const [addingToWatchlist, setAddingToWatchlist] = useState<string | null>(null);
+
+  // Sorting state
+  const [leapsSortField, setLeapsSortField] = useState<LeapsSortField>('annualizedReturn');
+  const [leapsSortDirection, setLeapsSortDirection] = useState<SortDirection>('desc');
+  const [ccSortField, setCCSortField] = useState<CCSortField>('annualizedReturn');
+  const [ccSortDirection, setCCSortDirection] = useState<SortDirection>('desc');
 
   // LEAPS Filters
   const [leapsFilters, setLeapsFilters] = useState<LeapsFilters>({
@@ -297,9 +307,9 @@ const MarketScanner = () => {
     fetchWatchlist();
   }, [fetchWatchlist]);
 
-  // Filtered LEAPS data
+  // Filtered and sorted LEAPS data
   const filteredLeapsData = useMemo(() => {
-    return leapsData.filter(option => {
+    const filtered = leapsData.filter(option => {
       if (leapsFilters.optionType !== 'all' && option.optionType !== leapsFilters.optionType) return false;
       const absDelta = Math.abs(option.delta);
       if (absDelta < leapsFilters.minDelta || absDelta > leapsFilters.maxDelta) return false;
@@ -315,11 +325,23 @@ const MarketScanner = () => {
       if (spreadPercent > leapsFilters.maxBidAskSpread) return false;
       return true;
     });
-  }, [leapsData, leapsFilters]);
 
-  // Filtered Covered Calls data
+    // Sort the filtered data
+    return filtered.sort((a, b) => {
+      const aValue = a[leapsSortField];
+      const bValue = b[leapsSortField];
+      const multiplier = leapsSortDirection === 'asc' ? 1 : -1;
+      
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return aValue.localeCompare(bValue) * multiplier;
+      }
+      return ((aValue as number) - (bValue as number)) * multiplier;
+    });
+  }, [leapsData, leapsFilters, leapsSortField, leapsSortDirection]);
+
+  // Filtered and sorted Covered Calls data
   const filteredCCData = useMemo(() => {
-    return coveredCallsData.filter(option => {
+    const filtered = coveredCallsData.filter(option => {
       if (option.annualizedReturn < ccFilters.minAnnualizedReturn) return false;
       if (option.openInterest < ccFilters.minOpenInterest) return false;
       if (option.downProtection < ccFilters.minProtection) return false;
@@ -327,11 +349,74 @@ const MarketScanner = () => {
       if (option.daysToExpiry < ccFilters.minDaysToExpiry) return false;
       if (option.stockPrice > ccFilters.maxStockPrice) return false;
       if (option.impliedVolatility > ccFilters.maxIV) return false;
-      // Volume filter - need to add volume to CoveredCallOption interface
-      // Bid-ask spread would require bid/ask data on covered calls
       return true;
     });
-  }, [coveredCallsData, ccFilters]);
+
+    // Sort the filtered data
+    return filtered.sort((a, b) => {
+      const aValue = a[ccSortField];
+      const bValue = b[ccSortField];
+      const multiplier = ccSortDirection === 'asc' ? 1 : -1;
+      
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return aValue.localeCompare(bValue) * multiplier;
+      }
+      return ((aValue as number) - (bValue as number)) * multiplier;
+    });
+  }, [coveredCallsData, ccFilters, ccSortField, ccSortDirection]);
+
+  // Toggle sort for LEAPS table
+  const toggleLeapsSort = (field: LeapsSortField) => {
+    if (leapsSortField === field) {
+      setLeapsSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setLeapsSortField(field);
+      setLeapsSortDirection('desc');
+    }
+  };
+
+  // Toggle sort for Covered Calls table
+  const toggleCCSort = (field: CCSortField) => {
+    if (ccSortField === field) {
+      setCCSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setCCSortField(field);
+      setCCSortDirection('desc');
+    }
+  };
+
+  // Sortable table header component
+  const SortableHeader = ({ 
+    field, 
+    label, 
+    currentField, 
+    currentDirection, 
+    onSort 
+  }: { 
+    field: string; 
+    label: string; 
+    currentField: string; 
+    currentDirection: SortDirection; 
+    onSort: (field: any) => void;
+  }) => (
+    <TableHead 
+      className="cursor-pointer hover:bg-muted/50 select-none transition-colors"
+      onClick={() => onSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        {currentField === field ? (
+          currentDirection === 'asc' ? (
+            <ArrowUp className="h-3 w-3" />
+          ) : (
+            <ArrowDown className="h-3 w-3" />
+          )
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-30" />
+        )}
+      </div>
+    </TableHead>
+  );
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', { 
@@ -668,7 +753,7 @@ const MarketScanner = () => {
                 LEAPS Opportunities
               </CardTitle>
               <CardDescription>
-                Options expiring in 9+ months • Sorted by annualized return potential
+                Options expiring in 9+ months • Click column headers to sort
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -691,18 +776,19 @@ const MarketScanner = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-10"></TableHead>
-                        <TableHead>Symbol</TableHead>
+                        <SortableHeader field="symbol" label="Symbol" currentField={leapsSortField} currentDirection={leapsSortDirection} onSort={toggleLeapsSort} />
                         <TableHead>Type</TableHead>
-                        <TableHead>Stock</TableHead>
-                        <TableHead>Strike</TableHead>
+                        <SortableHeader field="stockPrice" label="Stock" currentField={leapsSortField} currentDirection={leapsSortDirection} onSort={toggleLeapsSort} />
+                        <SortableHeader field="strike" label="Strike" currentField={leapsSortField} currentDirection={leapsSortDirection} onSort={toggleLeapsSort} />
                         <TableHead>Expiry</TableHead>
-                        <TableHead>Days</TableHead>
-                        <TableHead>Bid/Ask</TableHead>
-                        <TableHead>IV</TableHead>
-                        <TableHead>Delta</TableHead>
-                        <TableHead>OI</TableHead>
-                        <TableHead>Breakeven</TableHead>
-                        <TableHead>Ann. Return</TableHead>
+                        <SortableHeader field="daysToExpiry" label="Days" currentField={leapsSortField} currentDirection={leapsSortDirection} onSort={toggleLeapsSort} />
+                        <SortableHeader field="bid" label="Bid/Ask" currentField={leapsSortField} currentDirection={leapsSortDirection} onSort={toggleLeapsSort} />
+                        <SortableHeader field="impliedVolatility" label="IV" currentField={leapsSortField} currentDirection={leapsSortDirection} onSort={toggleLeapsSort} />
+                        <SortableHeader field="delta" label="Delta" currentField={leapsSortField} currentDirection={leapsSortDirection} onSort={toggleLeapsSort} />
+                        <SortableHeader field="openInterest" label="OI" currentField={leapsSortField} currentDirection={leapsSortDirection} onSort={toggleLeapsSort} />
+                        <SortableHeader field="volume" label="Vol" currentField={leapsSortField} currentDirection={leapsSortDirection} onSort={toggleLeapsSort} />
+                        <SortableHeader field="breakeven" label="Breakeven" currentField={leapsSortField} currentDirection={leapsSortDirection} onSort={toggleLeapsSort} />
+                        <SortableHeader field="annualizedReturn" label="Ann. Return" currentField={leapsSortField} currentDirection={leapsSortDirection} onSort={toggleLeapsSort} />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -745,6 +831,7 @@ const MarketScanner = () => {
                             {option.delta.toFixed(2)}
                           </TableCell>
                           <TableCell>{option.openInterest.toLocaleString()}</TableCell>
+                          <TableCell>{option.volume.toLocaleString()}</TableCell>
                           <TableCell>${option.breakeven.toFixed(2)}</TableCell>
                           <TableCell className={getReturnColor(option.annualizedReturn)}>
                             {option.annualizedReturn.toFixed(1)}%
@@ -964,7 +1051,7 @@ const MarketScanner = () => {
                 Covered Call Opportunities (Stocks &lt;${ccFilters.maxStockPrice})
               </CardTitle>
               <CardDescription>
-                OTM calls on affordable stocks • {ccFilters.minDaysToExpiry}-{ccFilters.maxDaysToExpiry} days to expiration • Sorted by annualized return
+                OTM calls on affordable stocks • {ccFilters.minDaysToExpiry}-{ccFilters.maxDaysToExpiry} days to expiration • Click column headers to sort
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -987,18 +1074,18 @@ const MarketScanner = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-10"></TableHead>
-                        <TableHead>Symbol</TableHead>
-                        <TableHead>Stock Price</TableHead>
-                        <TableHead>Strike</TableHead>
+                        <SortableHeader field="symbol" label="Symbol" currentField={ccSortField} currentDirection={ccSortDirection} onSort={toggleCCSort} />
+                        <SortableHeader field="stockPrice" label="Stock Price" currentField={ccSortField} currentDirection={ccSortDirection} onSort={toggleCCSort} />
+                        <SortableHeader field="strike" label="Strike" currentField={ccSortField} currentDirection={ccSortDirection} onSort={toggleCCSort} />
                         <TableHead>Expiry</TableHead>
-                        <TableHead>Days</TableHead>
-                        <TableHead>Premium</TableHead>
-                        <TableHead>Premium %</TableHead>
-                        <TableHead>Ann. Return</TableHead>
-                        <TableHead>Protection</TableHead>
-                        <TableHead>Max Profit</TableHead>
-                        <TableHead>OI</TableHead>
-                        <TableHead>IV</TableHead>
+                        <SortableHeader field="daysToExpiry" label="Days" currentField={ccSortField} currentDirection={ccSortDirection} onSort={toggleCCSort} />
+                        <SortableHeader field="premium" label="Premium" currentField={ccSortField} currentDirection={ccSortDirection} onSort={toggleCCSort} />
+                        <SortableHeader field="premiumPercent" label="Premium %" currentField={ccSortField} currentDirection={ccSortDirection} onSort={toggleCCSort} />
+                        <SortableHeader field="annualizedReturn" label="Ann. Return" currentField={ccSortField} currentDirection={ccSortDirection} onSort={toggleCCSort} />
+                        <SortableHeader field="downProtection" label="Protection" currentField={ccSortField} currentDirection={ccSortDirection} onSort={toggleCCSort} />
+                        <SortableHeader field="maxProfit" label="Max Profit" currentField={ccSortField} currentDirection={ccSortDirection} onSort={toggleCCSort} />
+                        <SortableHeader field="openInterest" label="OI" currentField={ccSortField} currentDirection={ccSortDirection} onSort={toggleCCSort} />
+                        <SortableHeader field="impliedVolatility" label="IV" currentField={ccSortField} currentDirection={ccSortDirection} onSort={toggleCCSort} />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
