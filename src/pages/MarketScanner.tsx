@@ -60,6 +60,10 @@ interface LeapsFilters {
   minOpenInterest: number;
   minAnnualizedReturn: number;
   maxIV: number;
+  minVolume: number;
+  maxBidAskSpread: number;
+  minDaysToExpiry: number;
+  maxDaysToExpiry: number;
 }
 
 interface LeapsFilterPreset {
@@ -157,6 +161,9 @@ interface CoveredCallFilters {
   maxDaysToExpiry: number;
   minDaysToExpiry: number;
   maxStockPrice: number;
+  minVolume: number;
+  maxBidAskSpread: number;
+  maxIV: number;
 }
 
 const MarketScanner = () => {
@@ -179,7 +186,11 @@ const MarketScanner = () => {
     maxDelta: 1,
     minOpenInterest: 0,
     minAnnualizedReturn: 0,
-    maxIV: 200
+    maxIV: 200,
+    minVolume: 0,
+    maxBidAskSpread: 100,
+    minDaysToExpiry: 270,
+    maxDaysToExpiry: 730
   });
 
   // Covered Call Filters
@@ -189,7 +200,10 @@ const MarketScanner = () => {
     minProtection: 0,
     maxDaysToExpiry: 45,
     minDaysToExpiry: 14,
-    maxStockPrice: 20
+    maxStockPrice: 20,
+    minVolume: 0,
+    maxBidAskSpread: 100,
+    maxIV: 200
   });
 
   // Fetch user's watchlist
@@ -292,6 +306,13 @@ const MarketScanner = () => {
       if (option.openInterest < leapsFilters.minOpenInterest) return false;
       if (option.annualizedReturn < leapsFilters.minAnnualizedReturn) return false;
       if (option.impliedVolatility > leapsFilters.maxIV) return false;
+      if (option.volume < leapsFilters.minVolume) return false;
+      if (option.daysToExpiry < leapsFilters.minDaysToExpiry) return false;
+      if (option.daysToExpiry > leapsFilters.maxDaysToExpiry) return false;
+      // Bid-ask spread filter (as percentage of mid price)
+      const midPrice = (option.bid + option.ask) / 2;
+      const spreadPercent = midPrice > 0 ? ((option.ask - option.bid) / midPrice) * 100 : 0;
+      if (spreadPercent > leapsFilters.maxBidAskSpread) return false;
       return true;
     });
   }, [leapsData, leapsFilters]);
@@ -305,6 +326,9 @@ const MarketScanner = () => {
       if (option.daysToExpiry > ccFilters.maxDaysToExpiry) return false;
       if (option.daysToExpiry < ccFilters.minDaysToExpiry) return false;
       if (option.stockPrice > ccFilters.maxStockPrice) return false;
+      if (option.impliedVolatility > ccFilters.maxIV) return false;
+      // Volume filter - need to add volume to CoveredCallOption interface
+      // Bid-ask spread would require bid/ask data on covered calls
       return true;
     });
   }, [coveredCallsData, ccFilters]);
@@ -345,7 +369,11 @@ const MarketScanner = () => {
       maxDelta: 1,
       minOpenInterest: 0,
       minAnnualizedReturn: 0,
-      maxIV: 200
+      maxIV: 200,
+      minVolume: 0,
+      maxBidAskSpread: 100,
+      minDaysToExpiry: 270,
+      maxDaysToExpiry: 730
     });
   };
 
@@ -370,7 +398,10 @@ const MarketScanner = () => {
       minProtection: 0,
       maxDaysToExpiry: 45,
       minDaysToExpiry: 14,
-      maxStockPrice: 20
+      maxStockPrice: 20,
+      minVolume: 0,
+      maxBidAskSpread: 100,
+      maxIV: 200
     });
   };
 
@@ -501,7 +532,7 @@ const MarketScanner = () => {
               </CardHeader>
               <CollapsibleContent>
                 <CardContent className="pt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     <div className="space-y-2">
                       <Label>Option Type</Label>
                       <Select 
@@ -550,6 +581,48 @@ const MarketScanner = () => {
                         value={leapsFilters.minOpenInterest}
                         onChange={(e) => setLeapsFilters(prev => ({ ...prev, minOpenInterest: Number(e.target.value) }))}
                         min={0}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Min Volume</Label>
+                      <Input
+                        type="number"
+                        value={leapsFilters.minVolume}
+                        onChange={(e) => setLeapsFilters(prev => ({ ...prev, minVolume: Number(e.target.value) }))}
+                        min={0}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Min Days to Expiry</Label>
+                      <Input
+                        type="number"
+                        value={leapsFilters.minDaysToExpiry}
+                        onChange={(e) => setLeapsFilters(prev => ({ ...prev, minDaysToExpiry: Number(e.target.value) }))}
+                        min={0}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Max Days to Expiry</Label>
+                      <Input
+                        type="number"
+                        value={leapsFilters.maxDaysToExpiry}
+                        onChange={(e) => setLeapsFilters(prev => ({ ...prev, maxDaysToExpiry: Number(e.target.value) }))}
+                        min={leapsFilters.minDaysToExpiry}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Max Bid-Ask Spread %</Label>
+                      <Input
+                        type="number"
+                        value={leapsFilters.maxBidAskSpread}
+                        onChange={(e) => setLeapsFilters(prev => ({ ...prev, maxBidAskSpread: Number(e.target.value) }))}
+                        min={0}
+                        max={100}
+                        step={1}
                       />
                     </div>
 
@@ -774,7 +847,7 @@ const MarketScanner = () => {
               </CardHeader>
               <CollapsibleContent>
                 <CardContent className="pt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     <div className="space-y-2">
                       <Label>Min Ann. Return %</Label>
                       <Input
@@ -791,6 +864,16 @@ const MarketScanner = () => {
                         type="number"
                         value={ccFilters.minOpenInterest}
                         onChange={(e) => setCCFilters(prev => ({ ...prev, minOpenInterest: Number(e.target.value) }))}
+                        min={0}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Min Volume</Label>
+                      <Input
+                        type="number"
+                        value={ccFilters.minVolume}
+                        onChange={(e) => setCCFilters(prev => ({ ...prev, minVolume: Number(e.target.value) }))}
                         min={0}
                       />
                     </div>
@@ -834,6 +917,29 @@ const MarketScanner = () => {
                         value={ccFilters.maxStockPrice}
                         onChange={(e) => setCCFilters(prev => ({ ...prev, maxStockPrice: Number(e.target.value) }))}
                         min={1}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Max Bid-Ask Spread %</Label>
+                      <Input
+                        type="number"
+                        value={ccFilters.maxBidAskSpread}
+                        onChange={(e) => setCCFilters(prev => ({ ...prev, maxBidAskSpread: Number(e.target.value) }))}
+                        min={0}
+                        max={100}
+                        step={1}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Max IV %</Label>
+                      <Input
+                        type="number"
+                        value={ccFilters.maxIV}
+                        onChange={(e) => setCCFilters(prev => ({ ...prev, maxIV: Number(e.target.value) }))}
+                        min={0}
+                        max={500}
                       />
                     </div>
                   </div>
