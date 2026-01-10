@@ -8,6 +8,7 @@ import { BottomNavigation } from "@/components/mobile/BottomNavigation";
 import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
 import { SwipeNavigation } from "@/components/mobile/SwipeNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 // Lazy load all page components for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -70,36 +71,40 @@ const App = () => (
           <div className="pb-16 lg:pb-0">
             <Suspense fallback={<PageLoader />}>
               <Routes>
+                {/* Public routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/portfolio" element={<Portfolio />} />
-                <Route path="/performance" element={<Performance />} />
-                <Route path="/analysis" element={<Analysis />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/trading-toolkit" element={<TradingToolkit />} />
-                
-                <Route path="/options-portfolio" element={<OptionsPortfolio />} />
-                <Route path="/zero-dte" element={<ZeroDTE />} />
-                <Route path="/market-scanner" element={<MarketScanner />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/credit-options-guide" element={<CreditOptionsGuide />} />
-                <Route path="/fundamental-analysis-guide" element={<FundamentalAnalysisGuide />} />
-                
-                <Route path="/dividend-tracker" element={<DividendTracker />} />
-                <Route path="/economic-calendar" element={<EconomicCalendar />} />
-                <Route path="/risk-metrics" element={<RiskMetrics />} />
-                <Route path="/portfolio-rebalancing" element={<PortfolioRebalancing />} />
-                <Route path="/tradingview-webhook" element={<TradingViewWebhook />} />
-                <Route path="/trading-automation" element={<TradingAutomation />} />
-                <Route path="/watchlist" element={<Watchlist />} />
                 <Route path="/install" element={<Install />} />
-                <Route path="/stock-research" element={<StockResearch />} />
-                <Route path="/retirement-planning" element={<RetirementPlanning />} />
-                <Route path="/saved-data" element={<SavedData />} />
-                <Route path="/real-estate" element={<RealEstate />} />
-                <Route path="/car-finance" element={<CarFinance />} />
-                <Route path="/etf-comparison" element={<ETFComparison />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                
+                {/* Protected routes - allow guest mode */}
+                <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
+                <Route path="/performance" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
+                <Route path="/analysis" element={<ProtectedRoute><Analysis /></ProtectedRoute>} />
+                <Route path="/trading-toolkit" element={<ProtectedRoute><TradingToolkit /></ProtectedRoute>} />
+                <Route path="/options-portfolio" element={<ProtectedRoute><OptionsPortfolio /></ProtectedRoute>} />
+                <Route path="/zero-dte" element={<ProtectedRoute><ZeroDTE /></ProtectedRoute>} />
+                <Route path="/market-scanner" element={<ProtectedRoute><MarketScanner /></ProtectedRoute>} />
+                <Route path="/credit-options-guide" element={<ProtectedRoute><CreditOptionsGuide /></ProtectedRoute>} />
+                <Route path="/fundamental-analysis-guide" element={<ProtectedRoute><FundamentalAnalysisGuide /></ProtectedRoute>} />
+                <Route path="/dividend-tracker" element={<ProtectedRoute><DividendTracker /></ProtectedRoute>} />
+                <Route path="/economic-calendar" element={<ProtectedRoute><EconomicCalendar /></ProtectedRoute>} />
+                <Route path="/risk-metrics" element={<ProtectedRoute><RiskMetrics /></ProtectedRoute>} />
+                <Route path="/portfolio-rebalancing" element={<ProtectedRoute><PortfolioRebalancing /></ProtectedRoute>} />
+                <Route path="/stock-research" element={<ProtectedRoute><StockResearch /></ProtectedRoute>} />
+                <Route path="/retirement-planning" element={<ProtectedRoute><RetirementPlanning /></ProtectedRoute>} />
+                <Route path="/real-estate" element={<ProtectedRoute><RealEstate /></ProtectedRoute>} />
+                <Route path="/car-finance" element={<ProtectedRoute><CarFinance /></ProtectedRoute>} />
+                <Route path="/etf-comparison" element={<ProtectedRoute><ETFComparison /></ProtectedRoute>} />
+                
+                {/* Routes requiring full authentication */}
+                <Route path="/settings" element={<ProtectedRoute requiresAuth><Settings /></ProtectedRoute>} />
+                <Route path="/reports" element={<ProtectedRoute requiresAuth><Reports /></ProtectedRoute>} />
+                <Route path="/tradingview-webhook" element={<ProtectedRoute requiresAuth><TradingViewWebhook /></ProtectedRoute>} />
+                <Route path="/trading-automation" element={<ProtectedRoute requiresAuth><TradingAutomation /></ProtectedRoute>} />
+                <Route path="/watchlist" element={<ProtectedRoute requiresAuth><Watchlist /></ProtectedRoute>} />
+                <Route path="/saved-data" element={<ProtectedRoute requiresAuth><SavedData /></ProtectedRoute>} />
+                
+                {/* Catch-all route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
