@@ -9,9 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Plus, Trash2, TrendingUp, TrendingDown, BarChart3, PieChart, Scale, Info, RefreshCw, Loader2 } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, BarChart3, PieChart, Scale, Info, RefreshCw, Loader2, Save, FolderOpen, Star } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 
 interface ETFData {
@@ -24,6 +26,13 @@ interface ETFData {
   aum?: number;
   holdings: { symbol: string; name: string; weight: number }[];
   performance: { [key: string]: number };
+}
+
+interface SavedComparison {
+  id: string;
+  name: string;
+  symbols: string[];
+  created_at: string;
 }
 
 // Fallback data for when API fails or for unsupported symbols
@@ -117,6 +126,7 @@ const fallbackETFData: { [key: string]: ETFData } = {
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(142, 76%, 36%)', 'hsl(221, 83%, 53%)', 'hsl(262, 83%, 58%)'];
 
 const ETFComparison = () => {
+  const { user } = useAuth();
   const [selectedETFs, setSelectedETFs] = useState<string[]>(['SPY', 'QQQ']);
   const [newETF, setNewETF] = useState('');
   const [selectedTimeframe, setSelectedTimeframe] = useState('1Y');
@@ -124,6 +134,13 @@ const ETFComparison = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isLiveData, setIsLiveData] = useState(false);
+  
+  // Saved comparisons state
+  const [savedComparisons, setSavedComparisons] = useState<SavedComparison[]>([]);
+  const [saveName, setSaveName] = useState('');
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const timeframes = [
     { value: 'YTD', label: 'YTD' },
@@ -134,6 +151,76 @@ const ETFComparison = () => {
     { value: '10Y', label: '10 Years' },
     { value: 'All', label: 'All Time' },
   ];
+
+  // Fetch saved comparisons
+  const fetchSavedComparisons = useCallback(async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('saved_etf_comparisons')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (!error && data) {
+      setSavedComparisons(data as SavedComparison[]);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchSavedComparisons();
+  }, [fetchSavedComparisons]);
+
+  const saveComparison = async () => {
+    if (!user) {
+      toast.error('Please sign in to save comparisons');
+      return;
+    }
+    if (!saveName.trim()) {
+      toast.error('Please enter a name for this comparison');
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('saved_etf_comparisons')
+        .insert({
+          user_id: user.id,
+          name: saveName.trim(),
+          symbols: selectedETFs
+        });
+      
+      if (error) throw error;
+      
+      toast.success('Comparison saved!');
+      setSaveName('');
+      setIsSaveDialogOpen(false);
+      fetchSavedComparisons();
+    } catch (error) {
+      console.error('Error saving comparison:', error);
+      toast.error('Failed to save comparison');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const loadComparison = (comparison: SavedComparison) => {
+    setSelectedETFs(comparison.symbols);
+    setIsLoadDialogOpen(false);
+    toast.success(`Loaded "${comparison.name}"`);
+  };
+
+  const deleteComparison = async (id: string) => {
+    const { error } = await supabase
+      .from('saved_etf_comparisons')
+      .delete()
+      .eq('id', id);
+    
+    if (!error) {
+      toast.success('Comparison deleted');
+      fetchSavedComparisons();
+    }
+  };
 
   const fetchETFData = useCallback(async (symbols: string[]) => {
     if (symbols.length === 0) return;
@@ -262,7 +349,7 @@ const ETFComparison = () => {
             <TabsTrigger value="details">Details</TabsTrigger>
           </TabsList>
           
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center flex-wrap">
             <Input
               placeholder="Add ETF (e.g., VOO)"
               value={newETF}
@@ -285,6 +372,102 @@ const ETFComparison = () => {
                 <RefreshCw className="h-4 w-4" />
               )}
             </Button>
+            
+            {/* Save Dialog */}
+            <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" disabled={!user}>
+                  <Save className="h-4 w-4 mr-1" /> Save
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Save ETF Comparison</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div>
+                    <Label>Comparison Name</Label>
+                    <Input
+                      placeholder="e.g., Tech ETFs, Growth Portfolio"
+                      value={saveName}
+                      onChange={(e) => setSaveName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>ETFs</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedETFs.map(symbol => (
+                        <Badge key={symbol} variant="secondary">{symbol}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={saveComparison} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                    Save
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Load Dialog */}
+            <Dialog open={isLoadDialogOpen} onOpenChange={setIsLoadDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" disabled={!user || savedComparisons.length === 0}>
+                  <FolderOpen className="h-4 w-4 mr-1" /> Load
+                  {savedComparisons.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 text-xs">
+                      {savedComparisons.length}
+                    </Badge>
+                  )}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Load Saved Comparison</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2 py-4 max-h-[400px] overflow-y-auto">
+                  {savedComparisons.map(comparison => (
+                    <div 
+                      key={comparison.id} 
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex-1 cursor-pointer" onClick={() => loadComparison(comparison)}>
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-primary" />
+                          <span className="font-medium">{comparison.name}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {comparison.symbols.map(symbol => (
+                            <Badge key={symbol} variant="outline" className="text-xs">{symbol}</Badge>
+                          ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(comparison.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => deleteComparison(comparison.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {savedComparisons.length === 0 && (
+                    <p className="text-center text-muted-foreground py-4">
+                      No saved comparisons yet
+                    </p>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
