@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO, addDays, isSameDay } from 'date-fns';
 import { WhatIfScenarioBuilder } from '@/components/dividends/WhatIfScenarioBuilder';
 import { ReverseDividendCalculator } from '@/components/dividends/ReverseDividendCalculator';
+import { YieldOnCostTracker } from '@/components/dividends/YieldOnCostTracker';
 
 interface DividendStock {
   id: string;
@@ -960,6 +961,20 @@ export default function DividendTracker() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Yield on Cost Tracker */}
+            <YieldOnCostTracker 
+              stocks={stocks.map(s => ({
+                symbol: s.symbol,
+                costBasis: s.costBasis,
+                shares: s.shares,
+                annualDividend: s.annualDividend,
+                currentYield: s.dividendYield,
+                dividendGrowthRate: s.dividendGrowthRate || dividendGrowthRate,
+              }))}
+              projectionYears={years}
+              dividendGrowthRate={dividendGrowthRate}
+            />
           </TabsContent>
 
           <TabsContent value="projections" className="space-y-4">
