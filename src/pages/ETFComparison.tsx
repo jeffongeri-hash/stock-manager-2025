@@ -195,6 +195,29 @@ const fallbackETFData: { [key: string]: ETFData } = {
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(142, 76%, 36%)', 'hsl(221, 83%, 53%)', 'hsl(262, 83%, 58%)'];
 
+const normalizeETFData = (raw: any): ETFData => {
+  const holdingsRaw = Array.isArray(raw?.holdings) ? raw.holdings : [];
+  const performanceRaw = raw?.performance && typeof raw.performance === 'object' ? raw.performance : {};
+
+  return {
+    symbol: String(raw?.symbol ?? '').toUpperCase(),
+    name: String(raw?.name ?? raw?.symbol ?? 'Unknown ETF'),
+    price: typeof raw?.price === 'number' ? raw.price : Number(raw?.price) || 0,
+    change: typeof raw?.change === 'number' ? raw.change : undefined,
+    changePercent: typeof raw?.changePercent === 'number' ? raw.changePercent : undefined,
+    expenseRatio: typeof raw?.expenseRatio === 'number' ? raw.expenseRatio : Number(raw?.expenseRatio) || 0,
+    aum: typeof raw?.aum === 'number' ? raw.aum : (raw?.aum != null ? Number(raw.aum) : undefined),
+    holdings: holdingsRaw
+      .filter(Boolean)
+      .map((h: any) => ({
+        symbol: String(h?.symbol ?? ''),
+        name: String(h?.name ?? ''),
+        weight: typeof h?.weight === 'number' ? h.weight : Number(h?.weight) || 0,
+      })),
+    performance: performanceRaw as Record<string, number>,
+  };
+};
+
 const ETFComparison = () => {
   const { user } = useAuth();
   const [selectedETFs, setSelectedETFs] = useState<string[]>(['SPY', 'QQQ']);
@@ -294,7 +317,7 @@ const ETFComparison = () => {
 
   const fetchETFData = useCallback(async (symbols: string[]) => {
     if (symbols.length === 0) return;
-    
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('fetch-etf-data', {
@@ -303,8 +326,9 @@ const ETFComparison = () => {
 
       if (error) throw error;
 
-      if (data?.success && data.data) {
-        setEtfData(data.data);
+      if (data?.success && Array.isArray(data.data)) {
+        const normalized = data.data.map(normalizeETFData);
+        setEtfData(normalized);
         setIsLiveData(true);
         setLastUpdated(new Date());
       } else {
@@ -313,7 +337,10 @@ const ETFComparison = () => {
     } catch (error) {
       console.error('Error fetching ETF data:', error);
       // Fall back to local data
-      const fallbackData = symbols.map(symbol => fallbackETFData[symbol]).filter(Boolean);
+      const fallbackData = symbols
+        .map(symbol => fallbackETFData[symbol])
+        .filter(Boolean)
+        .map(normalizeETFData);
       setEtfData(fallbackData);
       setIsLiveData(false);
       toast.error('Using cached data - live API unavailable');
@@ -357,11 +384,12 @@ const ETFComparison = () => {
   // Find overlapping holdings
   const holdingsOverlap = useMemo(() => {
     if (etfData.length < 2) return [];
-    
+
     const holdingCounts: { [symbol: string]: { name: string; etfs: { symbol: string; weight: number }[] } } = {};
-    
+
     etfData.forEach(etf => {
-      etf.holdings.forEach(holding => {
+      (etf.holdings ?? []).forEach(holding => {
+        if (!holding?.symbol) return;
         if (!holdingCounts[holding.symbol]) {
           holdingCounts[holding.symbol] = { name: holding.name, etfs: [] };
         }
@@ -385,7 +413,7 @@ const ETFComparison = () => {
     return timeframes.map(tf => {
       const dataPoint: any = { timeframe: tf.label };
       etfData.forEach(etf => {
-        dataPoint[etf.symbol] = etf.performance[tf.value] || 0;
+        dataPoint[etf.symbol] = etf.performance?.[tf.value] ?? 0;
       });
       return dataPoint;
     });
@@ -395,7 +423,9 @@ const ETFComparison = () => {
   const getBestPerformer = (timeframe: string) => {
     if (etfData.length === 0) return null;
     return etfData.reduce((best, etf) => {
-      if (!best || (etf.performance[timeframe] || 0) > (best.performance[timeframe] || 0)) {
+      const etfValue = etf.performance?.[timeframe] ?? 0;
+      const bestValue = best?.performance?.[timeframe] ?? 0;
+      if (!best || etfValue > bestValue) {
         return etf;
       }
       return best;
