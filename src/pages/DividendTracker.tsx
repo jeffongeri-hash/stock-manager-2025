@@ -27,6 +27,8 @@ interface DividendStock {
   nextExDate: string;
   paymentDate?: string;
   dripEnabled: boolean;
+  dividendHistory?: { year: number; dividend: number }[];
+  dividendGrowthRate?: number; // 5-year CAGR
 }
 
 interface DividendEvent {
@@ -43,15 +45,124 @@ interface GrowthData {
   dripShares: number;
 }
 
+interface DripComparison {
+  year: number;
+  withDrip: number;
+  withoutDrip: number;
+  dripDividends: number;
+  noDripDividends: number;
+}
+
+// Sample dividend growth history data
+const DIVIDEND_HISTORY: Record<string, { year: number; dividend: number }[]> = {
+  'SCHD': [
+    { year: 2019, dividend: 1.72 },
+    { year: 2020, dividend: 2.03 },
+    { year: 2021, dividend: 2.25 },
+    { year: 2022, dividend: 2.56 },
+    { year: 2023, dividend: 2.62 },
+    { year: 2024, dividend: 2.68 },
+    { year: 2025, dividend: 2.76 },
+  ],
+  'VYM': [
+    { year: 2019, dividend: 2.84 },
+    { year: 2020, dividend: 2.91 },
+    { year: 2021, dividend: 3.10 },
+    { year: 2022, dividend: 3.25 },
+    { year: 2023, dividend: 3.18 },
+    { year: 2024, dividend: 3.21 },
+    { year: 2025, dividend: 3.30 },
+  ],
+  'O': [
+    { year: 2019, dividend: 2.73 },
+    { year: 2020, dividend: 2.79 },
+    { year: 2021, dividend: 2.83 },
+    { year: 2022, dividend: 2.98 },
+    { year: 2023, dividend: 3.05 },
+    { year: 2024, dividend: 3.08 },
+    { year: 2025, dividend: 3.10 },
+  ],
+  'JNJ': [
+    { year: 2019, dividend: 3.75 },
+    { year: 2020, dividend: 4.04 },
+    { year: 2021, dividend: 4.24 },
+    { year: 2022, dividend: 4.52 },
+    { year: 2023, dividend: 4.70 },
+    { year: 2024, dividend: 4.76 },
+    { year: 2025, dividend: 4.96 },
+  ],
+  'QYLD': [
+    { year: 2019, dividend: 2.45 },
+    { year: 2020, dividend: 2.38 },
+    { year: 2021, dividend: 2.52 },
+    { year: 2022, dividend: 2.28 },
+    { year: 2023, dividend: 2.12 },
+    { year: 2024, dividend: 2.04 },
+    { year: 2025, dividend: 1.98 },
+  ],
+  'JEPI': [
+    { year: 2021, dividend: 3.24 },
+    { year: 2022, dividend: 5.28 },
+    { year: 2023, dividend: 4.62 },
+    { year: 2024, dividend: 4.32 },
+    { year: 2025, dividend: 4.40 },
+  ],
+  'JEPQ': [
+    { year: 2022, dividend: 2.85 },
+    { year: 2023, dividend: 4.98 },
+    { year: 2024, dividend: 4.50 },
+    { year: 2025, dividend: 4.65 },
+  ],
+};
+
+// Calculate CAGR for dividend growth
+const calculateDividendCAGR = (history: { year: number; dividend: number }[]): number => {
+  if (history.length < 2) return 0;
+  const sorted = [...history].sort((a, b) => a.year - b.year);
+  const startValue = sorted[0].dividend;
+  const endValue = sorted[sorted.length - 1].dividend;
+  const years = sorted[sorted.length - 1].year - sorted[0].year;
+  if (years === 0 || startValue === 0) return 0;
+  return ((Math.pow(endValue / startValue, 1 / years) - 1) * 100);
+};
+
 const SAMPLE_STOCKS: DividendStock[] = [
-  { id: '1', symbol: 'SCHD', shares: 100, costBasis: 7500, annualDividend: 2.68, dividendYield: 3.57, frequency: 'quarterly', nextExDate: '2026-03-15', paymentDate: '2026-03-25', dripEnabled: true },
-  { id: '2', symbol: 'VYM', shares: 50, costBasis: 5500, annualDividend: 3.21, dividendYield: 2.92, frequency: 'quarterly', nextExDate: '2026-03-20', paymentDate: '2026-03-28', dripEnabled: true },
-  { id: '3', symbol: 'O', shares: 75, costBasis: 4125, annualDividend: 3.08, dividendYield: 5.60, frequency: 'monthly', nextExDate: '2026-01-31', paymentDate: '2026-02-15', dripEnabled: false },
-  { id: '4', symbol: 'JNJ', shares: 30, costBasis: 4500, annualDividend: 4.76, dividendYield: 3.17, frequency: 'quarterly', nextExDate: '2026-02-18', paymentDate: '2026-03-10', dripEnabled: true },
+  { 
+    id: '1', symbol: 'SCHD', shares: 100, costBasis: 7500, annualDividend: 2.68, dividendYield: 3.57, 
+    frequency: 'quarterly', nextExDate: '2026-03-15', paymentDate: '2026-03-25', dripEnabled: true,
+    dividendHistory: DIVIDEND_HISTORY['SCHD'], dividendGrowthRate: calculateDividendCAGR(DIVIDEND_HISTORY['SCHD'])
+  },
+  { 
+    id: '2', symbol: 'VYM', shares: 50, costBasis: 5500, annualDividend: 3.21, dividendYield: 2.92, 
+    frequency: 'quarterly', nextExDate: '2026-03-20', paymentDate: '2026-03-28', dripEnabled: true,
+    dividendHistory: DIVIDEND_HISTORY['VYM'], dividendGrowthRate: calculateDividendCAGR(DIVIDEND_HISTORY['VYM'])
+  },
+  { 
+    id: '3', symbol: 'O', shares: 75, costBasis: 4125, annualDividend: 3.08, dividendYield: 5.60, 
+    frequency: 'monthly', nextExDate: '2026-01-31', paymentDate: '2026-02-15', dripEnabled: false,
+    dividendHistory: DIVIDEND_HISTORY['O'], dividendGrowthRate: calculateDividendCAGR(DIVIDEND_HISTORY['O'])
+  },
+  { 
+    id: '4', symbol: 'JNJ', shares: 30, costBasis: 4500, annualDividend: 4.76, dividendYield: 3.17, 
+    frequency: 'quarterly', nextExDate: '2026-02-18', paymentDate: '2026-03-10', dripEnabled: true,
+    dividendHistory: DIVIDEND_HISTORY['JNJ'], dividendGrowthRate: calculateDividendCAGR(DIVIDEND_HISTORY['JNJ'])
+  },
   // High-yield income ETFs
-  { id: '5', symbol: 'QYLD', shares: 200, costBasis: 3400, annualDividend: 2.04, dividendYield: 12.0, frequency: 'monthly', nextExDate: '2026-01-20', paymentDate: '2026-01-25', dripEnabled: true },
-  { id: '6', symbol: 'JEPI', shares: 100, costBasis: 5400, annualDividend: 4.32, dividendYield: 8.0, frequency: 'monthly', nextExDate: '2026-01-05', paymentDate: '2026-01-08', dripEnabled: true },
-  { id: '7', symbol: 'JEPQ', shares: 80, costBasis: 4000, annualDividend: 4.50, dividendYield: 9.0, frequency: 'monthly', nextExDate: '2026-01-05', paymentDate: '2026-01-08', dripEnabled: true },
+  { 
+    id: '5', symbol: 'QYLD', shares: 200, costBasis: 3400, annualDividend: 2.04, dividendYield: 12.0, 
+    frequency: 'monthly', nextExDate: '2026-01-20', paymentDate: '2026-01-25', dripEnabled: true,
+    dividendHistory: DIVIDEND_HISTORY['QYLD'], dividendGrowthRate: calculateDividendCAGR(DIVIDEND_HISTORY['QYLD'])
+  },
+  { 
+    id: '6', symbol: 'JEPI', shares: 100, costBasis: 5400, annualDividend: 4.32, dividendYield: 8.0, 
+    frequency: 'monthly', nextExDate: '2026-01-05', paymentDate: '2026-01-08', dripEnabled: true,
+    dividendHistory: DIVIDEND_HISTORY['JEPI'], dividendGrowthRate: calculateDividendCAGR(DIVIDEND_HISTORY['JEPI'])
+  },
+  { 
+    id: '7', symbol: 'JEPQ', shares: 80, costBasis: 4000, annualDividend: 4.50, dividendYield: 9.0, 
+    frequency: 'monthly', nextExDate: '2026-01-05', paymentDate: '2026-01-08', dripEnabled: true,
+    dividendHistory: DIVIDEND_HISTORY['JEPQ'], dividendGrowthRate: calculateDividendCAGR(DIVIDEND_HISTORY['JEPQ'])
+  },
 ];
 
 export default function DividendTracker() {
@@ -107,6 +218,79 @@ export default function DividendTracker() {
 
     return data;
   }, [stocks, years, dividendGrowthRate, totals]);
+
+  // DRIP vs No-DRIP comparison
+  const dripComparison = useMemo(() => {
+    const data: DripComparison[] = [];
+    
+    // With DRIP
+    let dripValue = totals.totalCost;
+    let dripShares = stocks.reduce((sum, s) => sum + s.shares, 0);
+    let dripDividends = totals.annualIncome;
+    
+    // Without DRIP
+    let noDripValue = totals.totalCost;
+    let noDripShares = stocks.reduce((sum, s) => sum + s.shares, 0);
+    let noDripDividends = totals.annualIncome;
+
+    for (let year = 0; year <= years; year++) {
+      data.push({
+        year,
+        withDrip: Math.round(dripValue),
+        withoutDrip: Math.round(noDripValue),
+        dripDividends: Math.round(dripDividends),
+        noDripDividends: Math.round(noDripDividends),
+      });
+
+      // With DRIP: reinvest dividends
+      const avgDripPrice = dripValue / dripShares;
+      const newShares = dripDividends / avgDripPrice;
+      dripShares += newShares;
+      dripDividends *= (1 + dividendGrowthRate / 100);
+      dripValue = dripShares * avgDripPrice * (1 + dividendGrowthRate / 200);
+      
+      // Without DRIP: only price appreciation, no dividend reinvestment
+      noDripDividends *= (1 + dividendGrowthRate / 100);
+      const avgNoDripPrice = noDripValue / noDripShares;
+      noDripValue = noDripShares * avgNoDripPrice * (1 + dividendGrowthRate / 200);
+    }
+
+    return data;
+  }, [stocks, years, dividendGrowthRate, totals]);
+
+  // Calculate portfolio-weighted average dividend growth
+  const avgDividendGrowth = useMemo(() => {
+    const totalValue = stocks.reduce((sum, s) => sum + s.costBasis, 0);
+    if (totalValue === 0) return 0;
+    
+    const weightedGrowth = stocks.reduce((sum, s) => {
+      const weight = s.costBasis / totalValue;
+      return sum + (s.dividendGrowthRate || 0) * weight;
+    }, 0);
+    
+    return weightedGrowth;
+  }, [stocks]);
+
+  // Combined dividend history for chart
+  const dividendGrowthChartData = useMemo(() => {
+    const years = new Set<number>();
+    stocks.forEach(s => {
+      s.dividendHistory?.forEach(h => years.add(h.year));
+    });
+    
+    const sortedYears = Array.from(years).sort((a, b) => a - b);
+    
+    return sortedYears.map(year => {
+      const dataPoint: Record<string, number | string> = { year: year.toString() };
+      stocks.forEach(stock => {
+        const historyItem = stock.dividendHistory?.find(h => h.year === year);
+        if (historyItem) {
+          dataPoint[stock.symbol] = historyItem.dividend;
+        }
+      });
+      return dataPoint;
+    });
+  }, [stocks]);
 
   // Monthly income breakdown with stock details
   const monthlyBreakdown = useMemo(() => {
@@ -291,9 +475,10 @@ export default function DividendTracker() {
         </div>
 
         <Tabs defaultValue="holdings" className="space-y-4">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-xl grid-cols-4">
             <TabsTrigger value="holdings">Holdings</TabsTrigger>
-            <TabsTrigger value="projections">DRIP Projections</TabsTrigger>
+            <TabsTrigger value="growth">Growth & DRIP</TabsTrigger>
+            <TabsTrigger value="projections">Projections</TabsTrigger>
             <TabsTrigger value="calendar">Calendar</TabsTrigger>
           </TabsList>
 
@@ -409,6 +594,275 @@ export default function DividendTracker() {
                     ))}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Growth & DRIP Power Tab */}
+          <TabsContent value="growth" className="space-y-4">
+            {/* DRIP Power Comparison */}
+            <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <RefreshCw className="h-5 w-5 text-primary" />
+                  The Power of DRIP
+                </CardTitle>
+                <CardDescription>
+                  See how dividend reinvestment compounds your wealth over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid lg:grid-cols-3 gap-6 mb-6">
+                  <div className="p-4 rounded-lg bg-muted/50 border text-center">
+                    <p className="text-sm text-muted-foreground mb-1">Starting Portfolio</p>
+                    <p className="text-2xl font-bold">${totals.totalCost.toLocaleString()}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-success/10 border border-success/20 text-center">
+                    <p className="text-sm text-muted-foreground mb-1">With DRIP ({years} years)</p>
+                    <p className="text-2xl font-bold text-success">
+                      ${dripComparison[dripComparison.length - 1]?.withDrip.toLocaleString() || 0}
+                    </p>
+                    <p className="text-xs text-success mt-1">
+                      +{(((dripComparison[dripComparison.length - 1]?.withDrip || 0) - totals.totalCost) / totals.totalCost * 100).toFixed(0)}% total return
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/30 border text-center">
+                    <p className="text-sm text-muted-foreground mb-1">Without DRIP ({years} years)</p>
+                    <p className="text-2xl font-bold text-muted-foreground">
+                      ${dripComparison[dripComparison.length - 1]?.withoutDrip.toLocaleString() || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      +{(((dripComparison[dripComparison.length - 1]?.withoutDrip || 0) - totals.totalCost) / totals.totalCost * 100).toFixed(0)}% total return
+                    </p>
+                  </div>
+                </div>
+                
+                {/* DRIP Advantage Highlight */}
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-primary">DRIP Advantage</p>
+                      <p className="text-sm text-muted-foreground">Extra wealth generated by reinvesting dividends</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-primary">
+                        +${((dripComparison[dripComparison.length - 1]?.withDrip || 0) - (dripComparison[dripComparison.length - 1]?.withoutDrip || 0)).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-primary">
+                        {(((dripComparison[dripComparison.length - 1]?.withDrip || 0) / (dripComparison[dripComparison.length - 1]?.withoutDrip || 1) - 1) * 100).toFixed(1)}% more with DRIP
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* DRIP Comparison Chart */}
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={dripComparison}>
+                      <defs>
+                        <linearGradient id="dripGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="noDripGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="year" 
+                        tickFormatter={(v) => `Year ${v}`}
+                        className="text-xs"
+                      />
+                      <YAxis 
+                        tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                        className="text-xs"
+                      />
+                      <Tooltip 
+                        formatter={(value: number, name: string) => [
+                          `$${value.toLocaleString()}`,
+                          name === 'withDrip' ? 'With DRIP' : 'Without DRIP'
+                        ]}
+                        labelFormatter={(label) => `Year ${label}`}
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="withDrip"
+                        name="withDrip"
+                        stroke="hsl(var(--success))"
+                        fill="url(#dripGradient)"
+                        strokeWidth={3}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="withoutDrip"
+                        name="withoutDrip"
+                        stroke="hsl(var(--muted-foreground))"
+                        fill="url(#noDripGradient)"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Dividend Growth Rate by Holding */}
+            <div className="grid lg:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Dividend Growth by Holding
+                  </CardTitle>
+                  <CardDescription>
+                    Historical compound annual growth rate (CAGR)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {stocks
+                      .filter(s => s.dividendGrowthRate !== undefined)
+                      .sort((a, b) => (b.dividendGrowthRate || 0) - (a.dividendGrowthRate || 0))
+                      .map((stock) => (
+                        <div key={stock.id} className="flex items-center gap-3">
+                          <div className="w-16 font-medium">{stock.symbol}</div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="h-2 rounded-full bg-gradient-to-r from-primary/50 to-primary"
+                                style={{ 
+                                  width: `${Math.min(100, Math.max(5, ((stock.dividendGrowthRate || 0) + 5) * 5))}%` 
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <Badge 
+                            variant={(stock.dividendGrowthRate || 0) > 0 ? 'default' : 'destructive'}
+                            className="w-20 justify-center"
+                          >
+                            {(stock.dividendGrowthRate || 0) > 0 ? '+' : ''}{(stock.dividendGrowthRate || 0).toFixed(1)}%
+                          </Badge>
+                        </div>
+                      ))}
+                  </div>
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Portfolio Weighted Avg</span>
+                      <Badge variant="outline" className="text-base">
+                        {avgDividendGrowth > 0 ? '+' : ''}{avgDividendGrowth.toFixed(1)}% CAGR
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Dividend History Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Historical Dividend Trends</CardTitle>
+                  <CardDescription>Annual dividend per share over time</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={dividendGrowthChartData}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="year" className="text-xs" />
+                        <YAxis tickFormatter={(v) => `$${v}`} className="text-xs" />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        {stocks.slice(0, 5).map((stock, i) => (
+                          <Area
+                            key={stock.symbol}
+                            type="monotone"
+                            dataKey={stock.symbol}
+                            stroke={COLORS[i % COLORS.length]}
+                            fill={COLORS[i % COLORS.length]}
+                            fillOpacity={0.1}
+                            strokeWidth={2}
+                          />
+                        ))}
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {stocks.slice(0, 5).map((stock, i) => (
+                      <div key={stock.symbol} className="flex items-center gap-1 text-xs">
+                        <div 
+                          className="w-2 h-2 rounded-full" 
+                          style={{ backgroundColor: COLORS[i % COLORS.length] }}
+                        />
+                        <span>{stock.symbol}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Dividend Aristocrats & Growth Highlights */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Dividend Growth Insights</CardTitle>
+                <CardDescription>Understanding the power of growing dividends</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="h-5 w-5 text-success" />
+                      <h4 className="font-medium">Growing Income</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      With a {dividendGrowthRate}% annual dividend growth, your income doubles every {(72 / dividendGrowthRate).toFixed(0)} years (Rule of 72).
+                    </p>
+                    <p className="text-lg font-bold text-success mt-2">
+                      ${(totals.annualIncome * Math.pow(1 + dividendGrowthRate/100, years)).toFixed(0)}/yr
+                    </p>
+                    <p className="text-xs text-muted-foreground">in {years} years</p>
+                  </div>
+                  
+                  <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <RefreshCw className="h-5 w-5 text-primary" />
+                      <h4 className="font-medium">DRIP Compounds</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Reinvesting dividends adds shares, which generate more dividends, which buy more shares...
+                    </p>
+                    <p className="text-lg font-bold text-primary mt-2">
+                      +{dripProjection[dripProjection.length - 1]?.dripShares || 0} shares
+                    </p>
+                    <p className="text-xs text-muted-foreground">from DRIP in {years} years</p>
+                  </div>
+                  
+                  <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <DollarSign className="h-5 w-5 text-warning" />
+                      <h4 className="font-medium">Yield on Cost</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      As dividends grow, your effective yield on original investment increases dramatically.
+                    </p>
+                    <p className="text-lg font-bold text-warning mt-2">
+                      {((totals.annualIncome * Math.pow(1 + dividendGrowthRate/100, years)) / totals.totalCost * 100).toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">yield on cost in {years} years</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
