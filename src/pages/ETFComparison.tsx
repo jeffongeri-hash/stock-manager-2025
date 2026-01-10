@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,39 +8,37 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Trash2, TrendingUp, TrendingDown, BarChart3, PieChart, Scale, Info, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, BarChart3, PieChart, Scale, Info, RefreshCw, Loader2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 
 interface ETFData {
   symbol: string;
   name: string;
   price: number;
+  change?: number;
+  changePercent?: number;
   expenseRatio: number;
-  aum: number;
+  aum?: number;
   holdings: { symbol: string; name: string; weight: number }[];
   performance: { [key: string]: number };
 }
 
-// Mock data for demonstration - in production, this would come from an API
-const mockETFData: { [key: string]: ETFData } = {
+// Fallback data for when API fails or for unsupported symbols
+const fallbackETFData: { [key: string]: ETFData } = {
   'SPY': {
     symbol: 'SPY',
     name: 'SPDR S&P 500 ETF Trust',
     price: 478.52,
     expenseRatio: 0.09,
-    aum: 495000000000,
     holdings: [
       { symbol: 'AAPL', name: 'Apple Inc.', weight: 7.2 },
       { symbol: 'MSFT', name: 'Microsoft Corp.', weight: 6.8 },
       { symbol: 'AMZN', name: 'Amazon.com Inc.', weight: 3.4 },
       { symbol: 'NVDA', name: 'NVIDIA Corp.', weight: 3.2 },
-      { symbol: 'GOOGL', name: 'Alphabet Inc. Class A', weight: 2.1 },
-      { symbol: 'META', name: 'Meta Platforms Inc.', weight: 1.9 },
-      { symbol: 'TSLA', name: 'Tesla Inc.', weight: 1.8 },
-      { symbol: 'BRK.B', name: 'Berkshire Hathaway Inc.', weight: 1.7 },
-      { symbol: 'UNH', name: 'UnitedHealth Group Inc.', weight: 1.3 },
-      { symbol: 'JPM', name: 'JPMorgan Chase & Co.', weight: 1.2 },
+      { symbol: 'GOOGL', name: 'Alphabet Inc.', weight: 2.1 },
     ],
     performance: { 'YTD': 12.5, '1Y': 24.8, '2Y': 8.2, '3Y': 32.4, '5Y': 78.5, '10Y': 215.6, 'All': 580.2 }
   },
@@ -49,18 +47,12 @@ const mockETFData: { [key: string]: ETFData } = {
     name: 'Invesco QQQ Trust',
     price: 405.23,
     expenseRatio: 0.20,
-    aum: 245000000000,
     holdings: [
       { symbol: 'AAPL', name: 'Apple Inc.', weight: 11.2 },
       { symbol: 'MSFT', name: 'Microsoft Corp.', weight: 10.5 },
       { symbol: 'AMZN', name: 'Amazon.com Inc.', weight: 5.8 },
       { symbol: 'NVDA', name: 'NVIDIA Corp.', weight: 5.2 },
       { symbol: 'META', name: 'Meta Platforms Inc.', weight: 4.8 },
-      { symbol: 'GOOGL', name: 'Alphabet Inc. Class A', weight: 3.8 },
-      { symbol: 'GOOG', name: 'Alphabet Inc. Class C', weight: 3.6 },
-      { symbol: 'TSLA', name: 'Tesla Inc.', weight: 3.2 },
-      { symbol: 'AVGO', name: 'Broadcom Inc.', weight: 2.8 },
-      { symbol: 'COST', name: 'Costco Wholesale Corp.', weight: 2.1 },
     ],
     performance: { 'YTD': 18.2, '1Y': 42.5, '2Y': 12.8, '3Y': 45.2, '5Y': 145.8, '10Y': 425.6, 'All': 1250.8 }
   },
@@ -69,18 +61,12 @@ const mockETFData: { [key: string]: ETFData } = {
     name: 'Vanguard Total Stock Market ETF',
     price: 245.12,
     expenseRatio: 0.03,
-    aum: 380000000000,
     holdings: [
       { symbol: 'AAPL', name: 'Apple Inc.', weight: 6.5 },
       { symbol: 'MSFT', name: 'Microsoft Corp.', weight: 6.1 },
       { symbol: 'AMZN', name: 'Amazon.com Inc.', weight: 2.9 },
       { symbol: 'NVDA', name: 'NVIDIA Corp.', weight: 2.8 },
-      { symbol: 'GOOGL', name: 'Alphabet Inc. Class A', weight: 1.8 },
-      { symbol: 'META', name: 'Meta Platforms Inc.', weight: 1.6 },
-      { symbol: 'TSLA', name: 'Tesla Inc.', weight: 1.5 },
-      { symbol: 'BRK.B', name: 'Berkshire Hathaway Inc.', weight: 1.4 },
-      { symbol: 'UNH', name: 'UnitedHealth Group Inc.', weight: 1.1 },
-      { symbol: 'JPM', name: 'JPMorgan Chase & Co.', weight: 1.0 },
+      { symbol: 'GOOGL', name: 'Alphabet Inc.', weight: 1.8 },
     ],
     performance: { 'YTD': 11.8, '1Y': 23.5, '2Y': 7.5, '3Y': 30.2, '5Y': 72.8, '10Y': 198.5, 'All': 520.4 }
   },
@@ -89,18 +75,12 @@ const mockETFData: { [key: string]: ETFData } = {
     name: 'Vanguard S&P 500 ETF',
     price: 440.85,
     expenseRatio: 0.03,
-    aum: 425000000000,
     holdings: [
       { symbol: 'AAPL', name: 'Apple Inc.', weight: 7.2 },
       { symbol: 'MSFT', name: 'Microsoft Corp.', weight: 6.8 },
       { symbol: 'AMZN', name: 'Amazon.com Inc.', weight: 3.4 },
       { symbol: 'NVDA', name: 'NVIDIA Corp.', weight: 3.2 },
-      { symbol: 'GOOGL', name: 'Alphabet Inc. Class A', weight: 2.1 },
-      { symbol: 'META', name: 'Meta Platforms Inc.', weight: 1.9 },
-      { symbol: 'TSLA', name: 'Tesla Inc.', weight: 1.8 },
-      { symbol: 'BRK.B', name: 'Berkshire Hathaway Inc.', weight: 1.7 },
-      { symbol: 'UNH', name: 'UnitedHealth Group Inc.', weight: 1.3 },
-      { symbol: 'JPM', name: 'JPMorgan Chase & Co.', weight: 1.2 },
+      { symbol: 'GOOGL', name: 'Alphabet Inc.', weight: 2.1 },
     ],
     performance: { 'YTD': 12.6, '1Y': 24.9, '2Y': 8.3, '3Y': 32.5, '5Y': 78.8, '10Y': 216.2, 'All': 320.5 }
   },
@@ -109,18 +89,12 @@ const mockETFData: { [key: string]: ETFData } = {
     name: 'iShares Russell 2000 ETF',
     price: 198.45,
     expenseRatio: 0.19,
-    aum: 65000000000,
     holdings: [
       { symbol: 'SMCI', name: 'Super Micro Computer Inc.', weight: 0.8 },
       { symbol: 'MSTR', name: 'MicroStrategy Inc.', weight: 0.7 },
       { symbol: 'TOST', name: 'Toast Inc.', weight: 0.5 },
       { symbol: 'APP', name: 'AppLovin Corp.', weight: 0.5 },
       { symbol: 'INSM', name: 'Insmed Inc.', weight: 0.4 },
-      { symbol: 'CRDO', name: 'Credo Technology Group', weight: 0.4 },
-      { symbol: 'SFM', name: 'Sprouts Farmers Market', weight: 0.4 },
-      { symbol: 'FN', name: 'Fabrinet', weight: 0.3 },
-      { symbol: 'GKOS', name: 'Glaukos Corp.', weight: 0.3 },
-      { symbol: 'MTH', name: 'Meritage Homes Corp.', weight: 0.3 },
     ],
     performance: { 'YTD': 4.2, '1Y': 12.8, '2Y': -2.5, '3Y': 8.5, '5Y': 35.2, '10Y': 85.6, 'All': 245.8 }
   },
@@ -129,18 +103,12 @@ const mockETFData: { [key: string]: ETFData } = {
     name: 'Vanguard Growth ETF',
     price: 342.18,
     expenseRatio: 0.04,
-    aum: 115000000000,
     holdings: [
       { symbol: 'AAPL', name: 'Apple Inc.', weight: 12.5 },
       { symbol: 'MSFT', name: 'Microsoft Corp.', weight: 11.8 },
       { symbol: 'AMZN', name: 'Amazon.com Inc.', weight: 5.2 },
       { symbol: 'NVDA', name: 'NVIDIA Corp.', weight: 4.8 },
       { symbol: 'META', name: 'Meta Platforms Inc.', weight: 3.5 },
-      { symbol: 'GOOGL', name: 'Alphabet Inc. Class A', weight: 3.2 },
-      { symbol: 'GOOG', name: 'Alphabet Inc. Class C', weight: 3.0 },
-      { symbol: 'TSLA', name: 'Tesla Inc.', weight: 2.8 },
-      { symbol: 'LLY', name: 'Eli Lilly and Company', weight: 2.5 },
-      { symbol: 'V', name: 'Visa Inc.', weight: 1.8 },
     ],
     performance: { 'YTD': 16.5, '1Y': 38.2, '2Y': 10.5, '3Y': 38.5, '5Y': 115.2, '10Y': 295.8, 'All': 580.2 }
   }
@@ -152,6 +120,10 @@ const ETFComparison = () => {
   const [selectedETFs, setSelectedETFs] = useState<string[]>(['SPY', 'QQQ']);
   const [newETF, setNewETF] = useState('');
   const [selectedTimeframe, setSelectedTimeframe] = useState('1Y');
+  const [etfData, setEtfData] = useState<ETFData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [isLiveData, setIsLiveData] = useState(false);
 
   const timeframes = [
     { value: 'YTD', label: 'YTD' },
@@ -163,9 +135,39 @@ const ETFComparison = () => {
     { value: 'All', label: 'All Time' },
   ];
 
-  const etfData = useMemo(() => {
-    return selectedETFs.map(symbol => mockETFData[symbol]).filter(Boolean);
-  }, [selectedETFs]);
+  const fetchETFData = useCallback(async (symbols: string[]) => {
+    if (symbols.length === 0) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-etf-data', {
+        body: { symbols }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data.data) {
+        setEtfData(data.data);
+        setIsLiveData(true);
+        setLastUpdated(new Date());
+      } else {
+        throw new Error(data?.error || 'Failed to fetch ETF data');
+      }
+    } catch (error) {
+      console.error('Error fetching ETF data:', error);
+      // Fall back to local data
+      const fallbackData = symbols.map(symbol => fallbackETFData[symbol]).filter(Boolean);
+      setEtfData(fallbackData);
+      setIsLiveData(false);
+      toast.error('Using cached data - live API unavailable');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchETFData(selectedETFs);
+  }, [selectedETFs, fetchETFData]);
 
   const addETF = () => {
     const symbol = newETF.toUpperCase().trim();
@@ -175,10 +177,6 @@ const ETFComparison = () => {
     }
     if (selectedETFs.includes(symbol)) {
       toast.error('ETF already added');
-      return;
-    }
-    if (!mockETFData[symbol]) {
-      toast.error(`ETF ${symbol} not found. Try SPY, QQQ, VTI, VOO, IWM, or VUG`);
       return;
     }
     if (selectedETFs.length >= 5) {
@@ -247,7 +245,8 @@ const ETFComparison = () => {
     }, null as ETFData | null);
   };
 
-  const formatAUM = (aum: number) => {
+  const formatAUM = (aum?: number) => {
+    if (!aum) return 'N/A';
     if (aum >= 1000000000000) return `$${(aum / 1000000000000).toFixed(1)}T`;
     if (aum >= 1000000000) return `$${(aum / 1000000000).toFixed(0)}B`;
     return `$${(aum / 1000000).toFixed(0)}M`;
@@ -263,7 +262,7 @@ const ETFComparison = () => {
             <TabsTrigger value="details">Details</TabsTrigger>
           </TabsList>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <Input
               placeholder="Add ETF (e.g., VOO)"
               value={newETF}
@@ -274,7 +273,36 @@ const ETFComparison = () => {
             <Button onClick={addETF} size="sm">
               <Plus className="h-4 w-4 mr-1" /> Add
             </Button>
+            <Button 
+              onClick={() => fetchETFData(selectedETFs)} 
+              size="sm" 
+              variant="outline"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </Button>
           </div>
+        </div>
+
+        {/* Data Source Indicator */}
+        <div className="flex items-center gap-2 text-sm">
+          <Badge variant={isLiveData ? 'default' : 'secondary'} className="text-xs">
+            {isLiveData ? '🔴 Live Data' : '📦 Cached Data'}
+          </Badge>
+          {lastUpdated && (
+            <span className="text-muted-foreground text-xs">
+              Updated: {lastUpdated.toLocaleTimeString()}
+            </span>
+          )}
+          {isLoading && (
+            <span className="text-muted-foreground text-xs flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" /> Loading...
+            </span>
+          )}
         </div>
 
         {/* Selected ETFs badges */}
