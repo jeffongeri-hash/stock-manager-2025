@@ -5,7 +5,7 @@ import {
   TrendingUp, FolderKanban, Zap, BookOpen, Activity,
   TestTube, Users, Radar, FileText, BookMarked,
   Grid3X3, DollarSign, CalendarDays, GitCompare, Shield, Newspaper,
-  Scale, Webhook, Cpu, Eye, FlaskConical, Target, Building2, Car
+  Scale, Webhook, Cpu, Eye, FlaskConical, Target, Building2, Car, GitCompareArrows
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -156,6 +156,11 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Portfolio Rebalancing',
       icon: Scale,
       href: '/portfolio-rebalancing',
+    },
+    {
+      title: 'ETF Comparison',
+      icon: GitCompareArrows,
+      href: '/etf-comparison',
     },
     {
       title: 'TradingView Integration',
