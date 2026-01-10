@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,11 +8,13 @@ import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AnimatedStatsCard } from '@/components/ui/AnimatedStatsCard';
-import { DollarSign, TrendingUp, Calendar, Plus, Trash2, RefreshCw, PiggyBank, LineChart } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { DollarSign, TrendingUp, Calendar, Plus, Trash2, RefreshCw, PiggyBank, LineChart, ChevronLeft, ChevronRight, CalendarDays, Banknote } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO, addDays, isSameDay } from 'date-fns';
 
 interface DividendStock {
   id: string;
@@ -24,7 +25,15 @@ interface DividendStock {
   dividendYield: number;
   frequency: 'monthly' | 'quarterly' | 'annually';
   nextExDate: string;
+  paymentDate?: string;
   dripEnabled: boolean;
+}
+
+interface DividendEvent {
+  date: Date;
+  symbol: string;
+  type: 'ex-date' | 'payment';
+  amount: number;
 }
 
 interface GrowthData {
@@ -35,20 +44,22 @@ interface GrowthData {
 }
 
 const SAMPLE_STOCKS: DividendStock[] = [
-  { id: '1', symbol: 'SCHD', shares: 100, costBasis: 7500, annualDividend: 2.68, dividendYield: 3.57, frequency: 'quarterly', nextExDate: '2026-03-15', dripEnabled: true },
-  { id: '2', symbol: 'VYM', shares: 50, costBasis: 5500, annualDividend: 3.21, dividendYield: 2.92, frequency: 'quarterly', nextExDate: '2026-03-20', dripEnabled: true },
-  { id: '3', symbol: 'O', shares: 75, costBasis: 4125, annualDividend: 3.08, dividendYield: 5.60, frequency: 'monthly', nextExDate: '2026-01-31', dripEnabled: false },
-  { id: '4', symbol: 'JNJ', shares: 30, costBasis: 4500, annualDividend: 4.76, dividendYield: 3.17, frequency: 'quarterly', nextExDate: '2026-02-18', dripEnabled: true },
+  { id: '1', symbol: 'SCHD', shares: 100, costBasis: 7500, annualDividend: 2.68, dividendYield: 3.57, frequency: 'quarterly', nextExDate: '2026-03-15', paymentDate: '2026-03-25', dripEnabled: true },
+  { id: '2', symbol: 'VYM', shares: 50, costBasis: 5500, annualDividend: 3.21, dividendYield: 2.92, frequency: 'quarterly', nextExDate: '2026-03-20', paymentDate: '2026-03-28', dripEnabled: true },
+  { id: '3', symbol: 'O', shares: 75, costBasis: 4125, annualDividend: 3.08, dividendYield: 5.60, frequency: 'monthly', nextExDate: '2026-01-31', paymentDate: '2026-02-15', dripEnabled: false },
+  { id: '4', symbol: 'JNJ', shares: 30, costBasis: 4500, annualDividend: 4.76, dividendYield: 3.17, frequency: 'quarterly', nextExDate: '2026-02-18', paymentDate: '2026-03-10', dripEnabled: true },
   // High-yield income ETFs
-  { id: '5', symbol: 'QYLD', shares: 200, costBasis: 3400, annualDividend: 2.04, dividendYield: 12.0, frequency: 'monthly', nextExDate: '2026-01-20', dripEnabled: true },
-  { id: '6', symbol: 'JEPI', shares: 100, costBasis: 5400, annualDividend: 4.32, dividendYield: 8.0, frequency: 'monthly', nextExDate: '2026-01-05', dripEnabled: true },
-  { id: '7', symbol: 'JEPQ', shares: 80, costBasis: 4000, annualDividend: 4.50, dividendYield: 9.0, frequency: 'monthly', nextExDate: '2026-01-05', dripEnabled: true },
+  { id: '5', symbol: 'QYLD', shares: 200, costBasis: 3400, annualDividend: 2.04, dividendYield: 12.0, frequency: 'monthly', nextExDate: '2026-01-20', paymentDate: '2026-01-25', dripEnabled: true },
+  { id: '6', symbol: 'JEPI', shares: 100, costBasis: 5400, annualDividend: 4.32, dividendYield: 8.0, frequency: 'monthly', nextExDate: '2026-01-05', paymentDate: '2026-01-08', dripEnabled: true },
+  { id: '7', symbol: 'JEPQ', shares: 80, costBasis: 4000, annualDividend: 4.50, dividendYield: 9.0, frequency: 'monthly', nextExDate: '2026-01-05', paymentDate: '2026-01-08', dripEnabled: true },
 ];
 
 export default function DividendTracker() {
   const [stocks, setStocks] = useState<DividendStock[]>(SAMPLE_STOCKS);
   const [years, setYears] = useState(10);
   const [dividendGrowthRate, setDividendGrowthRate] = useState(5);
+  const [calendarMonth, setCalendarMonth] = useState(new Date(2026, 0, 1)); // Start at Jan 2026 to match sample data
+  const [selectedMonthView, setSelectedMonthView] = useState<string>('all');
   const [newStock, setNewStock] = useState({
     symbol: '',
     shares: 0,
@@ -97,23 +108,111 @@ export default function DividendTracker() {
     return data;
   }, [stocks, years, dividendGrowthRate, totals]);
 
-  // Monthly income breakdown
+  // Monthly income breakdown with stock details
   const monthlyBreakdown = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months.map((month, i) => {
       let income = 0;
+      const contributors: { symbol: string; amount: number }[] = [];
       stocks.forEach(stock => {
+        let stockIncome = 0;
         if (stock.frequency === 'monthly') {
-          income += stock.annualDividend * stock.shares / 12;
+          stockIncome = stock.annualDividend * stock.shares / 12;
         } else if (stock.frequency === 'quarterly' && [2, 5, 8, 11].includes(i)) {
-          income += stock.annualDividend * stock.shares / 4;
+          stockIncome = stock.annualDividend * stock.shares / 4;
         } else if (stock.frequency === 'annually' && i === 11) {
-          income += stock.annualDividend * stock.shares;
+          stockIncome = stock.annualDividend * stock.shares;
+        }
+        if (stockIncome > 0) {
+          income += stockIncome;
+          contributors.push({ symbol: stock.symbol, amount: stockIncome });
         }
       });
-      return { month, income: Math.round(income * 100) / 100 };
+      return { month, monthIndex: i, income: Math.round(income * 100) / 100, contributors };
     });
   }, [stocks]);
+
+  // Generate calendar events for the current view
+  const calendarEvents = useMemo(() => {
+    const events: DividendEvent[] = [];
+    const monthStart = startOfMonth(calendarMonth);
+    const monthEnd = endOfMonth(calendarMonth);
+    
+    stocks.forEach(stock => {
+      const dividendPerPayment = stock.frequency === 'monthly' 
+        ? (stock.annualDividend * stock.shares) / 12
+        : stock.frequency === 'quarterly'
+          ? (stock.annualDividend * stock.shares) / 4
+          : stock.annualDividend * stock.shares;
+      
+      // Parse ex-date and payment date
+      if (stock.nextExDate) {
+        try {
+          const exDate = parseISO(stock.nextExDate);
+          // Generate recurring events based on frequency
+          const frequencyMonths = stock.frequency === 'monthly' ? 1 : stock.frequency === 'quarterly' ? 3 : 12;
+          
+          for (let offset = -12; offset <= 12; offset += frequencyMonths) {
+            const eventExDate = addMonths(exDate, offset);
+            if (eventExDate >= monthStart && eventExDate <= monthEnd) {
+              events.push({
+                date: eventExDate,
+                symbol: stock.symbol,
+                type: 'ex-date',
+                amount: dividendPerPayment
+              });
+            }
+            
+            // Payment date is typically ~10 days after ex-date if not specified
+            const paymentDate = stock.paymentDate 
+              ? addMonths(parseISO(stock.paymentDate), offset)
+              : addDays(eventExDate, 10);
+            if (paymentDate >= monthStart && paymentDate <= monthEnd) {
+              events.push({
+                date: paymentDate,
+                symbol: stock.symbol,
+                type: 'payment',
+                amount: dividendPerPayment
+              });
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing date for', stock.symbol, e);
+        }
+      }
+    });
+    
+    return events.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [stocks, calendarMonth]);
+
+  // Get events for a specific day
+  const getEventsForDay = (day: Date) => {
+    return calendarEvents.filter(event => isSameDay(event.date, day));
+  };
+
+  // Calendar days for the current month
+  const calendarDays = useMemo(() => {
+    const monthStart = startOfMonth(calendarMonth);
+    const monthEnd = endOfMonth(calendarMonth);
+    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    
+    // Add padding days for the start of the week
+    const startPadding = monthStart.getDay();
+    const paddedDays: (Date | null)[] = Array(startPadding).fill(null);
+    
+    return [...paddedDays, ...days];
+  }, [calendarMonth]);
+
+  // Monthly income by stock for pie chart
+  const incomeByStock = useMemo(() => {
+    return stocks.map(stock => ({
+      symbol: stock.symbol,
+      income: stock.annualDividend * stock.shares,
+      yield: stock.dividendYield
+    })).sort((a, b) => b.income - a.income);
+  }, [stocks]);
+
+  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(142, 76%, 36%)', 'hsl(221, 83%, 53%)'];
 
   const addStock = () => {
     if (!newStock.symbol) {
@@ -446,69 +545,287 @@ export default function DividendTracker() {
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-4">
-            {/* Monthly Income Chart */}
+            {/* Visual Calendar */}
             <Card>
               <CardHeader>
-                <CardTitle>Monthly Dividend Income</CardTitle>
-                <CardDescription>Expected dividend payments by month</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <CalendarDays className="h-5 w-5" />
+                      Dividend Calendar
+                    </CardTitle>
+                    <CardDescription>Ex-dates and payment dates for your holdings</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCalendarMonth(prev => addMonths(prev, -1))}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-medium w-32 text-center">
+                      {format(calendarMonth, 'MMMM yyyy')}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCalendarMonth(prev => addMonths(prev, 1))}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyBreakdown}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="month" className="text-xs" />
-                      <YAxis tickFormatter={(v) => `$${v}`} className="text-xs" />
-                      <Tooltip 
-                        formatter={(value: number) => [`$${value.toFixed(2)}`, 'Income']}
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                        }}
-                      />
-                      <Bar 
-                        dataKey="income" 
-                        fill="hsl(var(--success))" 
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                {/* Calendar Legend */}
+                <div className="flex gap-4 mb-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-warning" />
+                    <span>Ex-Dividend Date</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-success" />
+                    <span>Payment Date</span>
+                  </div>
+                </div>
+                
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                    <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
+                      {day}
+                    </div>
+                  ))}
+                  {calendarDays.map((day, i) => {
+                    if (!day) {
+                      return <div key={`empty-${i}`} className="h-24 bg-muted/20 rounded" />;
+                    }
+                    const events = getEventsForDay(day);
+                    const hasExDate = events.some(e => e.type === 'ex-date');
+                    const hasPayment = events.some(e => e.type === 'payment');
+                    
+                    return (
+                      <div
+                        key={day.toISOString()}
+                        className={cn(
+                          "h-24 p-1 rounded border text-xs overflow-hidden",
+                          isToday(day) && "border-primary bg-primary/5",
+                          !isSameMonth(day, calendarMonth) && "opacity-50",
+                          events.length > 0 && "bg-muted/30"
+                        )}
+                      >
+                        <div className={cn(
+                          "font-medium mb-1",
+                          isToday(day) && "text-primary"
+                        )}>
+                          {format(day, 'd')}
+                        </div>
+                        <div className="space-y-0.5 overflow-y-auto max-h-16">
+                          {events.slice(0, 3).map((event, idx) => (
+                            <div
+                              key={`${event.symbol}-${event.type}-${idx}`}
+                              className={cn(
+                                "px-1 py-0.5 rounded text-[10px] truncate",
+                                event.type === 'ex-date' 
+                                  ? "bg-warning/20 text-warning-foreground border-l-2 border-warning"
+                                  : "bg-success/20 text-success border-l-2 border-success"
+                              )}
+                              title={`${event.symbol} ${event.type === 'ex-date' ? 'Ex-Date' : 'Payment'}: $${event.amount.toFixed(2)}`}
+                            >
+                              {event.symbol}
+                            </div>
+                          ))}
+                          {events.length > 3 && (
+                            <div className="text-[10px] text-muted-foreground">
+                              +{events.length - 3} more
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Upcoming Dividends */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Upcoming Ex-Dividend Dates</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {stocks
-                    .sort((a, b) => new Date(a.nextExDate).getTime() - new Date(b.nextExDate).getTime())
-                    .map((stock) => (
-                      <div
-                        key={stock.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Calendar className="h-5 w-5 text-primary" />
-                          <div>
-                            <p className="font-medium">{stock.symbol}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {stock.frequency} dividend
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant="outline">{stock.nextExDate}</Badge>
-                          <p className="text-sm text-success mt-1">
-                            ${((stock.annualDividend * stock.shares) / (stock.frequency === 'monthly' ? 12 : stock.frequency === 'quarterly' ? 4 : 1)).toFixed(2)}
-                          </p>
-                        </div>
+            {/* Monthly Income Chart with Details */}
+            <div className="grid lg:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Banknote className="h-5 w-5" />
+                    Monthly Income Distribution
+                  </CardTitle>
+                  <CardDescription>Expected dividend payments by month</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={monthlyBreakdown}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="month" className="text-xs" />
+                        <YAxis tickFormatter={(v) => `$${v}`} className="text-xs" />
+                        <Tooltip 
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload?.[0]) return null;
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-card border rounded-lg p-3 shadow-lg">
+                                <p className="font-medium mb-2">{label}</p>
+                                <p className="text-success font-bold">${data.income.toFixed(2)}</p>
+                                {data.contributors?.length > 0 && (
+                                  <div className="mt-2 pt-2 border-t text-xs space-y-1">
+                                    {data.contributors.map((c: { symbol: string; amount: number }) => (
+                                      <div key={c.symbol} className="flex justify-between gap-4">
+                                        <span>{c.symbol}</span>
+                                        <span className="text-muted-foreground">${c.amount.toFixed(2)}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }}
+                        />
+                        <Bar dataKey="income" radius={[4, 4, 0, 0]}>
+                          {monthlyBreakdown.map((entry, index) => (
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={entry.income > 0 ? 'hsl(var(--success))' : 'hsl(var(--muted))'} 
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Income by Holding</CardTitle>
+                  <CardDescription>Annual dividend income breakdown</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={incomeByStock}
+                          dataKey="income"
+                          nameKey="symbol"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={2}
+                        >
+                          {incomeByStock.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value: number, name: string) => [`$${value.toFixed(2)}/yr`, name]}
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {incomeByStock.slice(0, 6).map((stock, i) => (
+                      <div key={stock.symbol} className="flex items-center gap-2 text-xs">
+                        <div 
+                          className="w-2 h-2 rounded-full" 
+                          style={{ backgroundColor: COLORS[i % COLORS.length] }}
+                        />
+                        <span className="font-medium">{stock.symbol}</span>
+                        <span className="text-muted-foreground">${stock.income.toFixed(0)}</span>
                       </div>
                     ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Upcoming Dividends List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Upcoming Ex-Dividend & Payment Dates</CardTitle>
+                <CardDescription>Next 30 days of dividend events</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Ex-Dates */}
+                  <div>
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-warning" />
+                      Ex-Dividend Dates
+                    </h4>
+                    <div className="space-y-2">
+                      {stocks
+                        .sort((a, b) => new Date(a.nextExDate).getTime() - new Date(b.nextExDate).getTime())
+                        .slice(0, 5)
+                        .map((stock) => (
+                          <div
+                            key={stock.id}
+                            className="flex items-center justify-between p-2 rounded-lg bg-warning/10 border border-warning/20"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-warning" />
+                              <div>
+                                <p className="font-medium text-sm">{stock.symbol}</p>
+                                <p className="text-xs text-muted-foreground">{stock.frequency}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <Badge variant="outline" className="text-xs">{stock.nextExDate}</Badge>
+                              <p className="text-xs text-success mt-0.5">
+                                ${((stock.annualDividend * stock.shares) / (stock.frequency === 'monthly' ? 12 : stock.frequency === 'quarterly' ? 4 : 1)).toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+
+                  {/* Payment Dates */}
+                  <div>
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-success" />
+                      Payment Dates
+                    </h4>
+                    <div className="space-y-2">
+                      {stocks
+                        .filter(s => s.paymentDate)
+                        .sort((a, b) => new Date(a.paymentDate!).getTime() - new Date(b.paymentDate!).getTime())
+                        .slice(0, 5)
+                        .map((stock) => (
+                          <div
+                            key={stock.id}
+                            className="flex items-center justify-between p-2 rounded-lg bg-success/10 border border-success/20"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Banknote className="h-4 w-4 text-success" />
+                              <div>
+                                <p className="font-medium text-sm">{stock.symbol}</p>
+                                <p className="text-xs text-muted-foreground">{stock.frequency}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <Badge variant="outline" className="text-xs bg-success/10">{stock.paymentDate}</Badge>
+                              <p className="text-xs text-success mt-0.5">
+                                ${((stock.annualDividend * stock.shares) / (stock.frequency === 'monthly' ? 12 : stock.frequency === 'quarterly' ? 4 : 1)).toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
