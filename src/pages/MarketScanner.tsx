@@ -62,13 +62,19 @@ interface LeapsFilters {
   maxIV: number;
 }
 
-interface FilterPreset {
+interface LeapsFilterPreset {
   name: string;
   description: string;
   filters: Partial<LeapsFilters>;
 }
 
-const leapsPresets: FilterPreset[] = [
+interface CoveredCallFilterPreset {
+  name: string;
+  description: string;
+  filters: Partial<CoveredCallFilters>;
+}
+
+const leapsPresets: LeapsFilterPreset[] = [
   {
     name: 'Deep ITM Calls',
     description: 'Delta 0.70+ for stock replacement',
@@ -103,6 +109,44 @@ const leapsPresets: FilterPreset[] = [
     name: 'Low IV',
     description: 'IV under 40% for cheaper options',
     filters: { optionType: 'all', maxIV: 40, minDelta: 0, maxDelta: 1 }
+  }
+];
+
+const coveredCallPresets: CoveredCallFilterPreset[] = [
+  {
+    name: 'High Income',
+    description: '30%+ annualized return for aggressive income',
+    filters: { minAnnualizedReturn: 30, minOpenInterest: 50 }
+  },
+  {
+    name: 'Conservative',
+    description: 'High downside protection (8%+) for safety',
+    filters: { minProtection: 8, minAnnualizedReturn: 10, maxDaysToExpiry: 45 }
+  },
+  {
+    name: 'Weekly Expiries',
+    description: '7-14 days for frequent premium collection',
+    filters: { minDaysToExpiry: 7, maxDaysToExpiry: 14, minOpenInterest: 100 }
+  },
+  {
+    name: 'Monthly Expiries',
+    description: '25-35 days for standard monthly cycle',
+    filters: { minDaysToExpiry: 25, maxDaysToExpiry: 35, minOpenInterest: 50 }
+  },
+  {
+    name: 'Balanced',
+    description: '15%+ return with 5%+ protection',
+    filters: { minAnnualizedReturn: 15, minProtection: 5, minOpenInterest: 25 }
+  },
+  {
+    name: 'Budget Stocks',
+    description: 'Stocks under $10 for smaller accounts',
+    filters: { maxStockPrice: 10, minOpenInterest: 50 }
+  },
+  {
+    name: 'High Liquidity',
+    description: 'Open Interest 200+ for easy entry/exit',
+    filters: { minOpenInterest: 200 }
   }
 ];
 
@@ -280,7 +324,7 @@ const MarketScanner = () => {
     return 'text-muted-foreground';
   };
 
-  const applyLeapsPreset = (preset: FilterPreset) => {
+  const applyLeapsPreset = (preset: LeapsFilterPreset) => {
     setLeapsFilters(prev => ({
       ...prev,
       optionType: preset.filters.optionType ?? prev.optionType,
@@ -303,6 +347,20 @@ const MarketScanner = () => {
       minAnnualizedReturn: 0,
       maxIV: 200
     });
+  };
+
+  const applyCCPreset = (preset: CoveredCallFilterPreset) => {
+    setCCFilters(prev => ({
+      ...prev,
+      minAnnualizedReturn: preset.filters.minAnnualizedReturn ?? prev.minAnnualizedReturn,
+      minOpenInterest: preset.filters.minOpenInterest ?? prev.minOpenInterest,
+      minProtection: preset.filters.minProtection ?? prev.minProtection,
+      maxDaysToExpiry: preset.filters.maxDaysToExpiry ?? prev.maxDaysToExpiry,
+      minDaysToExpiry: preset.filters.minDaysToExpiry ?? prev.minDaysToExpiry,
+      maxStockPrice: preset.filters.maxStockPrice ?? prev.maxStockPrice
+    }));
+    setShowCCFilters(true);
+    toast.success(`Applied "${preset.name}" preset`);
   };
 
   const resetCCFilters = () => {
@@ -670,6 +728,32 @@ const MarketScanner = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Covered Call Strategy Presets */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Quick Presets
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {coveredCallPresets.map((preset) => (
+                  <Button
+                    key={preset.name}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-auto py-1.5 px-3"
+                    onClick={() => applyCCPreset(preset)}
+                    title={preset.description}
+                  >
+                    {preset.name}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Covered Call Filters */}
           <Collapsible open={showCCFilters} onOpenChange={setShowCCFilters}>
