@@ -93,8 +93,13 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/',
     },
     {
-      title: 'Portfolio',
+      title: 'Assets',
       icon: Wallet,
+      href: '/assets',
+    },
+    {
+      title: 'Portfolio',
+      icon: FolderKanban,
       href: '/portfolio',
     },
     {
