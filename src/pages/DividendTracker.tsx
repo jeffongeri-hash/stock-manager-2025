@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AnimatedStatsCard } from '@/components/ui/AnimatedStatsCard';
-import { DollarSign, TrendingUp, Calendar, Plus, Trash2, RefreshCw, PiggyBank, LineChart, ChevronLeft, ChevronRight, CalendarDays, Banknote, Calculator, GitCompare, Clock } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, Plus, Trash2, RefreshCw, PiggyBank, LineChart, ChevronLeft, ChevronRight, CalendarDays, Banknote, Calculator, GitCompare, Clock, Link2, Building2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,8 @@ import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameM
 import { WhatIfScenarioBuilder } from '@/components/dividends/WhatIfScenarioBuilder';
 import { ReverseDividendCalculator } from '@/components/dividends/ReverseDividendCalculator';
 import { YieldOnCostTracker } from '@/components/dividends/YieldOnCostTracker';
+import { useSnaptrade } from '@/hooks/useSnaptrade';
+import { Link } from 'react-router-dom';
 
 interface DividendStock {
   id: string;
@@ -181,6 +183,9 @@ export default function DividendTracker() {
     annualDividend: 0,
     dividendYield: 0,
   });
+  
+  // Snaptrade integration for real brokerage data
+  const snaptrade = useSnaptrade();
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -563,8 +568,12 @@ export default function DividendTracker() {
         </div>
 
         <Tabs defaultValue="holdings" className="space-y-4">
-          <TabsList className="grid w-full max-w-3xl grid-cols-6">
+          <TabsList className="grid w-full max-w-4xl grid-cols-7">
             <TabsTrigger value="holdings">Holdings</TabsTrigger>
+            <TabsTrigger value="brokerage" className="flex items-center gap-1">
+              <Building2 className="h-3 w-3" />
+              Brokerage
+            </TabsTrigger>
             <TabsTrigger value="growth">Growth & DRIP</TabsTrigger>
             <TabsTrigger value="projections">Projections</TabsTrigger>
             <TabsTrigger value="calendar">Calendar</TabsTrigger>
@@ -1407,6 +1416,168 @@ export default function DividendTracker() {
           {/* Reverse Dividend Calculator Tab */}
           <TabsContent value="calculator">
             <ReverseDividendCalculator />
+          </TabsContent>
+
+          {/* Brokerage Dividends Tab */}
+          <TabsContent value="brokerage" className="space-y-4">
+            {snaptrade.isConnected ? (
+              <>
+                {/* Brokerage Summary */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground">Total Dividends Received</p>
+                        <p className="text-2xl font-bold text-success">${snaptrade.totalDividends.toFixed(2)}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground">Dividend-Paying Holdings</p>
+                        <p className="text-2xl font-bold">{snaptrade.dividends.length > 0 ? new Set(snaptrade.dividends.map(d => d.symbol)).size : 0}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground">Total Portfolio Value</p>
+                        <p className="text-2xl font-bold">${snaptrade.totalValue.toLocaleString()}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground">Connected Accounts</p>
+                        <p className="text-2xl font-bold">{snaptrade.connection?.accounts?.length || 0}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Dividend History Table */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Dividend History</CardTitle>
+                      <CardDescription>Real dividend payments from your connected brokerages</CardDescription>
+                    </div>
+                    <Button onClick={snaptrade.refresh} variant="outline" size="sm" disabled={snaptrade.isLoading}>
+                      <RefreshCw className={cn("h-4 w-4 mr-2", snaptrade.isLoading && "animate-spin")} />
+                      Refresh
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {snaptrade.dividends.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Symbol</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Ex-Date</TableHead>
+                            <TableHead>Payment Date</TableHead>
+                            <TableHead>Type</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {snaptrade.dividends.map((dividend) => (
+                            <TableRow key={dividend.id}>
+                              <TableCell className="font-medium">{dividend.symbol}</TableCell>
+                              <TableCell className="text-success font-mono">${dividend.amount.toFixed(2)}</TableCell>
+                              <TableCell>{dividend.ex_date ? format(parseISO(dividend.ex_date), 'MMM d, yyyy') : '-'}</TableCell>
+                              <TableCell>{dividend.payment_date ? format(parseISO(dividend.payment_date), 'MMM d, yyyy') : '-'}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{dividend.type}</Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <DollarSign className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                        <p>No dividend history found yet.</p>
+                        <p className="text-sm mt-1">Dividend data will appear here once your broker syncs transaction history.</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Holdings with Dividend Potential */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Holdings Overview</CardTitle>
+                    <CardDescription>Your real portfolio positions from connected brokerages</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {snaptrade.holdings.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Symbol</TableHead>
+                            <TableHead className="text-right">Shares</TableHead>
+                            <TableHead className="text-right">Price</TableHead>
+                            <TableHead className="text-right">Market Value</TableHead>
+                            <TableHead className="text-right">Cost Basis</TableHead>
+                            <TableHead className="text-right">Gain/Loss</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {snaptrade.holdings.slice(0, 10).map((holding) => (
+                            <TableRow key={holding.id}>
+                              <TableCell>
+                                <div>
+                                  <p className="font-medium">{holding.symbol}</p>
+                                  <p className="text-xs text-muted-foreground truncate max-w-[150px]">{holding.description}</p>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right font-mono">{holding.quantity.toLocaleString()}</TableCell>
+                              <TableCell className="text-right font-mono">${holding.price.toFixed(2)}</TableCell>
+                              <TableCell className="text-right font-mono">${holding.market_value.toLocaleString()}</TableCell>
+                              <TableCell className="text-right font-mono text-muted-foreground">${holding.cost_basis.toLocaleString()}</TableCell>
+                              <TableCell className={cn("text-right font-mono", holding.unrealized_pnl >= 0 ? "text-success" : "text-destructive")}>
+                                {holding.unrealized_pnl >= 0 ? '+' : ''}{holding.unrealized_pnl_percent.toFixed(2)}%
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <DollarSign className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                        <p>No holdings found.</p>
+                      </div>
+                    )}
+                    {snaptrade.holdings.length > 10 && (
+                      <div className="mt-4 text-center">
+                        <Button asChild variant="outline">
+                          <Link to="/assets">View All {snaptrade.holdings.length} Holdings</Link>
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <Card className="py-12 text-center">
+                <CardContent>
+                  <Building2 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Connect Your Brokerage</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Connect your brokerage accounts to see real dividend payments, holdings, and portfolio data synced automatically.
+                  </p>
+                  <Button asChild>
+                    <Link to="/assets">
+                      <Link2 className="h-4 w-4 mr-2" />
+                      Connect Brokerage
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
