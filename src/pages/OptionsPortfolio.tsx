@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, Plus, FolderKanban, Scale, Search, Layers, Shield, BookOpen } from 'lucide-react';
+import { Trash2, Plus, FolderKanban, Scale, Search, Layers, Shield, BookOpen, Calculator, DollarSign } from 'lucide-react';
 import { useStockData } from '@/hooks/useStockData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -18,6 +18,8 @@ import { CoveredCallScreener } from '@/components/options/CoveredCallScreener';
 import { OptionsChainViewer } from '@/components/options/OptionsChainViewer';
 import { IronCondorBuilder } from '@/components/options/IronCondorBuilder';
 import { OptionsStrategyBuilder } from '@/components/options/OptionsStrategyBuilder';
+import { CoveredCallAnalyzer } from '@/components/options/CoveredCallAnalyzer';
+import { PoorMansCalculator } from '@/components/options/PoorMansCalulator';
 import { Link } from 'react-router-dom';
 
 interface Trade {
@@ -158,6 +160,14 @@ export default function OptionsToolkit() {
           <TabsTrigger value="strategy-builder" className="flex items-center gap-2">
             <Layers className="h-4 w-4" />
             Strategy Builder
+          </TabsTrigger>
+          <TabsTrigger value="cc-analyzer" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            CC Analyzer
+          </TabsTrigger>
+          <TabsTrigger value="pmcc" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            PMCC
           </TabsTrigger>
         </TabsList>
 
@@ -413,6 +423,14 @@ export default function OptionsToolkit() {
 
         <TabsContent value="strategy-builder">
           <OptionsStrategyBuilder />
+        </TabsContent>
+
+        <TabsContent value="cc-analyzer">
+          <CoveredCallAnalyzer />
+        </TabsContent>
+
+        <TabsContent value="pmcc">
+          <PoorMansCalculator />
         </TabsContent>
       </Tabs>
     </PageLayout>
