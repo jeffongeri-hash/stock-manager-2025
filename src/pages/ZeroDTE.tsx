@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/stocksApi';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Search, RefreshCw, Loader2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Search, RefreshCw, Loader2, TrendingUp, TrendingDown, Eye } from 'lucide-react';
+import { useWatchlistActions } from '@/hooks/useWatchlistActions';
 
 interface Results {
   stockPrice: number;
@@ -27,6 +28,7 @@ interface Results {
 }
 
 export default function ZeroDTE() {
+  const { addToWatchlist, isLoggedIn } = useWatchlistActions();
   const [symbol, setSymbol] = useState('');
   const [stockPrice, setStockPrice] = useState('100');
   const [strikePrice, setStrikePrice] = useState('101');
@@ -38,6 +40,7 @@ export default function ZeroDTE() {
   const [stockName, setStockName] = useState<string | null>(null);
   const [priceChange, setPriceChange] = useState<number | null>(null);
   const [priceChangePercent, setPriceChangePercent] = useState<number | null>(null);
+  const [lastSymbol, setLastSymbol] = useState<string | null>(null);
 
   const erf = (x: number): number => {
     const a1 = 0.254829592;
@@ -143,6 +146,7 @@ export default function ZeroDTE() {
         setStockName(stock.name || symbolToFetch);
         setPriceChange(stock.change ?? null);
         setPriceChangePercent(stock.changePercent ?? null);
+        setLastSymbol(symbolToFetch);
         if (!symbolOverride) setSymbol(symbolToFetch);
         toast.success(`Updated price for ${stock.name}: $${stock.price.toFixed(2)}`);
       }
@@ -193,9 +197,20 @@ export default function ZeroDTE() {
                     {loadingPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                   </Button>
                   {stockName && (
-                    <Button onClick={handleRefresh} disabled={loadingPrice} size="icon" variant="outline" title="Refresh price">
-                      <RefreshCw className={`h-4 w-4 ${loadingPrice ? 'animate-spin' : ''}`} />
-                    </Button>
+                    <>
+                      <Button 
+                        onClick={() => lastSymbol && addToWatchlist(lastSymbol)} 
+                        disabled={!isLoggedIn || !lastSymbol} 
+                        size="icon" 
+                        variant="outline" 
+                        title={!isLoggedIn ? 'Sign in to add to watchlist' : 'Add to watchlist'}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button onClick={handleRefresh} disabled={loadingPrice} size="icon" variant="outline" title="Refresh price">
+                        <RefreshCw className={`h-4 w-4 ${loadingPrice ? 'animate-spin' : ''}`} />
+                      </Button>
+                    </>
                   )}
                 </div>
                 {stockName && (

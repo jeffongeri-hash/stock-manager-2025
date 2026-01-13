@@ -430,24 +430,26 @@ export const ITMOptionCalculator: React.FC = () => {
                       )}
                     </Button>
                     {lastFetchedSymbol && (
-                      <Button
-                        onClick={() => addToWatchlist(lastFetchedSymbol)}
-                        disabled={!isLoggedIn}
-                        size="icon"
-                        variant="outline"
-                        title={!isLoggedIn ? 'Sign in to add to watchlist' : 'Add to watchlist'}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        onClick={handleRefresh}
-                        disabled={isLoadingPrice}
-                        size="icon"
-                        variant="outline"
-                        title="Refresh price"
-                      >
-                        <RefreshCw className={`h-4 w-4 ${isLoadingPrice ? 'animate-spin' : ''}`} />
-                      </Button>
+                      <>
+                        <Button
+                          onClick={() => addToWatchlist(lastFetchedSymbol)}
+                          disabled={!isLoggedIn}
+                          size="icon"
+                          variant="outline"
+                          title={!isLoggedIn ? 'Sign in to add to watchlist' : 'Add to watchlist'}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          onClick={handleRefresh}
+                          disabled={isLoadingPrice}
+                          size="icon"
+                          variant="outline"
+                          title="Refresh price"
+                        >
+                          <RefreshCw className={`h-4 w-4 ${isLoadingPrice ? 'animate-spin' : ''}`} />
+                        </Button>
+                      </>
                     )}
                   </div>
                   {lastFetchedSymbol && stockName && (
