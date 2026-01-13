@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Wallet, TrendingUp, TrendingDown, RefreshCw, Building2, 
   PieChart, BarChart3, DollarSign, Link2, ArrowUpRight, ArrowDownRight,
-  Landmark, AlertCircle
+  Landmark, AlertCircle, Clock
 } from "lucide-react";
 import { useSnaptrade } from "@/hooks/useSnaptrade";
 import { useAuth } from "@/hooks/useAuth";
@@ -82,6 +82,15 @@ export default function Assets() {
   return (
     <PageLayout title="Assets">
       {/* Portfolio Summary Stats */}
+      {/* Auto-sync indicator */}
+      {snaptrade.isConnected && snaptrade.lastSyncTime && (
+        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          <span>Last synced: {snaptrade.lastSyncTime.toLocaleTimeString()}</span>
+          <span className="text-xs">(auto-syncs every 5 min)</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <AnimatedStatsCard
           title="Total Portfolio Value"
