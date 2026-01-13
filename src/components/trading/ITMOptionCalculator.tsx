@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,12 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Calculator, TrendingUp, TrendingDown, DollarSign, 
   Clock, Target, AlertTriangle, CheckCircle2, Info,
-  ArrowUpRight, ArrowDownRight, Scale
+  ArrowUpRight, ArrowDownRight, Scale, Search, Loader2
 } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, ReferenceLine, BarChart, Bar, Cell
 } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface GreeksData {
   delta: number;
@@ -131,6 +133,12 @@ const calculateGreeks = (
 };
 
 export const ITMOptionCalculator: React.FC = () => {
+  // Ticker search states
+  const [tickerSymbol, setTickerSymbol] = useState("");
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+  const [stockName, setStockName] = useState<string | null>(null);
+  const [lastFetchedSymbol, setLastFetchedSymbol] = useState<string | null>(null);
+
   // Input states
   const [stockPrice, setStockPrice] = useState(150);
   const [strikePrice, setStrikePrice] = useState(140);
@@ -141,6 +149,53 @@ export const ITMOptionCalculator: React.FC = () => {
   const [volatility, setVolatility] = useState(30);
   const [riskFreeRate, setRiskFreeRate] = useState(5);
   const [optionType, setOptionType] = useState<'call' | 'put'>('call');
+
+  // Fetch stock price by ticker
+  const fetchStockPrice = useCallback(async () => {
+    if (!tickerSymbol.trim()) {
+      toast.error("Please enter a ticker symbol");
+      return;
+    }
+
+    const symbol = tickerSymbol.trim().toUpperCase();
+    setIsLoadingPrice(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-stock-data', {
+        body: { symbols: [symbol] }
+      });
+
+      if (error) throw error;
+
+      if (data?.stocks && data.stocks.length > 0) {
+        const stock = data.stocks[0];
+        if (stock.price && stock.price > 0) {
+          setStockPrice(parseFloat(stock.price.toFixed(2)));
+          setStockName(stock.name || symbol);
+          setLastFetchedSymbol(symbol);
+          // Set reasonable defaults based on price
+          setStrikePrice(Math.round(stock.price * 0.95 * 2) / 2); // 5% ITM, rounded to 0.50
+          setTargetPrice(Math.round(stock.price * 1.1 * 2) / 2); // 10% gain target
+          toast.success(`Loaded ${symbol} at $${stock.price.toFixed(2)}`);
+        } else {
+          toast.error(`No price data available for ${symbol}`);
+        }
+      } else {
+        toast.error(`Could not find stock: ${symbol}`);
+      }
+    } catch (error) {
+      console.error('Error fetching stock price:', error);
+      toast.error("Failed to fetch stock price. Please try again.");
+    } finally {
+      setIsLoadingPrice(false);
+    }
+  }, [tickerSymbol]);
+
+  const handleTickerKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      fetchStockPrice();
+    }
+  };
 
   const isITM = optionType === 'call' 
     ? stockPrice > strikePrice 
@@ -331,6 +386,41 @@ export const ITMOptionCalculator: React.FC = () => {
               <div className="space-y-4">
                 <h3 className="font-medium text-sm text-muted-foreground">Option Details</h3>
                 
+                {/* Ticker Symbol Search */}
+                <div className="space-y-2">
+                  <Label>Search by Ticker Symbol</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        type="text" 
+                        value={tickerSymbol}
+                        onChange={(e) => setTickerSymbol(e.target.value.toUpperCase())}
+                        onKeyDown={handleTickerKeyDown}
+                        placeholder="e.g. AAPL, TSLA, MSFT"
+                        className="pl-9"
+                        maxLength={10}
+                      />
+                    </div>
+                    <Button 
+                      onClick={fetchStockPrice} 
+                      disabled={isLoadingPrice || !tickerSymbol.trim()}
+                      size="default"
+                    >
+                      {isLoadingPrice ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Get Price"
+                      )}
+                    </Button>
+                  </div>
+                  {lastFetchedSymbol && stockName && (
+                    <p className="text-xs text-muted-foreground">
+                      Loaded: <span className="font-medium text-foreground">{stockName}</span> ({lastFetchedSymbol})
+                    </p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Option Type</Label>
