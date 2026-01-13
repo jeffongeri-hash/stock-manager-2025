@@ -74,9 +74,20 @@ export function SnaptradeConnection() {
         }
       );
 
-      if (registerError) throw registerError;
+      if (registerError) {
+        console.error("Register error:", registerError);
+        throw new Error(registerError.message || "Failed to register with Snaptrade");
+      }
+
+      if (registerData?.error) {
+        throw new Error(registerData.error);
+      }
 
       const userSecret = registerData.userSecret;
+
+      if (!userSecret) {
+        throw new Error("Failed to get user credentials from Snaptrade");
+      }
 
       // Step 2: Get login link
       const { data: loginData, error: loginError } = await supabase.functions.invoke(
@@ -86,12 +97,25 @@ export function SnaptradeConnection() {
             action: "getLoginLink",
             userId: user.id,
             userSecret,
-            redirectUri: `${window.location.origin}/settings?snaptrade=success`,
+            redirectUri: `${window.location.origin}/assets?snaptrade=success`,
           },
         }
       );
 
-      if (loginError) throw loginError;
+      if (loginError) {
+        console.error("Login link error:", loginError);
+        throw new Error(loginError.message || "Failed to get login link");
+      }
+
+      if (loginData?.error) {
+        throw new Error(loginData.error);
+      }
+
+      const loginUrl = loginData.redirectURI || loginData.loginLink;
+      
+      if (!loginUrl) {
+        throw new Error("No login URL received from Snaptrade");
+      }
 
       // Save connection info
       const newConnection: SnaptradeConnection = {
@@ -104,12 +128,23 @@ export function SnaptradeConnection() {
       setConnection(newConnection);
 
       // Open Snaptrade connection widget
-      window.open(loginData.redirectURI || loginData.loginLink, "_blank", "width=500,height=700");
+      const popup = window.open(loginUrl, "_blank", "width=500,height=700");
       
-      toast.success("Complete the connection in the popup window");
+      if (!popup) {
+        toast.error("Popup blocked! Please allow popups for this site and try again.");
+        return;
+      }
+      
+      toast.success("Complete the connection in the popup window. Return here when done.");
     } catch (error: any) {
       console.error("Connection error:", error);
-      toast.error(error.message || "Failed to connect to Snaptrade");
+      const errorMessage = error.message || "Failed to connect to Snaptrade";
+      
+      if (errorMessage.includes("credentials not configured")) {
+        toast.error("Snaptrade API is not configured. Please contact support.");
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
