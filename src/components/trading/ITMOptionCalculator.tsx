@@ -138,6 +138,8 @@ export const ITMOptionCalculator: React.FC = () => {
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
   const [stockName, setStockName] = useState<string | null>(null);
   const [lastFetchedSymbol, setLastFetchedSymbol] = useState<string | null>(null);
+  const [priceChange, setPriceChange] = useState<number | null>(null);
+  const [priceChangePercent, setPriceChangePercent] = useState<number | null>(null);
 
   // Input states
   const [stockPrice, setStockPrice] = useState(150);
@@ -173,6 +175,8 @@ export const ITMOptionCalculator: React.FC = () => {
           setStockPrice(parseFloat(stock.price.toFixed(2)));
           setStockName(stock.name || symbol);
           setLastFetchedSymbol(symbol);
+          setPriceChange(stock.change ?? null);
+          setPriceChangePercent(stock.changePercent ?? null);
           // Set reasonable defaults based on price
           setStrikePrice(Math.round(stock.price * 0.95 * 2) / 2); // 5% ITM, rounded to 0.50
           setTargetPrice(Math.round(stock.price * 1.1 * 2) / 2); // 10% gain target
@@ -415,9 +419,29 @@ export const ITMOptionCalculator: React.FC = () => {
                     </Button>
                   </div>
                   {lastFetchedSymbol && stockName && (
-                    <p className="text-xs text-muted-foreground">
-                      Loaded: <span className="font-medium text-foreground">{stockName}</span> ({lastFetchedSymbol})
-                    </p>
+                    <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{stockName}</span>
+                        <Badge variant="outline" className="text-xs">{lastFetchedSymbol}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold">${stockPrice.toFixed(2)}</span>
+                        {priceChange !== null && priceChangePercent !== null && (
+                          <div className={`flex items-center gap-1 text-xs font-medium ${
+                            priceChange >= 0 ? 'text-green-500' : 'text-red-500'
+                          }`}>
+                            {priceChange >= 0 ? (
+                              <TrendingUp className="h-3 w-3" />
+                            ) : (
+                              <TrendingDown className="h-3 w-3" />
+                            )}
+                            <span>
+                              {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePercent >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}%)
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
 
