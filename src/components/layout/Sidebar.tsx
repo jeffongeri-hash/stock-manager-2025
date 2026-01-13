@@ -5,7 +5,8 @@ import {
   TrendingUp, FolderKanban, Zap, BookOpen, Activity,
   TestTube, Users, Radar, FileText, BookMarked,
   Grid3X3, DollarSign, CalendarDays, GitCompare, Shield, Newspaper,
-  Scale, Webhook, Cpu, Eye, FlaskConical, Target, Building2, Car, GitCompareArrows
+  Scale, Webhook, Cpu, Eye, FlaskConical, Target, Building2, Car, GitCompareArrows,
+  Briefcase
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -118,8 +119,8 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/trading-toolkit',
     },
     {
-      title: 'Options Portfolio',
-      icon: FolderKanban,
+      title: 'Options Toolkit',
+      icon: Scale,
       href: '/options-portfolio',
     },
     {
