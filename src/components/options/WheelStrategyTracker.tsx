@@ -11,9 +11,10 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { 
   RefreshCw, Plus, Trash2, DollarSign, TrendingUp, TrendingDown, 
-  Target, Clock, CheckCircle2, ArrowRight, Zap, Shield
+  Target, Clock, CheckCircle2, ArrowRight, Zap, Shield, Search
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { WheelStrategyAnalyzer } from './WheelStrategyAnalyzer';
 
 interface WheelPosition {
   id: string;
@@ -309,12 +310,20 @@ export const WheelStrategyTracker = () => {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="positions" className="space-y-4">
-        <TabsList>
+      <Tabs defaultValue="analyzer" className="space-y-4">
+        <TabsList className="flex flex-wrap gap-1 h-auto">
+          <TabsTrigger value="analyzer" className="flex items-center gap-2">
+            <Search className="h-4 w-4" />
+            Analyzer
+          </TabsTrigger>
           <TabsTrigger value="positions">Active Positions</TabsTrigger>
           <TabsTrigger value="add">Add Position</TabsTrigger>
           <TabsTrigger value="history">Trade History</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="analyzer">
+          <WheelStrategyAnalyzer />
+        </TabsContent>
 
         <TabsContent value="positions">
           <Card>
