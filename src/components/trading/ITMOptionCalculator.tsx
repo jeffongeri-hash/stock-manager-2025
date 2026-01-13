@@ -79,12 +79,19 @@ const calculateGreeks = (
   const r = riskFreeRate;
   const sigma = volatility;
 
-  if (T <= 0) {
+  // Guard against invalid inputs that would cause NaN/Infinity
+  if (T <= 0 || S <= 0 || K <= 0 || sigma <= 0 || !isFinite(S) || !isFinite(K) || !isFinite(T) || !isFinite(sigma)) {
     return { delta: isCall ? 1 : -1, gamma: 0, theta: 0, vega: 0, rho: 0 };
   }
 
-  const d1 = (Math.log(S / K) + (r + (sigma * sigma) / 2) * T) / (sigma * Math.sqrt(T));
-  const d2 = d1 - sigma * Math.sqrt(T);
+  const sqrtT = Math.sqrt(T);
+  const d1 = (Math.log(S / K) + (r + (sigma * sigma) / 2) * T) / (sigma * sqrtT);
+  const d2 = d1 - sigma * sqrtT;
+
+  // Guard against NaN from calculations
+  if (!isFinite(d1) || !isFinite(d2)) {
+    return { delta: isCall ? 1 : -1, gamma: 0, theta: 0, vega: 0, rho: 0 };
+  }
 
   const Nd1 = normCDF(d1);
   const Nd2 = normCDF(d2);
@@ -97,21 +104,28 @@ const calculateGreeks = (
   // Delta
   const delta = isCall ? Nd1 : Nd1 - 1;
 
-  // Gamma
-  const gamma = nprime / (S * sigma * Math.sqrt(T));
+  // Gamma - guard against division by zero
+  const gammaDenom = S * sigma * sqrtT;
+  const gamma = gammaDenom > 0 ? nprime / gammaDenom : 0;
 
   // Theta (per day)
-  const thetaCall = (-(S * nprime * sigma) / (2 * Math.sqrt(T)) - r * K * Math.exp(-r * T) * Nd2) / 365;
-  const thetaPut = (-(S * nprime * sigma) / (2 * Math.sqrt(T)) + r * K * Math.exp(-r * T) * NNd2) / 365;
+  const expRT = Math.exp(-r * T);
+  const thetaCall = (-(S * nprime * sigma) / (2 * sqrtT) - r * K * expRT * Nd2) / 365;
+  const thetaPut = (-(S * nprime * sigma) / (2 * sqrtT) + r * K * expRT * NNd2) / 365;
   const theta = isCall ? thetaCall : thetaPut;
 
   // Vega (per 1% change in volatility)
-  const vega = (S * nprime * Math.sqrt(T)) / 100;
+  const vega = (S * nprime * sqrtT) / 100;
 
   // Rho (per 1% change in interest rate)
   const rho = isCall 
-    ? (K * T * Math.exp(-r * T) * Nd2) / 100 
-    : (-K * T * Math.exp(-r * T) * NNd2) / 100;
+    ? (K * T * expRT * Nd2) / 100 
+    : (-K * T * expRT * NNd2) / 100;
+
+  // Final safety check - return zeros if any result is NaN
+  if (!isFinite(delta) || !isFinite(gamma) || !isFinite(theta) || !isFinite(vega) || !isFinite(rho)) {
+    return { delta: isCall ? 1 : -1, gamma: 0, theta: 0, vega: 0, rho: 0 };
+  }
 
   return { delta, gamma, theta, vega, rho };
 };
