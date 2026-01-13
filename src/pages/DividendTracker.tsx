@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AnimatedStatsCard } from '@/components/ui/AnimatedStatsCard';
-import { DollarSign, TrendingUp, Calendar, Plus, Trash2, RefreshCw, PiggyBank, LineChart, ChevronLeft, ChevronRight, CalendarDays, Banknote, Calculator, GitCompare, Clock, Link2, Building2 } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, Plus, Trash2, RefreshCw, PiggyBank, LineChart, ChevronLeft, ChevronRight, CalendarDays, Banknote, Calculator, GitCompare, Clock, Link2, Building2, Save, Download, Loader2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,8 @@ import { ReverseDividendCalculator } from '@/components/dividends/ReverseDividen
 import { YieldOnCostTracker } from '@/components/dividends/YieldOnCostTracker';
 import { useSnaptrade } from '@/hooks/useSnaptrade';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DividendStock {
   id: string;
@@ -171,11 +173,14 @@ const SAMPLE_STOCKS: DividendStock[] = [
 ];
 
 export default function DividendTracker() {
+  const { user } = useAuth();
   const [stocks, setStocks] = useState<DividendStock[]>(SAMPLE_STOCKS);
   const [years, setYears] = useState(10);
   const [dividendGrowthRate, setDividendGrowthRate] = useState(5);
   const [calendarMonth, setCalendarMonth] = useState(new Date(2026, 0, 1)); // Start at Jan 2026 to match sample data
   const [selectedMonthView, setSelectedMonthView] = useState<string>('all');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [newStock, setNewStock] = useState({
     symbol: '',
     shares: 0,
@@ -186,6 +191,98 @@ export default function DividendTracker() {
   
   // Snaptrade integration for real brokerage data
   const snaptrade = useSnaptrade();
+
+  // Load saved stocks from database
+  const loadSavedStocks = useCallback(async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('saved_dividend_stocks')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const loadedStocks: DividendStock[] = data.map(d => ({
+          id: d.id,
+          symbol: d.symbol,
+          shares: Number(d.shares),
+          costBasis: Number(d.cost_basis),
+          annualDividend: Number(d.annual_dividend),
+          dividendYield: Number(d.dividend_yield),
+          frequency: (d.frequency as 'monthly' | 'quarterly' | 'annually') || 'quarterly',
+          nextExDate: d.next_ex_date || '2026-03-15',
+          paymentDate: d.payment_date || undefined,
+          dripEnabled: d.drip_enabled ?? true,
+          dividendHistory: DIVIDEND_HISTORY[d.symbol] || [],
+          dividendGrowthRate: DIVIDEND_HISTORY[d.symbol] ? calculateDividendCAGR(DIVIDEND_HISTORY[d.symbol]) : 0,
+        }));
+        setStocks(loadedStocks);
+        toast.success(`Loaded ${data.length} saved dividend stocks`);
+      }
+    } catch (error) {
+      console.error('Error loading stocks:', error);
+      toast.error('Failed to load saved stocks');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  // Save stocks to database
+  const saveStocks = async () => {
+    if (!user) {
+      toast.error('Please sign in to save your portfolio');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // First, delete existing saved stocks
+      await supabase
+        .from('saved_dividend_stocks')
+        .delete()
+        .eq('user_id', user.id);
+
+      // Then insert new ones
+      const stocksToSave = stocks.map(s => ({
+        user_id: user.id,
+        symbol: s.symbol,
+        shares: s.shares,
+        cost_basis: s.costBasis,
+        annual_dividend: s.annualDividend,
+        dividend_yield: s.dividendYield,
+        frequency: s.frequency,
+        next_ex_date: s.nextExDate || null,
+        payment_date: s.paymentDate || null,
+        drip_enabled: s.dripEnabled,
+      }));
+
+      if (stocksToSave.length > 0) {
+        const { error } = await supabase
+          .from('saved_dividend_stocks')
+          .insert(stocksToSave);
+
+        if (error) throw error;
+      }
+
+      toast.success(`Saved ${stocks.length} dividend stocks`);
+    } catch (error) {
+      console.error('Error saving stocks:', error);
+      toast.error('Failed to save portfolio');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Load stocks on mount if user is logged in
+  useEffect(() => {
+    if (user) {
+      loadSavedStocks();
+    }
+  }, [user, loadSavedStocks]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -634,6 +731,46 @@ export default function DividendTracker() {
                   <div className="flex items-end">
                     <Button onClick={addStock} className="w-full">
                       <Plus className="h-4 w-4 mr-2" /> Add
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Save/Load Controls */}
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    {user ? (
+                      <span>Signed in - your portfolio can be saved to the cloud</span>
+                    ) : (
+                      <span>Sign in to save your dividend portfolio</span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={loadSavedStocks}
+                      disabled={!user || isLoading}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4 mr-2" />
+                      )}
+                      Load Saved
+                    </Button>
+                    <Button 
+                      onClick={saveStocks}
+                      disabled={!user || isSaving}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-2" />
+                      )}
+                      Save Portfolio
                     </Button>
                   </div>
                 </div>

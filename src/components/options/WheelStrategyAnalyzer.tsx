@@ -10,11 +10,12 @@ import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Search, RefreshCw, TrendingUp, TrendingDown, DollarSign, 
-  Target, AlertTriangle, CheckCircle2, Info, Loader2, Star
+  Target, AlertTriangle, CheckCircle2, Info, Loader2, Star, Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useStockData } from '@/hooks/useStockData';
+import { useWatchlistActions } from '@/hooks/useWatchlistActions';
 
 interface WheelAnalysis {
   strikePrice: number;
@@ -40,6 +41,7 @@ interface StrikeAnalysis {
 }
 
 export const WheelStrategyAnalyzer = () => {
+  const { addToWatchlist, isLoggedIn } = useWatchlistActions();
   const [symbol, setSymbol] = useState('');
   const [searchedSymbol, setSearchedSymbol] = useState('');
   const [expiration, setExpiration] = useState('');
@@ -402,9 +404,20 @@ export const WheelStrategyAnalyzer = () => {
                 )}
               </Button>
               {searchedSymbol && (
-                <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isLoading}>
-                  <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                </Button>
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => addToWatchlist(searchedSymbol)}
+                    disabled={!isLoggedIn}
+                    title={!isLoggedIn ? 'Sign in to add to watchlist' : 'Add to watchlist'}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isLoading}>
+                    <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  </Button>
+                </>
               )}
             </div>
           </div>

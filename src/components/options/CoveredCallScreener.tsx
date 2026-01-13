@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Search, Filter, TrendingUp, DollarSign, Target } from 'lucide-react';
+import { Search, Filter, TrendingUp, DollarSign, Target, Eye } from 'lucide-react';
+import { useWatchlistActions } from '@/hooks/useWatchlistActions';
 
 interface CoveredCallOpportunity {
   id: string;
@@ -24,6 +25,7 @@ interface CoveredCallOpportunity {
 }
 
 export const CoveredCallScreener = () => {
+  const { addToWatchlist, isLoggedIn } = useWatchlistActions();
   const [symbols, setSymbols] = useState('AAPL, MSFT, GOOGL, AMZN, NVDA');
   const [maxDelta, setMaxDelta] = useState([0.30]);
   const [minPremium, setMinPremium] = useState([2]);
@@ -177,7 +179,21 @@ export const CoveredCallScreener = () => {
                 <TableBody>
                   {results.map((opp) => (
                     <TableRow key={opp.id}>
-                      <TableCell className="font-bold">{opp.symbol}</TableCell>
+                      <TableCell className="font-bold">
+                        <div className="flex items-center gap-2">
+                          {opp.symbol}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => addToWatchlist(opp.symbol)}
+                            disabled={!isLoggedIn}
+                            title={!isLoggedIn ? 'Sign in to add to watchlist' : 'Add to watchlist'}
+                          >
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell>${opp.stockPrice.toFixed(2)}</TableCell>
                       <TableCell>${opp.strikePrice}</TableCell>
                       <TableCell className="text-green-500 font-medium">
