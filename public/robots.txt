@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://profitpathway.app/sitemap.xml
+
+# Disallow admin/settings pages from indexing
+Disallow: /settings
+Disallow: /saved-data
+Disallow: /reports
