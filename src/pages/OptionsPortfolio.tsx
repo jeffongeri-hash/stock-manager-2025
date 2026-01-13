@@ -8,12 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, Plus, Calculator, FolderKanban, TrendingUp, Scale } from 'lucide-react';
+import { Trash2, Plus, FolderKanban, Scale, Search, Layers, Shield, BookOpen } from 'lucide-react';
 import { useStockData } from '@/hooks/useStockData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/utils/stocksApi';
 import { ITMOptionCalculator } from '@/components/trading/ITMOptionCalculator';
+import { CoveredCallScreener } from '@/components/options/CoveredCallScreener';
+import { OptionsChainViewer } from '@/components/options/OptionsChainViewer';
+import { IronCondorBuilder } from '@/components/options/IronCondorBuilder';
+import { OptionsStrategyBuilder } from '@/components/options/OptionsStrategyBuilder';
+import { Link } from 'react-router-dom';
 
 interface Trade {
   id: string;
@@ -43,7 +48,7 @@ export default function OptionsToolkit() {
 
   const { stocks } = useStockData([ticker]);
   const currentPrice = stocks[0]?.price || 0;
-  const stockIV = 25; // Default IV - can be customized
+  const stockIV = 25;
 
   useEffect(() => {
     if (currentPrice && !strike) {
@@ -58,33 +63,11 @@ export default function OptionsToolkit() {
     const a4 = -1.453152027;
     const a5 = 1.061405429;
     const p = 0.3275911;
-
     const sign = x < 0 ? -1 : 1;
     x = Math.abs(x);
-
     const t = 1.0 / (1.0 + p * x);
     const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-
     return sign * y;
-  };
-
-  const expectedMove = (stockPrice: number, ivPercent: number, days: number) => {
-    const ivVal = ivPercent / 100;
-    return stockPrice * ivVal * Math.sqrt(days / 365);
-  };
-
-  const probITM = (S: number, K: number, IV: number, tDays: number, optionType: string) => {
-    const T = tDays / 365;
-    const sigma = IV / 100;
-    const expectedMoveVal = S * sigma * Math.sqrt(T);
-    const d = (S - K) / expectedMoveVal;
-    const N = 0.5 * (1 + erf(d / Math.sqrt(2)));
-
-    if (optionType.toLowerCase() === 'call') {
-      return N;
-    } else {
-      return 1 - N;
-    }
   };
 
   const daysToExpiration = (expirationDate: string) => {
@@ -100,106 +83,58 @@ export default function OptionsToolkit() {
       toast.error('Please fill in all fields');
       return;
     }
-
     const days = daysToExpiration(expiration);
-    
     try {
       const { data, error } = await supabase.functions.invoke('fetch-options-data', {
-        body: {
-          symbol: ticker,
-          stockPrice: currentPrice,
-          strikePrice: parseFloat(strike),
-          daysToExpiry: days,
-          volatility: stockIV / 100,
-          optionType: type
-        }
+        body: { symbol: ticker, stockPrice: currentPrice, strikePrice: parseFloat(strike), daysToExpiry: days, volatility: stockIV / 100, optionType: type }
       });
-
       if (error) throw error;
-
       const probITM = Math.abs(data.greeks.delta);
-      
       let riskFlag = 'Neutral';
-      if (type === 'call' && currentPrice < parseFloat(strike) && probITM < 0.3) {
-        riskFlag = 'Safe';
-      } else if (type === 'put' && currentPrice > parseFloat(strike) && probITM < 0.3) {
-        riskFlag = 'Safe';
-      } else if (probITM > 0.7) {
-        riskFlag = 'Risky';
-      }
-
-      const trade: Trade = {
-        id: Date.now().toString(),
-        ticker: ticker.toUpperCase(),
-        type,
-        strike: parseFloat(strike),
-        expiration,
-        currentPrice,
-        iv: stockIV,
-        entryPrice: parseFloat(entryPrice),
-        buySell,
-        contracts: parseInt(contracts),
-        expectedMove: data.expectedMove.amount,
-        probITM: probITM * 100,
-        riskFlag
-      };
-
+      if (type === 'call' && currentPrice < parseFloat(strike) && probITM < 0.3) riskFlag = 'Safe';
+      else if (type === 'put' && currentPrice > parseFloat(strike) && probITM < 0.3) riskFlag = 'Safe';
+      else if (probITM > 0.7) riskFlag = 'Risky';
+      const trade: Trade = { id: Date.now().toString(), ticker: ticker.toUpperCase(), type, strike: parseFloat(strike), expiration, currentPrice, iv: stockIV, entryPrice: parseFloat(entryPrice), buySell, contracts: parseInt(contracts), expectedMove: data.expectedMove.amount, probITM: probITM * 100, riskFlag };
       setPortfolio([...portfolio, trade]);
       toast.success('Position added successfully');
-      
-      clearForm();
+      setStrike(''); setExpiration(''); setEntryPrice(''); setContracts('');
     } catch (err) {
       console.error('Error adding trade:', err);
       toast.error('Failed to add position');
     }
   };
 
-  const clearForm = () => {
-    setStrike('');
-    setExpiration('');
-    setEntryPrice('');
-    setContracts('');
-  };
-
-  const removePosition = (id: string) => {
-    setPortfolio(portfolio.filter(p => p.id !== id));
-    toast.success('Position removed');
-  };
-
-
-  const clearPortfolio = () => {
-    setPortfolio([]);
-  };
-
+  const removePosition = (id: string) => { setPortfolio(portfolio.filter(p => p.id !== id)); toast.success('Position removed'); };
+  const clearPortfolio = () => { setPortfolio([]); };
   const getRiskColor = (flag: string) => {
     switch (flag) {
-      case 'Safe':
-        return 'bg-green-500/10 text-green-500 border-green-500/50';
-      case 'Risky':
-        return 'bg-red-500/10 text-red-500 border-red-500/50';
-      default:
-        return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/50';
+      case 'Safe': return 'bg-green-500/10 text-green-500 border-green-500/50';
+      case 'Risky': return 'bg-red-500/10 text-red-500 border-red-500/50';
+      default: return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/50';
     }
   };
 
   const totalPL = portfolio.reduce((sum, trade) => {
     const multiplier = 100 * trade.contracts;
-    let pl;
-    if (trade.buySell.toLowerCase() === 'buy') {
-      pl = (trade.currentPrice - trade.entryPrice) * multiplier;
-    } else {
-      pl = (trade.entryPrice - trade.currentPrice) * multiplier;
-    }
+    let pl = trade.buySell.toLowerCase() === 'buy' ? (trade.currentPrice - trade.entryPrice) * multiplier : (trade.entryPrice - trade.currentPrice) * multiplier;
     return sum + pl;
   }, 0);
-
   const totalRisk = portfolio.filter(p => p.riskFlag === 'Risky').length;
   const totalSafe = portfolio.filter(p => p.riskFlag === 'Safe').length;
 
   return (
     <PageLayout title="Options Toolkit">
+      <div className="mb-4">
+        <Link to="/options-guide">
+          <Button variant="outline" className="gap-2">
+            <BookOpen className="h-4 w-4" />
+            Options Strategy Guide (LEAPS, Covered Calls, 0DTE)
+          </Button>
+        </Link>
+      </div>
+
       <Tabs defaultValue="portfolio" className="space-y-6">
-        <TabsList className="grid grid-cols-2 w-full max-w-md">
+        <TabsList className="flex flex-wrap gap-1 h-auto p-1">
           <TabsTrigger value="portfolio" className="flex items-center gap-2">
             <FolderKanban className="h-4 w-4" />
             Portfolio
@@ -207,6 +142,22 @@ export default function OptionsToolkit() {
           <TabsTrigger value="itm-calculator" className="flex items-center gap-2">
             <Scale className="h-4 w-4" />
             ITM vs Stock
+          </TabsTrigger>
+          <TabsTrigger value="covered-calls" className="flex items-center gap-2">
+            <Search className="h-4 w-4" />
+            CC Screener
+          </TabsTrigger>
+          <TabsTrigger value="chain" className="flex items-center gap-2">
+            <Layers className="h-4 w-4" />
+            Options Chain
+          </TabsTrigger>
+          <TabsTrigger value="iron-condor" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Iron Condor
+          </TabsTrigger>
+          <TabsTrigger value="strategy-builder" className="flex items-center gap-2">
+            <Layers className="h-4 w-4" />
+            Strategy Builder
           </TabsTrigger>
         </TabsList>
 
@@ -446,6 +397,22 @@ export default function OptionsToolkit() {
 
         <TabsContent value="itm-calculator">
           <ITMOptionCalculator />
+        </TabsContent>
+
+        <TabsContent value="covered-calls">
+          <CoveredCallScreener />
+        </TabsContent>
+
+        <TabsContent value="chain">
+          <OptionsChainViewer />
+        </TabsContent>
+
+        <TabsContent value="iron-condor">
+          <IronCondorBuilder />
+        </TabsContent>
+
+        <TabsContent value="strategy-builder">
+          <OptionsStrategyBuilder />
         </TabsContent>
       </Tabs>
     </PageLayout>
