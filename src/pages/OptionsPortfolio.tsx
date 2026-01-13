@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Plus } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Trash2, Plus, Calculator, FolderKanban, TrendingUp, Scale } from 'lucide-react';
 import { useStockData } from '@/hooks/useStockData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/utils/stocksApi';
+import { ITMOptionCalculator } from '@/components/trading/ITMOptionCalculator';
 
 interface Trade {
   id: string;
@@ -29,7 +31,7 @@ interface Trade {
   probITM?: number;
 }
 
-export default function OptionsPortfolio() {
+export default function OptionsToolkit() {
   const [portfolio, setPortfolio] = useState<Trade[]>([]);
   const [ticker, setTicker] = useState('AAPL');
   const [type, setType] = useState('call');
@@ -195,47 +197,60 @@ export default function OptionsPortfolio() {
   const totalSafe = portfolio.filter(p => p.riskFlag === 'Safe').length;
 
   return (
-    <PageLayout title="Options Portfolio & Risk Analyzer">
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Total P&L</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className={`text-3xl font-bold ${totalPL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {formatCurrency(totalPL)}
-              </p>
-            </CardContent>
-          </Card>
+    <PageLayout title="Options Toolkit">
+      <Tabs defaultValue="portfolio" className="space-y-6">
+        <TabsList className="grid grid-cols-2 w-full max-w-md">
+          <TabsTrigger value="portfolio" className="flex items-center gap-2">
+            <FolderKanban className="h-4 w-4" />
+            Portfolio
+          </TabsTrigger>
+          <TabsTrigger value="itm-calculator" className="flex items-center gap-2">
+            <Scale className="h-4 w-4" />
+            ITM vs Stock
+          </TabsTrigger>
+        </TabsList>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Total Positions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{portfolio.length}</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="portfolio">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Total P&L</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className={`text-3xl font-bold ${totalPL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {formatCurrency(totalPL)}
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Safe Positions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-green-500">{totalSafe}</p>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Total Positions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">{portfolio.length}</p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Risky Positions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-red-500">{totalRisk}</p>
-            </CardContent>
-          </Card>
-        </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Safe Positions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-green-500">{totalSafe}</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Risky Positions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-red-500">{totalRisk}</p>
+                </CardContent>
+              </Card>
+            </div>
 
         <Card>
           <CardHeader>
@@ -424,9 +439,15 @@ export default function OptionsPortfolio() {
                 </ul>
               </div>
             </CardContent>
-          </Card>
-        )}
-      </div>
+            </Card>
+          )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="itm-calculator">
+          <ITMOptionCalculator />
+        </TabsContent>
+      </Tabs>
     </PageLayout>
   );
 }
