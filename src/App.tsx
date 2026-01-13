@@ -26,6 +26,7 @@ const MarketScanner = lazy(() => import("./pages/MarketScanner"));
 const Reports = lazy(() => import("./pages/Reports"));
 const CreditOptionsGuide = lazy(() => import("./pages/CreditOptionsGuide"));
 const FundamentalAnalysisGuide = lazy(() => import("./pages/FundamentalAnalysisGuide"));
+const OptionsGuide = lazy(() => import("./pages/OptionsGuide"));
 
 const DividendTracker = lazy(() => import("./pages/DividendTracker"));
 const EconomicCalendar = lazy(() => import("./pages/EconomicCalendar"));
@@ -87,6 +88,7 @@ const App = () => (
                 <Route path="/market-scanner" element={<ProtectedRoute><MarketScanner /></ProtectedRoute>} />
                 <Route path="/credit-options-guide" element={<ProtectedRoute><CreditOptionsGuide /></ProtectedRoute>} />
                 <Route path="/fundamental-analysis-guide" element={<ProtectedRoute><FundamentalAnalysisGuide /></ProtectedRoute>} />
+                <Route path="/options-guide" element={<ProtectedRoute><OptionsGuide /></ProtectedRoute>} />
                 <Route path="/dividend-tracker" element={<ProtectedRoute><DividendTracker /></ProtectedRoute>} />
                 <Route path="/economic-calendar" element={<ProtectedRoute><EconomicCalendar /></ProtectedRoute>} />
                 <Route path="/risk-metrics" element={<ProtectedRoute><RiskMetrics /></ProtectedRoute>} />
