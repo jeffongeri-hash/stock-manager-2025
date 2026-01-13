@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trash2, Plus, FolderKanban, Scale, Search, Layers, Shield, BookOpen, Calculator, DollarSign } from 'lucide-react';
+import { Trash2, Plus, FolderKanban, Scale, Search, Layers, Shield, BookOpen, Calculator, DollarSign, RefreshCw } from 'lucide-react';
 import { useStockData } from '@/hooks/useStockData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -20,6 +20,7 @@ import { IronCondorBuilder } from '@/components/options/IronCondorBuilder';
 import { OptionsStrategyBuilder } from '@/components/options/OptionsStrategyBuilder';
 import { CoveredCallAnalyzer } from '@/components/options/CoveredCallAnalyzer';
 import { PoorMansCalculator } from '@/components/options/PoorMansCalulator';
+import { WheelStrategyTracker } from '@/components/options/WheelStrategyTracker';
 import { Link } from 'react-router-dom';
 
 interface Trade {
@@ -168,6 +169,10 @@ export default function OptionsToolkit() {
           <TabsTrigger value="pmcc" className="flex items-center gap-2">
             <Calculator className="h-4 w-4" />
             PMCC
+          </TabsTrigger>
+          <TabsTrigger value="wheel" className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Wheel
           </TabsTrigger>
         </TabsList>
 
@@ -431,6 +436,10 @@ export default function OptionsToolkit() {
 
         <TabsContent value="pmcc">
           <PoorMansCalculator />
+        </TabsContent>
+
+        <TabsContent value="wheel">
+          <WheelStrategyTracker />
         </TabsContent>
       </Tabs>
     </PageLayout>
