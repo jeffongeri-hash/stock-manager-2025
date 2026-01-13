@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/stocksApi';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Search } from 'lucide-react';
+import { Search, RefreshCw, Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface Results {
   stockPrice: number;
@@ -34,6 +35,9 @@ export default function ZeroDTE() {
   const [thetaPerHour, setThetaPerHour] = useState('0.1');
   const [results, setResults] = useState<Results | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(false);
+  const [stockName, setStockName] = useState<string | null>(null);
+  const [priceChange, setPriceChange] = useState<number | null>(null);
+  const [priceChangePercent, setPriceChangePercent] = useState<number | null>(null);
 
   const erf = (x: number): number => {
     const a1 = 0.254829592;
@@ -117,8 +121,10 @@ export default function ZeroDTE() {
     calculateAndVisualize();
   }, []);
 
-  const fetchStockPrice = async () => {
-    if (!symbol.trim()) {
+  const fetchStockPrice = useCallback(async (symbolOverride?: string) => {
+    const symbolToFetch = symbolOverride || symbol.trim().toUpperCase();
+    
+    if (!symbolToFetch) {
       toast.error('Please enter a stock symbol');
       return;
     }
@@ -126,7 +132,7 @@ export default function ZeroDTE() {
     setLoadingPrice(true);
     try {
       const { data, error } = await supabase.functions.invoke('fetch-stock-data', {
-        body: { symbols: [symbol.toUpperCase()] }
+        body: { symbols: [symbolToFetch] }
       });
 
       if (error) throw error;
@@ -134,7 +140,11 @@ export default function ZeroDTE() {
       if (data?.stocks && data.stocks.length > 0) {
         const stock = data.stocks[0];
         setStockPrice(stock.price.toString());
-        toast.success(`Updated price for ${stock.name}: $${stock.price}`);
+        setStockName(stock.name || symbolToFetch);
+        setPriceChange(stock.change ?? null);
+        setPriceChangePercent(stock.changePercent ?? null);
+        if (!symbolOverride) setSymbol(symbolToFetch);
+        toast.success(`Updated price for ${stock.name}: $${stock.price.toFixed(2)}`);
       }
     } catch (err) {
       console.error('Error fetching stock price:', err);
@@ -142,7 +152,13 @@ export default function ZeroDTE() {
     } finally {
       setLoadingPrice(false);
     }
-  };
+  }, [symbol]);
+
+  const handleRefresh = useCallback(() => {
+    if (symbol.trim()) {
+      fetchStockPrice(symbol.trim().toUpperCase());
+    }
+  }, [symbol, fetchStockPrice]);
 
   const getRiskLevel = () => {
     if (!results) return 'medium';
@@ -173,10 +189,40 @@ export default function ZeroDTE() {
                     value={symbol}
                     onChange={(e) => setSymbol(e.target.value.toUpperCase())}
                   />
-                  <Button onClick={fetchStockPrice} disabled={loadingPrice} size="icon">
-                    <Search className="h-4 w-4" />
+                  <Button onClick={() => fetchStockPrice()} disabled={loadingPrice} size="icon">
+                    {loadingPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                   </Button>
+                  {stockName && (
+                    <Button onClick={handleRefresh} disabled={loadingPrice} size="icon" variant="outline" title="Refresh price">
+                      <RefreshCw className={`h-4 w-4 ${loadingPrice ? 'animate-spin' : ''}`} />
+                    </Button>
+                  )}
                 </div>
+                {stockName && (
+                  <div className="flex items-center justify-between p-2 mt-2 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{stockName}</span>
+                      <Badge variant="outline" className="text-xs">{symbol}</Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold">${parseFloat(stockPrice).toFixed(2)}</span>
+                      {priceChange !== null && priceChangePercent !== null && (
+                        <div className={`flex items-center gap-1 text-xs font-medium ${
+                          priceChange >= 0 ? 'text-green-500' : 'text-red-500'
+                        }`}>
+                          {priceChange >= 0 ? (
+                            <TrendingUp className="h-3 w-3" />
+                          ) : (
+                            <TrendingDown className="h-3 w-3" />
+                          )}
+                          <span>
+                            {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePercent >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}%)
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <Label htmlFor="stockPrice">Stock Price ($)</Label>

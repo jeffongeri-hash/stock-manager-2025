@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Search, TrendingUp, TrendingDown, BarChart3, MessageSquare, LineChart, Loader2, X, Plus, Check } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, BarChart3, MessageSquare, LineChart, Loader2, X, Plus, Check, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/hooks/useAuth';
@@ -42,6 +42,7 @@ export default function StockResearch() {
   const [results, setResults] = useState<StockResearchResult[]>([]);
   const [addingToWatchlist, setAddingToWatchlist] = useState<string | null>(null);
   const [addedSymbols, setAddedSymbols] = useState<Set<string>>(new Set());
+  const [lastSearchedSymbols, setLastSearchedSymbols] = useState<string[]>([]);
   const { user } = useAuth();
 
   const formatNumber = (num: number) => {
@@ -76,6 +77,7 @@ export default function StockResearch() {
 
     setLoading(true);
     setResults([]);
+    setLastSearchedSymbols(symbols);
 
     try {
       const researchResults: StockResearchResult[] = [];
@@ -149,6 +151,13 @@ export default function StockResearch() {
       toast.error('Failed to complete research');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    if (lastSearchedSymbols.length > 0) {
+      setSymbolInput(lastSearchedSymbols.join(', '));
+      handleSearch();
     }
   };
 
@@ -228,6 +237,11 @@ export default function StockResearch() {
                 )}
                 Research
               </Button>
+              {lastSearchedSymbols.length > 0 && results.length > 0 && (
+                <Button onClick={handleRefresh} disabled={loading} variant="outline" title="Refresh research">
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

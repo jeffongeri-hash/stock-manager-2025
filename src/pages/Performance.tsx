@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
+import { Trash2, RefreshCw, Loader2 } from 'lucide-react';
 
 interface StockTrade {
   id: string;
@@ -492,6 +492,11 @@ const Performance = () => {
                   variant="outline"
                   disabled={loadingPrices || openPositionsBreakdown.length === 0}
                 >
+                  {loadingPrices ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
                   {loadingPrices ? 'Refreshing...' : 'Refresh Prices'}
                 </Button>
               </div>
