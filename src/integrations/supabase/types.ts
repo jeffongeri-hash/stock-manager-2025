@@ -590,6 +590,54 @@ export type Database = {
           },
         ]
       }
+      saved_dividend_stocks: {
+        Row: {
+          annual_dividend: number
+          cost_basis: number
+          created_at: string
+          dividend_yield: number
+          drip_enabled: boolean
+          frequency: string
+          id: string
+          next_ex_date: string | null
+          payment_date: string | null
+          shares: number
+          symbol: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          annual_dividend?: number
+          cost_basis?: number
+          created_at?: string
+          dividend_yield?: number
+          drip_enabled?: boolean
+          frequency?: string
+          id?: string
+          next_ex_date?: string | null
+          payment_date?: string | null
+          shares?: number
+          symbol: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          annual_dividend?: number
+          cost_basis?: number
+          created_at?: string
+          dividend_yield?: number
+          drip_enabled?: boolean
+          frequency?: string
+          id?: string
+          next_ex_date?: string | null
+          payment_date?: string | null
+          shares?: number
+          symbol?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_etf_comparisons: {
         Row: {
           created_at: string

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Calculator, TrendingUp, TrendingDown, DollarSign, 
   Clock, Target, AlertTriangle, CheckCircle2, Info,
-  ArrowUpRight, ArrowDownRight, Scale, Search, Loader2, RefreshCw
+  ArrowUpRight, ArrowDownRight, Scale, Search, Loader2, RefreshCw, Eye
 } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useWatchlistActions } from "@/hooks/useWatchlistActions";
 
 interface GreeksData {
   delta: number;
@@ -133,6 +134,8 @@ const calculateGreeks = (
 };
 
 export const ITMOptionCalculator: React.FC = () => {
+  const { addToWatchlist, isLoggedIn } = useWatchlistActions();
+  
   // Ticker search states
   const [tickerSymbol, setTickerSymbol] = useState("");
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
@@ -427,6 +430,15 @@ export const ITMOptionCalculator: React.FC = () => {
                       )}
                     </Button>
                     {lastFetchedSymbol && (
+                      <Button
+                        onClick={() => addToWatchlist(lastFetchedSymbol)}
+                        disabled={!isLoggedIn}
+                        size="icon"
+                        variant="outline"
+                        title={!isLoggedIn ? 'Sign in to add to watchlist' : 'Add to watchlist'}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Button
                         onClick={handleRefresh}
                         disabled={isLoadingPrice}
