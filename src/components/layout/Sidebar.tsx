@@ -204,6 +204,11 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/credit-options-guide',
     },
     {
+      title: 'Options Strategy Guide',
+      icon: BookOpen,
+      href: '/options-guide',
+    },
+    {
       title: 'Fundamental Analysis Guide',
       icon: Activity,
       href: '/fundamental-analysis-guide',
