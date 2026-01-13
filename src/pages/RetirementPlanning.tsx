@@ -28,6 +28,7 @@ import { FireProgressBar } from '@/components/retirement/FireProgressBar';
 import { SpendingBreakdownCalculator } from '@/components/retirement/SpendingBreakdownCalculator';
 import { TaxAwareWithdrawalOptimizer } from '@/components/retirement/TaxAwareWithdrawalOptimizer';
 import { ScenarioComparison } from '@/components/retirement/ScenarioComparison';
+import { CoastFireMilestoneChart } from '@/components/retirement/CoastFireMilestoneChart';
 import { useUserSettings } from '@/hooks/useUserSettings';
 
 interface RetirementSettings {
@@ -453,6 +454,16 @@ const RetirementPlanning = () => {
           yearsToRetirement={projRetirementAge - projCurrentAge}
           projectedAtRetirement={retirementMetrics.portfolioAtRetirement}
           inflationRate={projInflation}
+        />
+
+        {/* Coast FIRE Milestone Chart */}
+        <CoastFireMilestoneChart
+          currentSavings={projCurrentSavings}
+          currentAge={projCurrentAge}
+          targetRetirementAge={projRetirementAge}
+          expectedReturn={projExpectedReturn}
+          monthlyContribution={projMonthlyContrib}
+          annualSpending={annualSpendingPostRetirement}
         />
 
         <Tabs defaultValue="crossover" className="space-y-4">

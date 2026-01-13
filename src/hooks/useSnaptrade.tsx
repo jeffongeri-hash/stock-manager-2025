@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -52,9 +52,13 @@ interface SnaptradeData {
   dividends: SnaptradeDividend[];
   isLoading: boolean;
   error: string | null;
+  lastSyncTime: Date | null;
 }
 
-export function useSnaptrade() {
+// Auto-sync interval in milliseconds (5 minutes)
+const AUTO_SYNC_INTERVAL = 5 * 60 * 1000;
+
+export function useSnaptrade(autoSync: boolean = true) {
   const { user } = useAuth();
   const [data, setData] = useState<SnaptradeData>({
     connection: null,
@@ -62,7 +66,10 @@ export function useSnaptrade() {
     dividends: [],
     isLoading: true,
     error: null,
+    lastSyncTime: null,
   });
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
 
   const loadConnection = useCallback(async () => {
     if (!user) {
@@ -121,22 +128,27 @@ export function useSnaptrade() {
         }
       });
 
-      setData(prev => ({
-        ...prev,
-        holdings,
-        isLoading: false,
-        error: null,
-      }));
+      if (isMountedRef.current) {
+        setData(prev => ({
+          ...prev,
+          holdings,
+          isLoading: false,
+          error: null,
+          lastSyncTime: new Date(),
+        }));
+      }
 
       // Also try to fetch transactions for dividends
       await fetchDividends(userSecret);
     } catch (error: any) {
       console.error("Error fetching holdings:", error);
-      setData(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error.message || "Failed to fetch holdings",
-      }));
+      if (isMountedRef.current) {
+        setData(prev => ({
+          ...prev,
+          isLoading: false,
+          error: error.message || "Failed to fetch holdings",
+        }));
+      }
     }
   };
 
@@ -163,10 +175,12 @@ export function useSnaptrade() {
           account_id: t.account?.id || "",
         }));
 
-      setData(prev => ({
-        ...prev,
-        dividends,
-      }));
+      if (isMountedRef.current) {
+        setData(prev => ({
+          ...prev,
+          dividends,
+        }));
+      }
     } catch (error) {
       console.error("Error fetching dividends:", error);
       // Don't fail the whole hook if dividends fail
@@ -180,9 +194,47 @@ export function useSnaptrade() {
     await fetchHoldings(data.connection!.userSecret);
   }, [user, data.connection]);
 
+  // Initial load
   useEffect(() => {
     loadConnection();
   }, [loadConnection]);
+
+  // Auto-sync setup
+  useEffect(() => {
+    if (!autoSync || !data.connection?.isConnected || !data.connection?.userSecret) {
+      return;
+    }
+
+    // Clear any existing interval
+    if (syncIntervalRef.current) {
+      clearInterval(syncIntervalRef.current);
+    }
+
+    // Set up periodic sync
+    syncIntervalRef.current = setInterval(() => {
+      if (data.connection?.userSecret && isMountedRef.current) {
+        console.log("[Snaptrade] Auto-sync triggered");
+        fetchHoldings(data.connection.userSecret);
+      }
+    }, AUTO_SYNC_INTERVAL);
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
+    };
+  }, [autoSync, data.connection?.isConnected, data.connection?.userSecret]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Check URL for Snaptrade success callback
   useEffect(() => {
