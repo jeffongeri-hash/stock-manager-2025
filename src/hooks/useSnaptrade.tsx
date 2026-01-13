@@ -248,7 +248,7 @@ export function useSnaptrade(autoSync: boolean = true) {
         localStorage.setItem(`snaptrade_${user.id}`, JSON.stringify(parsed));
         setData(prev => ({ ...prev, connection: parsed }));
         
-        // Clean URL
+        // Clean URL - handle both /settings and /assets pages
         window.history.replaceState({}, document.title, window.location.pathname);
         
         // Fetch data

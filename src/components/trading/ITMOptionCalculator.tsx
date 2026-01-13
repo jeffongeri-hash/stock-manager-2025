@@ -147,7 +147,7 @@ export const ITMOptionCalculator: React.FC = () => {
   const [optionPremium, setOptionPremium] = useState(15);
   const [daysToExpiry, setDaysToExpiry] = useState(45);
   const [contracts, setContracts] = useState(1);
-  const [targetPrice, setTargetPrice] = useState(165);
+  const [targetPrice, setTargetPrice] = useState(165); // Price you expect the stock to reach
   const [volatility, setVolatility] = useState(30);
   const [riskFreeRate, setRiskFreeRate] = useState(5);
   const [optionType, setOptionType] = useState<'call' | 'put'>('call');
@@ -540,7 +540,15 @@ export const ITMOptionCalculator: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Target Price (for comparison)</Label>
+                  <div className="flex items-center gap-2">
+                    <Label>Target Price</Label>
+                    <div className="group relative">
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                      <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 text-xs bg-popover border border-border rounded-md shadow-lg z-10">
+                        <strong>Target Price</strong> is the price you expect the stock to reach by expiration. This is used to calculate and compare potential profits between buying stock vs. buying the option.
+                      </div>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">$</span>
                     <Input 
@@ -548,8 +556,12 @@ export const ITMOptionCalculator: React.FC = () => {
                       value={targetPrice} 
                       onChange={(e) => setTargetPrice(Number(e.target.value))}
                       step={0.5}
+                      placeholder="Expected stock price at expiry"
                     />
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Your price prediction for {lastFetchedSymbol || 'the stock'} at expiration
+                  </p>
                 </div>
 
                 <div className="space-y-2">
