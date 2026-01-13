@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Calculator, TrendingUp, TrendingDown, DollarSign, 
   Clock, Target, AlertTriangle, CheckCircle2, Info,
-  ArrowUpRight, ArrowDownRight, Scale, Search, Loader2
+  ArrowUpRight, ArrowDownRight, Scale, Search, Loader2, RefreshCw
 } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -153,18 +153,19 @@ export const ITMOptionCalculator: React.FC = () => {
   const [optionType, setOptionType] = useState<'call' | 'put'>('call');
 
   // Fetch stock price by ticker
-  const fetchStockPrice = useCallback(async () => {
-    if (!tickerSymbol.trim()) {
+  const fetchStockPrice = useCallback(async (symbolOverride?: string) => {
+    const symbolToFetch = symbolOverride || tickerSymbol.trim().toUpperCase();
+    
+    if (!symbolToFetch) {
       toast.error("Please enter a ticker symbol");
       return;
     }
 
-    const symbol = tickerSymbol.trim().toUpperCase();
     setIsLoadingPrice(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('fetch-stock-data', {
-        body: { symbols: [symbol] }
+        body: { symbols: [symbolToFetch] }
       });
 
       if (error) throw error;
@@ -173,19 +174,21 @@ export const ITMOptionCalculator: React.FC = () => {
         const stock = data.stocks[0];
         if (stock.price && stock.price > 0) {
           setStockPrice(parseFloat(stock.price.toFixed(2)));
-          setStockName(stock.name || symbol);
-          setLastFetchedSymbol(symbol);
+          setStockName(stock.name || symbolToFetch);
+          setLastFetchedSymbol(symbolToFetch);
           setPriceChange(stock.change ?? null);
           setPriceChangePercent(stock.changePercent ?? null);
-          // Set reasonable defaults based on price
-          setStrikePrice(Math.round(stock.price * 0.95 * 2) / 2); // 5% ITM, rounded to 0.50
-          setTargetPrice(Math.round(stock.price * 1.1 * 2) / 2); // 10% gain target
-          toast.success(`Loaded ${symbol} at $${stock.price.toFixed(2)}`);
+          // Set reasonable defaults based on price (only on initial fetch)
+          if (!symbolOverride) {
+            setStrikePrice(Math.round(stock.price * 0.95 * 2) / 2); // 5% ITM, rounded to 0.50
+            setTargetPrice(Math.round(stock.price * 1.1 * 2) / 2); // 10% gain target
+          }
+          toast.success(`Loaded ${symbolToFetch} at $${stock.price.toFixed(2)}`);
         } else {
-          toast.error(`No price data available for ${symbol}`);
+          toast.error(`No price data available for ${symbolToFetch}`);
         }
       } else {
-        toast.error(`Could not find stock: ${symbol}`);
+        toast.error(`Could not find stock: ${symbolToFetch}`);
       }
     } catch (error) {
       console.error('Error fetching stock price:', error);
@@ -194,6 +197,12 @@ export const ITMOptionCalculator: React.FC = () => {
       setIsLoadingPrice(false);
     }
   }, [tickerSymbol]);
+
+  const handleRefresh = useCallback(() => {
+    if (lastFetchedSymbol) {
+      fetchStockPrice(lastFetchedSymbol);
+    }
+  }, [lastFetchedSymbol, fetchStockPrice]);
 
   const handleTickerKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -407,7 +416,7 @@ export const ITMOptionCalculator: React.FC = () => {
                       />
                     </div>
                     <Button 
-                      onClick={fetchStockPrice} 
+                      onClick={() => fetchStockPrice()} 
                       disabled={isLoadingPrice || !tickerSymbol.trim()}
                       size="default"
                     >
@@ -417,6 +426,17 @@ export const ITMOptionCalculator: React.FC = () => {
                         "Get Price"
                       )}
                     </Button>
+                    {lastFetchedSymbol && (
+                      <Button
+                        onClick={handleRefresh}
+                        disabled={isLoadingPrice}
+                        size="icon"
+                        variant="outline"
+                        title="Refresh price"
+                      >
+                        <RefreshCw className={`h-4 w-4 ${isLoadingPrice ? 'animate-spin' : ''}`} />
+                      </Button>
+                    )}
                   </div>
                   {lastFetchedSymbol && stockName && (
                     <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
