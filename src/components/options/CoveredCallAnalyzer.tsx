@@ -7,9 +7,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useStockData } from '@/hooks/useStockData';
-import { Search, TrendingUp, DollarSign, Target, RefreshCw, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Search, TrendingUp, DollarSign, Target, RefreshCw, AlertCircle, Eye, List } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface OptionsData {
@@ -30,12 +32,53 @@ interface OptionsData {
 }
 
 export const CoveredCallAnalyzer = () => {
+  const { user } = useAuth();
   const [symbols, setSymbols] = useState('AAPL, MSFT, GOOGL');
   const [targetDelta, setTargetDelta] = useState([0.25]);
   const [daysToExpiry, setDaysToExpiry] = useState([30]);
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<OptionsData[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [useWatchlist, setUseWatchlist] = useState(false);
+  const [watchlistSymbols, setWatchlistSymbols] = useState<string[]>([]);
+  const [loadingWatchlist, setLoadingWatchlist] = useState(false);
+
+  // Fetch watchlist symbols
+  useEffect(() => {
+    const fetchWatchlist = async () => {
+      if (!user) return;
+      
+      setLoadingWatchlist(true);
+      try {
+        const { data, error } = await supabase
+          .from('watchlist')
+          .select('symbol')
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
+        
+        const symbols = data?.map(item => item.symbol) || [];
+        setWatchlistSymbols(symbols);
+        
+        if (useWatchlist && symbols.length > 0) {
+          setSymbols(symbols.join(', '));
+        }
+      } catch (err) {
+        console.error('Error fetching watchlist:', err);
+      } finally {
+        setLoadingWatchlist(false);
+      }
+    };
+
+    fetchWatchlist();
+  }, [user]);
+
+  // Update symbols when toggling watchlist
+  useEffect(() => {
+    if (useWatchlist && watchlistSymbols.length > 0) {
+      setSymbols(watchlistSymbols.join(', '));
+    }
+  }, [useWatchlist, watchlistSymbols]);
 
   const symbolList = symbols.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
   const { stocks, loading: stocksLoading } = useStockData(symbolList);
@@ -139,17 +182,51 @@ export const CoveredCallAnalyzer = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Watchlist Integration Toggle */}
+          {user && watchlistSymbols.length > 0 && (
+            <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg border">
+              <div className="flex items-center gap-3">
+                <Eye className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium">Use Watchlist</p>
+                  <p className="text-sm text-muted-foreground">
+                    Analyze {watchlistSymbols.length} stocks from your watchlist
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={useWatchlist}
+                onCheckedChange={setUseWatchlist}
+                disabled={loadingWatchlist}
+              />
+            </div>
+          )}
+
+          {!user && (
+            <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+              <List className="h-4 w-4" />
+              Sign in to automatically analyze stocks from your watchlist
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-2 space-y-2">
               <Label>Stock Symbols (comma-separated)</Label>
               <Input
                 value={symbols}
-                onChange={(e) => setSymbols(e.target.value)}
+                onChange={(e) => {
+                  setSymbols(e.target.value);
+                  if (useWatchlist) setUseWatchlist(false);
+                }}
                 placeholder="AAPL, MSFT, GOOGL, NVDA"
+                disabled={useWatchlist}
               />
-              <p className="text-xs text-muted-foreground">
-                Enter watchlist symbols to analyze covered call opportunities
-              </p>
+              {useWatchlist && (
+                <Badge variant="outline" className="gap-1">
+                  <Eye className="h-3 w-3" />
+                  Using watchlist symbols
+                </Badge>
+              )}
             </div>
 
             <div className="space-y-2">
