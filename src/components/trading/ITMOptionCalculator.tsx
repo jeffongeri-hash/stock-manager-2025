@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Calculator, TrendingUp, TrendingDown, DollarSign, 
   Clock, Target, AlertTriangle, CheckCircle2, Info,
-  ArrowUpRight, ArrowDownRight, Scale, Search, Loader2, RefreshCw, Eye
+  ArrowUpRight, ArrowDownRight, Scale, Loader2, RefreshCw, Eye
 } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -19,6 +19,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useWatchlistActions } from "@/hooks/useWatchlistActions";
+import { TickerAutocomplete } from "@/components/trading/TickerAutocomplete";
 
 interface GreeksData {
   delta: number;
@@ -404,20 +405,20 @@ export const ITMOptionCalculator: React.FC = () => {
                 
                 {/* Ticker Symbol Search */}
                 <div className="space-y-2">
-                  <Label>Search by Ticker Symbol</Label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        type="text" 
-                        value={tickerSymbol}
-                        onChange={(e) => setTickerSymbol(e.target.value.toUpperCase())}
-                        onKeyDown={handleTickerKeyDown}
-                        placeholder="e.g. AAPL, TSLA, MSFT"
-                        className="pl-9"
-                        maxLength={10}
-                      />
-                    </div>
+                  <div className="flex gap-2 items-end">
+                    <TickerAutocomplete
+                      value={tickerSymbol}
+                      onChange={setTickerSymbol}
+                      onSelect={(symbol) => {
+                        setTickerSymbol(symbol);
+                        fetchStockPrice(symbol);
+                      }}
+                      onKeyDown={handleTickerKeyDown}
+                      label="Search by Ticker Symbol"
+                      placeholder="e.g. AAPL, TSLA, MSFT"
+                      className="flex-1"
+                      isLoading={isLoadingPrice}
+                    />
                     <Button 
                       onClick={() => fetchStockPrice()} 
                       disabled={isLoadingPrice || !tickerSymbol.trim()}
