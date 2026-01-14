@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +10,7 @@ import { Search, TrendingUp, TrendingDown, BarChart3, MessageSquare, LineChart, 
 import { Skeleton } from '@/components/ui/skeleton';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/hooks/useAuth';
+import { TickerAutocomplete } from '@/components/trading/TickerAutocomplete';
 
 interface StockData {
   symbol: string;
@@ -221,13 +221,15 @@ export default function StockResearch() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <Input
-                placeholder="Enter symbols (e.g., AAPL, MSFT, GOOGL)"
+            <div className="flex gap-4 items-end">
+              <TickerAutocomplete
                 value={symbolInput}
-                onChange={(e) => setSymbolInput(e.target.value.toUpperCase())}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onChange={setSymbolInput}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                label="Stock Symbols"
+                placeholder="Enter symbols (e.g., AAPL, MSFT, GOOGL)"
                 className="flex-1"
+                isLoading={loading}
               />
               <Button onClick={handleSearch} disabled={loading}>
                 {loading ? (

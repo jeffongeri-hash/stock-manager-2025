@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Search, Loader2, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { Loader2, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TickerAutocomplete } from "./TickerAutocomplete";
 
 export interface StockData {
   symbol: string;
@@ -104,22 +104,25 @@ export function TickerSearch({
     }
   };
 
+  const handleSelect = (symbol: string) => {
+    setTickerSymbol(symbol);
+    fetchStockPrice(symbol);
+  };
+
   return (
     <div className={`space-y-2 ${className}`}>
-      {showLabel && <Label>{label}</Label>}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            type="text" 
-            value={tickerSymbol}
-            onChange={(e) => setTickerSymbol(e.target.value.toUpperCase())}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            className="pl-9"
-            maxLength={10}
-          />
-        </div>
+      <div className="flex gap-2 items-end">
+        <TickerAutocomplete
+          value={tickerSymbol}
+          onChange={setTickerSymbol}
+          onSelect={handleSelect}
+          onKeyDown={handleKeyDown}
+          label={label}
+          placeholder={placeholder}
+          showLabel={showLabel}
+          className="flex-1"
+          isLoading={isLoading}
+        />
         <Button 
           onClick={() => fetchStockPrice()} 
           disabled={isLoading || !tickerSymbol.trim()}
@@ -129,7 +132,7 @@ export function TickerSearch({
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : compact ? (
-            <Search className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4" />
           ) : (
             "Get Price"
           )}
