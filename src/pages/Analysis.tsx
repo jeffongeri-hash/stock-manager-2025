@@ -1,14 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Sparkles, RefreshCw, Search, Loader2, TrendingUp, TrendingDown,
-  LineChart, Building, CalendarDays, Users, Eye
+  Sparkles, RefreshCw, Loader2, TrendingUp, TrendingDown,
+  LineChart, Building, CalendarDays, Users, Eye, Clock
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -18,6 +17,8 @@ import { FundamentalAnalysis } from '@/components/analysis/FundamentalAnalysis';
 import { CatalystEvents } from '@/components/analysis/CatalystEvents';
 import { AnalystRatings } from '@/components/analysis/AnalystRatings';
 import { useWatchlistActions } from '@/hooks/useWatchlistActions';
+import { TickerAutocomplete } from '@/components/trading/TickerAutocomplete';
+import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 
 interface StockData {
   symbol: string;
@@ -71,81 +72,57 @@ const Analysis = () => {
     { name: 'Communication Services', value: 4.2 },
   ];
 
-  const fetchStockData = useCallback(async () => {
-    if (!searchSymbol.trim()) {
+  const fetchStockData = useCallback(async (symbolOverride?: string) => {
+    const symbolToFetch = symbolOverride || searchSymbol.trim().toUpperCase();
+    
+    if (!symbolToFetch) {
       toast.error('Please enter a stock symbol');
       return;
     }
 
-    const symbol = searchSymbol.trim().toUpperCase();
     setIsLoading(true);
 
     try {
       // Fetch stock price data
       const { data: priceData, error: priceError } = await supabase.functions.invoke('fetch-stock-data', {
-        body: { symbols: [symbol] }
+        body: { symbols: [symbolToFetch] }
       });
 
       if (priceError) throw priceError;
 
       if (priceData?.stocks && priceData.stocks.length > 0) {
         const stock = priceData.stocks[0];
-        setStockData({
-          symbol: stock.symbol,
-          name: stock.name || symbol,
+        
+        // Validate we have price data
+        if (!stock.price || stock.price <= 0) {
+          toast.error(`No price data available for ${symbolToFetch}`);
+          setIsLoading(false);
+          return;
+        }
+        
+        const newStockData: StockData = {
+          symbol: stock.symbol || symbolToFetch,
+          name: stock.name || symbolToFetch,
           price: stock.price,
-          change: stock.change,
-          changePercent: stock.changePercent,
+          change: stock.change || 0,
+          changePercent: stock.changePercent || 0,
           volume: stock.volume,
           marketCap: stock.marketCap,
           high52Week: stock.high52Week || stock.price * 1.3,
           low52Week: stock.low52Week || stock.price * 0.7,
-        });
-        setActiveSymbol(symbol);
+        };
+        
+        setStockData(newStockData);
+        setActiveSymbol(symbolToFetch);
 
-        // Fetch fundamentals
-        try {
-          const { data: fundData } = await supabase.functions.invoke('fetch-fundamentals', {
-            body: { symbol }
-          });
+        // Fetch fundamentals in parallel
+        fetchFundamentals(symbolToFetch, stock.marketCap);
 
-          if (fundData?.fundamentals) {
-            const f = fundData.fundamentals;
-            setFundamentals({
-              pe: f.metrics?.peNormalizedAnnual || f.metrics?.peBasicExclExtraTTM,
-              forwardPe: f.metrics?.forwardPe,
-              ps: f.metrics?.psTTM,
-              pb: f.metrics?.pbQuarterly,
-              roe: f.metrics?.roeTTM,
-              roa: f.metrics?.roaTTM,
-              revenueGrowth: f.metrics?.revenueGrowthQuarterlyYoy,
-              epsGrowth: f.metrics?.epsGrowthQuarterlyYoy,
-              profitMargin: f.metrics?.netProfitMarginTTM,
-              debtToEquity: f.metrics?.totalDebtToEquity,
-              marketCap: f.profile?.marketCapitalization,
-            });
-          }
-        } catch (fundError) {
-          console.error('Error fetching fundamentals:', fundError);
-          // Set simulated fundamentals if API fails
-          setFundamentals({
-            pe: 20 + Math.random() * 15,
-            forwardPe: 18 + Math.random() * 12,
-            ps: 2 + Math.random() * 5,
-            pb: 2 + Math.random() * 4,
-            roe: 10 + Math.random() * 20,
-            roa: 5 + Math.random() * 15,
-            revenueGrowth: 5 + Math.random() * 25,
-            epsGrowth: 8 + Math.random() * 20,
-            profitMargin: 8 + Math.random() * 20,
-            debtToEquity: 0.5 + Math.random() * 1.5,
-            marketCap: stock.marketCap || 100000000000,
-          });
+        if (!symbolOverride) {
+          toast.success(`Loaded analysis for ${symbolToFetch}`);
         }
-
-        toast.success(`Loaded analysis for ${symbol}`);
       } else {
-        toast.error(`Could not find stock: ${symbol}`);
+        toast.error(`Could not find stock: ${symbolToFetch}`);
       }
     } catch (error) {
       console.error('Error fetching stock data:', error);
@@ -154,6 +131,73 @@ const Analysis = () => {
       setIsLoading(false);
     }
   }, [searchSymbol]);
+
+  const fetchFundamentals = async (symbol: string, fallbackMarketCap?: number) => {
+    try {
+      const { data: fundData } = await supabase.functions.invoke('fetch-fundamentals', {
+        body: { symbol }
+      });
+
+      if (fundData?.fundamentals) {
+        const f = fundData.fundamentals;
+        setFundamentals({
+          pe: f.metrics?.peNormalizedAnnual || f.metrics?.peBasicExclExtraTTM,
+          forwardPe: f.metrics?.forwardPe,
+          ps: f.metrics?.psTTM,
+          pb: f.metrics?.pbQuarterly,
+          roe: f.metrics?.roeTTM,
+          roa: f.metrics?.roaTTM,
+          revenueGrowth: f.metrics?.revenueGrowthQuarterlyYoy,
+          epsGrowth: f.metrics?.epsGrowthQuarterlyYoy,
+          profitMargin: f.metrics?.netProfitMarginTTM,
+          debtToEquity: f.metrics?.totalDebtToEquity,
+          marketCap: f.profile?.marketCapitalization,
+        });
+      } else {
+        // Set simulated fundamentals if API fails
+        setFundamentals({
+          pe: 20 + Math.random() * 15,
+          forwardPe: 18 + Math.random() * 12,
+          ps: 2 + Math.random() * 5,
+          pb: 2 + Math.random() * 4,
+          roe: 10 + Math.random() * 20,
+          roa: 5 + Math.random() * 15,
+          revenueGrowth: 5 + Math.random() * 25,
+          epsGrowth: 8 + Math.random() * 20,
+          profitMargin: 8 + Math.random() * 20,
+          debtToEquity: 0.5 + Math.random() * 1.5,
+          marketCap: fallbackMarketCap || 100000000000,
+        });
+      }
+    } catch (fundError) {
+      console.error('Error fetching fundamentals:', fundError);
+      // Set simulated fundamentals if API fails
+      setFundamentals({
+        pe: 20 + Math.random() * 15,
+        forwardPe: 18 + Math.random() * 12,
+        ps: 2 + Math.random() * 5,
+        pb: 2 + Math.random() * 4,
+        roe: 10 + Math.random() * 20,
+        roa: 5 + Math.random() * 15,
+        revenueGrowth: 5 + Math.random() * 25,
+        epsGrowth: 8 + Math.random() * 20,
+        profitMargin: 8 + Math.random() * 20,
+        debtToEquity: 0.5 + Math.random() * 1.5,
+        marketCap: fallbackMarketCap || 100000000000,
+      });
+    }
+  };
+
+  // Auto-refresh stock price every 30 seconds
+  const { isRefreshing, lastRefresh, manualRefresh, getTimeUntilRefresh } = useAutoRefresh({
+    interval: 30000,
+    enabled: !!activeSymbol && !!stockData,
+    onRefresh: async () => {
+      if (activeSymbol) {
+        await fetchStockData(activeSymbol);
+      }
+    },
+  });
 
   const getAIAnalysis = async (type: string) => {
     if (!stockData) {
@@ -192,6 +236,14 @@ const Analysis = () => {
       handleSearch();
     }
   };
+
+  const handleSymbolSelect = (symbol: string) => {
+    setSearchSymbol(symbol);
+    // Auto-search when selecting from dropdown
+    setTimeout(() => {
+      fetchStockData(symbol);
+    }, 100);
+  };
   
   return (
     <PageLayout title="Stock Analysis">
@@ -199,7 +251,7 @@ const Analysis = () => {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
+            <LineChart className="h-5 w-5" />
             Comprehensive Stock Analysis
           </CardTitle>
           <CardDescription>
@@ -207,33 +259,55 @@ const Analysis = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Enter stock symbol (e.g., AAPL, TSLA, NVDA)"
-                value={searchSymbol}
-                onChange={(e) => setSearchSymbol(e.target.value.toUpperCase())}
-                onKeyDown={handleKeyDown}
-                className="pl-9"
-              />
-            </div>
+          <div className="flex gap-2 items-end">
+            <TickerAutocomplete
+              value={searchSymbol}
+              onChange={setSearchSymbol}
+              onSelect={handleSymbolSelect}
+              onKeyDown={handleKeyDown}
+              label="Stock Symbol"
+              placeholder="Enter stock symbol (e.g., AAPL, TSLA, NVDA)"
+              className="flex-1 max-w-md"
+              isLoading={isLoading}
+            />
             <Button onClick={handleSearch} disabled={isLoading}>
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Analyze
             </Button>
             {stockData && (
-              <Button 
-                variant="outline" 
-                onClick={() => addToWatchlist(activeSymbol)}
-                disabled={!isLoggedIn}
-                title={!isLoggedIn ? 'Sign in to add to watchlist' : 'Add to watchlist'}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                Add to Watchlist
-              </Button>
+              <>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={manualRefresh}
+                  disabled={isRefreshing}
+                  title={lastRefresh ? `Last updated: ${lastRefresh.toLocaleTimeString()}` : 'Refresh'}
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => addToWatchlist(activeSymbol)}
+                  disabled={!isLoggedIn}
+                  title={!isLoggedIn ? 'Sign in to add to watchlist' : 'Add to watchlist'}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Add to Watchlist
+                </Button>
+              </>
             )}
           </div>
+          
+          {/* Auto-refresh indicator */}
+          {stockData && activeSymbol && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>
+                Auto-refresh every 30s
+                {lastRefresh && ` · Last updated ${lastRefresh.toLocaleTimeString()}`}
+              </span>
+            </div>
+          )}
           
           {/* Stock Summary */}
           {stockData && (
@@ -299,12 +373,22 @@ const Analysis = () => {
           </TabsContent>
 
           <TabsContent value="fundamental">
-            {fundamentals && (
-              <FundamentalAnalysis
-                symbol={activeSymbol}
-                fundamentals={fundamentals}
-              />
-            )}
+            <FundamentalAnalysis
+              symbol={activeSymbol}
+              fundamentals={fundamentals || {
+                pe: 25,
+                forwardPe: 22,
+                ps: 5,
+                pb: 4,
+                roe: 15,
+                roa: 10,
+                revenueGrowth: 10,
+                epsGrowth: 12,
+                profitMargin: 15,
+                debtToEquity: 0.8,
+                marketCap: stockData.marketCap || 100000000000,
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="catalysts">
