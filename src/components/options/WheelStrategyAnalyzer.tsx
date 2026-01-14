@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useStockData } from '@/hooks/useStockData';
 import { useWatchlistActions } from '@/hooks/useWatchlistActions';
+import { TickerAutocomplete } from '@/components/trading/TickerAutocomplete';
 
 interface WheelAnalysis {
   strikePrice: number;
@@ -344,12 +345,14 @@ export const WheelStrategyAnalyzer = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <Label>Stock Symbol</Label>
-              <Input
+              <TickerAutocomplete
                 value={symbol}
-                onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                placeholder="AAPL"
+                onChange={setSymbol}
+                onSelect={(s) => setSymbol(s)}
                 onKeyDown={(e) => e.key === 'Enter' && analyzeWheel()}
+                label="Stock Symbol"
+                placeholder="AAPL"
+                isLoading={isLoading}
               />
             </div>
             <div>

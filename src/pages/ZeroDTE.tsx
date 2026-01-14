@@ -8,8 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/stocksApi';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Search, RefreshCw, Loader2, TrendingUp, TrendingDown, Eye } from 'lucide-react';
+import { Search, RefreshCw, Loader2, TrendingUp, TrendingDown, Eye, Clock } from 'lucide-react';
 import { useWatchlistActions } from '@/hooks/useWatchlistActions';
+import { TickerAutocomplete } from '@/components/trading/TickerAutocomplete';
+import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 
 interface Results {
   stockPrice: number;
@@ -164,6 +166,22 @@ export default function ZeroDTE() {
     }
   }, [symbol, fetchStockPrice]);
 
+  // Auto-refresh stock price every 30 seconds
+  const { isRefreshing, lastRefresh, manualRefresh } = useAutoRefresh({
+    interval: 30000,
+    enabled: !!lastSymbol && !!stockName,
+    onRefresh: async () => {
+      if (lastSymbol) {
+        await fetchStockPrice(lastSymbol);
+      }
+    },
+  });
+
+  const handleSymbolSelect = (selectedSymbol: string) => {
+    setSymbol(selectedSymbol);
+    fetchStockPrice(selectedSymbol);
+  };
+
   const getRiskLevel = () => {
     if (!results) return 'medium';
     if (results.POPBuyer > 60) return 'low';
@@ -184,14 +202,16 @@ export default function ZeroDTE() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="symbol">Stock Symbol</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="symbol"
-                    type="text"
-                    placeholder="e.g., AAPL"
+                <div className="flex gap-2 items-end">
+                  <TickerAutocomplete
                     value={symbol}
-                    onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                    onChange={setSymbol}
+                    onSelect={handleSymbolSelect}
+                    onKeyDown={(e) => e.key === 'Enter' && fetchStockPrice()}
+                    label="Stock Symbol"
+                    placeholder="e.g., AAPL"
+                    className="flex-1"
+                    isLoading={loadingPrice}
                   />
                   <Button onClick={() => fetchStockPrice()} disabled={loadingPrice} size="icon">
                     {loadingPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -207,12 +227,18 @@ export default function ZeroDTE() {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button onClick={handleRefresh} disabled={loadingPrice} size="icon" variant="outline" title="Refresh price">
-                        <RefreshCw className={`h-4 w-4 ${loadingPrice ? 'animate-spin' : ''}`} />
+                      <Button onClick={manualRefresh} disabled={isRefreshing || loadingPrice} size="icon" variant="outline" title="Refresh price">
+                        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                       </Button>
                     </>
                   )}
                 </div>
+                {stockName && lastRefresh && (
+                  <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    <span>Auto-refresh every 30s · Last updated {lastRefresh.toLocaleTimeString()}</span>
+                  </div>
+                )}
                 {stockName && (
                   <div className="flex items-center justify-between p-2 mt-2 bg-muted/50 rounded-lg">
                     <div className="flex items-center gap-2">
