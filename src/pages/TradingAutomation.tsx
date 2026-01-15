@@ -89,6 +89,7 @@ const TradingAutomation = () => {
   const [currentRuleText, setCurrentRuleText] = useState('');
   const [currentParsedRule, setCurrentParsedRule] = useState<any>(null);
   const [isConnectingTD, setIsConnectingTD] = useState(false);
+  const [isConnectingSchwab, setIsConnectingSchwab] = useState(false);
   const [ibCredentials, setIbCredentials] = useState({ 
     username: '', 
     accountId: '',
@@ -219,6 +220,90 @@ const TradingAutomation = () => {
       setIsConnectingTD(false);
     }
   };
+
+  const connectSchwab = async () => {
+    setIsConnectingSchwab(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('schwab-auth');
+      
+      if (error) throw error;
+
+      if (data.authUrl) {
+        // Open Schwab OAuth in new window
+        const authWindow = window.open(data.authUrl, 'Schwab Auth', 'width=600,height=700');
+        
+        // Listen for OAuth callback
+        const handleMessage = (event: MessageEvent) => {
+          if (event.data?.type === 'SCHWAB_AUTH_CALLBACK') {
+            window.removeEventListener('message', handleMessage);
+            authWindow?.close();
+            
+            if (event.data.success) {
+              toast.success('Charles Schwab connected successfully!');
+              // Reload connections
+              loadBrokerConnections();
+            } else {
+              toast.error(event.data.error || 'Failed to connect Schwab');
+            }
+            setIsConnectingSchwab(false);
+          }
+        };
+        
+        window.addEventListener('message', handleMessage);
+        
+        // Fallback timeout
+        setTimeout(() => {
+          window.removeEventListener('message', handleMessage);
+          setIsConnectingSchwab(false);
+        }, 300000); // 5 minute timeout
+      } else if (data.error) {
+        toast.error(data.message || data.error);
+        setIsConnectingSchwab(false);
+      }
+    } catch (error: any) {
+      console.error('Schwab auth error:', error);
+      toast.error('Failed to start Schwab authentication');
+      setIsConnectingSchwab(false);
+    }
+  };
+
+  // Helper to reload broker connections
+  const loadBrokerConnections = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('broker_connections')
+      .select('*')
+      .eq('user_id', user.id);
+    
+    if (!error && data) {
+      const connections: BrokerConnection[] = data.map(conn => ({
+        id: conn.id,
+        name: conn.broker_type === 'td_ameritrade' ? 'TD Ameritrade' : 
+              conn.broker_type === 'interactive_brokers' ? 'Interactive Brokers' :
+              conn.broker_type === 'schwab' ? 'Charles Schwab' : 'Capitalise.ai',
+        type: conn.broker_type as BrokerConnection['type'],
+        status: conn.status as BrokerConnection['status'],
+        accountId: conn.broker_type === 'schwab' 
+          ? (conn.accounts as any)?.[0]?.accountNumber 
+          : (conn.accounts as any)?.[0]?.securitiesAccount?.accountId,
+        lastSync: conn.updated_at,
+      }));
+      setBrokerConnections(connections);
+    }
+  };
+
+  // Get the active broker for execution
+  const getActiveBroker = () => {
+    const schwabConnection = brokerConnections.find(c => c.type === 'schwab' && c.status === 'connected');
+    const tdConnection = brokerConnections.find(c => c.type === 'td_ameritrade' && c.status === 'connected');
+    
+    if (schwabConnection?.accountId) return { name: 'Charles Schwab', type: 'schwab' as const };
+    if (tdConnection?.accountId) return { name: 'TD Ameritrade', type: 'td_ameritrade' as const };
+    return null;
+  };
+
+  const activeBroker = getActiveBroker();
 
   // Request to execute an order - checks for 2FA first
   const requestExecuteOrder = useCallback((symbol: string, quantity: number, instruction: 'BUY' | 'SELL', orderType: 'MARKET' | 'LIMIT' = 'MARKET', price?: number) => {
@@ -964,6 +1049,34 @@ const TradingAutomation = () => {
 
                       <div className="border-t pt-4 mt-4">
                         <h4 className="font-medium mb-3 flex items-center gap-2">
+                          Charles Schwab Connection
+                          <Badge variant="default">Recommended</Badge>
+                          <Badge variant="secondary">OAuth</Badge>
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Connect securely using Schwab's official OAuth flow. A popup will open to authorize access.
+                        </p>
+                        <Button 
+                          onClick={connectSchwab} 
+                          className="w-full" 
+                          disabled={isConnectingSchwab || !user}
+                        >
+                          {isConnectingSchwab ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Connecting...
+                            </>
+                          ) : (
+                            <>
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Connect with Charles Schwab OAuth
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      <div className="border-t pt-4 mt-4">
+                        <h4 className="font-medium mb-3 flex items-center gap-2">
                           TD Ameritrade Connection
                           <Badge variant="secondary">OAuth</Badge>
                         </h4>
@@ -1025,6 +1138,11 @@ const TradingAutomation = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          {activeBroker?.type === broker.type && broker.status === 'connected' && (
+                            <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
+                              Active for Orders
+                            </Badge>
+                          )}
                           <Badge variant={broker.status === 'connected' ? 'default' : 'secondary'}>
                             {broker.status === 'connected' ? 'Connected' : 
                              broker.status === 'pending' ? 'Connecting...' : 'Disconnected'}
@@ -1035,6 +1153,13 @@ const TradingAutomation = () => {
                         </div>
                       </div>
                     ))}
+                    
+                    {activeBroker && brokerConnections.filter(c => c.status === 'connected').length > 1 && (
+                      <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
+                        <strong>Note:</strong> {activeBroker.name} will be used for order execution. 
+                        Schwab takes priority when multiple brokers are connected.
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
