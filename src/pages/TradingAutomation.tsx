@@ -51,7 +51,7 @@ interface TradingRule {
 interface BrokerConnection {
   id: string;
   name: string;
-  type: 'interactive_brokers' | 'td_ameritrade' | 'capitalise_ai';
+  type: 'interactive_brokers' | 'td_ameritrade' | 'capitalise_ai' | 'schwab';
   status: 'connected' | 'disconnected' | 'pending';
   accountId?: string;
   lastSync?: string;
@@ -132,10 +132,13 @@ const TradingAutomation = () => {
         const connections: BrokerConnection[] = data.map(conn => ({
           id: conn.id,
           name: conn.broker_type === 'td_ameritrade' ? 'TD Ameritrade' : 
-                conn.broker_type === 'interactive_brokers' ? 'Interactive Brokers' : 'Capitalise.ai',
+                conn.broker_type === 'interactive_brokers' ? 'Interactive Brokers' :
+                conn.broker_type === 'schwab' ? 'Charles Schwab' : 'Capitalise.ai',
           type: conn.broker_type as BrokerConnection['type'],
           status: conn.status as BrokerConnection['status'],
-          accountId: (conn.accounts as any)?.[0]?.securitiesAccount?.accountId,
+          accountId: conn.broker_type === 'schwab' 
+            ? (conn.accounts as any)?.[0]?.accountNumber 
+            : (conn.accounts as any)?.[0]?.securitiesAccount?.accountId,
           lastSync: conn.updated_at,
         }));
         setBrokerConnections(connections);
@@ -224,9 +227,12 @@ const TradingAutomation = () => {
       return;
     }
 
+    // Check for connected brokers - prefer Schwab, fallback to TD Ameritrade
+    const schwabConnection = brokerConnections.find(c => c.type === 'schwab' && c.status === 'connected');
     const tdConnection = brokerConnections.find(c => c.type === 'td_ameritrade' && c.status === 'connected');
-    if (!tdConnection || !tdConnection.accountId) {
-      toast.error('No connected TD Ameritrade account found');
+    
+    if (!schwabConnection?.accountId && !tdConnection?.accountId) {
+      toast.error('No connected broker account found. Please connect Schwab or TD Ameritrade.');
       return;
     }
 
@@ -242,35 +248,74 @@ const TradingAutomation = () => {
 
   // Execute order directly (after 2FA verification or if 2FA is disabled)
   const executeOrderDirect = async (symbol: string, quantity: number, instruction: 'BUY' | 'SELL', orderType: 'MARKET' | 'LIMIT' = 'MARKET', price?: number) => {
+    // Check for connected brokers - prefer Schwab, fallback to TD Ameritrade
+    const schwabConnection = brokerConnections.find(c => c.type === 'schwab' && c.status === 'connected');
     const tdConnection = brokerConnections.find(c => c.type === 'td_ameritrade' && c.status === 'connected');
-    if (!tdConnection || !tdConnection.accountId) {
-      toast.error('No connected TD Ameritrade account found');
+    
+    const session = await supabase.auth.getSession();
+    const accessToken = session.data.session?.access_token;
+    
+    if (!accessToken) {
+      toast.error('Authentication required');
       return;
     }
 
-    try {
-      const { data, error } = await supabase.functions.invoke('td-execute-order', {
-        body: {
-          accountId: tdConnection.accountId,
-          symbol,
-          quantity,
-          orderType,
-          instruction,
-          price,
+    // Use Schwab if connected, otherwise TD Ameritrade
+    if (schwabConnection?.accountId) {
+      try {
+        const { data, error } = await supabase.functions.invoke('schwab-execute-order', {
+          body: {
+            accountId: schwabConnection.accountId,
+            symbol,
+            quantity,
+            orderType,
+            instruction,
+            price,
+          },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data.success) {
+          toast.success(data.message);
+          return data.orderId;
+        } else {
+          toast.error(data.error || 'Order execution failed');
         }
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast.success(data.message);
-        return data.orderId;
-      } else {
-        toast.error(data.error || 'Order execution failed');
+      } catch (error: any) {
+        console.error('Schwab order execution error:', error);
+        toast.error('Failed to execute order via Schwab: ' + error.message);
       }
-    } catch (error: any) {
-      console.error('Order execution error:', error);
-      toast.error('Failed to execute order: ' + error.message);
+    } else if (tdConnection?.accountId) {
+      try {
+        const { data, error } = await supabase.functions.invoke('td-execute-order', {
+          body: {
+            accountId: tdConnection.accountId,
+            symbol,
+            quantity,
+            orderType,
+            instruction,
+            price,
+          }
+        });
+
+        if (error) throw error;
+
+        if (data.success) {
+          toast.success(data.message);
+          return data.orderId;
+        } else {
+          toast.error(data.error || 'Order execution failed');
+        }
+      } catch (error: any) {
+        console.error('TD order execution error:', error);
+        toast.error('Failed to execute order via TD Ameritrade: ' + error.message);
+      }
+    } else {
+      toast.error('No connected broker account found');
     }
   };
 
@@ -1000,11 +1045,16 @@ const TradingAutomation = () => {
                 <CardTitle>Supported Brokers</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="border rounded-lg p-4 text-center">
+                    <h3 className="font-semibold mb-2">Charles Schwab</h3>
+                    <p className="text-xs text-muted-foreground">Industry-leading brokerage with full API trading support</p>
+                    <Badge className="mt-2">Recommended</Badge>
+                  </div>
                   <div className="border rounded-lg p-4 text-center">
                     <h3 className="font-semibold mb-2">Interactive Brokers</h3>
                     <p className="text-xs text-muted-foreground">Professional trading platform with global market access</p>
-                    <Badge className="mt-2">Recommended</Badge>
+                    <Badge variant="secondary" className="mt-2">Pro</Badge>
                   </div>
                   <div className="border rounded-lg p-4 text-center">
                     <h3 className="font-semibold mb-2">TD Ameritrade</h3>
