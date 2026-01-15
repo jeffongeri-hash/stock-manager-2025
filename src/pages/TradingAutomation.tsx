@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle, Loader2, GitMerge, Calendar, Shield, Activity, History, LogIn, Lock } from 'lucide-react';
+import { Bot, Plus, Trash2, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, Link2, ExternalLink, Unlink, Settings, Sparkles, Star, BarChart3, GitCompare, Settings2, Shuffle, Loader2, GitMerge, Calendar, Shield, Activity, History, LogIn, Lock, DollarSign, Play } from 'lucide-react';
 import { NaturalLanguageRuleBuilder } from '@/components/trading/NaturalLanguageRuleBuilder';
 import { StrategyTemplateLibrary, StrategyTemplate } from '@/components/trading/StrategyTemplateLibrary';
 import { RuleBacktester } from '@/components/trading/RuleBacktester';
@@ -55,6 +55,9 @@ interface BrokerConnection {
   status: 'connected' | 'disconnected' | 'pending';
   accountId?: string;
   lastSync?: string;
+  totalValue?: number;
+  cashBalance?: number;
+  availableFunds?: number;
 }
 
 const defaultRules: TradingRule[] = [
@@ -104,6 +107,11 @@ const TradingAutomation = () => {
   
   // 2FA verification state
   const [show2FAVerification, setShow2FAVerification] = useState(false);
+  const [showPaperTradeTest, setShowPaperTradeTest] = useState(false);
+  const [paperTradeSymbol, setPaperTradeSymbol] = useState('SPY');
+  const [paperTradeQuantity, setPaperTradeQuantity] = useState(10);
+  const [paperTradeInstruction, setPaperTradeInstruction] = useState<'BUY' | 'SELL'>('BUY');
+  const [isPaperTrading, setIsPaperTrading] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<{
     symbol: string;
     quantity: number;
@@ -130,18 +138,43 @@ const TradingAutomation = () => {
         .eq('user_id', user.id);
       
       if (!error && data) {
-        const connections: BrokerConnection[] = data.map(conn => ({
-          id: conn.id,
-          name: conn.broker_type === 'td_ameritrade' ? 'TD Ameritrade' : 
-                conn.broker_type === 'interactive_brokers' ? 'Interactive Brokers' :
-                conn.broker_type === 'schwab' ? 'Charles Schwab' : 'Capitalise.ai',
-          type: conn.broker_type as BrokerConnection['type'],
-          status: conn.status as BrokerConnection['status'],
-          accountId: conn.broker_type === 'schwab' 
-            ? (conn.accounts as any)?.[0]?.accountNumber 
-            : (conn.accounts as any)?.[0]?.securitiesAccount?.accountId,
-          lastSync: conn.updated_at,
-        }));
+        const connections: BrokerConnection[] = data.map(conn => {
+          // Extract balance data based on broker type
+          const accounts = conn.accounts as any;
+          let totalValue: number | undefined;
+          let cashBalance: number | undefined;
+          let availableFunds: number | undefined;
+          let accountId: string | undefined;
+          
+          if (conn.broker_type === 'schwab' && accounts?.[0]) {
+            const secAccount = accounts[0].securitiesAccount || accounts[0];
+            const balances = secAccount?.currentBalances;
+            totalValue = balances?.liquidationValue;
+            cashBalance = balances?.cashBalance;
+            availableFunds = balances?.availableFunds;
+            accountId = secAccount?.accountNumber || accounts[0]?.accountNumber;
+          } else if (accounts?.[0]?.securitiesAccount) {
+            const secAccount = accounts[0].securitiesAccount;
+            totalValue = secAccount?.currentBalances?.liquidationValue;
+            cashBalance = secAccount?.currentBalances?.cashBalance;
+            availableFunds = secAccount?.currentBalances?.availableFunds;
+            accountId = secAccount?.accountId;
+          }
+          
+          return {
+            id: conn.id,
+            name: conn.broker_type === 'td_ameritrade' ? 'TD Ameritrade' : 
+                  conn.broker_type === 'interactive_brokers' ? 'Interactive Brokers' :
+                  conn.broker_type === 'schwab' ? 'Charles Schwab' : 'Capitalise.ai',
+            type: conn.broker_type as BrokerConnection['type'],
+            status: conn.status as BrokerConnection['status'],
+            accountId,
+            lastSync: conn.updated_at,
+            totalValue,
+            cashBalance,
+            availableFunds,
+          };
+        });
         setBrokerConnections(connections);
       }
     };
@@ -277,18 +310,42 @@ const TradingAutomation = () => {
       .eq('user_id', user.id);
     
     if (!error && data) {
-      const connections: BrokerConnection[] = data.map(conn => ({
-        id: conn.id,
-        name: conn.broker_type === 'td_ameritrade' ? 'TD Ameritrade' : 
-              conn.broker_type === 'interactive_brokers' ? 'Interactive Brokers' :
-              conn.broker_type === 'schwab' ? 'Charles Schwab' : 'Capitalise.ai',
-        type: conn.broker_type as BrokerConnection['type'],
-        status: conn.status as BrokerConnection['status'],
-        accountId: conn.broker_type === 'schwab' 
-          ? (conn.accounts as any)?.[0]?.accountNumber 
-          : (conn.accounts as any)?.[0]?.securitiesAccount?.accountId,
-        lastSync: conn.updated_at,
-      }));
+      const connections: BrokerConnection[] = data.map(conn => {
+        const accounts = conn.accounts as any;
+        let totalValue: number | undefined;
+        let cashBalance: number | undefined;
+        let availableFunds: number | undefined;
+        let accountId: string | undefined;
+        
+        if (conn.broker_type === 'schwab' && accounts?.[0]) {
+          const secAccount = accounts[0].securitiesAccount || accounts[0];
+          const balances = secAccount?.currentBalances;
+          totalValue = balances?.liquidationValue;
+          cashBalance = balances?.cashBalance;
+          availableFunds = balances?.availableFunds;
+          accountId = secAccount?.accountNumber || accounts[0]?.accountNumber;
+        } else if (accounts?.[0]?.securitiesAccount) {
+          const secAccount = accounts[0].securitiesAccount;
+          totalValue = secAccount?.currentBalances?.liquidationValue;
+          cashBalance = secAccount?.currentBalances?.cashBalance;
+          availableFunds = secAccount?.currentBalances?.availableFunds;
+          accountId = secAccount?.accountId;
+        }
+        
+        return {
+          id: conn.id,
+          name: conn.broker_type === 'td_ameritrade' ? 'TD Ameritrade' : 
+                conn.broker_type === 'interactive_brokers' ? 'Interactive Brokers' :
+                conn.broker_type === 'schwab' ? 'Charles Schwab' : 'Capitalise.ai',
+          type: conn.broker_type as BrokerConnection['type'],
+          status: conn.status as BrokerConnection['status'],
+          accountId,
+          lastSync: conn.updated_at,
+          totalValue,
+          cashBalance,
+          availableFunds,
+        };
+      });
       setBrokerConnections(connections);
     }
   };
@@ -417,6 +474,47 @@ const TradingAutomation = () => {
       setPendingOrder(null);
     }
   }, [pendingOrder]);
+
+  // Paper trade simulation
+  const executePaperTrade = async () => {
+    setIsPaperTrading(true);
+    
+    // Simulate order processing
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    const mockPrice = (Math.random() * 100 + 400).toFixed(2);
+    const totalValue = (parseFloat(mockPrice) * paperTradeQuantity).toFixed(2);
+    
+    toast.success(
+      `📝 Paper Trade Executed!\n${paperTradeInstruction} ${paperTradeQuantity} ${paperTradeSymbol} @ $${mockPrice}\nTotal: $${totalValue}`,
+      { duration: 5000 }
+    );
+    
+    setIsPaperTrading(false);
+    setShowPaperTradeTest(false);
+  };
+
+  // Calculate total portfolio value from connected brokers
+  const getTotalPortfolioValue = () => {
+    return brokerConnections
+      .filter(c => c.status === 'connected' && c.totalValue)
+      .reduce((sum, c) => sum + (c.totalValue || 0), 0);
+  };
+
+  const getTotalCashBalance = () => {
+    return brokerConnections
+      .filter(c => c.status === 'connected' && c.cashBalance)
+      .reduce((sum, c) => sum + (c.cashBalance || 0), 0);
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
 
   const handleTemplateSelect = (template: StrategyTemplate) => {
     setSelectedTemplateText(template.ruleText);
@@ -582,7 +680,7 @@ const TradingAutomation = () => {
 
   return (
     <PageLayout title="Trading Automation">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Active Rules</CardTitle>
@@ -602,15 +700,63 @@ const TradingAutomation = () => {
               {hasLiveBroker ? (
                 <>
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  <span className="text-lg font-semibold">Connected</span>
+                  <span className="text-sm font-semibold">{activeBroker?.name || 'Connected'}</span>
                 </>
               ) : (
                 <>
                   <AlertCircle className="h-5 w-5 text-yellow-500" />
-                  <span className="text-lg font-semibold">Paper Mode</span>
+                  <span className="text-sm font-semibold">Paper Mode</span>
                 </>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-1">
+              <TrendingUp className="h-4 w-4" />
+              Portfolio Value
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {getTotalPortfolioValue() > 0 ? (
+              <>
+                <div className="text-2xl font-bold text-green-600">
+                  {formatCurrency(getTotalPortfolioValue())}
+                </div>
+                <p className="text-xs text-muted-foreground">From connected brokers</p>
+              </>
+            ) : (
+              <>
+                <div className="text-lg font-semibold text-muted-foreground">--</div>
+                <p className="text-xs text-muted-foreground">Connect broker to view</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-1">
+              <DollarSign className="h-4 w-4" />
+              Cash Available
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {getTotalCashBalance() > 0 ? (
+              <>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(getTotalCashBalance())}
+                </div>
+                <p className="text-xs text-muted-foreground">Ready to trade</p>
+              </>
+            ) : (
+              <>
+                <div className="text-lg font-semibold text-muted-foreground">--</div>
+                <p className="text-xs text-muted-foreground">Connect broker to view</p>
+              </>
+            )}
           </CardContent>
         </Card>
         
@@ -624,20 +770,104 @@ const TradingAutomation = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-muted/30">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Last Activity</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-1">
+              <Play className="h-4 w-4" />
+              Test Order
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-sm font-semibold">
-              {rules.find(r => r.lastTriggered)?.lastTriggered 
-                ? new Date(rules.find(r => r.lastTriggered)!.lastTriggered!).toLocaleString()
-                : 'No activity yet'
-              }
-            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              onClick={() => setShowPaperTradeTest(true)}
+            >
+              Paper Trade
+            </Button>
           </CardContent>
         </Card>
       </div>
+
+      {/* Paper Trade Test Dialog */}
+      {showPaperTradeTest && (
+        <Card className="mb-6 border-dashed border-2 border-primary/30 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Play className="h-5 w-5" />
+              Paper Trade Simulation
+            </CardTitle>
+            <CardDescription>
+              Test order execution without using real money. This simulates how your trades will work.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label>Symbol</Label>
+                <Input 
+                  value={paperTradeSymbol}
+                  onChange={(e) => setPaperTradeSymbol(e.target.value.toUpperCase())}
+                  placeholder="SPY"
+                />
+              </div>
+              <div>
+                <Label>Quantity</Label>
+                <Input 
+                  type="number"
+                  value={paperTradeQuantity}
+                  onChange={(e) => setPaperTradeQuantity(parseInt(e.target.value) || 0)}
+                  min={1}
+                />
+              </div>
+              <div>
+                <Label>Action</Label>
+                <Select 
+                  value={paperTradeInstruction}
+                  onValueChange={(v) => setPaperTradeInstruction(v as 'BUY' | 'SELL')}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="BUY">Buy</SelectItem>
+                    <SelectItem value="SELL">Sell</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                onClick={executePaperTrade}
+                disabled={isPaperTrading || !paperTradeSymbol || paperTradeQuantity <= 0}
+                className="flex-1"
+              >
+                {isPaperTrading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Executing...
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Execute Paper Trade
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowPaperTradeTest(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              ⚠️ This is a simulation only. No real orders will be placed. Use this to test your setup before enabling live trading.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="ai-builder" className="space-y-6">
         <TabsList className="flex-wrap h-auto gap-1">
