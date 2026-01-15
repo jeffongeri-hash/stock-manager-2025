@@ -44,6 +44,7 @@ const RealEstate = lazy(() => import("./pages/RealEstate"));
 const CarFinance = lazy(() => import("./pages/CarFinance"));
 const ETFComparison = lazy(() => import("./pages/ETFComparison"));
 const Assets = lazy(() => import("./pages/Assets"));
+const SchwabCallback = lazy(() => import("./pages/SchwabCallback"));
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,7 @@ const App = () => (
                 <Route path="/car-finance" element={<ProtectedRoute><CarFinance /></ProtectedRoute>} />
                 <Route path="/etf-comparison" element={<ProtectedRoute><ETFComparison /></ProtectedRoute>} />
                 <Route path="/assets" element={<ProtectedRoute requiresAuth><Assets /></ProtectedRoute>} />
+                <Route path="/schwab/callback" element={<SchwabCallback />} />
                 
                 {/* Routes requiring full authentication */}
                 <Route path="/settings" element={<ProtectedRoute requiresAuth><Settings /></ProtectedRoute>} />
