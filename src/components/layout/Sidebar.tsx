@@ -6,7 +6,7 @@ import {
   TestTube, Users, Radar, FileText, BookMarked,
   Grid3X3, DollarSign, CalendarDays, GitCompare, Shield, Newspaper,
   Scale, Webhook, Cpu, Eye, FlaskConical, Target, Building2, Car, GitCompareArrows,
-  Briefcase
+  Briefcase, Bot
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -177,6 +177,11 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Trading Automation',
       icon: Cpu,
       href: '/trading-automation',
+    },
+    {
+      title: 'SmartTrade AI',
+      icon: Bot,
+      href: '/smarttrade-ai',
     },
     {
       title: 'Watchlist & Alerts',

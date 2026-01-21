@@ -49,3 +49,6 @@ verify_jwt = false
 
 [functions.ibkr-refresh-token]
 verify_jwt = false
+
+[functions.smarttrade-ai]
+verify_jwt = false
