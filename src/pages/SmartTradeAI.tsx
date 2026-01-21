@@ -89,6 +89,7 @@ interface SentimentData {
 interface TradePlan {
   id: string;
   ticker: string;
+  companyName?: string;
   currentPrice: number;
   entryPrice: number;
   initialStopLoss: number;
@@ -104,6 +105,13 @@ interface TradePlan {
   riskPercent: number;
   timestamp: number;
   projectedLoss: number;
+  liveData?: {
+    high: number;
+    low: number;
+    previousClose: number;
+    change: number;
+    changePercent: number;
+  };
 }
 
 interface PricePoint {
@@ -130,6 +138,14 @@ const STORAGE_KEY = 'smarttrade_saved_plans_v1';
 
 // --- Sub Components ---
 
+interface LiveData {
+  high: number;
+  low: number;
+  previousClose: number;
+  change: number;
+  changePercent: number;
+}
+
 const SentimentSparkline = ({ history }: { history: number[] }) => {
   const data = useMemo(() => (history || []).map((val, i) => ({ val, i })), [history]);
   if (!data.length) return null;
@@ -143,6 +159,23 @@ const SentimentSparkline = ({ history }: { history: number[] }) => {
           <Line type="monotone" dataKey="val" stroke={color} strokeWidth={2} dot={false} isAnimationActive={true} />
         </LineChart>
       </ResponsiveContainer>
+    </div>
+  );
+};
+
+const LiveDataBadge = ({ liveData }: { liveData?: LiveData }) => {
+  if (!liveData) return null;
+  const isPositive = (liveData.changePercent || 0) >= 0;
+  
+  return (
+    <div className="flex items-center gap-2">
+      <Badge variant="outline" className="gap-1 text-xs">
+        <Activity className="w-3 h-3 text-emerald-500 animate-pulse" />
+        LIVE
+      </Badge>
+      <span className={`text-sm font-mono font-semibold ${isPositive ? 'text-emerald-500' : 'text-destructive'}`}>
+        {isPositive ? '+' : ''}{liveData.changePercent?.toFixed(2)}%
+      </span>
     </div>
   );
 };
@@ -625,6 +658,7 @@ const SmartTradeAI = () => {
       const newPlan: TradePlan = {
         id: crypto.randomUUID(),
         ticker: cleanTicker,
+        companyName: data.companyName,
         currentPrice: data.currentPrice,
         entryPrice: data.entryPrice,
         initialStopLoss: data.stopLoss,
@@ -650,7 +684,8 @@ const SmartTradeAI = () => {
         newsArticles: data.newsArticles || [],
         portfolioSize,
         riskPercent,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        liveData: data.liveData
       };
 
       setPlan(newPlan);
@@ -812,7 +847,12 @@ const SmartTradeAI = () => {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center justify-between text-lg">
-                  <span className="flex items-center gap-2 font-mono">{plan.ticker}</span>
+                  <div className="flex flex-col gap-1">
+                    <span className="flex items-center gap-2 font-mono">{plan.ticker}</span>
+                    {plan.companyName && (
+                      <span className="text-xs font-normal text-muted-foreground">{plan.companyName}</span>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="icon" onClick={savePlan}>
                       <Save className="w-4 h-4" />
@@ -822,6 +862,20 @@ const SmartTradeAI = () => {
                     </Button>
                   </div>
                 </CardTitle>
+                {plan.liveData && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="outline" className="gap-1 text-xs">
+                      <Activity className="w-3 h-3 text-emerald-500 animate-pulse" />
+                      LIVE
+                    </Badge>
+                    <span className={`text-sm font-mono font-semibold ${(plan.liveData.changePercent || 0) >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
+                      {(plan.liveData.changePercent || 0) >= 0 ? '+' : ''}{plan.liveData.changePercent?.toFixed(2)}%
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      H: ${plan.liveData.high?.toFixed(2)} L: ${plan.liveData.low?.toFixed(2)}
+                    </span>
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
