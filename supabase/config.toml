@@ -52,3 +52,6 @@ verify_jwt = false
 
 [functions.smarttrade-ai]
 verify_jwt = false
+
+[functions.quantgemini-analyze]
+verify_jwt = false

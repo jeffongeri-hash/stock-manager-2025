@@ -184,6 +184,11 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/smarttrade-ai',
     },
     {
+      title: 'QuantGemini',
+      icon: FlaskConical,
+      href: '/quantgemini',
+    },
+    {
       title: 'Watchlist & Alerts',
       icon: Eye,
       href: '/watchlist',
