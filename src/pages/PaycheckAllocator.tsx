@@ -19,6 +19,7 @@ import { DeductionRow } from '@/components/paycheck/DeductionRow';
 import { ScenarioInputs } from '@/components/paycheck/ScenarioInputs';
 import { EmployerMatchProjection } from '@/components/paycheck/EmployerMatchProjection';
 import { PaycheckWaterfall } from '@/components/paycheck/PaycheckWaterfall';
+import { FireCalculator } from '@/components/paycheck/FireCalculator';
 import {
   Calculator, DollarSign, Plus, Trash2, Loader2, 
   Percent, Building2, Landmark, Heart, Briefcase,
@@ -1395,6 +1396,15 @@ export default function PaycheckAllocator() {
                     {/* Employer Match & Retirement Projection */}
                     <EmployerMatchProjection
                       grossPay={grossPay}
+                      payFrequency={payFrequency}
+                      preTaxDeductions={preTaxDeductions}
+                      postTaxDeductions={postTaxDeductions}
+                    />
+
+                    {/* FIRE Calculator */}
+                    <FireCalculator
+                      grossPay={grossPay}
+                      netPay={result.netPay}
                       payFrequency={payFrequency}
                       preTaxDeductions={preTaxDeductions}
                       postTaxDeductions={postTaxDeductions}
