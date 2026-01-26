@@ -271,15 +271,33 @@ Return ONLY valid JSON matching this exact structure (no markdown, no code block
     const aiResponse = await response.json();
     let analysisText = aiResponse.choices?.[0]?.message?.content || "";
     
-    // Clean up the response
+    // Clean up the response - remove markdown code blocks
     analysisText = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    // Fix trailing commas in JSON (common AI output issue)
+    // Remove trailing commas before closing braces/brackets
+    analysisText = analysisText
+      .replace(/,(\s*[\]}])/g, '$1')  // Remove comma before ] or }
+      .replace(/,(\s*,)/g, ',')       // Remove duplicate commas
+      .replace(/\[\s*,/g, '[')        // Remove leading comma in arrays
+      .replace(/{\s*,/g, '{');        // Remove leading comma in objects
     
     let analysis;
     try {
       analysis = JSON.parse(analysisText);
     } catch (parseError) {
-      console.error("Failed to parse AI response:", analysisText);
-      throw new Error("Failed to parse analysis response");
+      // Try a more aggressive cleanup as fallback
+      try {
+        // Remove any remaining problematic characters
+        const cleanedText = analysisText
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+          .replace(/\n\s*\n/g, '\n') // Remove empty lines
+          .trim();
+        analysis = JSON.parse(cleanedText);
+      } catch (secondError) {
+        console.error("Failed to parse AI response after cleanup:", analysisText.substring(0, 500));
+        throw new Error("Failed to parse analysis response");
+      }
     }
 
     // Merge live data into response
