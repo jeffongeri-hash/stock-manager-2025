@@ -17,7 +17,9 @@ import { ScenarioComparison } from '@/components/paycheck/ScenarioComparison';
 import { WhatIfSlider } from '@/components/paycheck/WhatIfSlider';
 import { DeductionRow } from '@/components/paycheck/DeductionRow';
 import { ScenarioInputs } from '@/components/paycheck/ScenarioInputs';
-import { 
+import { EmployerMatchProjection } from '@/components/paycheck/EmployerMatchProjection';
+import { PaycheckWaterfall } from '@/components/paycheck/PaycheckWaterfall';
+import {
   Calculator, DollarSign, Plus, Trash2, Loader2, 
   Percent, Building2, Landmark, Heart, Briefcase,
   PiggyBank, Shield, GraduationCap, Baby, Car,
@@ -74,6 +76,7 @@ interface SavedConfiguration {
 const COMMON_PRETAX_DEDUCTIONS = [
   { value: '401k', label: '401(k) Contribution', icon: PiggyBank },
   { value: '403b', label: '403(b) Contribution', icon: PiggyBank },
+  { value: '457b', label: '457(b) Contribution', icon: PiggyBank },
   { value: 'hsa', label: 'HSA Contribution', icon: Heart },
   { value: 'fsa', label: 'FSA (Flexible Spending)', icon: Heart },
   { value: 'health', label: 'Health Insurance Premium', icon: Shield },
@@ -1089,6 +1092,19 @@ export default function PaycheckAllocator() {
                   </CardContent>
                 </Card>
 
+                {/* Paycheck Flow Waterfall */}
+                <PaycheckWaterfall
+                  grossPay={result.grossPay}
+                  preTaxDeductions={result.preTaxDeductions}
+                  federalTax={result.taxes.federalTax}
+                  stateTax={result.taxes.stateTax}
+                  localTax={result.taxes.localTax}
+                  socialSecurity={result.taxes.socialSecurity}
+                  medicare={result.taxes.medicare}
+                  postTaxDeductions={result.postTaxDeductions}
+                  netPay={result.netPay}
+                />
+
                 {/* Detailed Breakdown */}
                 <Card>
                   <CardHeader>
@@ -1375,6 +1391,14 @@ export default function PaycheckAllocator() {
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Employer Match & Retirement Projection */}
+                    <EmployerMatchProjection
+                      grossPay={grossPay}
+                      payFrequency={payFrequency}
+                      preTaxDeductions={preTaxDeductions}
+                      postTaxDeductions={postTaxDeductions}
+                    />
                   </>
                 )}
               </TabsContent>

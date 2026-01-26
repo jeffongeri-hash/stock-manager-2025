@@ -15,6 +15,7 @@ interface Deduction {
 const COMMON_PRETAX_DEDUCTIONS = [
   { value: '401k', label: '401(k) Contribution', icon: PiggyBank },
   { value: '403b', label: '403(b) Contribution', icon: PiggyBank },
+  { value: '457b', label: '457(b) Contribution', icon: PiggyBank },
   { value: 'hsa', label: 'HSA Contribution', icon: Heart },
   { value: 'fsa', label: 'FSA (Flexible Spending)', icon: Heart },
   { value: 'health', label: 'Health Insurance Premium', icon: Shield },
