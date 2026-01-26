@@ -55,3 +55,6 @@ verify_jwt = false
 
 [functions.quantgemini-analyze]
 verify_jwt = false
+
+[functions.calculate-paycheck]
+verify_jwt = false
