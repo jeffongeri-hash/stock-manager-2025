@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { DeductionCombobox } from '@/components/paycheck/DeductionCombobox';
 import { ScenarioComparison } from '@/components/paycheck/ScenarioComparison';
+import { WhatIfSlider } from '@/components/paycheck/WhatIfSlider';
 import { 
   Calculator, DollarSign, Plus, Trash2, Loader2, 
   Percent, Building2, Landmark, Heart, Briefcase,
@@ -1376,6 +1377,13 @@ export default function PaycheckAllocator() {
                     )}
                   </CardContent>
                 </Card>
+
+                {/* What-If Slider */}
+                <WhatIfSlider 
+                  result={result} 
+                  grossPay={grossPay} 
+                  payFrequency={payFrequency} 
+                />
               </TabsContent>
 
               <TabsContent value="yearly" className="space-y-6">
