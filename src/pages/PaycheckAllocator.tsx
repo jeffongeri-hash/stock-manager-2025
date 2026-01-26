@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,9 +13,10 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { DeductionCombobox } from '@/components/paycheck/DeductionCombobox';
 import { ScenarioComparison } from '@/components/paycheck/ScenarioComparison';
 import { WhatIfSlider } from '@/components/paycheck/WhatIfSlider';
+import { DeductionRow } from '@/components/paycheck/DeductionRow';
+import { ScenarioInputs } from '@/components/paycheck/ScenarioInputs';
 import { 
   Calculator, DollarSign, Plus, Trash2, Loader2, 
   Percent, Building2, Landmark, Heart, Briefcase,
@@ -336,33 +337,31 @@ export default function PaycheckAllocator() {
     }
   };
 
-  const updateDeduction = (id: string, field: keyof Deduction, value: string | number, isPretax: boolean, isScenarioB = false) => {
+  const updateDeduction = useCallback((id: string, field: keyof Deduction, value: string | number, isPretax: boolean, isScenarioB = false) => {
     if (isScenarioB) {
-      const deductions = isPretax ? preTaxDeductionsB : postTaxDeductionsB;
       const setDeductions = isPretax ? setPreTaxDeductionsB : setPostTaxDeductionsB;
-      setDeductions(deductions.map(d => d.id === id ? { ...d, [field]: value } : d));
+      setDeductions(prev => prev.map(d => d.id === id ? { ...d, [field]: value } : d));
     } else {
-      const deductions = isPretax ? preTaxDeductions : postTaxDeductions;
       const setDeductions = isPretax ? setPreTaxDeductions : setPostTaxDeductions;
-      setDeductions(deductions.map(d => d.id === id ? { ...d, [field]: value } : d));
+      setDeductions(prev => prev.map(d => d.id === id ? { ...d, [field]: value } : d));
     }
-  };
+  }, []);
 
-  const removeDeduction = (id: string, isPretax: boolean, isScenarioB = false) => {
+  const removeDeduction = useCallback((id: string, isPretax: boolean, isScenarioB = false) => {
     if (isScenarioB) {
       if (isPretax) {
-        setPreTaxDeductionsB(preTaxDeductionsB.filter(d => d.id !== id));
+        setPreTaxDeductionsB(prev => prev.filter(d => d.id !== id));
       } else {
-        setPostTaxDeductionsB(postTaxDeductionsB.filter(d => d.id !== id));
+        setPostTaxDeductionsB(prev => prev.filter(d => d.id !== id));
       }
     } else {
       if (isPretax) {
-        setPreTaxDeductions(preTaxDeductions.filter(d => d.id !== id));
+        setPreTaxDeductions(prev => prev.filter(d => d.id !== id));
       } else {
-        setPostTaxDeductions(postTaxDeductions.filter(d => d.id !== id));
+        setPostTaxDeductions(prev => prev.filter(d => d.id !== id));
       }
     }
-  };
+  }, []);
 
   const copyScenarioAToB = () => {
     setGrossPayB(grossPay);
@@ -537,77 +536,6 @@ export default function PaycheckAllocator() {
     return data.filter(d => d.value > 0);
   };
 
-  const DeductionRow = ({ deduction, isPretax, isScenarioB = false }: { deduction: Deduction; isPretax: boolean; isScenarioB?: boolean }) => {
-    const options = isPretax ? COMMON_PRETAX_DEDUCTIONS : COMMON_POSTTAX_DEDUCTIONS;
-    
-    return (
-      <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg flex-wrap">
-        <DeductionCombobox
-          options={options}
-          value={deduction.label}
-          onSelect={(label) => updateDeduction(deduction.id, 'label', label, isPretax, isScenarioB)}
-          placeholder="Select or type..."
-        />
-        
-        <Input
-          placeholder="Custom label"
-          value={deduction.label}
-          onChange={(e) => updateDeduction(deduction.id, 'label', e.target.value, isPretax, isScenarioB)}
-          className="flex-1 min-w-[120px]"
-        />
-        
-        <div className="flex items-center gap-1">
-          <Select 
-            value={deduction.type} 
-            onValueChange={(v: 'percentage' | 'amount') => updateDeduction(deduction.id, 'type', v, isPretax, isScenarioB)}
-          >
-            <SelectTrigger className="w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="amount">
-                <div className="flex items-center gap-1">
-                  <DollarSign className="h-3 w-3" />
-                  Amount
-                </div>
-              </SelectItem>
-              <SelectItem value="percentage">
-                <div className="flex items-center gap-1">
-                  <Percent className="h-3 w-3" />
-                  Percent
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <div className="relative">
-            {deduction.type === 'amount' && (
-              <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            )}
-            <Input
-              type="number"
-              value={deduction.value || ''}
-              onChange={(e) => updateDeduction(deduction.id, 'value', parseFloat(e.target.value) || 0, isPretax, isScenarioB)}
-              className={`w-[100px] ${deduction.type === 'amount' ? 'pl-7' : ''}`}
-              placeholder="0"
-            />
-            {deduction.type === 'percentage' && (
-              <Percent className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            )}
-          </div>
-        </div>
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => removeDeduction(deduction.id, isPretax, isScenarioB)}
-          className="text-destructive hover:text-destructive"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-    );
-  };
 
   const yearlyProjection = getYearlyProjection();
   const taxBracketData = getTaxBracketData();
@@ -689,8 +617,9 @@ export default function PaycheckAllocator() {
                 setAllowances={setAllowances}
                 preTaxDeductions={preTaxDeductions}
                 postTaxDeductions={postTaxDeductions}
-                addDeduction={(isPretax) => addDeduction(isPretax, false)}
-                isScenarioB={false}
+                onAddDeduction={(isPretax) => addDeduction(isPretax, false)}
+                onUpdateDeduction={(id, field, value, isPretax) => updateDeduction(id, field, value, isPretax, false)}
+                onRemoveDeduction={(id, isPretax) => removeDeduction(id, isPretax, false)}
               />
               <Button 
                 className="w-full" 
@@ -730,8 +659,9 @@ export default function PaycheckAllocator() {
                 setAllowances={setAllowancesB}
                 preTaxDeductions={preTaxDeductionsB}
                 postTaxDeductions={postTaxDeductionsB}
-                addDeduction={(isPretax) => addDeduction(isPretax, true)}
-                isScenarioB={true}
+                onAddDeduction={(isPretax) => addDeduction(isPretax, true)}
+                onUpdateDeduction={(id, field, value, isPretax) => updateDeduction(id, field, value, isPretax, true)}
+                onRemoveDeduction={(id, isPretax) => removeDeduction(id, isPretax, true)}
               />
               <Button 
                 className="w-full" 
@@ -775,123 +705,6 @@ export default function PaycheckAllocator() {
     );
   }
 
-  function ScenarioInputs({
-    grossPay: gp,
-    setGrossPay: setGP,
-    payFrequency: pf,
-    setPayFrequency: setPF,
-    zipCode: zc,
-    setZipCode: setZC,
-    filingStatus: fs,
-    setFilingStatus: setFS,
-    allowances: al,
-    setAllowances: setAL,
-    preTaxDeductions: ptd,
-    postTaxDeductions: potd,
-    addDeduction: addDed,
-    isScenarioB,
-  }: {
-    grossPay: number;
-    setGrossPay: (v: number) => void;
-    payFrequency: string;
-    setPayFrequency: (v: string) => void;
-    zipCode: string;
-    setZipCode: (v: string) => void;
-    filingStatus: string;
-    setFilingStatus: (v: string) => void;
-    allowances: number;
-    setAllowances: (v: number) => void;
-    preTaxDeductions: Deduction[];
-    postTaxDeductions: Deduction[];
-    addDeduction: (isPretax: boolean) => void;
-    isScenarioB: boolean;
-  }) {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label className="text-xs">Gross Pay</Label>
-            <div className="relative">
-              <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-              <Input
-                type="number"
-                value={gp}
-                onChange={(e) => setGP(parseFloat(e.target.value) || 0)}
-                className="pl-6 h-9"
-              />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Frequency</Label>
-            <Select value={pf} onValueChange={setPF}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="biweekly">Bi-Weekly</SelectItem>
-                <SelectItem value="semimonthly">Semi-Monthly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label className="text-xs">ZIP Code</Label>
-            <Input
-              value={zc}
-              onChange={(e) => setZC(e.target.value.replace(/\D/g, '').slice(0, 5))}
-              placeholder="12345"
-              className="h-9"
-              maxLength={5}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Filing Status</Label>
-            <Select value={fs} onValueChange={setFS}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="single">Single</SelectItem>
-                <SelectItem value="married">Married</SelectItem>
-                <SelectItem value="marriedSeparate">Married Sep.</SelectItem>
-                <SelectItem value="headOfHousehold">Head of House</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Pre-Tax Deductions Compact */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs text-green-500">Pre-Tax Deductions</Label>
-            <Button variant="ghost" size="sm" className="h-6 px-2" onClick={() => addDed(true)}>
-              <Plus className="h-3 w-3" />
-            </Button>
-          </div>
-          {ptd.map(d => (
-            <DeductionRow key={d.id} deduction={d} isPretax={true} isScenarioB={isScenarioB} />
-          ))}
-        </div>
-
-        {/* Post-Tax Deductions Compact */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs text-blue-500">Post-Tax Deductions</Label>
-            <Button variant="ghost" size="sm" className="h-6 px-2" onClick={() => addDed(false)}>
-              <Plus className="h-3 w-3" />
-            </Button>
-          </div>
-          {potd.map(d => (
-            <DeductionRow key={d.id} deduction={d} isPretax={false} isScenarioB={isScenarioB} />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   function StandardModeUI() {
     return (
@@ -1129,7 +942,14 @@ export default function PaycheckAllocator() {
                 </p>
               ) : (
                 preTaxDeductions.map(d => (
-                  <DeductionRow key={d.id} deduction={d} isPretax={true} />
+                  <DeductionRow 
+                    key={d.id} 
+                    deduction={d} 
+                    isPretax={true}
+                    options={COMMON_PRETAX_DEDUCTIONS}
+                    onUpdate={(id, field, value) => updateDeduction(id, field, value, true, false)}
+                    onRemove={(id) => removeDeduction(id, true, false)}
+                  />
                 ))
               )}
             </CardContent>
@@ -1159,7 +979,14 @@ export default function PaycheckAllocator() {
                 </p>
               ) : (
                 postTaxDeductions.map(d => (
-                  <DeductionRow key={d.id} deduction={d} isPretax={false} />
+                  <DeductionRow 
+                    key={d.id} 
+                    deduction={d} 
+                    isPretax={false}
+                    options={COMMON_POSTTAX_DEDUCTIONS}
+                    onUpdate={(id, field, value) => updateDeduction(id, field, value, false, false)}
+                    onRemove={(id) => removeDeduction(id, false, false)}
+                  />
                 ))
               )}
             </CardContent>
