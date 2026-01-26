@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { SlidersHorizontal, TrendingUp, TrendingDown, DollarSign, Percent, PiggyBank, Heart, Shield, Car, GraduationCap } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { SlidersHorizontal, TrendingUp, TrendingDown, DollarSign, Percent, PiggyBank, Heart, Shield, Car, GraduationCap, Gift, Sparkles } from 'lucide-react';
 
 interface PaycheckResult {
   grossPay: number;
@@ -38,13 +40,13 @@ interface WhatIfSliderProps {
 }
 
 const ADJUSTABLE_VARIABLES = [
-  { value: '401k', label: '401(k) Contribution', icon: PiggyBank, maxPercent: 23, category: 'pretax' },
-  { value: 'hsa', label: 'HSA Contribution', icon: Heart, maxPercent: 8, category: 'pretax' },
-  { value: 'fsa', label: 'FSA Contribution', icon: Heart, maxPercent: 5, category: 'pretax' },
-  { value: 'health_premium', label: 'Health Insurance Premium', icon: Shield, maxPercent: 15, category: 'pretax' },
-  { value: 'commuter', label: 'Commuter Benefits', icon: Car, maxPercent: 5, category: 'pretax' },
-  { value: 'roth_401k', label: 'Roth 401(k)', icon: PiggyBank, maxPercent: 23, category: 'posttax' },
-  { value: 'student_loan', label: 'Student Loan Payment', icon: GraduationCap, maxPercent: 20, category: 'posttax' },
+  { value: '401k', label: '401(k) Contribution', icon: PiggyBank, maxPercent: 23, category: 'pretax', hasMatch: true },
+  { value: 'hsa', label: 'HSA Contribution', icon: Heart, maxPercent: 8, category: 'pretax', hasMatch: false },
+  { value: 'fsa', label: 'FSA Contribution', icon: Heart, maxPercent: 5, category: 'pretax', hasMatch: false },
+  { value: 'health_premium', label: 'Health Insurance Premium', icon: Shield, maxPercent: 15, category: 'pretax', hasMatch: false },
+  { value: 'commuter', label: 'Commuter Benefits', icon: Car, maxPercent: 5, category: 'pretax', hasMatch: false },
+  { value: 'roth_401k', label: 'Roth 401(k)', icon: PiggyBank, maxPercent: 23, category: 'posttax', hasMatch: true },
+  { value: 'student_loan', label: 'Student Loan Payment', icon: GraduationCap, maxPercent: 20, category: 'posttax', hasMatch: false },
 ];
 
 const getPayPeriodsPerYear = (frequency: string): number => {
@@ -80,16 +82,34 @@ export function WhatIfSlider({ result, grossPay, payFrequency }: WhatIfSliderPro
   const [selectedVariable, setSelectedVariable] = useState('401k');
   const [adjustmentPercent, setAdjustmentPercent] = useState(6); // Default 6%
   
+  // Employer match settings
+  const [enableEmployerMatch, setEnableEmployerMatch] = useState(true);
+  const [matchPercent, setMatchPercent] = useState(50); // 50% match
+  const [matchUpTo, setMatchUpTo] = useState(6); // Up to 6% of salary
+  
   const selectedVarConfig = ADJUSTABLE_VARIABLES.find(v => v.value === selectedVariable);
   const Icon = selectedVarConfig?.icon || DollarSign;
   const isPretax = selectedVarConfig?.category === 'pretax';
   const maxPercent = selectedVarConfig?.maxPercent || 25;
+  const hasMatchOption = selectedVarConfig?.hasMatch || false;
   
   const periodsPerYear = getPayPeriodsPerYear(payFrequency);
   
   const calculations = useMemo(() => {
     const adjustmentAmount = (grossPay * adjustmentPercent) / 100;
     const annualAdjustment = adjustmentAmount * periodsPerYear;
+    
+    // Calculate employer match
+    let employerMatchPerPaycheck = 0;
+    let annualEmployerMatch = 0;
+    
+    if (enableEmployerMatch && hasMatchOption) {
+      // Calculate what portion of your contribution gets matched
+      const matchablePercent = Math.min(adjustmentPercent, matchUpTo);
+      const matchableAmount = (grossPay * matchablePercent) / 100;
+      employerMatchPerPaycheck = matchableAmount * (matchPercent / 100);
+      annualEmployerMatch = employerMatchPerPaycheck * periodsPerYear;
+    }
     
     // Estimate the annual taxable income
     const annualTaxableIncome = result.taxableIncome * periodsPerYear;
@@ -101,6 +121,10 @@ export function WhatIfSlider({ result, grossPay, payFrequency }: WhatIfSliderPro
       result.taxes.stateTax
     );
     
+    // Total contribution (yours + employer)
+    const totalContributionPerPaycheck = adjustmentAmount + employerMatchPerPaycheck;
+    const totalAnnualContribution = annualAdjustment + annualEmployerMatch;
+    
     if (isPretax) {
       // Pre-tax deductions reduce taxable income
       const taxSavingsPerPaycheck = adjustmentAmount * marginalRate;
@@ -108,6 +132,9 @@ export function WhatIfSlider({ result, grossPay, payFrequency }: WhatIfSliderPro
       const netCostPerPaycheck = adjustmentAmount - taxSavingsPerPaycheck;
       const newNetPay = result.netPay - netCostPerPaycheck;
       const netPayDifference = newNetPay - result.netPay;
+      
+      // Calculate effective return on investment
+      const immediateReturn = ((taxSavingsPerPaycheck + employerMatchPerPaycheck) / netCostPerPaycheck) * 100;
       
       return {
         adjustmentAmount,
@@ -119,10 +146,18 @@ export function WhatIfSlider({ result, grossPay, payFrequency }: WhatIfSliderPro
         netPayDifference,
         effectiveRate: (netCostPerPaycheck / adjustmentAmount) * 100,
         marginalRate: marginalRate * 100,
+        employerMatchPerPaycheck,
+        annualEmployerMatch,
+        totalContributionPerPaycheck,
+        totalAnnualContribution,
+        immediateReturn,
       };
     } else {
       // Post-tax deductions don't affect taxes
       const newNetPay = result.netPay - adjustmentAmount;
+      const immediateReturn = employerMatchPerPaycheck > 0 
+        ? (employerMatchPerPaycheck / adjustmentAmount) * 100 
+        : 0;
       
       return {
         adjustmentAmount,
@@ -134,9 +169,14 @@ export function WhatIfSlider({ result, grossPay, payFrequency }: WhatIfSliderPro
         netPayDifference: -adjustmentAmount,
         effectiveRate: 100,
         marginalRate: marginalRate * 100,
+        employerMatchPerPaycheck,
+        annualEmployerMatch,
+        totalContributionPerPaycheck,
+        totalAnnualContribution,
+        immediateReturn,
       };
     }
-  }, [result, grossPay, adjustmentPercent, isPretax, periodsPerYear]);
+  }, [result, grossPay, adjustmentPercent, isPretax, periodsPerYear, enableEmployerMatch, matchPercent, matchUpTo, hasMatchOption]);
   
   return (
     <Card>
@@ -164,6 +204,7 @@ export function WhatIfSlider({ result, grossPay, payFrequency }: WhatIfSliderPro
                   <div className="flex items-center gap-2">
                     <v.icon className="h-4 w-4" />
                     {v.label}
+                    {v.hasMatch && <Badge variant="secondary" className="text-[10px] px-1">Match</Badge>}
                   </div>
                 </SelectItem>
               ))}
@@ -174,12 +215,69 @@ export function WhatIfSlider({ result, grossPay, payFrequency }: WhatIfSliderPro
                   <div className="flex items-center gap-2">
                     <v.icon className="h-4 w-4" />
                     {v.label}
+                    {v.hasMatch && <Badge variant="secondary" className="text-[10px] px-1">Match</Badge>}
                   </div>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
+        
+        {/* Employer Match Settings */}
+        {hasMatchOption && (
+          <div className="p-4 rounded-lg border bg-gradient-to-br from-purple-500/5 to-transparent">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Gift className="h-5 w-5 text-purple-500" />
+                <Label className="font-medium">Employer Match</Label>
+              </div>
+              <Switch
+                checked={enableEmployerMatch}
+                onCheckedChange={setEnableEmployerMatch}
+              />
+            </div>
+            
+            {enableEmployerMatch && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Match Rate</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={matchPercent}
+                      onChange={(e) => setMatchPercent(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
+                      className="w-20"
+                      min={0}
+                      max={100}
+                    />
+                    <span className="text-sm text-muted-foreground">% of your contribution</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Up To</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={matchUpTo}
+                      onChange={(e) => setMatchUpTo(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
+                      className="w-20"
+                      min={0}
+                      max={100}
+                    />
+                    <span className="text-sm text-muted-foreground">% of your salary</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {enableEmployerMatch && (
+              <p className="text-xs text-muted-foreground mt-3">
+                Example: {matchPercent}% match up to {matchUpTo}% means if you contribute {matchUpTo}% of your salary, 
+                your employer adds {(matchUpTo * matchPercent / 100).toFixed(1)}%.
+              </p>
+            )}
+          </div>
+        )}
         
         {/* Slider */}
         <div className="space-y-4">
@@ -209,6 +307,9 @@ export function WhatIfSlider({ result, grossPay, payFrequency }: WhatIfSliderPro
           
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>0%</span>
+            {hasMatchOption && enableEmployerMatch && (
+              <span className="text-purple-500">↑ {matchUpTo}% (max match)</span>
+            )}
             <span>{maxPercent}%</span>
           </div>
         </div>
@@ -218,12 +319,27 @@ export function WhatIfSlider({ result, grossPay, payFrequency }: WhatIfSliderPro
         {/* Impact Summary */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1 p-3 rounded-lg bg-muted/50">
-            <p className="text-xs text-muted-foreground">Per Paycheck Contribution</p>
+            <p className="text-xs text-muted-foreground">Your Contribution</p>
             <p className="text-xl font-bold">${calculations.adjustmentAmount.toFixed(2)}</p>
             <p className="text-xs text-muted-foreground">
               ${calculations.annualAdjustment.toLocaleString(undefined, { maximumFractionDigits: 0 })}/year
             </p>
           </div>
+          
+          {enableEmployerMatch && hasMatchOption && calculations.employerMatchPerPaycheck > 0 && (
+            <div className="space-y-1 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Gift className="h-3 w-3" />
+                Employer Match
+              </p>
+              <p className="text-xl font-bold text-purple-600">
+                +${calculations.employerMatchPerPaycheck.toFixed(2)}
+              </p>
+              <p className="text-xs text-purple-600">
+                +${calculations.annualEmployerMatch.toLocaleString(undefined, { maximumFractionDigits: 0 })}/year
+              </p>
+            </div>
+          )}
           
           {isPretax && (
             <div className="space-y-1 p-3 rounded-lg bg-green-500/10">
@@ -265,6 +381,48 @@ export function WhatIfSlider({ result, grossPay, payFrequency }: WhatIfSliderPro
           </div>
         </div>
         
+        {/* Total Value Card (when employer match is enabled) */}
+        {enableEmployerMatch && hasMatchOption && adjustmentPercent > 0 && (
+          <>
+            <Separator />
+            <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/10 via-primary/5 to-green-500/10 border">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <span className="font-semibold">Total Retirement Value</span>
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-xs text-muted-foreground">Your Contribution</p>
+                  <p className="text-lg font-bold">${calculations.adjustmentAmount.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">+ Employer Match</p>
+                  <p className="text-lg font-bold text-purple-600">
+                    ${calculations.employerMatchPerPaycheck.toFixed(2)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">= Total/Paycheck</p>
+                  <p className="text-lg font-bold text-primary">
+                    ${calculations.totalContributionPerPaycheck.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t text-center">
+                <p className="text-sm text-muted-foreground">Annual Total to Retirement</p>
+                <p className="text-2xl font-bold text-primary">
+                  ${calculations.totalAnnualContribution.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </p>
+                {calculations.immediateReturn > 0 && (
+                  <Badge className="mt-2 bg-green-500">
+                    {calculations.immediateReturn.toFixed(0)}% Immediate Return!
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+        
         {/* Insight Box */}
         {isPretax && adjustmentPercent > 0 && (
           <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
@@ -277,9 +435,11 @@ export function WhatIfSlider({ result, grossPay, payFrequency }: WhatIfSliderPro
                   every <strong>$1.00</strong> you contribute to {selectedVarConfig?.label} only costs you{' '}
                   <strong className="text-primary">${(calculations.effectiveRate / 100).toFixed(2)}</strong> in take-home pay.
                 </p>
-                {selectedVariable === '401k' && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    💡 If your employer matches contributions, your effective return is even higher!
+                {hasMatchOption && enableEmployerMatch && calculations.employerMatchPerPaycheck > 0 && (
+                  <p className="text-sm text-purple-600 mt-2">
+                    🎁 With your employer's {matchPercent}% match, you're getting{' '}
+                    <strong>${(calculations.adjustmentAmount + calculations.employerMatchPerPaycheck).toFixed(2)}</strong> invested 
+                    for only <strong>${calculations.netCostPerPaycheck.toFixed(2)}</strong> out of pocket!
                   </p>
                 )}
               </div>
@@ -299,6 +459,12 @@ export function WhatIfSlider({ result, grossPay, payFrequency }: WhatIfSliderPro
                     'Roth contributions grow tax-free and withdrawals in retirement are tax-free!' :
                     'this helps you build savings and meet financial goals.'}
                 </p>
+                {hasMatchOption && enableEmployerMatch && calculations.employerMatchPerPaycheck > 0 && (
+                  <p className="text-sm text-purple-600 mt-2">
+                    🎁 Your employer match of <strong>${calculations.employerMatchPerPaycheck.toFixed(2)}/paycheck</strong> is 
+                    essentially a {calculations.immediateReturn.toFixed(0)}% instant return on your contribution!
+                  </p>
+                )}
               </div>
             </div>
           </div>
