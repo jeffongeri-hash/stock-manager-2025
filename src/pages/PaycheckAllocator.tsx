@@ -9,14 +9,18 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { DeductionCombobox } from '@/components/paycheck/DeductionCombobox';
+import { ScenarioComparison } from '@/components/paycheck/ScenarioComparison';
 import { 
   Calculator, DollarSign, Plus, Trash2, Loader2, 
   Percent, Building2, Landmark, Heart, Briefcase,
   PiggyBank, Shield, GraduationCap, Baby, Car,
-  Save, FolderOpen, Calendar, TrendingUp, Star, StarOff
+  Save, FolderOpen, Calendar, TrendingUp, Star, StarOff,
+  GitCompare, Copy
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
@@ -155,6 +159,22 @@ export default function PaycheckAllocator() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
   
+  // Comparison mode
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [scenarioAName, setScenarioAName] = useState('Scenario A');
+  const [scenarioBName, setScenarioBName] = useState('Scenario B');
+  
+  // Scenario B state
+  const [grossPayB, setGrossPayB] = useState<number>(5000);
+  const [payFrequencyB, setPayFrequencyB] = useState('biweekly');
+  const [zipCodeB, setZipCodeB] = useState('');
+  const [filingStatusB, setFilingStatusB] = useState('single');
+  const [allowancesB, setAllowancesB] = useState<number>(0);
+  const [preTaxDeductionsB, setPreTaxDeductionsB] = useState<Deduction[]>([]);
+  const [postTaxDeductionsB, setPostTaxDeductionsB] = useState<Deduction[]>([]);
+  const [isCalculatingB, setIsCalculatingB] = useState(false);
+  const [resultB, setResultB] = useState<PaycheckResult | null>(null);
+  
   // Load saved configurations on mount
   useEffect(() => {
     if (user) {
@@ -292,7 +312,7 @@ export default function PaycheckAllocator() {
     }
   };
 
-  const addDeduction = (isPretax: boolean) => {
+  const addDeduction = (isPretax: boolean, isScenarioB = false) => {
     const newDeduction: Deduction = {
       id: crypto.randomUUID(),
       label: '',
@@ -300,36 +320,58 @@ export default function PaycheckAllocator() {
       type: 'amount',
     };
     
-    if (isPretax) {
-      setPreTaxDeductions([...preTaxDeductions, newDeduction]);
+    if (isScenarioB) {
+      if (isPretax) {
+        setPreTaxDeductionsB([...preTaxDeductionsB, newDeduction]);
+      } else {
+        setPostTaxDeductionsB([...postTaxDeductionsB, newDeduction]);
+      }
     } else {
-      setPostTaxDeductions([...postTaxDeductions, newDeduction]);
+      if (isPretax) {
+        setPreTaxDeductions([...preTaxDeductions, newDeduction]);
+      } else {
+        setPostTaxDeductions([...postTaxDeductions, newDeduction]);
+      }
     }
   };
 
-  const updateDeduction = (id: string, field: keyof Deduction, value: string | number, isPretax: boolean) => {
-    const deductions = isPretax ? preTaxDeductions : postTaxDeductions;
-    const setDeductions = isPretax ? setPreTaxDeductions : setPostTaxDeductions;
-    
-    setDeductions(deductions.map(d => 
-      d.id === id ? { ...d, [field]: value } : d
-    ));
-  };
-
-  const removeDeduction = (id: string, isPretax: boolean) => {
-    if (isPretax) {
-      setPreTaxDeductions(preTaxDeductions.filter(d => d.id !== id));
+  const updateDeduction = (id: string, field: keyof Deduction, value: string | number, isPretax: boolean, isScenarioB = false) => {
+    if (isScenarioB) {
+      const deductions = isPretax ? preTaxDeductionsB : postTaxDeductionsB;
+      const setDeductions = isPretax ? setPreTaxDeductionsB : setPostTaxDeductionsB;
+      setDeductions(deductions.map(d => d.id === id ? { ...d, [field]: value } : d));
     } else {
-      setPostTaxDeductions(postTaxDeductions.filter(d => d.id !== id));
+      const deductions = isPretax ? preTaxDeductions : postTaxDeductions;
+      const setDeductions = isPretax ? setPreTaxDeductions : setPostTaxDeductions;
+      setDeductions(deductions.map(d => d.id === id ? { ...d, [field]: value } : d));
     }
   };
 
-  const selectCommonDeduction = (commonValue: string, id: string, isPretax: boolean) => {
-    const options = isPretax ? COMMON_PRETAX_DEDUCTIONS : COMMON_POSTTAX_DEDUCTIONS;
-    const selected = options.find(o => o.value === commonValue);
-    if (selected && selected.value !== 'custom') {
-      updateDeduction(id, 'label', selected.label, isPretax);
+  const removeDeduction = (id: string, isPretax: boolean, isScenarioB = false) => {
+    if (isScenarioB) {
+      if (isPretax) {
+        setPreTaxDeductionsB(preTaxDeductionsB.filter(d => d.id !== id));
+      } else {
+        setPostTaxDeductionsB(postTaxDeductionsB.filter(d => d.id !== id));
+      }
+    } else {
+      if (isPretax) {
+        setPreTaxDeductions(preTaxDeductions.filter(d => d.id !== id));
+      } else {
+        setPostTaxDeductions(postTaxDeductions.filter(d => d.id !== id));
+      }
     }
+  };
+
+  const copyScenarioAToB = () => {
+    setGrossPayB(grossPay);
+    setPayFrequencyB(payFrequency);
+    setZipCodeB(zipCode);
+    setFilingStatusB(filingStatus);
+    setAllowancesB(allowances);
+    setPreTaxDeductionsB(preTaxDeductions.map(d => ({ ...d, id: crypto.randomUUID() })));
+    setPostTaxDeductionsB(postTaxDeductions.map(d => ({ ...d, id: crypto.randomUUID() })));
+    toast.success('Copied Scenario A to Scenario B');
   };
 
   const calculatePaycheck = async () => {
@@ -363,13 +405,57 @@ export default function PaycheckAllocator() {
       if (error) throw error;
       
       setResult(data);
-      toast.success('Paycheck calculated successfully');
+      toast.success(`${comparisonMode ? scenarioAName : 'Paycheck'} calculated successfully`);
     } catch (error) {
       console.error('Error calculating paycheck:', error);
       toast.error('Failed to calculate paycheck');
     } finally {
       setIsCalculating(false);
     }
+  };
+
+  const calculatePaycheckB = async () => {
+    if (!zipCodeB || zipCodeB.length !== 5) {
+      toast.error('Please enter a valid 5-digit ZIP code for Scenario B');
+      return;
+    }
+
+    setIsCalculatingB(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('calculate-paycheck', {
+        body: {
+          grossPay: grossPayB,
+          payFrequency: payFrequencyB,
+          zipCode: zipCodeB,
+          filingStatus: filingStatusB,
+          allowances: allowancesB,
+          preTaxDeductions: preTaxDeductionsB.map(d => ({
+            label: d.label,
+            value: d.value,
+            type: d.type,
+          })),
+          postTaxDeductions: postTaxDeductionsB.map(d => ({
+            label: d.label,
+            value: d.value,
+            type: d.type,
+          })),
+        },
+      });
+
+      if (error) throw error;
+      
+      setResultB(data);
+      toast.success(`${scenarioBName} calculated successfully`);
+    } catch (error) {
+      console.error('Error calculating paycheck B:', error);
+      toast.error('Failed to calculate Scenario B');
+    } finally {
+      setIsCalculatingB(false);
+    }
+  };
+
+  const calculateBothScenarios = async () => {
+    await Promise.all([calculatePaycheck(), calculatePaycheckB()]);
   };
 
   // Yearly projection calculations
@@ -450,38 +536,29 @@ export default function PaycheckAllocator() {
     return data.filter(d => d.value > 0);
   };
 
-  const DeductionRow = ({ deduction, isPretax }: { deduction: Deduction; isPretax: boolean }) => {
+  const DeductionRow = ({ deduction, isPretax, isScenarioB = false }: { deduction: Deduction; isPretax: boolean; isScenarioB?: boolean }) => {
     const options = isPretax ? COMMON_PRETAX_DEDUCTIONS : COMMON_POSTTAX_DEDUCTIONS;
     
     return (
-      <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-        <Select onValueChange={(v) => selectCommonDeduction(v, deduction.id, isPretax)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select type..." />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map(opt => (
-              <SelectItem key={opt.value} value={opt.value}>
-                <div className="flex items-center gap-2">
-                  <opt.icon className="h-4 w-4" />
-                  {opt.label}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg flex-wrap">
+        <DeductionCombobox
+          options={options}
+          value={deduction.label}
+          onSelect={(label) => updateDeduction(deduction.id, 'label', label, isPretax, isScenarioB)}
+          placeholder="Select or type..."
+        />
         
         <Input
-          placeholder="Label"
+          placeholder="Custom label"
           value={deduction.label}
-          onChange={(e) => updateDeduction(deduction.id, 'label', e.target.value, isPretax)}
-          className="flex-1"
+          onChange={(e) => updateDeduction(deduction.id, 'label', e.target.value, isPretax, isScenarioB)}
+          className="flex-1 min-w-[120px]"
         />
         
         <div className="flex items-center gap-1">
           <Select 
             value={deduction.type} 
-            onValueChange={(v: 'percentage' | 'amount') => updateDeduction(deduction.id, 'type', v, isPretax)}
+            onValueChange={(v: 'percentage' | 'amount') => updateDeduction(deduction.id, 'type', v, isPretax, isScenarioB)}
           >
             <SelectTrigger className="w-[100px]">
               <SelectValue />
@@ -509,7 +586,7 @@ export default function PaycheckAllocator() {
             <Input
               type="number"
               value={deduction.value || ''}
-              onChange={(e) => updateDeduction(deduction.id, 'value', parseFloat(e.target.value) || 0, isPretax)}
+              onChange={(e) => updateDeduction(deduction.id, 'value', parseFloat(e.target.value) || 0, isPretax, isScenarioB)}
               className={`w-[100px] ${deduction.type === 'amount' ? 'pl-7' : ''}`}
               placeholder="0"
             />
@@ -522,7 +599,7 @@ export default function PaycheckAllocator() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => removeDeduction(deduction.id, isPretax)}
+          onClick={() => removeDeduction(deduction.id, isPretax, isScenarioB)}
           className="text-destructive hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" />
@@ -536,6 +613,287 @@ export default function PaycheckAllocator() {
 
   return (
     <PageLayout title="Paycheck Allocator">
+      {/* Comparison Mode Toggle */}
+      <div className="flex items-center justify-between mb-6 p-4 rounded-lg border bg-card">
+        <div className="flex items-center gap-3">
+          <GitCompare className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <Label htmlFor="comparison-mode" className="font-medium">Comparison Mode</Label>
+            <p className="text-sm text-muted-foreground">Compare two paycheck scenarios side-by-side</p>
+          </div>
+        </div>
+        <Switch
+          id="comparison-mode"
+          checked={comparisonMode}
+          onCheckedChange={setComparisonMode}
+        />
+      </div>
+
+      {comparisonMode ? (
+        <ComparisonModeUI />
+      ) : (
+        <StandardModeUI />
+      )}
+    </PageLayout>
+  );
+
+  function ComparisonModeUI() {
+    return (
+      <div className="space-y-6">
+        {/* Scenario Names */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Scenario A Name</Label>
+            <Input 
+              value={scenarioAName} 
+              onChange={(e) => setScenarioAName(e.target.value)}
+              placeholder="e.g., Current Job"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Scenario B Name</Label>
+            <div className="flex gap-2">
+              <Input 
+                value={scenarioBName} 
+                onChange={(e) => setScenarioBName(e.target.value)}
+                placeholder="e.g., With 401k"
+              />
+              <Button variant="outline" size="icon" onClick={copyScenarioAToB} title="Copy Scenario A to B">
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Side by Side Scenarios */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Scenario A */}
+          <Card className="border-chart-1/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-chart-1/10 border-chart-1/30">{scenarioAName}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ScenarioInputs
+                grossPay={grossPay}
+                setGrossPay={setGrossPay}
+                payFrequency={payFrequency}
+                setPayFrequency={setPayFrequency}
+                zipCode={zipCode}
+                setZipCode={setZipCode}
+                filingStatus={filingStatus}
+                setFilingStatus={setFilingStatus}
+                allowances={allowances}
+                setAllowances={setAllowances}
+                preTaxDeductions={preTaxDeductions}
+                postTaxDeductions={postTaxDeductions}
+                addDeduction={(isPretax) => addDeduction(isPretax, false)}
+                isScenarioB={false}
+              />
+              <Button 
+                className="w-full" 
+                onClick={calculatePaycheck}
+                disabled={isCalculating}
+              >
+                {isCalculating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Calculator className="h-4 w-4 mr-2" />}
+                Calculate {scenarioAName}
+              </Button>
+              {result && (
+                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-center">
+                  <p className="text-sm text-muted-foreground">Net Pay</p>
+                  <p className="text-2xl font-bold text-green-500">${result.netPay.toFixed(2)}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Scenario B */}
+          <Card className="border-chart-2/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-chart-2/10 border-chart-2/30">{scenarioBName}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ScenarioInputs
+                grossPay={grossPayB}
+                setGrossPay={setGrossPayB}
+                payFrequency={payFrequencyB}
+                setPayFrequency={setPayFrequencyB}
+                zipCode={zipCodeB}
+                setZipCode={setZipCodeB}
+                filingStatus={filingStatusB}
+                setFilingStatus={setFilingStatusB}
+                allowances={allowancesB}
+                setAllowances={setAllowancesB}
+                preTaxDeductions={preTaxDeductionsB}
+                postTaxDeductions={postTaxDeductionsB}
+                addDeduction={(isPretax) => addDeduction(isPretax, true)}
+                isScenarioB={true}
+              />
+              <Button 
+                className="w-full" 
+                onClick={calculatePaycheckB}
+                disabled={isCalculatingB}
+              >
+                {isCalculatingB ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Calculator className="h-4 w-4 mr-2" />}
+                Calculate {scenarioBName}
+              </Button>
+              {resultB && (
+                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-center">
+                  <p className="text-sm text-muted-foreground">Net Pay</p>
+                  <p className="text-2xl font-bold text-green-500">${resultB.netPay.toFixed(2)}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Calculate Both Button */}
+        <Button 
+          className="w-full" 
+          size="lg"
+          onClick={calculateBothScenarios}
+          disabled={isCalculating || isCalculatingB}
+        >
+          {(isCalculating || isCalculatingB) ? (
+            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+          ) : (
+            <GitCompare className="h-5 w-5 mr-2" />
+          )}
+          Calculate & Compare Both Scenarios
+        </Button>
+
+        {/* Comparison Results */}
+        <ScenarioComparison
+          scenarioA={{ name: scenarioAName, result, payFrequency }}
+          scenarioB={{ name: scenarioBName, result: resultB, payFrequency: payFrequencyB }}
+        />
+      </div>
+    );
+  }
+
+  function ScenarioInputs({
+    grossPay: gp,
+    setGrossPay: setGP,
+    payFrequency: pf,
+    setPayFrequency: setPF,
+    zipCode: zc,
+    setZipCode: setZC,
+    filingStatus: fs,
+    setFilingStatus: setFS,
+    allowances: al,
+    setAllowances: setAL,
+    preTaxDeductions: ptd,
+    postTaxDeductions: potd,
+    addDeduction: addDed,
+    isScenarioB,
+  }: {
+    grossPay: number;
+    setGrossPay: (v: number) => void;
+    payFrequency: string;
+    setPayFrequency: (v: string) => void;
+    zipCode: string;
+    setZipCode: (v: string) => void;
+    filingStatus: string;
+    setFilingStatus: (v: string) => void;
+    allowances: number;
+    setAllowances: (v: number) => void;
+    preTaxDeductions: Deduction[];
+    postTaxDeductions: Deduction[];
+    addDeduction: (isPretax: boolean) => void;
+    isScenarioB: boolean;
+  }) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Gross Pay</Label>
+            <div className="relative">
+              <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+              <Input
+                type="number"
+                value={gp}
+                onChange={(e) => setGP(parseFloat(e.target.value) || 0)}
+                className="pl-6 h-9"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Frequency</Label>
+            <Select value={pf} onValueChange={setPF}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="biweekly">Bi-Weekly</SelectItem>
+                <SelectItem value="semimonthly">Semi-Monthly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs">ZIP Code</Label>
+            <Input
+              value={zc}
+              onChange={(e) => setZC(e.target.value.replace(/\D/g, '').slice(0, 5))}
+              placeholder="12345"
+              className="h-9"
+              maxLength={5}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Filing Status</Label>
+            <Select value={fs} onValueChange={setFS}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="single">Single</SelectItem>
+                <SelectItem value="married">Married</SelectItem>
+                <SelectItem value="marriedSeparate">Married Sep.</SelectItem>
+                <SelectItem value="headOfHousehold">Head of House</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Pre-Tax Deductions Compact */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-green-500">Pre-Tax Deductions</Label>
+            <Button variant="ghost" size="sm" className="h-6 px-2" onClick={() => addDed(true)}>
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+          {ptd.map(d => (
+            <DeductionRow key={d.id} deduction={d} isPretax={true} isScenarioB={isScenarioB} />
+          ))}
+        </div>
+
+        {/* Post-Tax Deductions Compact */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-blue-500">Post-Tax Deductions</Label>
+            <Button variant="ghost" size="sm" className="h-6 px-2" onClick={() => addDed(false)}>
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+          {potd.map(d => (
+            <DeductionRow key={d.id} deduction={d} isPretax={false} isScenarioB={isScenarioB} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function StandardModeUI() {
+    return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input Section */}
         <div className="space-y-6">
@@ -1199,6 +1557,6 @@ export default function PaycheckAllocator() {
           )}
         </div>
       </div>
-    </PageLayout>
-  );
+    );
+  }
 }
