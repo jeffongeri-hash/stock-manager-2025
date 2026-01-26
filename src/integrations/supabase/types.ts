@@ -370,6 +370,54 @@ export type Database = {
         }
         Relationships: []
       }
+      paycheck_configurations: {
+        Row: {
+          allowances: number
+          created_at: string
+          filing_status: string
+          gross_pay: number
+          id: string
+          is_default: boolean
+          name: string
+          pay_frequency: string
+          post_tax_deductions: Json
+          pre_tax_deductions: Json
+          updated_at: string
+          user_id: string
+          zip_code: string
+        }
+        Insert: {
+          allowances?: number
+          created_at?: string
+          filing_status?: string
+          gross_pay: number
+          id?: string
+          is_default?: boolean
+          name: string
+          pay_frequency?: string
+          post_tax_deductions?: Json
+          pre_tax_deductions?: Json
+          updated_at?: string
+          user_id: string
+          zip_code: string
+        }
+        Update: {
+          allowances?: number
+          created_at?: string
+          filing_status?: string
+          gross_pay?: number
+          id?: string
+          is_default?: boolean
+          name?: string
+          pay_frequency?: string
+          post_tax_deductions?: Json
+          pre_tax_deductions?: Json
+          updated_at?: string
+          user_id?: string
+          zip_code?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
