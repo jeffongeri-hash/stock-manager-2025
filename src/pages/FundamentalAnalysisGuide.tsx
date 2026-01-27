@@ -3,11 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle2, TrendingUp, BarChart3, DollarSign, Shield, Brain } from "lucide-react";
+import { CheckCircle2, TrendingUp, BarChart3, DollarSign, Shield, Brain, Calculator } from "lucide-react";
 import { useState } from "react";
+import { InstitutionalRatios, SectorType, PhaseType } from "@/components/analysis/InstitutionalRatios";
 
 const FundamentalAnalysisGuide = () => {
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [selectedSector, setSelectedSector] = useState<SectorType>('general');
+  const [selectedPhase, setSelectedPhase] = useState<PhaseType>('mature');
 
   const toggleCheck = (id: string) => {
     setCheckedItems(prev => {
@@ -1003,6 +1006,54 @@ const FundamentalAnalysisGuide = () => {
                 <p className="text-muted-foreground">"Know what you own — invest in companies you understand."</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Institutional-Grade Financial Ratios */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calculator className="h-5 w-5" />
+              Institutional-Grade Financial Ratios
+            </CardTitle>
+            <CardDescription>
+              Professional ratio analysis framework with sector-specific benchmarks and lifecycle phase considerations.
+              Select your industry sector and company phase to see appropriate benchmarks.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InstitutionalRatios
+              ratios={{
+                // Sample ratios for demonstration - in real use, these would come from API
+                debtToEquity: 0.85,
+                netDebtToEbitda: 2.8,
+                debtToCapital: 0.46,
+                currentRatio: 1.4,
+                quickRatio: 1.1,
+                cashRunwayMonths: 28,
+                roic: 0.12,
+                roe: 0.18,
+                roa: 0.08,
+                incrementalRoic: 0.14,
+                revenueCAGR: 0.12,
+                fcfCAGR: 0.09,
+                epsCAGR: 0.11,
+                shareCountCAGR: 0.02,
+                ocfToNetIncome: 1.1,
+                fcfYield: 0.05,
+                capexToRevenue: 0.12,
+                evToEbitda: 11.5,
+                priceToBook: 2.2,
+                priceToSales: 3.5,
+                interestCoverage: 4.2,
+                fixedChargeCoverage: 3.1,
+                assetTurnover: 0.45,
+              }}
+              sector={selectedSector}
+              phase={selectedPhase}
+              onSectorChange={setSelectedSector}
+              onPhaseChange={setSelectedPhase}
+            />
           </CardContent>
         </Card>
 

@@ -14,7 +14,6 @@ import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import { TechnicalAnalysis } from '@/components/analysis/TechnicalAnalysis';
 import { FundamentalAnalysis } from '@/components/analysis/FundamentalAnalysis';
-import { InstitutionalRatios, RatioData, SectorType, PhaseType } from '@/components/analysis/InstitutionalRatios';
 import { CatalystEvents } from '@/components/analysis/CatalystEvents';
 import { AnalystRatings } from '@/components/analysis/AnalystRatings';
 import { useWatchlistActions } from '@/hooks/useWatchlistActions';
@@ -54,9 +53,6 @@ const Analysis = () => {
   const [activeSymbol, setActiveSymbol] = useState<string>('');
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [fundamentals, setFundamentals] = useState<FundamentalsData | null>(null);
-  const [institutionalRatios, setInstitutionalRatios] = useState<RatioData>({});
-  const [selectedSector, setSelectedSector] = useState<SectorType>('general');
-  const [selectedPhase, setSelectedPhase] = useState<PhaseType>('mature');
   const [isLoading, setIsLoading] = useState(false);
   
   const { addToWatchlist, isLoggedIn } = useWatchlistActions();
@@ -146,7 +142,6 @@ const Analysis = () => {
         const f = fundData.fundamentals;
         const metrics = f.metrics || {};
         
-        // Set basic fundamentals
         setFundamentals({
           pe: metrics.peNormalizedAnnual || metrics.peBasicExclExtraTTM,
           forwardPe: metrics.forwardPe,
@@ -160,136 +155,38 @@ const Analysis = () => {
           debtToEquity: metrics.totalDebtToEquity,
           marketCap: f.profile?.marketCapitalization,
         });
-
-        // Build institutional ratios from API data
-        const debtToEquity = metrics.totalDebtToEquity;
-        const currentRatio = metrics.currentRatioQuarterly;
-        const quickRatio = metrics.quickRatioQuarterly;
-        const roe = metrics.roeTTM;
-        const roa = metrics.roaTTM;
-        const revenueGrowth = metrics.revenueGrowthQuarterlyYoy;
-        const epsGrowth = metrics.epsGrowthQuarterlyYoy;
-        const grossMargin = metrics.grossMarginTTM;
-        const freeCashFlowPerShare = metrics.freeCashFlowPerShareTTM;
-        const eps = metrics.epsBasicExclExtraItemsTTM;
-        const cashPerShare = metrics.cashPerShareQuarterly;
-        const evToEbitda = metrics.enterpriseValueOverEBITDATTM;
-        const pb = metrics.pbQuarterly;
-        const ps = metrics.psTTM;
-        const interestCoverage = metrics.interestCoverageQuarterly;
-        const assetTurnover = metrics.assetTurnoverTTM;
-        const fcfMargin = metrics.freeCashFlowMarginTTM;
-        const revenuePerShare = metrics.revenuePerShareTTM;
-        const bookValuePerShare = metrics.bookValuePerShareQuarterly;
-        const epsGrowth3Y = metrics.epsGrowth3Y;
-        const epsGrowth5Y = metrics.epsGrowth5Y;
-        const revenueGrowth3Y = metrics.revenueGrowth3Y;
-        const revenueGrowth5Y = metrics.revenueGrowth5Y;
-
-        setInstitutionalRatios({
-          // Capital Structure
-          debtToEquity: debtToEquity,
-          netDebtToEbitda: metrics.netDebtOverEBITDATTM,
-          debtToCapital: debtToEquity ? debtToEquity / (1 + debtToEquity) : undefined,
-          // Liquidity
-          currentRatio: currentRatio,
-          quickRatio: quickRatio,
-          cashRunwayMonths: undefined, // Would need cash burn rate
-          // Profitability
-          roic: metrics.roicTTM ? metrics.roicTTM / 100 : (roe && debtToEquity ? ((roe / 100) / (1 + debtToEquity)) : undefined),
-          roe: roe ? roe / 100 : undefined,
-          roa: roa ? roa / 100 : undefined,
-          incrementalRoic: undefined, // Requires historical data
-          // Growth
-          revenueCAGR: revenueGrowth5Y ? revenueGrowth5Y / 100 : (revenueGrowth3Y ? revenueGrowth3Y / 100 : (revenueGrowth ? revenueGrowth / 100 : undefined)),
-          fcfCAGR: undefined, // Requires historical FCF
-          epsCAGR: epsGrowth5Y ? epsGrowth5Y / 100 : (epsGrowth3Y ? epsGrowth3Y / 100 : (epsGrowth ? epsGrowth / 100 : undefined)),
-          shareCountCAGR: undefined, // Requires share count history
-          // Cash Flow
-          ocfToNetIncome: metrics.operatingCashFlowToNetIncomeRatioTTM,
-          fcfYield: metrics.freeCashFlowYieldTTM ? metrics.freeCashFlowYieldTTM / 100 : undefined,
-          capexToRevenue: metrics.capexToRevenueTTM,
-          fcfMargin: fcfMargin ? fcfMargin / 100 : undefined,
-          // Valuation
-          evToEbitda: evToEbitda,
-          priceToBook: pb,
-          priceToSales: ps,
-          // Institutional
-          interestCoverage: interestCoverage,
-          fixedChargeCoverage: undefined, // Requires lease data
-          assetTurnover: assetTurnover,
-          grossMargin: grossMargin ? grossMargin / 100 : undefined,
-        });
-
-        // Auto-detect sector from industry
-        const industry = f.profile?.finnhubIndustry?.toLowerCase() || '';
-        if (industry.includes('utility') || industry.includes('power') || industry.includes('electric')) {
-          setSelectedSector('utility');
-        } else if (industry.includes('nuclear') || industry.includes('solar') || industry.includes('wind') || industry.includes('renewable')) {
-          setSelectedSector('energy-transition');
-        } else if (industry.includes('software') || industry.includes('technology') || industry.includes('internet') || industry.includes('semiconductor')) {
-          setSelectedSector('technology');
-        } else if (industry.includes('bank') || industry.includes('insurance') || industry.includes('financial')) {
-          setSelectedSector('financials');
-        } else if (industry.includes('biotech') || industry.includes('pharma') || industry.includes('health')) {
-          setSelectedSector('healthcare');
-        } else if (industry.includes('industrial') || industry.includes('manufacturing') || industry.includes('aerospace')) {
-          setSelectedSector('industrials');
-        } else {
-          setSelectedSector('general');
-        }
-
       } else {
         // Set simulated fundamentals if API fails
-        setSimulatedData(fallbackMarketCap);
+        setFundamentals({
+          pe: 20 + Math.random() * 15,
+          forwardPe: 18 + Math.random() * 12,
+          ps: 2 + Math.random() * 5,
+          pb: 2 + Math.random() * 4,
+          roe: 10 + Math.random() * 20,
+          roa: 5 + Math.random() * 15,
+          revenueGrowth: 5 + Math.random() * 25,
+          epsGrowth: 8 + Math.random() * 20,
+          profitMargin: 8 + Math.random() * 20,
+          debtToEquity: 0.5 + Math.random() * 1.5,
+          marketCap: fallbackMarketCap || 100000000000,
+        });
       }
     } catch (fundError) {
       console.error('Error fetching fundamentals:', fundError);
-      setSimulatedData(fallbackMarketCap);
+      setFundamentals({
+        pe: 20 + Math.random() * 15,
+        forwardPe: 18 + Math.random() * 12,
+        ps: 2 + Math.random() * 5,
+        pb: 2 + Math.random() * 4,
+        roe: 10 + Math.random() * 20,
+        roa: 5 + Math.random() * 15,
+        revenueGrowth: 5 + Math.random() * 25,
+        epsGrowth: 8 + Math.random() * 20,
+        profitMargin: 8 + Math.random() * 20,
+        debtToEquity: 0.5 + Math.random() * 1.5,
+        marketCap: fallbackMarketCap || 100000000000,
+      });
     }
-  };
-
-  const setSimulatedData = (fallbackMarketCap?: number) => {
-    setFundamentals({
-      pe: 20 + Math.random() * 15,
-      forwardPe: 18 + Math.random() * 12,
-      ps: 2 + Math.random() * 5,
-      pb: 2 + Math.random() * 4,
-      roe: 10 + Math.random() * 20,
-      roa: 5 + Math.random() * 15,
-      revenueGrowth: 5 + Math.random() * 25,
-      epsGrowth: 8 + Math.random() * 20,
-      profitMargin: 8 + Math.random() * 20,
-      debtToEquity: 0.5 + Math.random() * 1.5,
-      marketCap: fallbackMarketCap || 100000000000,
-    });
-    
-    // Simulated institutional ratios
-    setInstitutionalRatios({
-      debtToEquity: 0.5 + Math.random() * 1.5,
-      netDebtToEbitda: 2 + Math.random() * 3,
-      debtToCapital: 0.3 + Math.random() * 0.3,
-      currentRatio: 1.2 + Math.random() * 0.8,
-      quickRatio: 0.9 + Math.random() * 0.6,
-      cashRunwayMonths: 24 + Math.random() * 24,
-      roic: 0.06 + Math.random() * 0.08,
-      roe: 0.10 + Math.random() * 0.15,
-      roa: 0.04 + Math.random() * 0.08,
-      incrementalRoic: 0.08 + Math.random() * 0.08,
-      revenueCAGR: 0.05 + Math.random() * 0.15,
-      fcfCAGR: 0.05 + Math.random() * 0.1,
-      epsCAGR: 0.05 + Math.random() * 0.12,
-      shareCountCAGR: 0.01 + Math.random() * 0.04,
-      ocfToNetIncome: 0.85 + Math.random() * 0.4,
-      fcfYield: 0.03 + Math.random() * 0.06,
-      capexToRevenue: 0.08 + Math.random() * 0.15,
-      evToEbitda: 8 + Math.random() * 10,
-      priceToBook: 1.5 + Math.random() * 3,
-      priceToSales: 2 + Math.random() * 5,
-      interestCoverage: 2.5 + Math.random() * 4,
-      fixedChargeCoverage: 2 + Math.random() * 3,
-      assetTurnover: 0.3 + Math.random() * 0.5,
-    });
   };
 
   // Auto-refresh stock price every 30 seconds
@@ -492,14 +389,6 @@ const Analysis = () => {
                 debtToEquity: 0.8,
                 marketCap: stockData.marketCap || 100000000000,
               }}
-            />
-            
-            <InstitutionalRatios
-              ratios={institutionalRatios}
-              sector={selectedSector}
-              phase={selectedPhase}
-              onSectorChange={setSelectedSector}
-              onPhaseChange={setSelectedPhase}
             />
           </TabsContent>
 
