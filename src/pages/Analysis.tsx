@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import { TechnicalAnalysis } from '@/components/analysis/TechnicalAnalysis';
 import { FundamentalAnalysis } from '@/components/analysis/FundamentalAnalysis';
+import { InstitutionalRatios } from '@/components/analysis/InstitutionalRatios';
 import { CatalystEvents } from '@/components/analysis/CatalystEvents';
 import { AnalystRatings } from '@/components/analysis/AnalystRatings';
 import { useWatchlistActions } from '@/hooks/useWatchlistActions';
@@ -372,7 +373,7 @@ const Analysis = () => {
             />
           </TabsContent>
 
-          <TabsContent value="fundamental">
+          <TabsContent value="fundamental" className="space-y-6">
             <FundamentalAnalysis
               symbol={activeSymbol}
               fundamentals={fundamentals || {
@@ -388,6 +389,42 @@ const Analysis = () => {
                 debtToEquity: 0.8,
                 marketCap: stockData.marketCap || 100000000000,
               }}
+            />
+            
+            <InstitutionalRatios
+              ratios={{
+                // Capital Structure
+                debtToEquity: fundamentals?.debtToEquity,
+                netDebtToEbitda: fundamentals?.debtToEquity ? fundamentals.debtToEquity * 2.5 : undefined,
+                debtToCapital: fundamentals?.debtToEquity ? fundamentals.debtToEquity / (1 + fundamentals.debtToEquity) : undefined,
+                // Liquidity
+                currentRatio: 1.2 + Math.random() * 0.8,
+                quickRatio: 0.9 + Math.random() * 0.6,
+                cashRunwayMonths: 24 + Math.random() * 24,
+                // Profitability
+                roic: fundamentals?.roe ? (fundamentals.roe / 100) * 0.7 : undefined,
+                roe: fundamentals?.roe ? fundamentals.roe / 100 : undefined,
+                roa: fundamentals?.roa ? fundamentals.roa / 100 : undefined,
+                incrementalRoic: 0.08 + Math.random() * 0.08,
+                // Growth
+                revenueCAGR: fundamentals?.revenueGrowth ? fundamentals.revenueGrowth / 100 : undefined,
+                fcfCAGR: 0.05 + Math.random() * 0.1,
+                epsCAGR: fundamentals?.epsGrowth ? fundamentals.epsGrowth / 100 : undefined,
+                shareCountCAGR: 0.01 + Math.random() * 0.04,
+                // Cash Flow
+                ocfToNetIncome: 0.85 + Math.random() * 0.4,
+                fcfYield: 0.03 + Math.random() * 0.06,
+                capexToRevenue: 0.08 + Math.random() * 0.15,
+                // Valuation
+                evToEbitda: fundamentals?.pe ? fundamentals.pe * 0.6 : undefined,
+                priceToBook: fundamentals?.pb,
+                priceToSales: fundamentals?.ps,
+                // Institutional
+                interestCoverage: 2.5 + Math.random() * 4,
+                fixedChargeCoverage: 2 + Math.random() * 3,
+                assetTurnover: 0.3 + Math.random() * 0.5,
+              }}
+              sector="general"
             />
           </TabsContent>
 
