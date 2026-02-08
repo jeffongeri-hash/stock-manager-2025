@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { 
   Calculator, MapPin, DollarSign, TrendingUp, 
   Lightbulb, Globe, Users, Shield, Flame, Target,
-  PiggyBank, Wallet, ExternalLink, Plane
+  PiggyBank, Wallet, ExternalLink, Plane, Banknote
 } from 'lucide-react';
 import { IgniteUserFinancials, FireType } from '@/types/ignitefire';
 import { IgniteDashboard } from '@/components/ignitefire/IgniteDashboard';
@@ -19,6 +19,7 @@ import { IgniteLocationScanner } from '@/components/ignitefire/IgniteLocationSca
 import { IgniteFamilyPlanner } from '@/components/ignitefire/IgniteFamilyPlanner';
 import { IgniteDebtPayoff } from '@/components/ignitefire/IgniteDebtPayoff';
 import IgniteTravelPlanner from '@/components/ignitefire/IgniteTravelPlanner';
+import IgnitePaycheckPlanner from '@/components/ignitefire/IgnitePaycheckPlanner';
 
 const IgniteFire = () => {
   const [financials, setFinancials] = useState<IgniteUserFinancials>(() => {
@@ -64,7 +65,7 @@ const IgniteFire = () => {
         </div>
 
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 mb-6">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -72,6 +73,10 @@ const IgniteFire = () => {
             <TabsTrigger value="calculators" className="flex items-center gap-2">
               <Calculator className="h-4 w-4" />
               <span className="hidden sm:inline">FIRE Paths</span>
+            </TabsTrigger>
+            <TabsTrigger value="paycheck" className="flex items-center gap-2">
+              <Banknote className="h-4 w-4" />
+              <span className="hidden sm:inline">Paycheck</span>
             </TabsTrigger>
             <TabsTrigger value="location" className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
@@ -97,6 +102,10 @@ const IgniteFire = () => {
 
           <TabsContent value="calculators">
             <IgniteFIRECalculators financials={financials} />
+          </TabsContent>
+
+          <TabsContent value="paycheck">
+            <IgnitePaycheckPlanner financials={financials} />
           </TabsContent>
 
           <TabsContent value="location">
