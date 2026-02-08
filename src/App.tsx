@@ -35,7 +35,7 @@ const RiskMetrics = lazy(() => import("./pages/RiskMetrics"));
 const PortfolioRebalancing = lazy(() => import("./pages/PortfolioRebalancing"));
 const TradingViewWebhook = lazy(() => import("./pages/TradingViewWebhook"));
 const TradingAutomation = lazy(() => import("./pages/TradingAutomation"));
-const Watchlist = lazy(() => import("./pages/Watchlist"));
+const IgniteFire = lazy(() => import("./pages/IgniteFire"));
 const Install = lazy(() => import("./pages/Install"));
 const StockResearch = lazy(() => import("./pages/StockResearch"));
 const RetirementPlanning = lazy(() => import("./pages/RetirementPlanning"));
@@ -115,7 +115,7 @@ const App = () => (
                 <Route path="/reports" element={<ProtectedRoute requiresAuth><Reports /></ProtectedRoute>} />
                 <Route path="/tradingview-webhook" element={<ProtectedRoute requiresAuth><TradingViewWebhook /></ProtectedRoute>} />
                 <Route path="/trading-automation" element={<ProtectedRoute requiresAuth><TradingAutomation /></ProtectedRoute>} />
-                <Route path="/watchlist" element={<ProtectedRoute requiresAuth><Watchlist /></ProtectedRoute>} />
+                <Route path="/ignite-fire" element={<ProtectedRoute><IgniteFire /></ProtectedRoute>} />
                 <Route path="/saved-data" element={<ProtectedRoute requiresAuth><SavedData /></ProtectedRoute>} />
                 
                 {/* Catch-all route */}

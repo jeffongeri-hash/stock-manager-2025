@@ -11,19 +11,31 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     // Handle number inputs to prevent leading zeros
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (type === 'number' && onChange) {
-        const inputValue = e.target.value;
-        // Remove leading zeros except for decimals like "0.5"
-        if (inputValue !== '' && !inputValue.startsWith('0.') && inputValue.startsWith('0') && inputValue.length > 1) {
-          e.target.value = inputValue.replace(/^0+/, '') || '0';
+        let inputValue = e.target.value;
+        // Remove leading zeros except for decimals like "0.5" or just "0"
+        if (inputValue !== '' && inputValue !== '0' && !inputValue.startsWith('0.') && inputValue.startsWith('0') && inputValue.length > 1) {
+          inputValue = inputValue.replace(/^0+/, '') || '0';
+          e.target.value = inputValue;
         }
       }
       onChange?.(e);
     };
 
     // Format the display value to remove leading zeros for number type
-    const displayValue = type === 'number' && typeof value === 'number' 
-      ? value.toString() 
-      : value;
+    // Convert number to string and strip leading zeros (except for decimals)
+    const formatDisplayValue = () => {
+      if (type === 'number' && value !== undefined && value !== '') {
+        const strValue = String(value);
+        // Remove leading zeros but keep decimal zeros like 0.5
+        if (!strValue.startsWith('0.') && strValue !== '0') {
+          return strValue.replace(/^0+/, '') || '0';
+        }
+        return strValue;
+      }
+      return value;
+    };
+    
+    const displayValue = formatDisplayValue();
 
     return (
       <input
