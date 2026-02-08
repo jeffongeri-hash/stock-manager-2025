@@ -1,11 +1,9 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Target, PiggyBank, Wallet, Calendar, DollarSign } from 'lucide-react';
-import { IgniteUserFinancials, FireType } from '@/types/ignitefire';
+import { IgniteUserFinancials } from '@/types/ignitefire';
 
 interface IgniteDashboardProps {
   financials: IgniteUserFinancials;
@@ -13,16 +11,9 @@ interface IgniteDashboardProps {
 }
 
 export const IgniteDashboard: React.FC<IgniteDashboardProps> = ({ financials, setFinancials }) => {
-  const yearsToRetirement = financials.retirementAge - financials.currentAge;
-  const fireNumber = financials.annualSpending * 25; // 4% rule
-  const progress = Math.min((financials.currentNetWorth / fireNumber) * 100, 100);
-  const savingsRate = (financials.annualSavings / financials.grossAnnualIncome) * 100;
-  
-  // Simple FV calculation
-  const futureValue = financials.currentNetWorth * Math.pow(1 + financials.expectedReturn / 100, yearsToRetirement) +
-    financials.annualSavings * ((Math.pow(1 + financials.expectedReturn / 100, yearsToRetirement) - 1) / (financials.expectedReturn / 100));
-  
-  const onTrack = futureValue >= fireNumber;
+  const fireNumber = financials.annualSpending * 25;
+  const progressPercent = Math.min(100, (financials.currentNetWorth / Math.max(1, fireNumber)) * 100);
+  const savingsRate = Math.round((financials.annualSavings / Math.max(1, financials.grossAnnualIncome)) * 100);
 
   const handleChange = (field: keyof IgniteUserFinancials, value: string) => {
     const numValue = parseFloat(value) || 0;
@@ -30,50 +21,58 @@ export const IgniteDashboard: React.FC<IgniteDashboardProps> = ({ financials, se
   };
 
   return (
-    <div className="space-y-6">
-      {/* Progress Overview */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-primary" />
-                FIRE Progress
-              </CardTitle>
-              <CardDescription>Your journey to financial independence</CardDescription>
-            </div>
-            <Badge variant={onTrack ? "default" : "destructive"}>
-              {onTrack ? "On Track" : "Needs Attention"}
-            </Badge>
+    <div className="space-y-8 pb-8">
+      {/* Main Progress Card */}
+      <Card className="overflow-hidden">
+        <CardContent className="p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="font-black text-muted-foreground uppercase tracking-widest text-[10px]">Financial Sustainability Progress</h3>
+            <Badge className="text-[10px] font-black uppercase tracking-widest">Active Model</Badge>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Current: ${financials.currentNetWorth.toLocaleString()}</span>
-                <span>Target: ${fireNumber.toLocaleString()}</span>
+
+          <div className="flex flex-col md:flex-row items-center gap-12">
+            {/* SVG Progress Ring */}
+            <div className="relative w-52 h-52 flex items-center justify-center shrink-0">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle 
+                  cx="50%" cy="50%" r="44%" 
+                  stroke="currentColor" 
+                  strokeWidth="12" 
+                  fill="transparent" 
+                  className="text-muted" 
+                />
+                <circle 
+                  cx="50%" cy="50%" r="44%" 
+                  stroke="currentColor" 
+                  strokeWidth="12" 
+                  fill="transparent" 
+                  strokeDasharray="276"
+                  strokeDashoffset={276 - (276 * progressPercent / 100)}
+                  className="text-primary transition-all duration-1000 ease-out" 
+                  strokeLinecap="round" 
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-4xl font-black tracking-tighter">{Math.round(progressPercent)}%</span>
+                <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">To Target</span>
               </div>
-              <Progress value={progress} className="h-3" />
-              <p className="text-sm text-muted-foreground mt-1">{progress.toFixed(1)}% to FIRE</p>
             </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <p className="text-2xl font-bold text-primary">{yearsToRetirement}</p>
-                <p className="text-xs text-muted-foreground">Years to Target</p>
+
+            <div className="flex-1 w-full space-y-10">
+              <div>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Consolidated Net Worth</p>
+                <p className="text-5xl md:text-6xl font-black tracking-tighter">${financials.currentNetWorth.toLocaleString()}</p>
               </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <p className="text-2xl font-bold text-primary">{savingsRate.toFixed(0)}%</p>
-                <p className="text-xs text-muted-foreground">Savings Rate</p>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <p className="text-2xl font-bold text-primary">${(futureValue / 1000).toFixed(0)}K</p>
-                <p className="text-xs text-muted-foreground">Projected Value</p>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <p className="text-2xl font-bold text-primary">${(financials.annualSpending / 12).toFixed(0)}</p>
-                <p className="text-xs text-muted-foreground">Monthly Need</p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="p-6 bg-muted rounded-2xl">
+                  <p className="text-[10px] text-muted-foreground font-black uppercase mb-1">Savings Rate</p>
+                  <p className="text-3xl font-black">{savingsRate}%</p>
+                </div>
+                <div className="p-6 bg-muted rounded-2xl">
+                  <p className="text-[10px] text-muted-foreground font-black uppercase mb-1">FIRE Target ($)</p>
+                  <p className="text-3xl font-black">${fireNumber.toLocaleString()}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -81,95 +80,96 @@ export const IgniteDashboard: React.FC<IgniteDashboardProps> = ({ financials, se
       </Card>
 
       {/* Financial Inputs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet className="h-5 w-5" />
-              Personal Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Current Age</Label>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-primary uppercase tracking-widest text-[11px] font-black">Financial Inputs Control</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="space-y-6">
+              <div>
+                <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 block">Current Assets ($)</Label>
                 <Input 
                   type="number" 
-                  value={financials.currentAge}
-                  onChange={(e) => handleChange('currentAge', e.target.value)}
+                  value={financials.currentNetWorth} 
+                  onChange={(e) => handleChange('currentNetWorth', e.target.value)}
+                  className="font-bold text-xl h-14"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Target Retirement Age</Label>
+              <div>
+                <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 block">Est. Annual Spending ($)</Label>
                 <Input 
                   type="number" 
-                  value={financials.retirementAge}
-                  onChange={(e) => handleChange('retirementAge', e.target.value)}
+                  value={financials.annualSpending} 
+                  onChange={(e) => handleChange('annualSpending', e.target.value)}
+                  className="font-bold text-xl h-14"
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 block">Annual Savings ($)</Label>
+                <Input 
+                  type="number" 
+                  value={financials.annualSavings} 
+                  onChange={(e) => handleChange('annualSavings', e.target.value)}
+                  className="font-bold text-xl h-14"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Gross Annual Income</Label>
-              <Input 
-                type="number" 
-                value={financials.grossAnnualIncome}
-                onChange={(e) => handleChange('grossAnnualIncome', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Tax Rate (%)</Label>
-              <Input 
-                type="number" 
-                value={financials.taxRate}
-                onChange={(e) => handleChange('taxRate', e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PiggyBank className="h-5 w-5" />
-              Savings & Spending
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Current Net Worth</Label>
-              <Input 
-                type="number" 
-                value={financials.currentNetWorth}
-                onChange={(e) => handleChange('currentNetWorth', e.target.value)}
-              />
+            <div className="space-y-6">
+              <div>
+                <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 block">Gross Annual Income ($)</Label>
+                <Input 
+                  type="number" 
+                  value={financials.grossAnnualIncome} 
+                  onChange={(e) => handleChange('grossAnnualIncome', e.target.value)}
+                  className="font-bold text-xl h-14"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 block">Current Age</Label>
+                  <Input 
+                    type="number" 
+                    value={financials.currentAge} 
+                    onChange={(e) => handleChange('currentAge', e.target.value)}
+                    className="font-bold text-xl h-14"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 block">Target Age</Label>
+                  <Input 
+                    type="number" 
+                    value={financials.retirementAge} 
+                    onChange={(e) => handleChange('retirementAge', e.target.value)}
+                    className="font-bold text-xl h-14"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 block">Expected Return (%)</Label>
+                  <Input 
+                    type="number" 
+                    value={financials.expectedReturn} 
+                    onChange={(e) => handleChange('expectedReturn', e.target.value)}
+                    className="font-bold text-xl h-14"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 block">Tax Rate (%)</Label>
+                  <Input 
+                    type="number" 
+                    value={financials.taxRate} 
+                    onChange={(e) => handleChange('taxRate', e.target.value)}
+                    className="font-bold text-xl h-14"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Annual Spending</Label>
-              <Input 
-                type="number" 
-                value={financials.annualSpending}
-                onChange={(e) => handleChange('annualSpending', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Annual Savings</Label>
-              <Input 
-                type="number" 
-                value={financials.annualSavings}
-                onChange={(e) => handleChange('annualSavings', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Expected Annual Return (%)</Label>
-              <Input 
-                type="number" 
-                value={financials.expectedReturn}
-                onChange={(e) => handleChange('expectedReturn', e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

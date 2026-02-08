@@ -74,6 +74,12 @@ export interface OptionsHistoryItem {
   timestamp: number;
 }
 
+export interface OptionsHistoryItem {
+  ticker: string;
+  analysis: string;
+  timestamp: number;
+}
+
 export interface VacationPlan {
   origin: string;
   destination: string;

@@ -1,341 +1,471 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Plus, Trash2, TrendingDown, Calculator, Zap } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  PieChart, Pie, Cell, Legend, ComposedChart, Bar, Line
+} from 'recharts';
+import { 
+  Trash2, Plus, Zap, TrendingDown, Banknote, ShieldCheck, SlidersHorizontal,
+  CreditCard, GraduationCap, Home, User, Calculator, Sparkles, Scale, ArrowRightLeft, 
+  Lightbulb, ThumbsUp, AlertCircle, ArrowUpRight, Building2
+} from 'lucide-react';
 import { Debt, DebtPayoffStrategy } from '@/types/ignitefire';
-import { toast } from 'sonner';
+
+const DEBT_TYPES = [
+  { id: 'credit_card', name: 'Credit Card', icon: CreditCard },
+  { id: 'student_loan', name: 'Student Loan', icon: GraduationCap },
+  { id: 'car_loan', name: 'Car Loan', icon: Banknote },
+  { id: 'mortgage', name: 'Mortgage', icon: Home },
+  { id: 'personal_loan', name: 'Personal Loan', icon: User },
+];
+
+const MAJOR_BANKS = [
+  { bank: 'Chase', avg: 24.49 },
+  { bank: 'Amex', avg: 25.99 },
+  { bank: 'Citi', avg: 26.24 },
+  { bank: 'Capital One', avg: 27.99 },
+  { bank: 'Discover', avg: 24.24 },
+  { bank: 'Wells Fargo', avg: 25.24 },
+  { bank: 'BofA', avg: 24.99 },
+  { bank: 'Apple', avg: 23.24 },
+];
+
+const COLORS = ['hsl(var(--primary))', '#f43f5e', '#10b981', '#f59e0b', '#0ea5e9', '#8b5cf6'];
 
 export const IgniteDebtPayoff: React.FC = () => {
-  const [debts, setDebts] = useState<Debt[]>([]);
-  const [strategy, setStrategy] = useState<DebtPayoffStrategy>('avalanche');
-  const [extraPayment, setExtraPayment] = useState(0);
-  
-  const [newDebt, setNewDebt] = useState<Partial<Debt>>({
-    name: '',
-    balance: 0,
-    interestRate: 0,
-    minPayment: 0,
-    type: 'credit_card'
+  const [debts, setDebts] = useState<Debt[]>(() => {
+    const saved = localStorage.getItem('ignite_debts_v2');
+    return saved ? JSON.parse(saved) : [
+      { id: '1', name: 'Chase Sapphire', balance: 4500, interestRate: 24.99, minPayment: 150, type: 'credit_card', creditLimit: 15000 },
+      { id: '2', name: 'Auto Loan', balance: 18000, interestRate: 5.5, minPayment: 420, type: 'car_loan' },
+      { id: '3', name: 'Federal Student Loan', balance: 25000, interestRate: 6.8, minPayment: 280, type: 'student_loan' }
+    ];
   });
 
-  const addDebt = () => {
-    if (!newDebt.name || !newDebt.balance) {
-      toast.error('Please fill in debt name and balance');
-      return;
-    }
-    
-    const debt: Debt = {
+  const [activeSubTab, setActiveSubTab] = useState<'payoff' | 'cc_lab'>('payoff');
+  const [extraPayment, setExtraPayment] = useState(500);
+  const [strategy, setStrategy] = useState<DebtPayoffStrategy>('avalanche');
+  
+  // Balance Transfer State
+  const [btAmount, setBtAmount] = useState(5000);
+  const [btFeePct, setBtFeePct] = useState(3);
+  const [btPromoMonths, setBtPromoMonths] = useState(18);
+
+  useEffect(() => {
+    localStorage.setItem('ignite_debts_v2', JSON.stringify(debts));
+  }, [debts]);
+
+  const addDebt = (prefill?: Partial<Debt>) => {
+    const newDebt: Debt = {
       id: Date.now().toString(),
-      name: newDebt.name!,
-      balance: newDebt.balance!,
-      interestRate: newDebt.interestRate || 0,
-      minPayment: newDebt.minPayment || 0,
-      type: newDebt.type as Debt['type'] || 'credit_card'
+      name: prefill?.name || 'New Debt Source',
+      balance: prefill?.balance || 0,
+      interestRate: prefill?.interestRate || 15,
+      minPayment: prefill?.minPayment || 0,
+      type: prefill?.type || 'credit_card',
+      creditLimit: prefill?.creditLimit || 5000
     };
-    
-    setDebts(prev => [...prev, debt]);
-    setNewDebt({ name: '', balance: 0, interestRate: 0, minPayment: 0, type: 'credit_card' });
-    toast.success('Debt added');
+    setDebts([...debts, newDebt]);
+  };
+
+  const updateDebt = (id: string, field: keyof Debt, value: any) => {
+    setDebts(debts.map(d => d.id === id ? { ...d, [field]: value } : d));
   };
 
   const removeDebt = (id: string) => {
-    setDebts(prev => prev.filter(d => d.id !== id));
+    setDebts(debts.filter(d => d.id !== id));
   };
 
-  // Calculate payoff order based on strategy
-  const getSortedDebts = () => {
-    return [...debts].sort((a, b) => {
-      if (strategy === 'avalanche') {
-        return b.interestRate - a.interestRate; // Highest interest first
+  const runSimulation = (simStrategy: DebtPayoffStrategy) => {
+    let currentDebts = debts.map(d => ({ ...d }));
+    let months = 0;
+    let totalInterest = 0;
+    const history = [];
+    const MAX_MONTHS = 600;
+
+    while (currentDebts.some(d => d.balance > 0) && months < MAX_MONTHS) {
+      if (simStrategy === 'avalanche') {
+        currentDebts.sort((a, b) => b.interestRate - a.interestRate);
       } else {
-        return a.balance - b.balance; // Lowest balance first (snowball)
+        currentDebts.sort((a, b) => a.balance - b.balance);
       }
-    });
-  };
 
-  // Calculate total debt and payments
-  const totalDebt = debts.reduce((sum, d) => sum + d.balance, 0);
-  const totalMinPayment = debts.reduce((sum, d) => sum + d.minPayment, 0);
-  const weightedAvgRate = totalDebt > 0 
-    ? debts.reduce((sum, d) => sum + (d.interestRate * d.balance), 0) / totalDebt 
-    : 0;
-
-  // Simple payoff calculation
-  const calculatePayoffMonths = () => {
-    if (debts.length === 0) return 0;
-    
-    let totalMonths = 0;
-    let remainingDebts = getSortedDebts().map(d => ({ ...d }));
-    const monthlyPayment = totalMinPayment + extraPayment;
-    
-    while (remainingDebts.some(d => d.balance > 0) && totalMonths < 600) {
-      totalMonths++;
-      let available = monthlyPayment;
-      
-      // Pay minimums first
-      remainingDebts.forEach(debt => {
-        if (debt.balance > 0) {
-          const interest = (debt.balance * debt.interestRate / 100) / 12;
-          const payment = Math.min(debt.minPayment, debt.balance + interest);
-          debt.balance = debt.balance + interest - payment;
-          available -= payment;
+      let availableExtra = extraPayment;
+      currentDebts.forEach(d => {
+        if (d.balance > 0) {
+          const interest = (d.balance * (d.interestRate / 100)) / 12;
+          totalInterest += interest;
+          d.balance += interest;
+          const pay = Math.min(d.balance, d.minPayment);
+          d.balance -= pay;
         }
       });
-      
-      // Apply extra to first debt with balance
-      for (const debt of remainingDebts) {
-        if (debt.balance > 0 && available > 0) {
-          const payment = Math.min(available, debt.balance);
-          debt.balance -= payment;
-          available -= payment;
-          break;
+
+      for (const d of currentDebts) {
+        if (d.balance > 0) {
+          const pay = Math.min(d.balance, availableExtra);
+          d.balance -= pay;
+          availableExtra -= pay;
+          if (availableExtra <= 0) break;
         }
       }
+
+      const monthlyTotalBalance = currentDebts.reduce((acc, d) => acc + d.balance, 0);
+      history.push({ 
+        month: months, 
+        balance: Math.max(0, Math.round(monthlyTotalBalance)),
+        year: (months / 12).toFixed(1)
+      });
+      months++;
     }
-    
-    return totalMonths;
+    return { history, totalInterest, months };
   };
 
-  const payoffMonths = calculatePayoffMonths();
-  const payoffYears = Math.floor(payoffMonths / 12);
-  const payoffRemainingMonths = payoffMonths % 12;
+  const avalancheSim = useMemo(() => runSimulation('avalanche'), [debts, extraPayment]);
+  const snowballSim = useMemo(() => runSimulation('snowball'), [debts, extraPayment]);
+  const activeSim = strategy === 'avalanche' ? avalancheSim : snowballSim;
+
+  const creditCardPortfolio = useMemo(() => {
+    const cards = debts.filter(d => d.type === 'credit_card');
+    const totalBalance = cards.reduce((acc, c) => acc + c.balance, 0);
+    const totalLimit = cards.reduce((acc, c) => acc + (c.creditLimit || 0), 0);
+    const avgAPY = cards.length > 0 ? cards.reduce((acc, c) => acc + c.interestRate, 0) / cards.length : 0;
+    const utilization = totalLimit > 0 ? (totalBalance / totalLimit) * 100 : 0;
+    
+    return { cards, totalBalance, totalLimit, avgAPY, utilization };
+  }, [debts]);
+
+  const btSavings = useMemo(() => {
+    const fee = btAmount * (btFeePct / 100);
+    const avgCCRate = creditCardPortfolio.avgAPY || 25; 
+    const monthlyInterest = (btAmount * (avgCCRate / 100)) / 12;
+    const totalInterestSaved = monthlyInterest * btPromoMonths;
+    const netSavings = totalInterestSaved - fee;
+    return { fee, totalInterestSaved, netSavings };
+  }, [btAmount, btFeePct, btPromoMonths, creditCardPortfolio.avgAPY]);
+
+  const totalCurrentDebt = debts.reduce((acc, d) => acc + d.balance, 0);
+  const pieData = debts.map(d => ({ name: d.name, value: d.balance }));
 
   return (
     <div className="space-y-6">
-      {/* Summary Card */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Total Debt</p>
-              <p className="text-2xl font-bold text-destructive">${totalDebt.toLocaleString()}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Monthly Payment</p>
-              <p className="text-2xl font-bold">${(totalMinPayment + extraPayment).toLocaleString()}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Avg Interest Rate</p>
-              <p className="text-2xl font-bold">{weightedAvgRate.toFixed(1)}%</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Payoff Time</p>
-              <p className="text-2xl font-bold text-primary">
-                {payoffYears > 0 ? `${payoffYears}y ` : ''}{payoffRemainingMonths}m
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Add Debt */}
+      {/* Header */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            Add Debt
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input 
-                placeholder="e.g., Chase Credit Card"
-                value={newDebt.name}
-                onChange={(e) => setNewDebt(prev => ({ ...prev, name: e.target.value }))}
-              />
+        <CardContent className="p-6 space-y-6">
+          <div className="flex flex-col md:flex-row justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-black tracking-tight flex items-center gap-3">
+                <ShieldCheck className="h-7 w-7 text-primary" />
+                Debt Destroyer Hub
+              </h2>
+              <p className="text-muted-foreground italic">Simulate aggressive payoff paths to accelerate your FIRE trajectory.</p>
             </div>
-            <div className="space-y-2">
-              <Label>Balance</Label>
-              <Input 
-                type="number"
-                placeholder="5000"
-                value={newDebt.balance || ''}
-                onChange={(e) => setNewDebt(prev => ({ ...prev, balance: parseFloat(e.target.value) || 0 }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Interest Rate (%)</Label>
-              <Input 
-                type="number"
-                placeholder="18.99"
-                value={newDebt.interestRate || ''}
-                onChange={(e) => setNewDebt(prev => ({ ...prev, interestRate: parseFloat(e.target.value) || 0 }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Min Payment</Label>
-              <Input 
-                type="number"
-                placeholder="150"
-                value={newDebt.minPayment || ''}
-                onChange={(e) => setNewDebt(prev => ({ ...prev, minPayment: parseFloat(e.target.value) || 0 }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Type</Label>
-              <Select 
-                value={newDebt.type} 
-                onValueChange={(v) => setNewDebt(prev => ({ ...prev, type: v as Debt['type'] }))}
+            <div className="flex bg-muted p-1 rounded-xl self-start">
+              <Button 
+                variant={activeSubTab === 'payoff' ? "default" : "ghost"}
+                onClick={() => setActiveSubTab('payoff')}
+                className="text-[10px] font-black uppercase tracking-widest"
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="credit_card">Credit Card</SelectItem>
-                  <SelectItem value="student_loan">Student Loan</SelectItem>
-                  <SelectItem value="car_loan">Car Loan</SelectItem>
-                  <SelectItem value="mortgage">Mortgage</SelectItem>
-                  <SelectItem value="personal_loan">Personal Loan</SelectItem>
-                </SelectContent>
-              </Select>
+                Payoff Strategy
+              </Button>
+              <Button 
+                variant={activeSubTab === 'cc_lab' ? "default" : "ghost"}
+                onClick={() => setActiveSubTab('cc_lab')}
+                className="text-[10px] font-black uppercase tracking-widest"
+              >
+                Credit Card Lab
+              </Button>
             </div>
           </div>
-          <Button onClick={addDebt} className="mt-4">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Debt
-          </Button>
+
+          {activeSubTab === 'payoff' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-muted p-4 rounded-xl space-y-2">
+                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Monthly Snowball Extra ($)</Label>
+                <div className="relative">
+                  <Sparkles className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary" />
+                  <Input 
+                    type="number" 
+                    value={extraPayment} 
+                    onChange={(e) => setExtraPayment(parseFloat(e.target.value) || 0)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="bg-primary p-4 rounded-xl text-primary-foreground">
+                <p className="text-[10px] font-black uppercase opacity-70 tracking-widest">Est. Interest Leakage</p>
+                <p className="text-2xl font-black tracking-tight">${Math.round(activeSim.totalInterest).toLocaleString()}</p>
+              </div>
+              <div className="bg-primary p-4 rounded-xl text-primary-foreground">
+                <p className="text-[10px] font-black uppercase opacity-70 tracking-widest">Time to Debt-Free</p>
+                <p className="text-2xl font-black tracking-tight">{Math.floor(activeSim.months / 12)}y {activeSim.months % 12}m</p>
+              </div>
+              <div className="bg-card p-4 rounded-xl border flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Payoff Strategy</p>
+                  <Select value={strategy} onValueChange={(v) => setStrategy(v as DebtPayoffStrategy)}>
+                    <SelectTrigger className="border-0 p-0 h-auto font-black text-primary uppercase text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="avalanche">Avalanche (ROI)</SelectItem>
+                      <SelectItem value="snowball">Snowball (Psych)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <SlidersHorizontal className="h-8 w-8 text-primary/20" />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-destructive p-4 rounded-xl text-destructive-foreground">
+                <p className="text-[10px] font-black uppercase opacity-70 tracking-widest">Total CC Debt</p>
+                <p className="text-2xl font-black tracking-tight">${creditCardPortfolio.totalBalance.toLocaleString()}</p>
+              </div>
+              <div className="bg-card p-4 rounded-xl border">
+                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Portfolio Limit</p>
+                <p className="text-2xl font-black tracking-tight">${(creditCardPortfolio.totalLimit / 1000).toFixed(1)}k</p>
+              </div>
+              <div className="bg-amber-500 p-4 rounded-xl text-white">
+                <p className="text-[10px] font-black uppercase opacity-70 tracking-widest">Weighted APR</p>
+                <p className="text-2xl font-black tracking-tight">{creditCardPortfolio.avgAPY.toFixed(1)}%</p>
+              </div>
+              <div className={`p-4 rounded-xl text-white ${creditCardPortfolio.utilization > 30 ? 'bg-destructive' : 'bg-primary'}`}>
+                <p className="text-[10px] font-black uppercase opacity-70 tracking-widest">Credit Utilization</p>
+                <p className="text-2xl font-black tracking-tight">{creditCardPortfolio.utilization.toFixed(1)}%</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Strategy Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5" />
-            Payoff Strategy
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div 
-              className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                strategy === 'avalanche' ? 'border-primary bg-primary/5' : ''
-              }`}
-              onClick={() => setStrategy('avalanche')}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingDown className="h-5 w-5 text-primary" />
-                <span className="font-semibold">Avalanche Method</span>
-                {strategy === 'avalanche' && <Badge>Selected</Badge>}
+      {/* CC Lab Content */}
+      {activeSubTab === 'cc_lab' && (
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="p-6 space-y-6">
+              <div>
+                <h3 className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-primary" /> Portfolio Quick-Discovery
+                </h3>
+                <p className="text-xs text-muted-foreground italic">Select your primary bank to auto-load 2025 standard credit metrics.</p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Pay highest interest rate first. Saves the most money on interest.
-              </p>
-            </div>
-            <div 
-              className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                strategy === 'snowball' ? 'border-primary bg-primary/5' : ''
-              }`}
-              onClick={() => setStrategy('snowball')}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="h-5 w-5 text-primary" />
-                <span className="font-semibold">Snowball Method</span>
-                {strategy === 'snowball' && <Badge>Selected</Badge>}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Pay smallest balance first. Quick wins for motivation.
-              </p>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Extra Monthly Payment</Label>
-            <Input 
-              type="number"
-              placeholder="0"
-              value={extraPayment || ''}
-              onChange={(e) => setExtraPayment(parseFloat(e.target.value) || 0)}
-              className="max-w-xs"
-            />
-            <p className="text-xs text-muted-foreground">Additional amount to pay beyond minimums</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Debt List */}
-      {debts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Payoff Order ({strategy === 'avalanche' ? 'Highest Interest First' : 'Smallest Balance First'})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
-                  <TableHead className="text-right">Interest</TableHead>
-                  <TableHead className="text-right">Min Payment</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {getSortedDebts().map((debt, index) => (
-                  <TableRow key={debt.id}>
-                    <TableCell>
-                      <Badge variant={index === 0 ? "default" : "secondary"}>{index + 1}</Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">{debt.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{debt.type.replace('_', ' ')}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">${debt.balance.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{debt.interestRate}%</TableCell>
-                    <TableCell className="text-right">${debt.minPayment}</TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => removeDebt(debt.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+                {MAJOR_BANKS.map((bank) => (
+                  <Button 
+                    key={bank.bank}
+                    variant="outline"
+                    onClick={() => addDebt({ name: `${bank.bank} Card`, type: 'credit_card', interestRate: bank.avg })}
+                    className="flex flex-col items-center gap-2 h-auto py-4"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-black text-xs">
+                      {bank.bank[0]}
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-tight">{bank.bank}</span>
+                  </Button>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6 space-y-6">
+              <h3 className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-primary" /> Strategic Debt Playbook
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div className="p-6 bg-primary/5 border border-primary/10 rounded-xl space-y-3">
+                  <div className="p-2 bg-primary rounded-xl w-fit text-primary-foreground"><TrendingDown className="h-5 w-5" /></div>
+                  <h4 className="text-sm font-black uppercase tracking-tight">The Math Path (Avalanche)</h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed italic">Highest APR first. Objectively the fastest way to stop 'interest leakage' and salvage your FIRE timeline.</p>
+                </div>
+                <div className="p-6 bg-primary/5 border border-primary/10 rounded-xl space-y-3">
+                  <div className="p-2 bg-primary rounded-xl w-fit text-primary-foreground"><ThumbsUp className="h-5 w-5" /></div>
+                  <h4 className="text-sm font-black uppercase tracking-tight">Psychological Wins (Snowball)</h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed italic">Smallest balance first. Great for momentum and the dopamine of killing a card balance.</p>
+                </div>
+                <div className="p-6 bg-destructive/5 border border-destructive/10 rounded-xl space-y-3">
+                  <div className="p-2 bg-destructive rounded-xl w-fit text-destructive-foreground"><AlertCircle className="h-5 w-5" /></div>
+                  <h4 className="text-sm font-black uppercase tracking-tight">Stop the Bleed</h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed italic">Unlink cards from digital wallets. You cannot out-invest a 25% APR drain.</p>
+                </div>
+                <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-xl space-y-3">
+                  <div className="p-2 bg-amber-500 rounded-xl w-fit text-white"><ArrowRightLeft className="h-5 w-5" /></div>
+                  <h4 className="text-sm font-black uppercase tracking-tight">The Arbitrage (Transfer)</h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed italic">Move high-interest debt to 0% promo cards. 3-5% fee is worth it for balances over $2k.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-      {debts.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No debts added yet</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Add your debts above to create a payoff plan
-            </p>
-          </CardContent>
-        </Card>
+      {/* Payoff Chart */}
+      {activeSubTab === 'payoff' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <Card className="lg:col-span-8">
+            <CardContent className="p-6 h-[400px]">
+              <h3 className="text-[11px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
+                <Zap className="h-4 w-4 text-primary" /> Payoff Simulation
+              </h3>
+              <ResponsiveContainer width="100%" height="90%">
+                <AreaChart>
+                  <defs>
+                    <linearGradient id="payoffGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" opacity={0.3} />
+                  <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} className="fill-muted-foreground" />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} className="fill-muted-foreground" tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', backgroundColor: 'hsl(var(--card))' }} />
+                  <Area type="monotone" data={avalancheSim.history} dataKey="balance" stroke="hsl(var(--primary))" strokeWidth={4} fill="url(#payoffGrad)" name="Avalanche Path" />
+                  <Area type="monotone" data={snowballSim.history} dataKey="balance" stroke="#f43f5e" strokeWidth={2} fill="transparent" strokeDasharray="5 5" name="Snowball Path" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-4">
+            <CardContent className="p-6 space-y-4">
+              <h3 className="text-[11px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                <Scale className="h-4 w-4" /> Debt Mix
+              </h3>
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={pieData} innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
+                      {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', backgroundColor: 'hsl(var(--card))' }} />
+                    <Legend verticalAlign="bottom" iconType="circle" />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="p-4 bg-muted rounded-xl">
+                <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Total Outstanding</p>
+                <p className="text-xl font-black">${totalCurrentDebt.toLocaleString()}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
+
+      {/* Debt Inventory */}
+      <Card>
+        <CardContent className="p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
+              <Calculator className="h-5 w-5 text-primary" /> Active Portfolio Inventory
+            </h3>
+            <Button onClick={() => addDebt()} className="font-black uppercase tracking-widest text-xs">
+              <Plus className="h-4 w-4 mr-2" /> Add New Liability
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {debts.map(debt => {
+              const DebtIcon = DEBT_TYPES.find(t => t.id === debt.type)?.icon || CreditCard;
+              const utilization = debt.type === 'credit_card' && debt.creditLimit ? (debt.balance / debt.creditLimit) * 100 : 0;
+              
+              return (
+                <div key={debt.id} className="p-5 bg-muted rounded-xl group hover:ring-2 ring-primary transition-all relative space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-card rounded-xl border">
+                        <DebtIcon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <Input 
+                          value={debt.name} 
+                          onChange={(e) => updateDebt(debt.id, 'name', e.target.value)} 
+                          className="bg-transparent font-black text-base outline-none border-0 p-0 h-auto focus-visible:ring-0" 
+                        />
+                        <Select value={debt.type} onValueChange={(v) => updateDebt(debt.id, 'type', v)}>
+                          <SelectTrigger className="border-0 p-0 h-auto text-[10px] font-black uppercase text-muted-foreground focus:ring-0">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DEBT_TYPES.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => removeDebt(debt.id)} 
+                      className="opacity-0 group-hover:opacity-100 text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-[9px] font-black text-muted-foreground uppercase">Balance ($)</Label>
+                      <Input 
+                        type="number" 
+                        value={debt.balance} 
+                        onChange={(e) => updateDebt(debt.id, 'balance', parseFloat(e.target.value) || 0)} 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[9px] font-black text-muted-foreground uppercase">APR (%)</Label>
+                      <Input 
+                        type="number" 
+                        step="0.1" 
+                        value={debt.interestRate} 
+                        onChange={(e) => updateDebt(debt.id, 'interestRate', parseFloat(e.target.value) || 0)} 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[9px] font-black text-muted-foreground uppercase">Min Payment ($)</Label>
+                      <Input 
+                        type="number" 
+                        value={debt.minPayment} 
+                        onChange={(e) => updateDebt(debt.id, 'minPayment', parseFloat(e.target.value) || 0)} 
+                      />
+                    </div>
+                    {debt.type === 'credit_card' && (
+                      <div className="space-y-1">
+                        <Label className="text-[9px] font-black text-muted-foreground uppercase">Credit Limit ($)</Label>
+                        <Input 
+                          type="number" 
+                          value={debt.creditLimit || 0} 
+                          onChange={(e) => updateDebt(debt.id, 'creditLimit', parseFloat(e.target.value) || 0)} 
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {debt.type === 'credit_card' && debt.creditLimit && (
+                    <div className="pt-2 border-t">
+                      <div className="flex justify-between text-[9px] font-black uppercase mb-1">
+                        <span className="text-muted-foreground">Utilization</span>
+                        <span className={utilization > 30 ? 'text-destructive' : 'text-primary'}>{utilization.toFixed(0)}%</span>
+                      </div>
+                      <div className="w-full h-2 bg-muted-foreground/20 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full transition-all ${utilization > 30 ? 'bg-destructive' : 'bg-primary'}`}
+                          style={{ width: `${Math.min(100, utilization)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
