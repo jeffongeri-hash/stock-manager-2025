@@ -3,9 +3,9 @@ import {
   PieChart, Wallet, LineChart, 
   Settings, ChevronRight, ChevronLeft, Home, Calculator,
   TrendingUp, FolderKanban, Zap, BookOpen, Activity,
-  TestTube, Users, Radar, FileText, BookMarked,
+  Users, Radar, FileText, BookMarked,
   Grid3X3, DollarSign, CalendarDays, GitCompare, Shield, Newspaper,
-  Scale, Webhook, Cpu, Eye, FlaskConical, Target, Building2, Car, GitCompareArrows,
+  Scale, Webhook, Cpu, FlaskConical, Target, Building2, Car, GitCompareArrows,
   Briefcase, Bot, Receipt
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -194,9 +194,9 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/paycheck-allocator',
     },
     {
-      title: 'Watchlist & Alerts',
-      icon: Eye,
-      href: '/watchlist',
+      title: 'IgniteFIRE Suite',
+      icon: Zap,
+      href: '/ignite-fire',
     },
     {
       title: 'Retirement Planning',
