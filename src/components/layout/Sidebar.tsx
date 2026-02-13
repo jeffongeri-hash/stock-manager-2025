@@ -194,6 +194,11 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/paycheck-allocator',
     },
     {
+      title: 'SWR Calculator',
+      icon: Calculator,
+      href: '/swr-calculator',
+    },
+    {
       title: 'IgniteFIRE Suite',
       icon: Zap,
       href: '/ignite-fire',
