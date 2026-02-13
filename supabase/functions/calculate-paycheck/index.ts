@@ -1,11 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -113,7 +111,6 @@ Return ONLY valid JSON in this exact format:
     // Parse the JSON response
     let taxCalculation;
     try {
-      // Clean the response - remove markdown code blocks if present
       let cleanContent = content.trim();
       if (cleanContent.startsWith('```json')) {
         cleanContent = cleanContent.slice(7);
@@ -126,7 +123,6 @@ Return ONLY valid JSON in this exact format:
       taxCalculation = JSON.parse(cleanContent.trim());
     } catch (parseError) {
       console.error('Failed to parse AI response:', content);
-      // Fallback calculations
       taxCalculation = {
         federalTax: taxableIncome * 0.12,
         stateTax: taxableIncome * 0.05,
