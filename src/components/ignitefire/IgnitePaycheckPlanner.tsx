@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { 
   Banknote, MapPin, Plus, Trash2, Shield, TrendingUp, 
   Wallet, Heart, PiggyBank, Loader2, Gift, BarChart3, 
-  Calculator, RefreshCw, Percent, DollarSign
+  Calculator, RefreshCw, Percent, DollarSign, Scale
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -234,10 +234,11 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
   return (
     <div className="space-y-6">
       <Tabs defaultValue="planner" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="planner">Paycheck Planner</TabsTrigger>
           <TabsTrigger value="match">Employer Match</TabsTrigger>
           <TabsTrigger value="goals">Savings Goals</TabsTrigger>
+          <TabsTrigger value="compare">Compare Scenarios</TabsTrigger>
         </TabsList>
 
         <TabsContent value="planner" className="space-y-6">
@@ -711,7 +712,208 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="compare" className="space-y-6">
+          <ScenarioComparison
+            grossInput={grossInput}
+            payCycle={payCycle}
+            periodsPerYear={periodsPerYear}
+            zipCode={zipCode}
+            filingStatus={filingStatus}
+            enableEmployerMatch={enableEmployerMatch}
+            baseMatchPercent={baseMatchPercent}
+            matchRate={matchRate}
+            matchUpTo={matchUpTo}
+            healthIns={deductions.healthIns}
+            taxRate={financials.taxRate}
+          />
+        </TabsContent>
       </Tabs>
+    </div>
+  );
+};
+
+// --- Scenario Comparison Sub-Component ---
+
+interface ScenarioConfig {
+  fourOhOneKPercent: number;
+  hsaPercent: number;
+  rothIRA: number;
+  brokerage: number;
+}
+
+interface ScenarioComparisonProps {
+  grossInput: number;
+  payCycle: string;
+  periodsPerYear: number;
+  zipCode: string;
+  filingStatus: string;
+  enableEmployerMatch: boolean;
+  baseMatchPercent: number;
+  matchRate: number;
+  matchUpTo: number;
+  healthIns: number;
+  taxRate: number;
+}
+
+const defaultScenarioA: ScenarioConfig = { fourOhOneKPercent: 10, hsaPercent: 3, rothIRA: 250, brokerage: 300 };
+const defaultScenarioB: ScenarioConfig = { fourOhOneKPercent: 20, hsaPercent: 5, rothIRA: 500, brokerage: 0 };
+
+const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({
+  grossInput, periodsPerYear, enableEmployerMatch, baseMatchPercent, matchRate, matchUpTo, healthIns, taxRate,
+}) => {
+  const [scenarioA, setScenarioA] = useState<ScenarioConfig>(defaultScenarioA);
+  const [scenarioB, setScenarioB] = useState<ScenarioConfig>(defaultScenarioB);
+
+  const calcScenario = (s: ScenarioConfig) => {
+    const contrib401k = grossInput * s.fourOhOneKPercent / 100;
+    const contribHsa = grossInput * s.hsaPercent / 100;
+    const totalPreTax = contrib401k + contribHsa;
+    const taxableGross = Math.max(0, grossInput - totalPreTax);
+    const estTax = taxableGross * (taxRate / 100);
+    const netAfterTax = Math.max(0, taxableGross - estTax - healthIns);
+    const totalPostTax = s.rothIRA + s.brokerage;
+    const disposable = Math.max(0, netAfterTax - totalPostTax);
+    const totalSavings = totalPreTax + totalPostTax;
+
+    const employeePercent = grossInput > 0 ? (contrib401k / grossInput) * 100 : 0;
+    const baseMatch = enableEmployerMatch ? (baseMatchPercent / 100) * grossInput : 0;
+    const matchable = Math.min(employeePercent, matchUpTo);
+    const matchContrib = enableEmployerMatch ? (matchRate / 100) * (matchable / 100) * grossInput : 0;
+    const employerTotal = baseMatch + matchContrib;
+
+    return {
+      contrib401k, contribHsa, totalPreTax, estTax, netAfterTax,
+      totalPostTax, disposable, totalSavings, employerTotal,
+      savingsRate: grossInput > 0 ? (totalSavings / grossInput * 100) : 0,
+      annualSavings: totalSavings * periodsPerYear,
+      annualEmployer: employerTotal * periodsPerYear,
+    };
+  };
+
+  const a = calcScenario(scenarioA);
+  const b = calcScenario(scenarioB);
+
+  const renderScenarioInputs = (label: string, scenario: ScenarioConfig, setter: React.Dispatch<React.SetStateAction<ScenarioConfig>>, color: string) => (
+    <Card className={`border-${color}/30`}>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Badge variant="outline" className={`text-${color}`}>{label}</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">401(k) %</Label>
+          <Input type="number" value={scenario.fourOhOneKPercent}
+            onChange={(e) => setter(p => ({ ...p, fourOhOneKPercent: parseFloat(e.target.value) || 0 }))} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">HSA %</Label>
+          <Input type="number" value={scenario.hsaPercent}
+            onChange={(e) => setter(p => ({ ...p, hsaPercent: parseFloat(e.target.value) || 0 }))} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Roth IRA ($/pay)</Label>
+          <Input type="number" value={scenario.rothIRA}
+            onChange={(e) => setter(p => ({ ...p, rothIRA: parseFloat(e.target.value) || 0 }))} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Brokerage ($/pay)</Label>
+          <Input type="number" value={scenario.brokerage}
+            onChange={(e) => setter(p => ({ ...p, brokerage: parseFloat(e.target.value) || 0 }))} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderMetric = (label: string, valA: number, valB: number, isCurrency = true, higherIsBetter = true) => {
+    const diff = valB - valA;
+    const better = higherIsBetter ? diff > 0 : diff < 0;
+    return (
+      <div className="flex items-center justify-between py-2 border-b last:border-0">
+        <span className="text-sm text-muted-foreground">{label}</span>
+        <div className="flex items-center gap-4 text-sm">
+          <span className="font-medium w-24 text-right">{isCurrency ? `$${Math.round(valA).toLocaleString()}` : `${valA.toFixed(1)}%`}</span>
+          <span className="font-medium w-24 text-right">{isCurrency ? `$${Math.round(valB).toLocaleString()}` : `${valB.toFixed(1)}%`}</span>
+          <Badge variant={diff === 0 ? 'secondary' : better ? 'default' : 'destructive'} className="w-24 justify-center text-xs">
+            {diff === 0 ? 'Same' : `${diff > 0 ? '+' : ''}${isCurrency ? `$${Math.round(diff).toLocaleString()}` : `${diff.toFixed(1)}%`}`}
+          </Badge>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Scale className="h-5 w-5" />
+            Strategy Comparison
+          </CardTitle>
+          <CardDescription>
+            Compare two contribution strategies side by side to find the optimal allocation
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {renderScenarioInputs('Scenario A', scenarioA, setScenarioA, 'chart-1')}
+        {renderScenarioInputs('Scenario B', scenarioB, setScenarioB, 'chart-2')}
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Per-Paycheck Comparison</CardTitle>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
+            <span className="w-[calc(100%-20rem)]"></span>
+            <span className="w-24 text-right font-bold">Scenario A</span>
+            <span className="w-24 text-right font-bold">Scenario B</span>
+            <span className="w-24 text-center font-bold">Delta</span>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-0">
+          {renderMetric('Pre-Tax Savings', a.totalPreTax, b.totalPreTax)}
+          {renderMetric('Estimated Taxes', a.estTax, b.estTax, true, false)}
+          {renderMetric('Post-Tax Savings', a.totalPostTax, b.totalPostTax)}
+          {renderMetric('Disposable Income', a.disposable, b.disposable)}
+          {renderMetric('Total Savings', a.totalSavings, b.totalSavings)}
+          {renderMetric('Employer Match', a.employerTotal, b.employerTotal)}
+          {renderMetric('Savings Rate', a.savingsRate, b.savingsRate, false)}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Annual Projection</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 rounded-lg bg-muted text-center">
+              <p className="text-xs text-muted-foreground mb-1">Scenario A Annual Savings</p>
+              <p className="text-2xl font-bold">${a.annualSavings.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">+ ${a.annualEmployer.toLocaleString()} employer</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted text-center">
+              <p className="text-xs text-muted-foreground mb-1">Scenario B Annual Savings</p>
+              <p className="text-2xl font-bold">${b.annualSavings.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">+ ${b.annualEmployer.toLocaleString()} employer</p>
+            </div>
+          </div>
+          {a.annualSavings !== b.annualSavings && (
+            <div className="mt-4 p-4 rounded-lg bg-primary/10 border border-primary/20 text-sm text-center">
+              {b.annualSavings > a.annualSavings
+                ? `📈 Scenario B saves $${(b.annualSavings - a.annualSavings).toLocaleString()} more per year`
+                : `📈 Scenario A saves $${(a.annualSavings - b.annualSavings).toLocaleString()} more per year`}
+              {' — '}
+              {b.annualEmployer > a.annualEmployer
+                ? `with $${(b.annualEmployer - a.annualEmployer).toLocaleString()} more employer match`
+                : a.annualEmployer > b.annualEmployer
+                ? `but $${(a.annualEmployer - b.annualEmployer).toLocaleString()} less employer match`
+                : 'with equal employer match'}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

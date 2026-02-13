@@ -8,7 +8,10 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isGuestMode, setIsGuestMode] = useState(false);
+  const [isGuestMode, setIsGuestMode] = useState(() => {
+    const guestMode = localStorage.getItem(GUEST_MODE_KEY);
+    return guestMode !== 'false'; // Default to guest mode on fresh sessions
+  });
 
   useEffect(() => {
     // Check for guest mode preference
