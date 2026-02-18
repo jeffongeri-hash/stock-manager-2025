@@ -45,6 +45,8 @@ export function DeductionRow({
         placeholder="Custom label"
         value={deduction.label}
         onChange={(e) => onUpdate(deduction.id, 'label', e.target.value)}
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
         className="flex-1 min-w-[120px]"
       />
       
@@ -80,6 +82,8 @@ export function DeductionRow({
             type="number"
             value={deduction.value || ''}
             onChange={(e) => onUpdate(deduction.id, 'value', parseFloat(e.target.value) || 0)}
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
             className={`w-[100px] ${deduction.type === 'amount' ? 'pl-7' : ''}`}
             placeholder="0"
           />
