@@ -1,7 +1,8 @@
+import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DeductionCombobox } from './DeductionCombobox';
+import { DebouncedInput } from './DebouncedInput';
 import { DollarSign, Percent, Trash2 } from 'lucide-react';
 
 interface Deduction {
@@ -25,35 +26,54 @@ interface DeductionRowProps {
   onRemove: (id: string) => void;
 }
 
-export function DeductionRow({ 
+export const DeductionRow = React.memo(function DeductionRow({ 
   deduction, 
   isPretax, 
   options,
   onUpdate,
   onRemove,
 }: DeductionRowProps) {
+  const handleLabelSelect = useCallback((label: string) => {
+    onUpdate(deduction.id, 'label', label);
+  }, [deduction.id, onUpdate]);
+
+  const handleLabelChange = useCallback((val: string) => {
+    onUpdate(deduction.id, 'label', val);
+  }, [deduction.id, onUpdate]);
+
+  const handleValueChange = useCallback((val: string) => {
+    onUpdate(deduction.id, 'value', parseFloat(val) || 0);
+  }, [deduction.id, onUpdate]);
+
+  const handleTypeChange = useCallback((v: 'percentage' | 'amount') => {
+    onUpdate(deduction.id, 'type', v);
+  }, [deduction.id, onUpdate]);
+
+  const handleRemove = useCallback(() => {
+    onRemove(deduction.id);
+  }, [deduction.id, onRemove]);
+
   return (
     <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg flex-wrap">
       <DeductionCombobox
         options={options}
         value={deduction.label}
-        onSelect={(label) => onUpdate(deduction.id, 'label', label)}
+        onSelect={handleLabelSelect}
         placeholder="Select or type..."
       />
       
-      <Input
-        placeholder="Custom label"
+      <DebouncedInput
         value={deduction.label}
-        onChange={(e) => onUpdate(deduction.id, 'label', e.target.value)}
-        onClick={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
+        onChange={handleLabelChange}
+        placeholder="Custom label"
         className="flex-1 min-w-[120px]"
+        debounceMs={400}
       />
       
       <div className="flex items-center gap-1">
         <Select 
           value={deduction.type} 
-          onValueChange={(v: 'percentage' | 'amount') => onUpdate(deduction.id, 'type', v)}
+          onValueChange={handleTypeChange}
         >
           <SelectTrigger className="w-[100px]">
             <SelectValue />
@@ -78,14 +98,13 @@ export function DeductionRow({
           {deduction.type === 'amount' && (
             <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           )}
-          <Input
+          <DebouncedInput
             type="number"
             value={deduction.value || ''}
-            onChange={(e) => onUpdate(deduction.id, 'value', parseFloat(e.target.value) || 0)}
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
+            onChange={handleValueChange}
             className={`w-[100px] ${deduction.type === 'amount' ? 'pl-7' : ''}`}
             placeholder="0"
+            debounceMs={400}
           />
           {deduction.type === 'percentage' && (
             <Percent className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -96,11 +115,11 @@ export function DeductionRow({
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => onRemove(deduction.id)}
+        onClick={handleRemove}
         className="text-destructive hover:text-destructive"
       >
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>
   );
-}
+});
