@@ -47,7 +47,6 @@ const Assets = lazy(() => import("./pages/Assets"));
 const SchwabCallback = lazy(() => import("./pages/SchwabCallback"));
 const SmartTradeAI = lazy(() => import("./pages/SmartTradeAI"));
 const QuantGemini = lazy(() => import("./pages/QuantGemini"));
-const PaycheckAllocator = lazy(() => import("./pages/PaycheckAllocator"));
 const SWRCalculator = lazy(() => import("./pages/SWRCalculator"));
 
 const queryClient = new QueryClient();
@@ -107,7 +106,6 @@ const App = () => (
                 <Route path="/etf-comparison" element={<ProtectedRoute><ETFComparison /></ProtectedRoute>} />
                 <Route path="/smarttrade-ai" element={<ProtectedRoute><SmartTradeAI /></ProtectedRoute>} />
                 <Route path="/quantgemini" element={<ProtectedRoute><QuantGemini /></ProtectedRoute>} />
-                <Route path="/paycheck-allocator" element={<ProtectedRoute><PaycheckAllocator /></ProtectedRoute>} />
                 <Route path="/swr-calculator" element={<ProtectedRoute><SWRCalculator /></ProtectedRoute>} />
                 <Route path="/assets" element={<ProtectedRoute requiresAuth><Assets /></ProtectedRoute>} />
                 <Route path="/schwab/callback" element={<SchwabCallback />} />

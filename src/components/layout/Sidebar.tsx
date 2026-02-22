@@ -6,7 +6,7 @@ import {
   Users, Radar, FileText, BookMarked,
   Grid3X3, DollarSign, CalendarDays, GitCompare, Shield, Newspaper,
   Scale, Webhook, Cpu, FlaskConical, Target, Building2, Car, GitCompareArrows,
-  Briefcase, Bot, Receipt
+  Briefcase, Bot
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -187,11 +187,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'QuantGemini',
       icon: FlaskConical,
       href: '/quantgemini',
-    },
-    {
-      title: 'Paycheck Allocator',
-      icon: Receipt,
-      href: '/paycheck-allocator',
     },
     {
       title: 'SWR Calculator',
