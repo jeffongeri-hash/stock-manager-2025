@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 interface DebouncedInputProps {
   value: number | string;
@@ -21,6 +21,7 @@ export function DebouncedInput({
   const [localValue, setLocalValue] = useState(String(externalValue));
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFocusedRef = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Sync external value only when not focused
   useEffect(() => {
@@ -45,7 +46,6 @@ export function DebouncedInput({
 
   const handleBlur = useCallback(() => {
     isFocusedRef.current = false;
-    // Flush any pending debounce immediately on blur
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -61,7 +61,8 @@ export function DebouncedInput({
   }, []);
 
   return (
-    <Input
+    <input
+      ref={inputRef}
       type={type}
       value={localValue}
       onChange={handleChange}
@@ -69,7 +70,10 @@ export function DebouncedInput({
       onBlur={handleBlur}
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
-      className={className}
+      className={cn(
+        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        className
+      )}
       placeholder={placeholder}
     />
   );
