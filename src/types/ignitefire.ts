@@ -28,6 +28,13 @@ export interface SavingsBucket {
   targetBalance: number;
 }
 
+export interface FlexibleDeduction {
+  id: string;
+  label: string;
+  value: number;
+  type: 'percentage' | 'amount';
+}
+
 export interface PaycheckDeductions {
   fourOhOneKType: 'percentage' | 'fixed';
   fourOhOneKValue: number;
@@ -46,6 +53,9 @@ export interface PaycheckDeductions {
   matchPercent: number;
   matchLimit: number;
   buckets: SavingsBucket[];
+  
+  additionalPreTax: FlexibleDeduction[];
+  additionalPostTax: FlexibleDeduction[];
 }
 
 export interface Debt {

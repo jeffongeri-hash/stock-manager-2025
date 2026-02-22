@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,18 +7,42 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Slider } from '@/components/ui/slider';
+import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { 
-  Banknote, MapPin, Plus, Trash2, Shield, TrendingUp, 
+  Banknote, MapPin, Plus, Trash2, Shield, TrendingUp, TrendingDown,
   Wallet, Heart, PiggyBank, Loader2, Gift, BarChart3, 
-  Calculator, RefreshCw, Percent, DollarSign, Scale
+  Calculator, RefreshCw, Percent, DollarSign, Scale, SlidersHorizontal, Sparkles
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, Cell, Legend, PieChart, Pie 
 } from 'recharts';
-import { IgniteUserFinancials, PaycheckDeductions, SavingsBucket } from '@/types/ignitefire';
+import { IgniteUserFinancials, PaycheckDeductions, SavingsBucket, FlexibleDeduction } from '@/types/ignitefire';
+import { DeductionRow } from '@/components/paycheck/DeductionRow';
+
+const COMMON_PRETAX_DEDUCTIONS = [
+  { value: 'health', label: 'Health Insurance Premium', icon: Shield },
+  { value: 'dental', label: 'Dental Insurance', icon: Shield },
+  { value: 'vision', label: 'Vision Insurance', icon: Shield },
+  { value: 'life', label: 'Life Insurance', icon: Shield },
+  { value: 'fsa', label: 'FSA (Flexible Spending)', icon: Heart },
+  { value: 'commuter', label: 'Commuter Benefits', icon: DollarSign },
+  { value: 'dependent', label: 'Dependent Care FSA', icon: DollarSign },
+  { value: 'custom', label: 'Custom Deduction', icon: DollarSign },
+];
+
+const COMMON_POSTTAX_DEDUCTIONS = [
+  { value: 'union', label: 'Union Dues', icon: DollarSign },
+  { value: 'charity', label: 'Charitable Contributions', icon: Heart },
+  { value: 'garnishment', label: 'Wage Garnishment', icon: DollarSign },
+  { value: 'studentloan', label: 'Student Loan Repayment', icon: DollarSign },
+  { value: 'aftertaxlife', label: 'After-Tax Life Insurance', icon: Shield },
+  { value: 'disability', label: 'Disability Insurance', icon: Shield },
+  { value: 'custom', label: 'Custom Deduction', icon: DollarSign },
+];
 
 interface IgnitePaycheckPlannerProps {
   financials: IgniteUserFinancials;
@@ -38,6 +62,24 @@ const CHART_COLORS = [
   'hsl(var(--chart-5))',
 ];
 
+const WHATIF_VARIABLES = [
+  { value: '401k', label: '401(k) Contribution', icon: PiggyBank, maxPercent: 23, category: 'pretax', hasMatch: true },
+  { value: 'hsa', label: 'HSA Contribution', icon: Heart, maxPercent: 8, category: 'pretax', hasMatch: false },
+  { value: 'roth_ira', label: 'Roth IRA', icon: TrendingUp, maxPercent: 15, category: 'posttax', hasMatch: false },
+  { value: 'brokerage', label: 'Brokerage', icon: Wallet, maxPercent: 30, category: 'posttax', hasMatch: false },
+  { value: 'health_premium', label: 'Health Insurance Premium', icon: Shield, maxPercent: 15, category: 'pretax', hasMatch: false },
+];
+
+const estimateMarginalTaxRate = (annualTaxableIncome: number): number => {
+  if (annualTaxableIncome <= 11600) return 0.10;
+  if (annualTaxableIncome <= 47150) return 0.12;
+  if (annualTaxableIncome <= 100525) return 0.22;
+  if (annualTaxableIncome <= 191950) return 0.24;
+  if (annualTaxableIncome <= 243725) return 0.32;
+  if (annualTaxableIncome <= 609350) return 0.35;
+  return 0.37;
+};
+
 const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financials }) => {
   const [payCycle, setPayCycle] = useState<'biweekly' | 'monthly' | 'annual'>('biweekly');
   const [grossInput, setGrossInput] = useState(3846.15);
@@ -47,7 +89,7 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
   const [taxResult, setTaxResult] = useState<any>(null);
   
   const [deductions, setDeductions] = useState<PaycheckDeductions>(() => {
-    const saved = localStorage.getItem('ignite_paycheck_v7');
+    const saved = localStorage.getItem('ignite_paycheck_v8');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -71,6 +113,8 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
       buckets: [
         { id: '1', name: 'Emergency Fund', type: 'percentage', value: 10, currentBalance: 12000, targetBalance: 30000 },
       ],
+      additionalPreTax: [],
+      additionalPostTax: [],
     };
   });
 
@@ -80,8 +124,15 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
   const [matchRate, setMatchRate] = useState(50);
   const [matchUpTo, setMatchUpTo] = useState(6);
 
+  // What-If state
+  const [whatIfVariable, setWhatIfVariable] = useState('401k');
+  const [whatIfPercent, setWhatIfPercent] = useState(6);
+  const [whatIfEnableMatch, setWhatIfEnableMatch] = useState(true);
+  const [whatIfMatchPercent, setWhatIfMatchPercent] = useState(50);
+  const [whatIfMatchUpTo, setWhatIfMatchUpTo] = useState(6);
+
   useEffect(() => {
-    localStorage.setItem('ignite_paycheck_v7', JSON.stringify(deductions));
+    localStorage.setItem('ignite_paycheck_v8', JSON.stringify(deductions));
   }, [deductions]);
 
   const grossAnnual = useMemo(() => {
@@ -103,25 +154,30 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
     ? (grossInput * deductions.rothIRAValue / 100) 
     : deductions.rothIRAValue;
 
-  const totalPreTax = contrib401k + contribHsa + deductions.otherPreTax;
+  // Additional flexible deductions
+  const additionalPreTaxTotal = deductions.additionalPreTax.reduce((sum, d) => {
+    return sum + (d.type === 'percentage' ? (grossInput * d.value / 100) : d.value);
+  }, 0);
+  const additionalPostTaxTotal = deductions.additionalPostTax.reduce((sum, d) => {
+    return sum + (d.type === 'percentage' ? (grossInput * d.value / 100) : d.value);
+  }, 0);
+
+  const totalPreTax = contrib401k + contribHsa + deductions.otherPreTax + additionalPreTaxTotal;
   const taxableGross = Math.max(0, grossInput - totalPreTax);
 
-  // Use tax result if available, otherwise estimate
   const estTaxRate = taxResult?.taxes?.taxBreakdown?.federalRate 
     ? parseFloat(taxResult.taxes.taxBreakdown.federalRate) / 100 
     : (financials.taxRate / 100);
   const estTax = taxResult?.totalTaxes || (taxableGross * estTaxRate);
   const netAfterTax = Math.max(0, taxableGross - estTax - deductions.healthIns);
 
-  // Post-tax calculations
   const bucketSums = deductions.buckets.reduce((acc, b) => {
     const val = b.type === 'percentage' ? (netAfterTax * b.value) / 100 : b.value;
     return acc + val;
   }, 0);
-  const totalPostTaxSavings = bucketSums + rothIRA + deductions.brokerage;
+  const totalPostTaxSavings = bucketSums + rothIRA + deductions.brokerage + additionalPostTaxTotal;
   const disposable = Math.max(0, netAfterTax - totalPostTaxSavings);
 
-  // Employer match calculations
   const employeeContributionPercent = grossInput > 0 ? (contrib401k / grossInput) * 100 : 0;
   const baseContributionPerPay = enableEmployerMatch ? (baseMatchPercent / 100) * grossInput : 0;
   const effectiveMatchablePercent = Math.min(employeeContributionPercent, matchUpTo);
@@ -139,15 +195,6 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
     { name: 'Post-Tax Savings', value: totalPostTaxSavings, fill: CHART_COLORS[2] },
     { name: 'Disposable', value: disposable, fill: CHART_COLORS[4] }
   ].filter(d => d.value > 0), [totalPreTax, estTax, deductions.healthIns, totalPostTaxSavings, disposable]);
-
-  const waterfallData = [
-    { name: 'Gross', value: grossInput, fill: CHART_COLORS[0] },
-    { name: 'Pre-Tax', value: -totalPreTax, fill: CHART_COLORS[1] },
-    { name: 'Taxes', value: -estTax, fill: 'hsl(0 84% 60%)' },
-    { name: 'Insurance', value: -deductions.healthIns, fill: CHART_COLORS[3] },
-    { name: 'Post-Tax', value: -totalPostTaxSavings, fill: CHART_COLORS[2] },
-    { name: 'Net', value: disposable, fill: 'hsl(142 76% 36%)' },
-  ];
 
   const calculateTax = async () => {
     if (!zipCode || zipCode.length !== 5) {
@@ -167,10 +214,20 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
           preTaxDeductions: [
             { label: '401(k)', value: contrib401k, type: 'amount' },
             { label: 'HSA', value: contribHsa, type: 'amount' },
+            ...deductions.additionalPreTax.map(d => ({
+              label: d.label,
+              value: d.type === 'percentage' ? (grossInput * d.value / 100) : d.value,
+              type: 'amount',
+            })),
           ],
           postTaxDeductions: [
             { label: 'Roth IRA', value: rothIRA, type: 'amount' },
             { label: 'Brokerage', value: deductions.brokerage, type: 'amount' },
+            ...deductions.additionalPostTax.map(d => ({
+              label: d.label,
+              value: d.type === 'percentage' ? (grossInput * d.value / 100) : d.value,
+              type: 'amount',
+            })),
           ],
         },
       });
@@ -196,6 +253,51 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
       [name]: prev[name] === 'percentage' ? 'fixed' : 'percentage'
     }));
   };
+
+  // Flexible deduction handlers
+  const addFlexibleDeduction = useCallback((isPretax: boolean) => {
+    const newDeduction: FlexibleDeduction = {
+      id: Date.now().toString(),
+      label: '',
+      value: 0,
+      type: 'amount',
+    };
+    setDeductions(prev => ({
+      ...prev,
+      [isPretax ? 'additionalPreTax' : 'additionalPostTax']: [
+        ...prev[isPretax ? 'additionalPreTax' : 'additionalPostTax'],
+        newDeduction,
+      ],
+    }));
+  }, []);
+
+  const handleUpdatePreTaxFlex = useCallback((id: string, field: keyof FlexibleDeduction, value: string | number) => {
+    setDeductions(prev => ({
+      ...prev,
+      additionalPreTax: prev.additionalPreTax.map(d => d.id === id ? { ...d, [field]: value } : d),
+    }));
+  }, []);
+
+  const handleRemovePreTaxFlex = useCallback((id: string) => {
+    setDeductions(prev => ({
+      ...prev,
+      additionalPreTax: prev.additionalPreTax.filter(d => d.id !== id),
+    }));
+  }, []);
+
+  const handleUpdatePostTaxFlex = useCallback((id: string, field: keyof FlexibleDeduction, value: string | number) => {
+    setDeductions(prev => ({
+      ...prev,
+      additionalPostTax: prev.additionalPostTax.map(d => d.id === id ? { ...d, [field]: value } : d),
+    }));
+  }, []);
+
+  const handleRemovePostTaxFlex = useCallback((id: string) => {
+    setDeductions(prev => ({
+      ...prev,
+      additionalPostTax: prev.additionalPostTax.filter(d => d.id !== id),
+    }));
+  }, []);
 
   const addBucket = () => {
     const newBucket: SavingsBucket = {
@@ -231,11 +333,74 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
       : { label: 'On track to Max', color: 'text-green-500' };
   };
 
+  // What-If calculations
+  const whatIfConfig = WHATIF_VARIABLES.find(v => v.value === whatIfVariable);
+  const whatIfIsPretax = whatIfConfig?.category === 'pretax';
+  const whatIfMaxPercent = whatIfConfig?.maxPercent || 25;
+  const whatIfHasMatch = whatIfConfig?.hasMatch || false;
+  const WhatIfIcon = whatIfConfig?.icon || DollarSign;
+
+  const whatIfCalc = useMemo(() => {
+    const adjustmentAmount = (grossInput * whatIfPercent) / 100;
+    const annualAdjustment = adjustmentAmount * periodsPerYear;
+
+    let employerMatchPerPaycheck = 0;
+    let annualEmployerMatch = 0;
+    if (whatIfEnableMatch && whatIfHasMatch) {
+      const matchablePercent = Math.min(whatIfPercent, whatIfMatchUpTo);
+      const matchableAmount = (grossInput * matchablePercent) / 100;
+      employerMatchPerPaycheck = matchableAmount * (whatIfMatchPercent / 100);
+      annualEmployerMatch = employerMatchPerPaycheck * periodsPerYear;
+    }
+
+    const annualTaxable = taxableGross * periodsPerYear;
+    const marginalRate = estimateMarginalTaxRate(annualTaxable) + 0.05; // +5% for state estimate
+
+    if (whatIfIsPretax) {
+      const taxSavingsPerPaycheck = adjustmentAmount * marginalRate;
+      const annualTaxSavings = taxSavingsPerPaycheck * periodsPerYear;
+      const netCostPerPaycheck = adjustmentAmount - taxSavingsPerPaycheck;
+      const netPayDifference = -netCostPerPaycheck;
+      const newNetPay = disposable + netCostPerPaycheck * -1; // rough
+
+      return {
+        adjustmentAmount,
+        annualAdjustment,
+        taxSavingsPerPaycheck,
+        annualTaxSavings,
+        netCostPerPaycheck,
+        newNetPay,
+        netPayDifference,
+        effectiveRate: adjustmentAmount > 0 ? (netCostPerPaycheck / adjustmentAmount) * 100 : 0,
+        employerMatchPerPaycheck,
+        annualEmployerMatch,
+        totalContributionPerPaycheck: adjustmentAmount + employerMatchPerPaycheck,
+        totalAnnualContribution: annualAdjustment + annualEmployerMatch,
+      };
+    } else {
+      return {
+        adjustmentAmount,
+        annualAdjustment,
+        taxSavingsPerPaycheck: 0,
+        annualTaxSavings: 0,
+        netCostPerPaycheck: adjustmentAmount,
+        newNetPay: disposable - adjustmentAmount,
+        netPayDifference: -adjustmentAmount,
+        effectiveRate: 100,
+        employerMatchPerPaycheck,
+        annualEmployerMatch,
+        totalContributionPerPaycheck: adjustmentAmount + employerMatchPerPaycheck,
+        totalAnnualContribution: annualAdjustment + annualEmployerMatch,
+      };
+    }
+  }, [grossInput, whatIfPercent, whatIfIsPretax, periodsPerYear, taxableGross, disposable, whatIfEnableMatch, whatIfHasMatch, whatIfMatchPercent, whatIfMatchUpTo]);
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="planner" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
+        <TabsList className="grid w-full grid-cols-5 mb-6">
           <TabsTrigger value="planner">Paycheck Planner</TabsTrigger>
+          <TabsTrigger value="whatif">What-If</TabsTrigger>
           <TabsTrigger value="match">Employer Match</TabsTrigger>
           <TabsTrigger value="goals">Savings Goals</TabsTrigger>
           <TabsTrigger value="compare">Compare Scenarios</TabsTrigger>
@@ -443,6 +608,82 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
             })}
           </div>
 
+          {/* Additional Pre-Tax Deductions */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm flex items-center gap-2 text-green-500">
+                    <Shield className="h-4 w-4" />
+                    Additional Pre-Tax Deductions
+                  </CardTitle>
+                  <CardDescription>Health, dental, vision, FSA, commuter benefits, etc. (% or $)</CardDescription>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => addFlexibleDeduction(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+            </CardHeader>
+            {deductions.additionalPreTax.length > 0 && (
+              <CardContent className="space-y-2">
+                {deductions.additionalPreTax.map(d => (
+                  <DeductionRow
+                    key={d.id}
+                    deduction={d}
+                    isPretax={true}
+                    options={COMMON_PRETAX_DEDUCTIONS}
+                    onUpdate={handleUpdatePreTaxFlex}
+                    onRemove={handleRemovePreTaxFlex}
+                  />
+                ))}
+                {additionalPreTaxTotal > 0 && (
+                  <div className="text-sm text-right text-green-500 pt-2 border-t">
+                    Additional Pre-Tax Total: ${additionalPreTaxTotal.toFixed(2)}/paycheck
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Additional Post-Tax Deductions */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm flex items-center gap-2 text-blue-500">
+                    <Wallet className="h-4 w-4" />
+                    Additional Post-Tax Deductions
+                  </CardTitle>
+                  <CardDescription>Union dues, charity, student loans, disability, etc. (% or $)</CardDescription>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => addFlexibleDeduction(false)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+            </CardHeader>
+            {deductions.additionalPostTax.length > 0 && (
+              <CardContent className="space-y-2">
+                {deductions.additionalPostTax.map(d => (
+                  <DeductionRow
+                    key={d.id}
+                    deduction={d}
+                    isPretax={false}
+                    options={COMMON_POSTTAX_DEDUCTIONS}
+                    onUpdate={handleUpdatePostTaxFlex}
+                    onRemove={handleRemovePostTaxFlex}
+                  />
+                ))}
+                {additionalPostTaxTotal > 0 && (
+                  <div className="text-sm text-right text-blue-500 pt-2 border-t">
+                    Additional Post-Tax Total: ${additionalPostTaxTotal.toFixed(2)}/paycheck
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+
           {/* Tax Breakdown (if available) */}
           {taxResult && (
             <Card>
@@ -483,6 +724,234 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
           )}
         </TabsContent>
 
+        {/* What-If Tab */}
+        <TabsContent value="whatif" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <SlidersHorizontal className="h-5 w-5 text-primary" />
+                What-If Slider
+              </CardTitle>
+              <CardDescription>
+                Quickly see how adjusting a single variable impacts your take-home pay
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Variable Selection */}
+              <div className="space-y-2">
+                <Label>Select Variable to Adjust</Label>
+                <Select value={whatIfVariable} onValueChange={setWhatIfVariable}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Pre-Tax Deductions</div>
+                    {WHATIF_VARIABLES.filter(v => v.category === 'pretax').map(v => (
+                      <SelectItem key={v.value} value={v.value}>
+                        <div className="flex items-center gap-2">
+                          <v.icon className="h-4 w-4" />
+                          {v.label}
+                          {v.hasMatch && <Badge variant="secondary" className="text-[10px] px-1">Match</Badge>}
+                        </div>
+                      </SelectItem>
+                    ))}
+                    <Separator className="my-1" />
+                    <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Post-Tax Deductions</div>
+                    {WHATIF_VARIABLES.filter(v => v.category === 'posttax').map(v => (
+                      <SelectItem key={v.value} value={v.value}>
+                        <div className="flex items-center gap-2">
+                          <v.icon className="h-4 w-4" />
+                          {v.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Employer Match Settings */}
+              {whatIfHasMatch && (
+                <div className="p-4 rounded-lg border bg-gradient-to-br from-purple-500/5 to-transparent">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Gift className="h-5 w-5 text-purple-500" />
+                      <Label className="font-medium">Employer Match</Label>
+                    </div>
+                    <Switch
+                      checked={whatIfEnableMatch}
+                      onCheckedChange={setWhatIfEnableMatch}
+                    />
+                  </div>
+                  {whatIfEnableMatch && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm text-muted-foreground">Match Rate</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            value={whatIfMatchPercent}
+                            onChange={(e) => setWhatIfMatchPercent(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
+                            className="w-20"
+                          />
+                          <span className="text-sm text-muted-foreground">% of your contribution</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm text-muted-foreground">Up To</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            value={whatIfMatchUpTo}
+                            onChange={(e) => setWhatIfMatchUpTo(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
+                            className="w-20"
+                          />
+                          <span className="text-sm text-muted-foreground">% of your salary</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Slider */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <WhatIfIcon className="h-4 w-4" />
+                    {whatIfConfig?.label} Rate
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-lg font-bold">
+                      {whatIfPercent}%
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      (${whatIfCalc.adjustmentAmount.toFixed(2)}/paycheck)
+                    </span>
+                  </div>
+                </div>
+
+                <Slider
+                  value={[whatIfPercent]}
+                  onValueChange={(v) => setWhatIfPercent(v[0])}
+                  min={0}
+                  max={whatIfMaxPercent}
+                  step={0.5}
+                  className="py-4"
+                />
+
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>0%</span>
+                  {whatIfHasMatch && whatIfEnableMatch && (
+                    <span className="text-purple-500">↑ {whatIfMatchUpTo}% (max match)</span>
+                  )}
+                  <span>{whatIfMaxPercent}%</span>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Impact Summary */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">Your Contribution</p>
+                  <p className="text-xl font-bold">${whatIfCalc.adjustmentAmount.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    ${whatIfCalc.annualAdjustment.toLocaleString(undefined, { maximumFractionDigits: 0 })}/year
+                  </p>
+                </div>
+
+                {whatIfEnableMatch && whatIfHasMatch && whatIfCalc.employerMatchPerPaycheck > 0 && (
+                  <div className="space-y-1 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Gift className="h-3 w-3" />
+                      Employer Match
+                    </p>
+                    <p className="text-xl font-bold text-purple-600">
+                      +${whatIfCalc.employerMatchPerPaycheck.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-purple-600">
+                      +${whatIfCalc.annualEmployerMatch.toLocaleString(undefined, { maximumFractionDigits: 0 })}/year
+                    </p>
+                  </div>
+                )}
+
+                {whatIfIsPretax && (
+                  <div className="space-y-1 p-3 rounded-lg bg-green-500/10">
+                    <p className="text-xs text-muted-foreground">Tax Savings</p>
+                    <p className="text-xl font-bold text-green-500">
+                      ${whatIfCalc.taxSavingsPerPaycheck.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-green-600">
+                      ${whatIfCalc.annualTaxSavings.toLocaleString(undefined, { maximumFractionDigits: 0 })}/year
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-1 p-3 rounded-lg bg-amber-500/10">
+                  <p className="text-xs text-muted-foreground">Actual Cost to You</p>
+                  <p className="text-xl font-bold text-amber-600">
+                    ${whatIfCalc.netCostPerPaycheck.toFixed(2)}
+                  </p>
+                  {whatIfIsPretax && (
+                    <p className="text-xs text-muted-foreground">
+                      {whatIfCalc.effectiveRate.toFixed(0)}¢ per dollar contributed
+                    </p>
+                  )}
+                </div>
+
+                <div className={`space-y-1 p-3 rounded-lg ${whatIfCalc.netPayDifference >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                  <p className="text-xs text-muted-foreground">Net Pay Change</p>
+                  <p className={`text-xl font-bold flex items-center gap-1 ${whatIfCalc.netPayDifference >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {whatIfCalc.netPayDifference >= 0 ? (
+                      <TrendingUp className="h-4 w-4" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4" />
+                    )}
+                    {whatIfCalc.netPayDifference >= 0 ? '+' : ''}${whatIfCalc.netPayDifference.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Total Value Card */}
+              {whatIfEnableMatch && whatIfHasMatch && whatIfPercent > 0 && (
+                <>
+                  <Separator />
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/10 via-primary/5 to-green-500/10 border">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      <span className="font-semibold">Total Retirement Value</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Your Contribution</p>
+                        <p className="text-lg font-bold">${whatIfCalc.adjustmentAmount.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">+ Employer Match</p>
+                        <p className="text-lg font-bold text-purple-600">
+                          ${whatIfCalc.employerMatchPerPaycheck.toFixed(2)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">= Total/Paycheck</p>
+                        <p className="text-lg font-bold text-primary">
+                          ${whatIfCalc.totalContributionPerPaycheck.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t text-center">
+                      <p className="text-sm text-muted-foreground">Annual Total</p>
+                      <p className="text-2xl font-bold text-primary">
+                        ${whatIfCalc.totalAnnualContribution.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="match" className="space-y-6">
           <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
             <CardHeader>
@@ -495,7 +964,6 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Enable Toggle */}
               <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
                 <div className="flex items-center gap-2">
                   <Gift className="h-4 w-4 text-primary" />
@@ -506,7 +974,6 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
 
               {enableEmployerMatch && (
                 <>
-                  {/* Match Configuration */}
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs text-muted-foreground">Base Contribution %</Label>
@@ -514,9 +981,7 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
                         type="number"
                         value={baseMatchPercent}
                         onChange={(e) => setBaseMatchPercent(parseFloat(e.target.value) || 0)}
-                        min={0}
-                        max={100}
-                        step={0.5}
+                        min={0} max={100} step={0.5}
                       />
                       <p className="text-xs text-muted-foreground">Free contribution</p>
                     </div>
@@ -526,9 +991,7 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
                         type="number"
                         value={matchRate}
                         onChange={(e) => setMatchRate(parseFloat(e.target.value) || 0)}
-                        min={0}
-                        max={200}
-                        step={10}
+                        min={0} max={200} step={10}
                       />
                       <p className="text-xs text-muted-foreground">Of your contribution</p>
                     </div>
@@ -538,9 +1001,7 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
                         type="number"
                         value={matchUpTo}
                         onChange={(e) => setMatchUpTo(parseFloat(e.target.value) || 0)}
-                        min={0}
-                        max={100}
-                        step={1}
+                        min={0} max={100} step={1}
                       />
                       <p className="text-xs text-muted-foreground">Of salary cap</p>
                     </div>
@@ -552,7 +1013,6 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
                 </>
               )}
 
-              {/* Summary Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="p-4 rounded-lg bg-chart-1/10 border border-chart-1/20 text-center">
                   <PiggyBank className="h-5 w-5 mx-auto mb-2 text-chart-1" />
@@ -580,7 +1040,6 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
                 </div>
               </div>
 
-              {/* Per Paycheck */}
               <div className="p-4 rounded-lg border bg-muted/30 space-y-2">
                 <h4 className="font-medium text-sm flex items-center gap-2">
                   <Wallet className="h-4 w-4" />
@@ -614,7 +1073,6 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
                 </div>
               </div>
 
-              {/* Insight */}
               {enableEmployerMatch && annualEmployerTotal > 0 && (
                 <div className="p-4 rounded-lg bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20">
                   <p className="text-sm">
@@ -712,6 +1170,7 @@ const IgnitePaycheckPlanner: React.FC<IgnitePaycheckPlannerProps> = ({ financial
             </CardContent>
           </Card>
         </TabsContent>
+
         <TabsContent value="compare" className="space-y-6">
           <ScenarioComparison
             grossInput={grossInput}
