@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ScenarioComparison } from '@/components/paycheck/ScenarioComparison';
 import { WhatIfSlider } from '@/components/paycheck/WhatIfSlider';
 import { DeductionRow } from '@/components/paycheck/DeductionRow';
+import { DebouncedInput } from '@/components/paycheck/DebouncedInput';
 import { ScenarioInputs } from '@/components/paycheck/ScenarioInputs';
 import { EmployerMatchProjection } from '@/components/paycheck/EmployerMatchProjection';
 import { PaycheckWaterfall } from '@/components/paycheck/PaycheckWaterfall';
@@ -867,12 +868,12 @@ export default function PaycheckAllocator() {
                   <Label htmlFor="grossPay">Gross Pay (per paycheck)</Label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="grossPay"
+                    <DebouncedInput
                       type="number"
                       value={grossPay}
-                      onChange={(e) => setGrossPay(parseFloat(e.target.value) || 0)}
+                      onChange={(val) => setGrossPay(parseFloat(val) || 0)}
                       className="pl-8"
+                      debounceMs={400}
                     />
                   </div>
                 </div>
@@ -898,13 +899,12 @@ export default function PaycheckAllocator() {
                   <Label htmlFor="zipCode">ZIP Code</Label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="zipCode"
+                    <DebouncedInput
                       value={zipCode}
-                      onChange={(e) => setZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                      onChange={(val) => setZipCode(val.replace(/\D/g, '').slice(0, 5))}
                       placeholder="12345"
                       className="pl-8"
-                      maxLength={5}
+                      debounceMs={400}
                     />
                   </div>
                 </div>
@@ -927,12 +927,11 @@ export default function PaycheckAllocator() {
               
               <div className="space-y-2">
                 <Label htmlFor="allowances">Withholding Allowances</Label>
-                <Input
-                  id="allowances"
+                <DebouncedInput
                   type="number"
                   value={allowances}
-                  onChange={(e) => setAllowances(parseInt(e.target.value) || 0)}
-                  min={0}
+                  onChange={(val) => setAllowances(parseInt(val) || 0)}
+                  debounceMs={400}
                 />
               </div>
             </CardContent>

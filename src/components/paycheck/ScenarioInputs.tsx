@@ -1,8 +1,9 @@
+import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DeductionRow } from './DeductionRow';
+import { DebouncedInput } from './DebouncedInput';
 import { DollarSign, Plus, PiggyBank, Heart, Shield, Car, Baby, Briefcase, Landmark, GraduationCap } from 'lucide-react';
 
 interface Deduction {
@@ -74,6 +75,22 @@ export function ScenarioInputs({
   onUpdateDeduction,
   onRemoveDeduction,
 }: ScenarioInputsProps) {
+  const handleUpdatePretax = useCallback((id: string, field: keyof Deduction, value: string | number) => {
+    onUpdateDeduction(id, field, value, true);
+  }, [onUpdateDeduction]);
+
+  const handleRemovePretax = useCallback((id: string) => {
+    onRemoveDeduction(id, true);
+  }, [onRemoveDeduction]);
+
+  const handleUpdatePosttax = useCallback((id: string, field: keyof Deduction, value: string | number) => {
+    onUpdateDeduction(id, field, value, false);
+  }, [onUpdateDeduction]);
+
+  const handleRemovePosttax = useCallback((id: string) => {
+    onRemoveDeduction(id, false);
+  }, [onRemoveDeduction]);
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
@@ -81,11 +98,12 @@ export function ScenarioInputs({
           <Label className="text-xs">Gross Pay</Label>
           <div className="relative">
             <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-            <Input
+            <DebouncedInput
               type="number"
               value={grossPay}
-              onChange={(e) => setGrossPay(parseFloat(e.target.value) || 0)}
+              onChange={(val) => setGrossPay(parseFloat(val) || 0)}
               className="pl-6 h-9"
+              debounceMs={400}
             />
           </div>
         </div>
@@ -108,12 +126,12 @@ export function ScenarioInputs({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label className="text-xs">ZIP Code</Label>
-          <Input
+          <DebouncedInput
             value={zipCode}
-            onChange={(e) => setZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+            onChange={(val) => setZipCode(val.replace(/\D/g, '').slice(0, 5))}
             placeholder="12345"
             className="h-9"
-            maxLength={5}
+            debounceMs={400}
           />
         </div>
         <div className="space-y-1">
@@ -146,8 +164,8 @@ export function ScenarioInputs({
             deduction={d} 
             isPretax={true} 
             options={COMMON_PRETAX_DEDUCTIONS}
-            onUpdate={(id, field, value) => onUpdateDeduction(id, field, value, true)}
-            onRemove={(id) => onRemoveDeduction(id, true)}
+            onUpdate={handleUpdatePretax}
+            onRemove={handleRemovePretax}
           />
         ))}
       </div>
@@ -166,8 +184,8 @@ export function ScenarioInputs({
             deduction={d} 
             isPretax={false} 
             options={COMMON_POSTTAX_DEDUCTIONS}
-            onUpdate={(id, field, value) => onUpdateDeduction(id, field, value, false)}
-            onRemove={(id) => onRemoveDeduction(id, false)}
+            onUpdate={handleUpdatePosttax}
+            onRemove={handleRemovePosttax}
           />
         ))}
       </div>
