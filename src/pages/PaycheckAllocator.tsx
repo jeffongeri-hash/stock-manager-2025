@@ -367,6 +367,22 @@ export default function PaycheckAllocator() {
     }
   }, []);
 
+  const handleUpdatePretax = useCallback((id: string, field: keyof Deduction, value: string | number) => {
+    updateDeduction(id, field, value, true, false);
+  }, [updateDeduction]);
+
+  const handleRemovePretax = useCallback((id: string) => {
+    removeDeduction(id, true, false);
+  }, [removeDeduction]);
+
+  const handleUpdatePosttax = useCallback((id: string, field: keyof Deduction, value: string | number) => {
+    updateDeduction(id, field, value, false, false);
+  }, [updateDeduction]);
+
+  const handleRemovePosttax = useCallback((id: string) => {
+    removeDeduction(id, false, false);
+  }, [removeDeduction]);
+
   const copyScenarioAToB = () => {
     setGrossPayB(grossPay);
     setPayFrequencyB(payFrequency);
@@ -951,8 +967,8 @@ export default function PaycheckAllocator() {
                     deduction={d} 
                     isPretax={true}
                     options={COMMON_PRETAX_DEDUCTIONS}
-                    onUpdate={(id, field, value) => updateDeduction(id, field, value, true, false)}
-                    onRemove={(id) => removeDeduction(id, true, false)}
+                    onUpdate={handleUpdatePretax}
+                    onRemove={handleRemovePretax}
                   />
                 ))
               )}
@@ -988,8 +1004,8 @@ export default function PaycheckAllocator() {
                     deduction={d} 
                     isPretax={false}
                     options={COMMON_POSTTAX_DEDUCTIONS}
-                    onUpdate={(id, field, value) => updateDeduction(id, field, value, false, false)}
-                    onRemove={(id) => removeDeduction(id, false, false)}
+                    onUpdate={handleUpdatePosttax}
+                    onRemove={handleRemovePosttax}
                   />
                 ))
               )}
