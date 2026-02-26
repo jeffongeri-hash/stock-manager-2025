@@ -58,3 +58,9 @@ verify_jwt = false
 
 [functions.calculate-paycheck]
 verify_jwt = false
+
+[functions.ignite-options-scanner]
+verify_jwt = false
+
+[functions.ignite-fire-advice]
+verify_jwt = false

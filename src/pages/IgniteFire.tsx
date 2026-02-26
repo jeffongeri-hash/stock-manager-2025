@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { 
   Calculator, MapPin, DollarSign, TrendingUp, 
   Lightbulb, Globe, Users, Shield, Flame, Target,
-  PiggyBank, Wallet, ExternalLink, Plane, Banknote
+  PiggyBank, Wallet, ExternalLink, Plane, Banknote, BarChart3
 } from 'lucide-react';
 import { IgniteUserFinancials, FireType } from '@/types/ignitefire';
 import { IgniteDashboard } from '@/components/ignitefire/IgniteDashboard';
@@ -20,6 +20,8 @@ import { IgniteFamilyPlanner } from '@/components/ignitefire/IgniteFamilyPlanner
 import { IgniteDebtPayoff } from '@/components/ignitefire/IgniteDebtPayoff';
 import IgniteTravelPlanner from '@/components/ignitefire/IgniteTravelPlanner';
 import IgnitePaycheckPlanner from '@/components/ignitefire/IgnitePaycheckPlanner';
+import IgniteOptionsScanner from '@/components/ignitefire/IgniteOptionsScanner';
+import IgniteFireAdvice from '@/components/ignitefire/IgniteFireAdvice';
 
 const IgniteFire = () => {
   const [financials, setFinancials] = useState<IgniteUserFinancials>(() => {
@@ -65,7 +67,7 @@ const IgniteFire = () => {
         </div>
 
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 mb-6">
+          <TabsList className="grid w-full grid-cols-5 md:grid-cols-9 mb-6">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -93,6 +95,14 @@ const IgniteFire = () => {
             <TabsTrigger value="travel" className="flex items-center gap-2">
               <Plane className="h-4 w-4" />
               <span className="hidden sm:inline">Travel Lab</span>
+            </TabsTrigger>
+            <TabsTrigger value="options" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Options Lab</span>
+            </TabsTrigger>
+            <TabsTrigger value="accelerate" className="flex items-center gap-2">
+              <Lightbulb className="h-4 w-4" />
+              <span className="hidden sm:inline">Accelerate</span>
             </TabsTrigger>
           </TabsList>
 
@@ -122,6 +132,14 @@ const IgniteFire = () => {
 
           <TabsContent value="travel">
             <IgniteTravelPlanner />
+          </TabsContent>
+
+          <TabsContent value="options">
+            <IgniteOptionsScanner />
+          </TabsContent>
+
+          <TabsContent value="accelerate">
+            <IgniteFireAdvice financials={financials} />
           </TabsContent>
         </Tabs>
       </div>
