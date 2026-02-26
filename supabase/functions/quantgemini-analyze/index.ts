@@ -1,7 +1,11 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+const TICKER_REGEX = /^[A-Z]{1,10}$/;
 
 const INVESTOR_PROMPTS = `
 Analyze the stock based on these strict investor criteria:
@@ -15,9 +19,9 @@ Analyze the stock based on these strict investor criteria:
 async function fetchFinnhubData(symbol: string, apiKey: string) {
   try {
     const [quoteRes, profileRes, newsRes] = await Promise.all([
-      fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`),
-      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${apiKey}`),
-      fetch(`https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${getDateDaysAgo(7)}&to=${getToday()}&token=${apiKey}`)
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/company-news?symbol=${encodeURIComponent(symbol)}&from=${getDateDaysAgo(7)}&to=${getToday()}&token=${apiKey}`)
     ]);
 
     const [quote, profile, news] = await Promise.all([
@@ -53,11 +57,40 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Auth check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { ticker, action } = await req.json();
     
-    if (!ticker) {
+    // Input validation
+    const cleanTicker = String(ticker || '').toUpperCase().trim();
+    if (!cleanTicker || !TICKER_REGEX.test(cleanTicker)) {
       return new Response(
-        JSON.stringify({ error: 'Ticker symbol is required' }),
+        JSON.stringify({ error: 'Invalid ticker symbol (1-10 uppercase letters required)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (action && !['refresh_price', 'analyze'].includes(action)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid action' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -75,7 +108,7 @@ Deno.serve(async (req) => {
     let companyProfile = null;
 
     if (FINNHUB_API_KEY) {
-      const finnhubData = await fetchFinnhubData(ticker.toUpperCase(), FINNHUB_API_KEY);
+      const finnhubData = await fetchFinnhubData(cleanTicker, FINNHUB_API_KEY);
       if (finnhubData) {
         liveData = {
           currentPrice: finnhubData.quote?.c || 0,
@@ -90,7 +123,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If just refreshing price, return early
     if (action === 'refresh_price') {
       return new Response(
         JSON.stringify({ liveData }),
@@ -98,7 +130,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build the prompt with live data context
     const liveContext = liveData ? `
 LIVE MARKET DATA (use these exact values):
 - Current Price: $${liveData.currentPrice.toFixed(2)}
@@ -113,7 +144,7 @@ ${companyProfile?.marketCapitalization ? `- Market Cap: $${(companyProfile.marke
 
     const newsContext = finnhubNews.length > 0 ? `
 RECENT NEWS (incorporate these into recentNews array):
-${finnhubNews.slice(0, 5).map((n: any) => `- ${new Date(n.datetime * 1000).toLocaleDateString()}: ${n.headline} (${n.source})`).join('\n')}
+${finnhubNews.slice(0, 5).map((n: any) => `- ${new Date(n.datetime * 1000).toLocaleDateString()}: ${String(n.headline || '').slice(0, 200)} (${n.source})`).join('\n')}
 ` : '';
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -131,7 +162,7 @@ ${finnhubNews.slice(0, 5).map((n: any) => `- ${new Date(n.datetime * 1000).toLoc
           },
           {
             role: "user",
-            content: `Conduct a deep equity research analysis for the stock ticker: ${ticker.toUpperCase()}.
+            content: `Conduct a deep equity research analysis for the stock ticker: ${cleanTicker}.
 
 ${liveContext}
 ${newsContext}
@@ -151,95 +182,24 @@ Requirements:
 
 Return ONLY valid JSON matching this exact structure (no markdown, no code blocks):
 {
-  "symbol": "${ticker.toUpperCase()}",
+  "symbol": "${cleanTicker}",
   "name": "Company Name",
   "price": "$XXX.XX",
   "change": "+X.XX (+X.XX%)",
   "sector": "Sector Name",
   "industry": "Industry Name",
-  "fundamentals": {
-    "epsGrowth": "XX%",
-    "epsGrowthHistory": [{"year": "2020", "value": 10}, {"year": "2021", "value": 15}, {"year": "2022", "value": 20}, {"year": "2023", "value": 18}, {"year": "2024", "value": 22}],
-    "roe": "XX%",
-    "roa": "XX%",
-    "netMargin": "XX%",
-    "operatingMargin": "XX%",
-    "currentRatio": "X.XX",
-    "quickRatio": "X.XX",
-    "fcf": "$X.XXB",
-    "pegRatio": "X.XX",
-    "debtToEquity": "X.XX",
-    "marketCap": "$XXXB",
-    "peRatio": "XX.X",
-    "pbRatio": "X.XX",
-    "profitMargin": "XX%"
-  },
-  "yoyComparison": {
-    "revenue": {"current": 100, "previous": 90, "unit": "B"},
-    "roe": {"current": 20, "previous": 18},
-    "roa": {"current": 10, "previous": 9},
-    "peRatio": {"current": 25, "previous": 22},
-    "netMargin": {"current": 15, "previous": 14},
-    "operatingMargin": {"current": 20, "previous": 18},
-    "currentRatio": {"current": 1.5, "previous": 1.4},
-    "debtToEquity": {"current": 0.5, "previous": 0.6},
-    "fcf": {"current": 10, "previous": 8, "unit": "B"}
-  },
-  "technicalAnalysis": {
-    "trend": "Bullish/Bearish/Neutral",
-    "support": "$XXX.XX",
-    "resistance": "$XXX.XX",
-    "rsi": "XX",
-    "ma50": "$XXX.XX",
-    "ma200": "$XXX.XX",
-    "macd": "Bullish/Bearish crossover",
-    "volumeTrend": "Above/Below average",
-    "volumePriceAnalysis": "Description",
-    "movingAverages": "Above/Below key MAs",
-    "volumeProfile": "Description"
-  },
-  "investorScorecard": {
-    "oneil": {"score": 75, "verdict": "Strong Buy/Buy/Hold/Sell", "details": "Analysis details"},
-    "buffett": {"score": 80, "verdict": "Strong Buy/Buy/Hold/Sell", "details": "Analysis details"},
-    "ackman": {"score": 70, "verdict": "Strong Buy/Buy/Hold/Sell", "details": "Analysis details"},
-    "shkreli": {"score": 65, "verdict": "Strong Buy/Buy/Hold/Sell", "details": "Analysis details"},
-    "lynch": {"score": 85, "verdict": "Strong Buy/Buy/Hold/Sell", "details": "Analysis details"}
-  },
-  "catalysts": [
-    {"event": "Event name", "impact": "High/Medium/Low", "timeline": "Q1 2025"}
-  ],
-  "recentNews": [
-    {"date": "2025-01-20", "headline": "News headline", "sentiment": "bullish", "source": "Source Name"}
-  ],
-  "sectorComparison": [
-    {"peer": "TICKER", "peRatio": "XX.X", "revenueGrowth": "XX%", "profitMargin": "XX%"}
-  ],
-  "marketCorrelation": [
-    {"label": "S&P 500", "value": 0.85},
-    {"label": "NASDAQ", "value": 0.90}
-  ],
-  "ivAnalysis": {
-    "impliedVol": "XX%",
-    "historicalVol": "XX%",
-    "ivRank": "XX%",
-    "tradingSuggestion": "Suggestion text",
-    "volatilityHistory": [{"date": "Jan", "iv": 25, "hv": 22}]
-  },
-  "analystSentiment": {
-    "consensus": "Buy/Hold/Sell",
-    "targetPrice": "$XXX.XX",
-    "score": 75,
-    "summary": "Summary of analyst views",
-    "ratings": {"buy": 15, "hold": 5, "sell": 2},
-    "reports": [{"analystName": "Goldman Sachs", "target": "$XXX", "snippet": "Analysis snippet"}]
-  },
-  "historicalChart": [
-    {"date": "2024-01", "price": 150, "volume": 1000000}
-  ],
-  "bullishBearish": {
-    "bullCase": ["Bull point 1", "Bull point 2", "Bull point 3"],
-    "bearCase": ["Bear point 1", "Bear point 2", "Bear point 3"]
-  }
+  "fundamentals": {"epsGrowth": "XX%", "epsGrowthHistory": [], "roe": "XX%", "roa": "XX%", "netMargin": "XX%", "operatingMargin": "XX%", "currentRatio": "X.XX", "quickRatio": "X.XX", "fcf": "$X.XXB", "pegRatio": "X.XX", "debtToEquity": "X.XX", "marketCap": "$XXXB", "peRatio": "XX.X", "pbRatio": "X.XX", "profitMargin": "XX%"},
+  "yoyComparison": {},
+  "technicalAnalysis": {},
+  "investorScorecard": {},
+  "catalysts": [],
+  "recentNews": [],
+  "sectorComparison": [],
+  "marketCorrelation": [],
+  "ivAnalysis": {},
+  "analystSentiment": {},
+  "historicalChart": [],
+  "bullishBearish": {"bullCase": [], "bearCase": []}
 }`
           }
         ],
@@ -269,43 +229,35 @@ Return ONLY valid JSON matching this exact structure (no markdown, no code block
     const aiResponse = await response.json();
     let analysisText = aiResponse.choices?.[0]?.message?.content || "";
     
-    // Clean up the response - remove markdown code blocks
     analysisText = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    
-    // Fix trailing commas in JSON (common AI output issue)
-    // Remove trailing commas before closing braces/brackets
     analysisText = analysisText
-      .replace(/,(\s*[\]}])/g, '$1')  // Remove comma before ] or }
-      .replace(/,(\s*,)/g, ',')       // Remove duplicate commas
-      .replace(/\[\s*,/g, '[')        // Remove leading comma in arrays
-      .replace(/{\s*,/g, '{');        // Remove leading comma in objects
+      .replace(/,(\s*[\]}])/g, '$1')
+      .replace(/,(\s*,)/g, ',')
+      .replace(/\[\s*,/g, '[')
+      .replace(/{\s*,/g, '{');
     
     let analysis;
     try {
       analysis = JSON.parse(analysisText);
     } catch (parseError) {
-      // Try a more aggressive cleanup as fallback
       try {
-        // Remove any remaining problematic characters
         const cleanedText = analysisText
-          .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
-          .replace(/\n\s*\n/g, '\n') // Remove empty lines
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+          .replace(/\n\s*\n/g, '\n')
           .trim();
         analysis = JSON.parse(cleanedText);
       } catch (secondError) {
-        console.error("Failed to parse AI response after cleanup:", analysisText.substring(0, 500));
+        console.error("Failed to parse AI response after cleanup");
         throw new Error("Failed to parse analysis response");
       }
     }
 
-    // Merge live data into response
     if (liveData) {
       analysis.liveData = liveData;
       analysis.price = `$${liveData.currentPrice.toFixed(2)}`;
       analysis.change = `${liveData.changePercent >= 0 ? '+' : ''}${(liveData.currentPrice - liveData.previousClose).toFixed(2)} (${liveData.changePercent >= 0 ? '+' : ''}${liveData.changePercent.toFixed(2)}%)`;
     }
 
-    // Merge Finnhub news if available
     if (finnhubNews.length > 0 && (!analysis.recentNews || analysis.recentNews.length < 3)) {
       analysis.recentNews = finnhubNews.slice(0, 8).map((n: any) => ({
         date: new Date(n.datetime * 1000).toLocaleDateString(),
@@ -315,7 +267,7 @@ Return ONLY valid JSON matching this exact structure (no markdown, no code block
       }));
     }
 
-    console.log(`QuantGemini analysis completed for ${ticker}${liveData ? ' with live data' : ''}`);
+    console.log(`QuantGemini analysis completed for ${cleanTicker}${liveData ? ' with live data' : ''}`);
 
     return new Response(
       JSON.stringify(analysis),

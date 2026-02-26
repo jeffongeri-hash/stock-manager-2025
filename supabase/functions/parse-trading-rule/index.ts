@@ -1,6 +1,8 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 Deno.serve(async (req) => {
@@ -9,6 +11,26 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Auth check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { ruleText } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
@@ -16,7 +38,23 @@ Deno.serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Parsing trading rule:", ruleText);
+    // Input validation
+    if (!ruleText || typeof ruleText !== 'string') {
+      return new Response(JSON.stringify({ error: 'Rule text is required' }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (ruleText.length > 2000) {
+      return new Response(JSON.stringify({ error: 'Rule text too long (max 2000 characters)' }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Sanitize input
+    const sanitizedRule = ruleText.trim().replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+
+    console.log("Parsing trading rule:", sanitizedRule.slice(0, 100));
 
     const systemPrompt = `You are a trading rule parser. Convert natural language trading rules into structured JSON.
 
@@ -67,7 +105,7 @@ Parse the rule and return ONLY valid JSON, no explanation.`;
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Parse this trading rule: "${ruleText}"` }
+          { role: "user", content: `Parse this trading rule: "${sanitizedRule}"` }
         ],
       }),
     });
@@ -78,14 +116,12 @@ Parse the rule and return ONLY valid JSON, no explanation.`;
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       throw new Error(`AI gateway error: ${response.status}`);
@@ -94,12 +130,11 @@ Parse the rule and return ONLY valid JSON, no explanation.`;
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
     
-    console.log("AI response:", content);
+    console.log("AI response received");
 
     // Extract JSON from the response
     let parsedRule;
     try {
-      // Try to find JSON in the response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         parsedRule = JSON.parse(jsonMatch[0]);
@@ -110,17 +145,15 @@ Parse the rule and return ONLY valid JSON, no explanation.`;
       console.error("JSON parse error:", parseError);
       return new Response(JSON.stringify({ 
         error: "Could not parse the rule. Please try rephrasing.",
-        rawResponse: content 
       }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     return new Response(JSON.stringify({ 
       success: true, 
       parsedRule,
-      originalText: ruleText
+      originalText: sanitizedRule
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -130,8 +163,7 @@ Parse the rule and return ONLY valid JSON, no explanation.`;
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : "Unknown error" 
     }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

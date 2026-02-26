@@ -1,7 +1,13 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+const ZIP_REGEX = /^\d{5}$/;
+const VALID_FILING_STATUSES = ['single', 'married', 'married_separately', 'head_of_household'];
+const VALID_PAY_FREQUENCIES = ['weekly', 'biweekly', 'semimonthly', 'monthly'];
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -9,14 +15,63 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Auth check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { grossPay, payFrequency, zipCode, filingStatus, allowances, preTaxDeductions, postTaxDeductions } = await req.json();
 
-    if (!grossPay || !zipCode) {
+    // Input validation
+    if (typeof grossPay !== 'number' || grossPay <= 0 || grossPay > 10000000) {
       return new Response(
-        JSON.stringify({ error: 'Gross pay and zip code are required' }),
+        JSON.stringify({ error: 'Gross pay must be a positive number up to $10,000,000' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const cleanZip = String(zipCode || '').trim();
+    if (!cleanZip || !ZIP_REGEX.test(cleanZip)) {
+      return new Response(
+        JSON.stringify({ error: 'Valid 5-digit ZIP code is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const validFrequency = VALID_PAY_FREQUENCIES.includes(payFrequency) ? payFrequency : 'biweekly';
+    const validFilingStatus = VALID_FILING_STATUSES.includes(filingStatus) ? filingStatus : 'single';
+    const validAllowances = typeof allowances === 'number' && allowances >= 0 && allowances <= 20 ? allowances : 0;
+
+    // Validate deductions arrays
+    const validateDeductions = (deductions: any): any[] => {
+      if (!Array.isArray(deductions)) return [];
+      return deductions.slice(0, 20).filter((d: any) => 
+        d && typeof d.value === 'number' && d.value >= 0 && d.value <= 1000000 &&
+        ['percentage', 'fixed'].includes(d.type)
+      ).map((d: any) => ({
+        name: String(d.name || 'Deduction').slice(0, 100),
+        type: d.type,
+        value: d.value,
+      }));
+    };
+
+    const validPreTax = validateDeductions(preTaxDeductions);
+    const validPostTax = validateDeductions(postTaxDeductions);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -25,13 +80,11 @@ Deno.serve(async (req) => {
 
     // Calculate pre-tax deduction total
     let preTaxTotal = 0;
-    if (preTaxDeductions && Array.isArray(preTaxDeductions)) {
-      for (const deduction of preTaxDeductions) {
-        if (deduction.type === 'percentage') {
-          preTaxTotal += (grossPay * deduction.value) / 100;
-        } else {
-          preTaxTotal += deduction.value;
-        }
+    for (const deduction of validPreTax) {
+      if (deduction.type === 'percentage') {
+        preTaxTotal += (grossPay * deduction.value) / 100;
+      } else {
+        preTaxTotal += deduction.value;
       }
     }
 
@@ -41,10 +94,10 @@ Deno.serve(async (req) => {
 
 INPUT DATA:
 - Gross Pay (per paycheck): $${grossPay.toFixed(2)}
-- Pay Frequency: ${payFrequency || 'biweekly'}
-- ZIP Code: ${zipCode}
-- Filing Status: ${filingStatus || 'single'}
-- Allowances/Withholdings: ${allowances || 0}
+- Pay Frequency: ${validFrequency}
+- ZIP Code: ${cleanZip}
+- Filing Status: ${validFilingStatus}
+- Allowances/Withholdings: ${validAllowances}
 - Taxable Income (after pre-tax deductions): $${taxableIncome.toFixed(2)}
 
 CALCULATE AND RETURN AS JSON:
@@ -108,21 +161,15 @@ Return ONLY valid JSON in this exact format:
     const aiData = await response.json();
     const content = aiData.choices?.[0]?.message?.content || '';
     
-    // Parse the JSON response
     let taxCalculation;
     try {
       let cleanContent = content.trim();
-      if (cleanContent.startsWith('```json')) {
-        cleanContent = cleanContent.slice(7);
-      } else if (cleanContent.startsWith('```')) {
-        cleanContent = cleanContent.slice(3);
-      }
-      if (cleanContent.endsWith('```')) {
-        cleanContent = cleanContent.slice(0, -3);
-      }
+      if (cleanContent.startsWith('```json')) cleanContent = cleanContent.slice(7);
+      else if (cleanContent.startsWith('```')) cleanContent = cleanContent.slice(3);
+      if (cleanContent.endsWith('```')) cleanContent = cleanContent.slice(0, -3);
       taxCalculation = JSON.parse(cleanContent.trim());
     } catch (parseError) {
-      console.error('Failed to parse AI response:', content);
+      console.error('Failed to parse AI response');
       taxCalculation = {
         federalTax: taxableIncome * 0.12,
         stateTax: taxableIncome * 0.05,
@@ -131,24 +178,18 @@ Return ONLY valid JSON in this exact format:
         localTaxName: null,
         socialSecurity: Math.min(grossPay * 0.062, 168600 * 0.062 / 26),
         medicare: grossPay * 0.0145,
-        taxBreakdown: {
-          federalRate: '12%',
-          stateRate: '5%',
-          localRate: 'N/A'
-        },
+        taxBreakdown: { federalRate: '12%', stateRate: '5%', localRate: 'N/A' },
         notes: 'Using estimated rates. Please verify with a tax professional.'
       };
     }
 
     // Calculate post-tax deduction total
     let postTaxTotal = 0;
-    if (postTaxDeductions && Array.isArray(postTaxDeductions)) {
-      for (const deduction of postTaxDeductions) {
-        if (deduction.type === 'percentage') {
-          postTaxTotal += (grossPay * deduction.value) / 100;
-        } else {
-          postTaxTotal += deduction.value;
-        }
+    for (const deduction of validPostTax) {
+      if (deduction.type === 'percentage') {
+        postTaxTotal += (grossPay * deduction.value) / 100;
+      } else {
+        postTaxTotal += deduction.value;
       }
     }
 
