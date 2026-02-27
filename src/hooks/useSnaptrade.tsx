@@ -55,7 +55,6 @@ interface SnaptradeData {
   lastSyncTime: Date | null;
 }
 
-// Auto-sync interval in milliseconds (5 minutes)
 const AUTO_SYNC_INTERVAL = 5 * 60 * 1000;
 
 export function useSnaptrade(autoSync: boolean = true) {
@@ -78,11 +77,23 @@ export function useSnaptrade(autoSync: boolean = true) {
     }
 
     try {
-      const stored = localStorage.getItem(`snaptrade_${user.id}`);
-      if (stored) {
-        const parsed: SnaptradeConnection = JSON.parse(stored);
+      const { data: dbData, error } = await supabase
+        .from("snaptrade_connections")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (dbData) {
+        const parsed: SnaptradeConnection = {
+          userId: dbData.user_id,
+          userSecret: dbData.user_secret,
+          isConnected: dbData.is_connected,
+          accounts: (dbData.accounts as unknown as SnaptradeAccount[]) || [],
+        };
         setData(prev => ({ ...prev, connection: parsed, isLoading: !parsed.isConnected }));
-        
+
         if (parsed.isConnected && parsed.userSecret) {
           await fetchHoldings(parsed.userSecret);
         } else {
@@ -106,7 +117,6 @@ export function useSnaptrade(autoSync: boolean = true) {
 
       if (holdingsError) throw holdingsError;
 
-      // Transform holdings data
       const holdings: SnaptradeHolding[] = (holdingsData?.holdings || holdingsData || []).map((h: any) => ({
         id: h.id || crypto.randomUUID(),
         symbol: h.symbol?.symbol || h.symbol || "Unknown",
@@ -121,7 +131,6 @@ export function useSnaptrade(autoSync: boolean = true) {
         account_id: h.account?.id || "",
       }));
 
-      // Calculate unrealized PnL percent
       holdings.forEach(h => {
         if (h.cost_basis > 0) {
           h.unrealized_pnl_percent = ((h.market_value - h.cost_basis) / h.cost_basis) * 100;
@@ -138,7 +147,6 @@ export function useSnaptrade(autoSync: boolean = true) {
         }));
       }
 
-      // Also try to fetch transactions for dividends
       await fetchDividends(userSecret);
     } catch (error: any) {
       console.error("Error fetching holdings:", error);
@@ -161,7 +169,6 @@ export function useSnaptrade(autoSync: boolean = true) {
 
       if (transactionsError) throw transactionsError;
 
-      // Filter for dividend transactions
       const dividends: SnaptradeDividend[] = (transactionsData || [])
         .filter((t: any) => t.type?.toLowerCase().includes("dividend"))
         .map((t: any) => ({
@@ -176,41 +183,28 @@ export function useSnaptrade(autoSync: boolean = true) {
         }));
 
       if (isMountedRef.current) {
-        setData(prev => ({
-          ...prev,
-          dividends,
-        }));
+        setData(prev => ({ ...prev, dividends }));
       }
     } catch (error) {
       console.error("Error fetching dividends:", error);
-      // Don't fail the whole hook if dividends fail
     }
   };
 
   const refresh = useCallback(async () => {
     if (!user || !data.connection?.userSecret) return;
-    
     setData(prev => ({ ...prev, isLoading: true }));
     await fetchHoldings(data.connection!.userSecret);
   }, [user, data.connection]);
 
-  // Initial load
   useEffect(() => {
     loadConnection();
   }, [loadConnection]);
 
-  // Auto-sync setup
   useEffect(() => {
-    if (!autoSync || !data.connection?.isConnected || !data.connection?.userSecret) {
-      return;
-    }
+    if (!autoSync || !data.connection?.isConnected || !data.connection?.userSecret) return;
 
-    // Clear any existing interval
-    if (syncIntervalRef.current) {
-      clearInterval(syncIntervalRef.current);
-    }
+    if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
 
-    // Set up periodic sync
     syncIntervalRef.current = setInterval(() => {
       if (data.connection?.userSecret && isMountedRef.current) {
         console.log("[Snaptrade] Auto-sync triggered");
@@ -219,43 +213,56 @@ export function useSnaptrade(autoSync: boolean = true) {
     }, AUTO_SYNC_INTERVAL);
 
     return () => {
-      if (syncIntervalRef.current) {
-        clearInterval(syncIntervalRef.current);
-      }
+      if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
     };
   }, [autoSync, data.connection?.isConnected, data.connection?.userSecret]);
 
-  // Cleanup on unmount
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      if (syncIntervalRef.current) {
-        clearInterval(syncIntervalRef.current);
-      }
+      if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
     };
   }, []);
 
-  // Check URL for Snaptrade success callback
+  // Handle Snaptrade success callback
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("snaptrade") === "success" && user) {
-      // Mark connection as successful
-      const stored = localStorage.getItem(`snaptrade_${user.id}`);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        parsed.isConnected = true;
-        localStorage.setItem(`snaptrade_${user.id}`, JSON.stringify(parsed));
-        setData(prev => ({ ...prev, connection: parsed }));
-        
-        // Clean URL - handle both /settings and /assets pages
-        window.history.replaceState({}, document.title, window.location.pathname);
-        
-        // Fetch data
-        if (parsed.userSecret) {
-          fetchHoldings(parsed.userSecret);
+      (async () => {
+        try {
+          const { data: dbData, error } = await supabase
+            .from("snaptrade_connections")
+            .select("*")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (error) throw error;
+
+          if (dbData) {
+            await supabase
+              .from("snaptrade_connections")
+              .update({ is_connected: true, updated_at: new Date().toISOString() })
+              .eq("user_id", user.id);
+
+            const parsed: SnaptradeConnection = {
+              userId: dbData.user_id,
+              userSecret: dbData.user_secret,
+              isConnected: true,
+              accounts: (dbData.accounts as unknown as SnaptradeAccount[]) || [],
+            };
+            setData(prev => ({ ...prev, connection: parsed }));
+
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            if (parsed.userSecret) {
+              fetchHoldings(parsed.userSecret);
+            }
+          }
+        } catch (error) {
+          console.error("Error handling Snaptrade callback:", error);
         }
-      }
+      })();
     }
   }, [user]);
 

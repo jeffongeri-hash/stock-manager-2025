@@ -713,6 +713,36 @@ export type Database = {
         }
         Relationships: []
       }
+      snaptrade_connections: {
+        Row: {
+          accounts: Json
+          created_at: string
+          id: string
+          is_connected: boolean
+          updated_at: string
+          user_id: string
+          user_secret: string
+        }
+        Insert: {
+          accounts?: Json
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          updated_at?: string
+          user_id: string
+          user_secret: string
+        }
+        Update: {
+          accounts?: Json
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          updated_at?: string
+          user_id?: string
+          user_secret?: string
+        }
+        Relationships: []
+      }
       stock_trades: {
         Row: {
           created_at: string
