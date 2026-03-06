@@ -10,6 +10,7 @@ import { SwipeNavigation } from "@/components/mobile/SwipeNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { SEOHead } from "@/hooks/useSEO";
+import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 
 // Lazy load all page components for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -73,6 +74,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <PWAUpdateNotification />
       <BrowserRouter>
         <SEOHead />
         <SwipeNavigation>
