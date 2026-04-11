@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Briefcase, Bell, Settings, MoreHorizontal, X, TrendingUp, Calculator, Newspaper, Target } from 'lucide-react';
+import { Home, Briefcase, BarChart2, Settings, MoreHorizontal, X, TrendingUp, Calculator, Newspaper, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
@@ -14,7 +14,7 @@ const primaryNavItems: NavItem[] = [
   { icon: <Home className="h-5 w-5" />, label: 'Home', path: '/' },
   { icon: <Briefcase className="h-5 w-5" />, label: 'Portfolio', path: '/portfolio' },
   { icon: <TrendingUp className="h-5 w-5" />, label: 'Markets', path: '/market-scanner' },
-  { icon: <Bell className="h-5 w-5" />, label: 'Alerts', path: '/watchlist' },
+  { icon: <BarChart2 className="h-5 w-5" />, label: 'Chart', path: '/chart' },
 ];
 
 const moreNavItems: NavItem[] = [

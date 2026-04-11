@@ -49,6 +49,7 @@ const SchwabCallback = lazy(() => import("./pages/SchwabCallback"));
 const SmartTradeAI = lazy(() => import("./pages/SmartTradeAI"));
 const QuantGemini = lazy(() => import("./pages/QuantGemini"));
 const SWRCalculator = lazy(() => import("./pages/SWRCalculator"));
+const TradingViewChart = lazy(() => import("./pages/TradingViewChart"));
 
 const queryClient = new QueryClient();
 
@@ -111,6 +112,7 @@ const App = () => (
                 <Route path="/swr-calculator" element={<ProtectedRoute><SWRCalculator /></ProtectedRoute>} />
                 <Route path="/assets" element={<ProtectedRoute requiresAuth><Assets /></ProtectedRoute>} />
                 <Route path="/schwab/callback" element={<SchwabCallback />} />
+                <Route path="/chart" element={<ProtectedRoute><TradingViewChart /></ProtectedRoute>} />
                 
                 {/* Routes requiring full authentication */}
                 <Route path="/settings" element={<ProtectedRoute requiresAuth><Settings /></ProtectedRoute>} />
