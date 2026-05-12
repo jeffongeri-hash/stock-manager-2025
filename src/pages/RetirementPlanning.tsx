@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero } from '@/components/layout/PageHero';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -284,7 +285,12 @@ const RetirementPlanning = () => {
   };
 
   return (
-    <PageLayout title="Retirement Planning">
+    <PageLayout>
+      <PageHero
+        eyebrow="Retirement Planning"
+        title={<>Design your <span className="gradient-text">FIRE</span> path</>}
+        description="Model FIRE targets, withdrawals, healthcare, Social Security, RMDs, and Roth conversions in one place."
+      />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

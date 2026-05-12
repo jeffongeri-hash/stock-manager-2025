@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero } from '@/components/layout/PageHero';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -200,7 +201,12 @@ const SavedData = () => {
   const totalLocalItems = localSettings.length;
 
   return (
-    <PageLayout title="Saved Data Management">
+    <PageLayout>
+      <PageHero
+        eyebrow="Saved Data"
+        title={<>Your <span className="gradient-text">research</span>, organized</>}
+        description="Manage saved tickers, scenarios, dividend stocks, and trade plans."
+      />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

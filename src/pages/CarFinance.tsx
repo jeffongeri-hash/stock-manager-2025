@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero } from '@/components/layout/PageHero';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -273,7 +274,12 @@ export default function CarFinance() {
   const leaseVsBuy = calculateLeaseVsBuy();
 
   return (
-    <PageLayout title="Car Finance">
+    <PageLayout>
+      <PageHero
+        eyebrow="Car Finance"
+        title={<>Drive the <span className="gradient-text">smart</span> deal</>}
+        description="Loan, lease, and depreciation modeling with AI-curated market deals."
+      />
       <Tabs defaultValue="calculator" className="space-y-6">
         <TabsList className="grid grid-cols-2 lg:grid-cols-5 gap-2">
           <TabsTrigger value="calculator" className="flex items-center gap-2">

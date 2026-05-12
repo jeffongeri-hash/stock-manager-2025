@@ -1,4 +1,5 @@
 import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHero } from "@/components/layout/PageHero";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +36,12 @@ const OptionsGuide = () => {
   };
 
   return (
-    <PageLayout title="Options Strategy Guide">
+    <PageLayout>
+      <PageHero
+        eyebrow="Strategy Guide"
+        title={<>Options, <span className="gradient-text">demystified</span></>}
+        description="Checklists and playbooks for LEAPS, covered calls, wheels, and 0DTE."
+      />
       <div className="space-y-6">
         <Card>
           <CardHeader>

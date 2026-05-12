@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero } from '@/components/layout/PageHero';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -460,7 +461,12 @@ const ETFComparisonContent = () => {
   };
 
   return (
-    <PageLayout title="ETF Comparison">
+    <PageLayout>
+      <PageHero
+        eyebrow="ETF Comparison"
+        title={<>Compare ETFs, <span className="gradient-text">side by side</span></>}
+        description="Expense ratios, holdings, performance, and risk metrics across multiple funds."
+      />
       <Tabs defaultValue="performance" className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between gap-4">
           <TabsList className="bg-muted/50">

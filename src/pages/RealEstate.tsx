@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero } from '@/components/layout/PageHero';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -324,7 +325,12 @@ export default function RealEstate() {
   const affordability = calculateAffordability();
 
   return (
-    <PageLayout title="Real Estate Investment">
+    <PageLayout>
+      <PageHero
+        eyebrow="Real Estate"
+        title={<>Underwrite deals with <span className="gradient-text">clarity</span></>}
+        description="Cash flow, cap rate, IRR, and AI-powered insights for every property."
+      />
       <Tabs defaultValue="investment" className="space-y-6">
         <TabsList className="grid grid-cols-3 lg:grid-cols-6 gap-2">
           <TabsTrigger value="investment" className="flex items-center gap-2">
