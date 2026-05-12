@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero } from '@/components/layout/PageHero';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,7 +36,12 @@ const Settings = () => {
     toast.success('Settings saved successfully!');
   };
   return (
-    <PageLayout title="Settings">
+    <PageLayout>
+      <PageHero
+        eyebrow="Settings"
+        title={<>Tune your <span className="gradient-text">experience</span></>}
+        description="Account, notifications, security, regional preferences, and broker connections."
+      />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           <div className="bg-card rounded-lg p-6 shadow">
