@@ -11,7 +11,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
@@ -22,25 +21,22 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    
-    // Create client with user's auth to validate the token
+
     const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
-    
-    // Validate the JWT token and get user
+
     const token = authHeader.replace('Bearer ', '');
     const { data: userData, error: userError } = await userSupabase.auth.getUser(token);
-    
+
     if (userError || !userData?.user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized - Invalid token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    const authenticatedUserId = userData.user.id;
-    const { code, state } = await req.json();
+
+    const { code } = await req.json();
 
     if (!code) {
       return new Response(
@@ -60,9 +56,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Exchange authorization code for access token
-    const tokenUrl = 'https://www.interactivebrokers.com/oauth2/token';
-    
     const tokenBody = new URLSearchParams({
       grant_type: 'authorization_code',
       code: decodeURIComponent(code),
@@ -71,11 +64,9 @@ Deno.serve(async (req) => {
       redirect_uri: redirectUri,
     });
 
-    const tokenResponse = await fetch(tokenUrl, {
+    const tokenResponse = await fetch('https://www.interactivebrokers.com/oauth2/token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: tokenBody.toString(),
     });
 
@@ -90,44 +81,26 @@ Deno.serve(async (req) => {
 
     const tokens = await tokenResponse.json();
 
-    // Get account info from IBKR Web API
-    let accounts = [];
+    let accounts: any = [];
     try {
       const accountsResponse = await fetch('https://api.ibkr.com/v1/api/portfolio/accounts', {
-        headers: {
-          'Authorization': `Bearer ${tokens.access_token}`,
-        },
+        headers: { 'Authorization': `Bearer ${tokens.access_token}` },
       });
-
-      if (accountsResponse.ok) {
-        accounts = await accountsResponse.json();
-      }
+      if (accountsResponse.ok) accounts = await accountsResponse.json();
     } catch (accountError) {
       console.error('Failed to fetch IBKR accounts:', accountError);
     }
 
-    // Store tokens in Supabase using authenticated user ID
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Calculate token expiration
     const expiresAt = new Date(Date.now() + (tokens.expires_in || 3600) * 1000).toISOString();
 
-    // Store the broker connection
-    const { error: dbError } = await supabase
-      .from('broker_connections')
-      .upsert({
-        user_id: authenticatedUserId,
-        broker_type: 'interactive_brokers',
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token || null,
-        token_expires_at: expiresAt,
-        accounts: accounts,
-        status: 'connected',
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id,broker_type'
-      });
+    const { error: dbError } = await userSupabase.rpc('store_broker_tokens', {
+      broker_type_param: 'ibkr',
+      access_token_param: tokens.access_token,
+      refresh_token_param: tokens.refresh_token || null,
+      expires_at_param: expiresAt,
+      accounts_param: accounts,
+      status_param: 'connected',
+    });
 
     if (dbError) {
       console.error('Failed to store IBKR broker connection:', dbError);
@@ -138,10 +111,10 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         expiresIn: tokens.expires_in,
-        accounts: accounts,
+        accounts,
         message: 'Successfully connected to Interactive Brokers'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -21,14 +21,15 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
     const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
-    
+
     const token = authHeader.replace('Bearer ', '');
     const { data: userData, error: userError } = await userSupabase.auth.getUser(token);
-    
+
     if (userError || !userData?.user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized - Invalid token' }),
@@ -36,16 +37,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const userId = userData.user.id;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get stored broker connection
-    const { data: connection, error: connError } = await supabase
-      .from('broker_connections')
-      .select('*')
-      .eq('user_id', userData.user.id)
-      .eq('broker_type', 'interactive_brokers')
-      .single();
+    const { data: rows, error: connError } = await userSupabase
+      .rpc('get_broker_tokens', { broker_type_param: 'ibkr' });
+    const connection = Array.isArray(rows) ? rows[0] : null;
 
     if (connError || !connection?.refresh_token) {
       return new Response(
@@ -64,9 +61,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Refresh the token
-    const tokenUrl = 'https://www.interactivebrokers.com/oauth2/token';
-    
     const tokenBody = new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: connection.refresh_token,
@@ -74,23 +68,21 @@ Deno.serve(async (req) => {
       client_secret: clientSecret,
     });
 
-    const tokenResponse = await fetch(tokenUrl, {
+    const tokenResponse = await fetch('https://www.interactivebrokers.com/oauth2/token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: tokenBody.toString(),
     });
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error('IBKR Token refresh failed:', errorText);
-      
-      // Mark connection as needing reauth
+
       await supabase
         .from('broker_connections')
         .update({ status: 'expired' })
-        .eq('id', connection.id);
+        .eq('user_id', userId)
+        .eq('broker_type', 'ibkr');
 
       return new Response(
         JSON.stringify({ error: 'Token refresh failed', needsReauth: true }),
@@ -99,27 +91,19 @@ Deno.serve(async (req) => {
     }
 
     const tokens = await tokenResponse.json();
-
-    // Update stored tokens
     const expiresAt = new Date(Date.now() + (tokens.expires_in || 3600) * 1000).toISOString();
-    
-    await supabase
-      .from('broker_connections')
-      .update({
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token || connection.refresh_token,
-        token_expires_at: expiresAt,
-        status: 'connected',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', connection.id);
+
+    await userSupabase.rpc('store_broker_tokens', {
+      broker_type_param: 'ibkr',
+      access_token_param: tokens.access_token,
+      refresh_token_param: tokens.refresh_token || connection.refresh_token,
+      expires_at_param: expiresAt,
+      accounts_param: null,
+      status_param: 'connected',
+    });
 
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        expiresIn: tokens.expires_in,
-        message: 'Token refreshed successfully'
-      }),
+      JSON.stringify({ success: true, expiresIn: tokens.expires_in, message: 'Token refreshed successfully' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: unknown) {
