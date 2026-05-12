@@ -6,7 +6,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 const quickActions = [
-  { icon: Search, label: 'Research Stock', path: '/stock-research', color: 'bg-blue-500' },
+  { icon: Search, label: 'Analysis', path: '/analysis', color: 'bg-blue-500' },
   { icon: Bell, label: 'New Alert', path: '/alerts', color: 'bg-amber-500' },
   { icon: TrendingUp, label: 'View Watchlist', path: '/watchlist', color: 'bg-green-500' },
   { icon: BookOpen, label: 'Trade Journal', path: '/trade-journal', color: 'bg-purple-500' },

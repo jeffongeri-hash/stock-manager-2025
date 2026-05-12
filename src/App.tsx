@@ -34,7 +34,7 @@ const RiskMetrics = lazy(() => import("./pages/RiskMetrics"));
 const PortfolioRebalancing = lazy(() => import("./pages/PortfolioRebalancing"));
 const IgniteFire = lazy(() => import("./pages/IgniteFire"));
 const Install = lazy(() => import("./pages/Install"));
-const StockResearch = lazy(() => import("./pages/StockResearch"));
+
 const RetirementPlanning = lazy(() => import("./pages/RetirementPlanning"));
 const SavedData = lazy(() => import("./pages/SavedData"));
 const RealEstate = lazy(() => import("./pages/RealEstate"));
@@ -97,7 +97,7 @@ const App = () => (
                 
                 <Route path="/risk-metrics" element={<ProtectedRoute><RiskMetrics /></ProtectedRoute>} />
                 <Route path="/portfolio-rebalancing" element={<ProtectedRoute><PortfolioRebalancing /></ProtectedRoute>} />
-                <Route path="/stock-research" element={<ProtectedRoute><StockResearch /></ProtectedRoute>} />
+                
                 <Route path="/retirement-planning" element={<ProtectedRoute><RetirementPlanning /></ProtectedRoute>} />
                 <Route path="/real-estate" element={<ProtectedRoute><RealEstate /></ProtectedRoute>} />
                 <Route path="/car-finance" element={<ProtectedRoute><CarFinance /></ProtectedRoute>} />

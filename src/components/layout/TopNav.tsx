@@ -21,7 +21,7 @@ const PRIMARY_NAV: NavItem[] = [
   { title: 'Trading', href: '/trading-toolkit' },
   { title: 'Options', href: '/options-portfolio' },
   { title: '0DTE', href: '/zero-dte' },
-  { title: 'Research', href: '/stock-research' },
+  
   { title: 'Scanner', href: '/market-scanner' },
   { title: 'Dividends', href: '/dividend-tracker' },
   { title: 'Risk', href: '/risk-metrics' },

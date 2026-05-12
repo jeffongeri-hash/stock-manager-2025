@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero, HeroStat } from '@/components/layout/PageHero';
+import { TrendingUp, CheckCircle2, Briefcase } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -312,42 +314,57 @@ const Performance = () => {
   const enhancedPerformanceData = generateEnhancedPerformanceData();
 
   return (
-    <PageLayout title="Performance">
+    <PageLayout>
+      <PageHero
+        eyebrow="Performance"
+        title={<>Realized & <span className="gradient-text">unrealized</span> P&L</>}
+        description="Cumulative return on closed trades, monthly cohort breakdowns, and live mark-to-market on every open position."
+        actions={
+          <Button
+            onClick={fetchCurrentPrices}
+            size="sm"
+            variant="outline"
+            className="border-primary/30 text-primary hover:bg-primary/10"
+            disabled={loadingPrices}
+          >
+            {loadingPrices
+              ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              : <RefreshCw className="h-4 w-4 mr-2" />}
+            {loadingPrices ? 'Refreshing' : 'Refresh prices'}
+          </Button>
+        }
+        stats={
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <HeroStat
+              label="Total P&L"
+              tone={metrics.totalPnL >= 0 ? 'success' : 'danger'}
+              icon={<TrendingUp className="h-3.5 w-3.5" />}
+              value={`${metrics.totalPnL >= 0 ? '+' : ''}$${metrics.totalPnL.toFixed(2)}`}
+              sub={
+                <span className={metrics.returnPct >= 0 ? 'text-success' : 'text-danger'}>
+                  {metrics.returnPct >= 0 ? '+' : ''}{metrics.returnPct.toFixed(2)}% return
+                </span>
+              }
+            />
+            <HeroStat
+              label="Closed P&L"
+              tone={metrics.closedPnL >= 0 ? 'success' : 'danger'}
+              icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+              value={`${metrics.closedPnL >= 0 ? '+' : ''}$${metrics.closedPnL.toFixed(2)}`}
+              sub="Realized gains and losses"
+            />
+            <HeroStat
+              label="Open positions"
+              tone="primary"
+              icon={<Briefcase className="h-3.5 w-3.5" />}
+              value={`$${metrics.openPositionsValue.toFixed(2)}`}
+              sub={`${openPositionsBreakdown.length} active lots`}
+            />
+          </div>
+        }
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* P&L Summary Cards */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total P&L</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className={`text-2xl font-bold ${metrics.totalPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              ${metrics.totalPnL.toFixed(2)}
-            </p>
-            <p className={`text-sm ${metrics.returnPct >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {metrics.returnPct >= 0 ? '+' : ''}{metrics.returnPct.toFixed(2)}%
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Closed P&L</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className={`text-2xl font-bold ${metrics.closedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              ${metrics.closedPnL.toFixed(2)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Open Positions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">${metrics.openPositionsValue.toFixed(2)}</p>
-          </CardContent>
-        </Card>
 
         {/* Performance Chart */}
         {enhancedPerformanceData.length > 1 && (
@@ -453,22 +470,22 @@ const Performance = () => {
                       {monthlyBreakdown.map((month) => (
                         <TableRow key={month.month}>
                           <TableCell className="font-medium">{month.month}</TableCell>
-                          <TableCell className={month.pnl >= 0 ? 'text-green-500 font-semibold' : 'text-red-500 font-semibold'}>
+                          <TableCell className={month.pnl >= 0 ? 'text-success font-semibold' : 'text-danger font-semibold'}>
                             {month.pnl >= 0 ? '+' : ''}${month.pnl.toFixed(2)}
                           </TableCell>
                           <TableCell>{month.trades}</TableCell>
-                          <TableCell className={month.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
+                          <TableCell className={month.pnl >= 0 ? 'text-success' : 'text-danger'}>
                             ${(month.pnl / month.trades).toFixed(2)}
                           </TableCell>
                         </TableRow>
                       ))}
                        <TableRow className="font-bold border-t-2">
                         <TableCell>Total</TableCell>
-                        <TableCell className={metrics.closedPnL >= 0 ? 'text-green-500' : 'text-red-500'}>
+                        <TableCell className={metrics.closedPnL >= 0 ? 'text-success' : 'text-danger'}>
                           {metrics.closedPnL >= 0 ? '+' : ''}${metrics.closedPnL.toFixed(2)}
                         </TableCell>
                         <TableCell>{monthlyBreakdown.reduce((sum, m) => sum + m.trades, 0)}</TableCell>
-                        <TableCell className={metrics.closedPnL >= 0 ? 'text-green-500' : 'text-red-500'}>
+                        <TableCell className={metrics.closedPnL >= 0 ? 'text-success' : 'text-danger'}>
                           ${(metrics.closedPnL / monthlyBreakdown.reduce((sum, m) => sum + m.trades, 0)).toFixed(2)}
                         </TableCell>
                       </TableRow>
@@ -503,7 +520,7 @@ const Performance = () => {
             </CardHeader>
             <CardContent>
               <div className="mb-6">
-                <p className={`text-3xl font-bold ${metrics.unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                <p className={`text-3xl font-bold ${metrics.unrealizedPnL >= 0 ? 'text-success' : 'text-danger'}`}>
                   {metrics.unrealizedPnL >= 0 ? '+' : ''}${metrics.unrealizedPnL.toFixed(2)}
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
@@ -542,10 +559,10 @@ const Performance = () => {
                         </TableCell>
                         <TableCell className="text-right">${position.entryValue.toFixed(2)}</TableCell>
                         <TableCell className="text-right">${position.currentValue.toFixed(2)}</TableCell>
-                        <TableCell className={`text-right font-semibold ${position.unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        <TableCell className={`text-right font-semibold ${position.unrealizedPnL >= 0 ? 'text-success' : 'text-danger'}`}>
                           {position.unrealizedPnL >= 0 ? '+' : ''}${position.unrealizedPnL.toFixed(2)}
                         </TableCell>
-                        <TableCell className={`text-right font-semibold ${position.unrealizedPnLPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        <TableCell className={`text-right font-semibold ${position.unrealizedPnLPercent >= 0 ? 'text-success' : 'text-danger'}`}>
                           {position.unrealizedPnLPercent >= 0 ? '+' : ''}{position.unrealizedPnLPercent.toFixed(2)}%
                         </TableCell>
                       </TableRow>
@@ -553,10 +570,10 @@ const Performance = () => {
                     <TableRow className="font-bold border-t-2">
                       <TableCell colSpan={5}>Total</TableCell>
                       <TableCell className="text-right">${openPositionsBreakdown.reduce((sum, p) => sum + p.currentValue, 0).toFixed(2)}</TableCell>
-                      <TableCell className={`text-right ${metrics.unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      <TableCell className={`text-right ${metrics.unrealizedPnL >= 0 ? 'text-success' : 'text-danger'}`}>
                         {metrics.unrealizedPnL >= 0 ? '+' : ''}${metrics.unrealizedPnL.toFixed(2)}
                       </TableCell>
-                      <TableCell className={`text-right ${metrics.unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      <TableCell className={`text-right ${metrics.unrealizedPnL >= 0 ? 'text-success' : 'text-danger'}`}>
                         {metrics.openPositionsValue > 0 ? (
                           `${metrics.unrealizedPnL >= 0 ? '+' : ''}${((metrics.unrealizedPnL / metrics.openPositionsValue) * 100).toFixed(2)}%`
                         ) : '0.00%'}
@@ -679,7 +696,7 @@ const Performance = () => {
                           <TableCell>{trade.quantity}</TableCell>
                           <TableCell>{new Date(trade.entry_date).toLocaleDateString()}</TableCell>
                           <TableCell>{trade.exit_date ? new Date(trade.exit_date).toLocaleDateString() : '-'}</TableCell>
-                          <TableCell className={trade.exit_price ? (pnl >= 0 ? 'text-green-500' : 'text-red-500') : ''}>
+                          <TableCell className={trade.exit_price ? (pnl >= 0 ? 'text-success' : 'text-danger') : ''}>
                             {trade.exit_price ? `$${pnl.toFixed(2)}` : '-'}
                           </TableCell>
                           <TableCell>
