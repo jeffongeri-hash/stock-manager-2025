@@ -208,9 +208,14 @@ const TradingToolkit = () => {
   const rulesScore = calculateRulesScore();
 
   return (
-    <PageLayout title="Trading Toolkit">
+    <PageLayout>
+      <PageHero
+        eyebrow="Trading Toolkit"
+        title={<>Plan, size, and <span className="gradient-text">execute</span></>}
+        description="Position sizing, expected move, Greeks, exits, Monte Carlo, and an AI assistant — all in one trader workspace."
+      />
       <Tabs defaultValue="position-sizing" className="w-full">
-        <TabsList className="flex flex-wrap h-auto gap-1 w-full">
+        <TabsList className="flex flex-wrap h-auto gap-1 w-full glass-card p-1">
           <TabsTrigger value="position-sizing">Position Sizing</TabsTrigger>
           <TabsTrigger value="expected-move" className="flex items-center gap-1">
             <TrendingUp className="h-3 w-3" />
