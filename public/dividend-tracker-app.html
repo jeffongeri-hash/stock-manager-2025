@@ -1274,9 +1274,10 @@ function init(){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  const stored = localStorage.getItem('finnhub_key');
-  if(stored){ apiKey=stored; $('live-indicator').style.display='flex'; $('api-modal').classList.add('hidden'); init(); }
-  else{ /* modal shows by default */ }
+  const m = $('api-modal'); if(m) m.classList.add('hidden');
+  const li = $('live-indicator'); if(li) li.style.display='flex';
+  init();
+  refreshPrices();
 });
 </script>
 </body>
