@@ -8,8 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Bell, Globe, Lock, User, Settings as SettingsIcon, Landmark } from 'lucide-react';
 import { toast } from 'sonner';
-import { IBKRConnection } from '@/components/brokers/IBKRConnection';
-import { SchwabConnection } from '@/components/brokers/SchwabConnection';
 import { SnaptradeConnection } from '@/components/brokers/SnaptradeConnection';
 
 type SettingsTab = 'account' | 'notifications' | 'security' | 'regional' | 'preferences' | 'brokers';
