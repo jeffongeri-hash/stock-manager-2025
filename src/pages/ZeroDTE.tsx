@@ -193,7 +193,12 @@ export default function ZeroDTE() {
   const riskLevel = getRiskLevel();
 
   return (
-    <PageLayout title="0 DTE Call Option Calculator">
+    <PageLayout>
+      <PageHero
+        eyebrow="0DTE Options"
+        title={<>Same-day <span className="gradient-text">expirations</span>, modeled live</>}
+        description="Stress-test 0DTE call ideas with live Finnhub pricing, breakeven, max loss, and risk levels before you click."
+      />
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <Card>
