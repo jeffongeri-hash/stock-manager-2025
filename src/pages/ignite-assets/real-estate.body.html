@@ -1,0 +1,320 @@
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<nav class="topnav">
+  <div class="nav-brand"><div class="nav-brand-icon">IF</div><span>IgniteFIRE</span></div>
+  <div class="nav-right">
+    <span class="nav-pill">Real Estate</span>
+    <button class="nav-btn" onclick="window.history.back()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+  </div>
+</nav>
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-tag">Real Estate Investment</div>
+    <div class="page-title">Real Estate Investment Calculator</div>
+    <div class="page-sub">Analyze properties, model mortgages, and find your path to real estate FIRE</div>
+  </div>
+</div>
+<div class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="switchTab('investment',this)">Investment Analysis</button>
+    <button class="tab-btn" onclick="switchTab('mortgage',this)">Mortgage</button>
+    <button class="tab-btn" onclick="switchTab('fha',this)">FHA Loan</button>
+    <button class="tab-btn" onclick="switchTab('affordability',this)">Affordability</button>
+    <button class="tab-btn" onclick="switchTab('rentvbuy',this)">Rent vs Buy</button>
+    <button class="tab-btn" onclick="switchTab('hacking',this)">House Hacking</button>
+    <button class="tab-btn" onclick="switchTab('closing',this)">Closing Costs</button>
+  </div>
+</div>
+
+<!-- INVESTMENT ANALYSIS -->
+<div class="tab-pane active" id="tab-investment">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Property Details</div>
+        <div class="card-sub">Enter property information for investment analysis</div>
+        <div class="input-group"><label class="input-label">Purchase Price ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="inv-price" value="300000" oninput="calcInvestment()"></div></div>
+        <div class="input-group"><label class="input-label">Down Payment (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="inv-down" value="20" oninput="calcInvestment()"></div></div>
+        <div class="input-group"><label class="input-label">Interest Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="inv-rate" value="6.5" step="0.1" oninput="calcInvestment()"></div></div>
+        <div class="input-group"><label class="input-label">Loan Term</label><select class="input-plain" id="inv-term" onchange="calcInvestment()"><option value="30">30 Years</option><option value="20">20 Years</option><option value="15">15 Years</option></select></div>
+        <div class="input-group"><label class="input-label">Monthly Rent ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="inv-rent" value="2000" oninput="calcInvestment()"></div></div>
+        <div class="input-group"><label class="input-label">Property Tax Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="inv-tax" value="1.2" step="0.1" oninput="calcInvestment()"></div></div>
+        <div class="input-group"><label class="input-label">Insurance ($/yr)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="inv-insurance" value="1800" oninput="calcInvestment()"></div></div>
+        <div class="input-group"><label class="input-label">Vacancy Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="inv-vacancy" value="8" oninput="calcInvestment()"></div></div>
+      </div>
+      <div>
+        <div class="grid-4" style="margin-bottom:1rem">
+          <div class="stat-card"><div class="stat-label">Monthly Cash Flow</div><div class="stat-value" id="inv-cashflow">—</div></div>
+          <div class="stat-card"><div class="stat-label">Cap Rate</div><div class="stat-value green" id="inv-cap">—</div></div>
+          <div class="stat-card"><div class="stat-label">Cash on Cash</div><div class="stat-value" id="inv-coc">—</div></div>
+          <div class="stat-card"><div class="stat-label">Monthly Mortgage</div><div class="stat-value" id="inv-mortgage">—</div></div>
+        </div>
+        <div class="chart-card" style="margin-bottom:1rem">
+          <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:1.25rem">Property Value &amp; Equity Over Time</div>
+          <div class="chart-wrap"><canvas id="inv-chart"></canvas></div>
+        </div>
+        <div class="result-box">
+          <div class="section-label">Investment Metrics</div>
+          <div class="grid-2" style="gap:.6rem">
+            <div><div class="stat-label">Annual NOI</div><div class="stat-value green" id="inv-noi">—</div></div>
+            <div><div class="stat-label">GRM</div><div class="stat-value" id="inv-grm">—</div></div>
+            <div><div class="stat-label">1% Rule Check</div><div class="stat-value" id="inv-1pct">—</div></div>
+            <div><div class="stat-label">Break-Even Rent</div><div class="stat-value amber" id="inv-ber">—</div></div>
+          </div>
+        </div>
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">Positive cash flow of <strong id="inv-fire-cf">$0/mo</strong> from this property contributes toward your FIRE passive income. <strong id="inv-fire-pct">0%</strong> of a $40K/yr FIRE spending target.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MORTGAGE -->
+<div class="tab-pane" id="tab-mortgage">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Mortgage Calculator</div>
+        <div class="card-sub">Detailed payment breakdown and amortization schedule</div>
+        <div class="input-group"><label class="input-label">Home Price ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="mo-price" value="350000" oninput="calcMortgage()"></div></div>
+        <div class="input-group"><label class="input-label">Down Payment ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="mo-down" value="70000" oninput="calcMortgage()"></div></div>
+        <div class="input-group"><label class="input-label">Interest Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="mo-rate" value="6.5" step="0.1" oninput="calcMortgage()"></div></div>
+        <div class="input-group"><label class="input-label">Loan Term</label><select class="input-plain" id="mo-term" onchange="calcMortgage()"><option value="30">30 Years</option><option value="20">20 Years</option><option value="15">15 Years</option></select></div>
+        <div class="input-group"><label class="input-label">Property Tax ($/yr)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="mo-tax" value="3500" oninput="calcMortgage()"></div></div>
+        <div class="input-group"><label class="input-label">Insurance ($/yr)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="mo-insurance" value="1800" oninput="calcMortgage()"></div></div>
+        <div class="input-group"><label class="input-label">PMI ($/mo, if &lt;20% down)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="mo-pmi" value="0" oninput="calcMortgage()"></div></div>
+      </div>
+      <div>
+        <div class="result-box" style="margin-bottom:1rem">
+          <div class="section-label">Payment Breakdown</div>
+          <div class="grid-2" style="gap:.75rem">
+            <div><div class="stat-label">Monthly Payment (P&I)</div><div class="stat-value green" id="mo-pi">—</div></div>
+            <div><div class="stat-label">Total Monthly PITI</div><div class="stat-value" id="mo-total">—</div></div>
+            <div><div class="stat-label">Total Interest Paid</div><div class="stat-value red" id="mo-total-interest">—</div></div>
+            <div><div class="stat-label">Total Cost of Loan</div><div class="stat-value" id="mo-total-cost">—</div></div>
+          </div>
+          <div id="mo-breakdown" style="margin-top:1rem;display:flex;flex-direction:column;gap:.4rem"></div>
+        </div>
+        <div class="chart-card">
+          <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:1.25rem">Amortization — Principal vs Interest</div>
+          <div class="chart-wrap"><canvas id="mo-chart"></canvas></div>
+        </div>
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">Total interest paid of <strong id="mo-fire-interest">—</strong> over the loan life. Paying an extra $200/mo reduces interest by <strong id="mo-fire-extra">—</strong> — money that accelerates your FIRE timeline.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FHA LOAN -->
+<div class="tab-pane" id="tab-fha">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">FHA Loan Calculator</div>
+        <div class="card-sub">Calculate FHA requirements including down payment, MIP, and loan limits</div>
+        <div class="input-group"><label class="input-label">Home Price ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="fha-price" value="300000" oninput="calcFHA()"></div></div>
+        <div class="input-group"><label class="input-label">Credit Score Range</label><select class="input-plain" id="fha-credit" onchange="calcFHA()"><option value="3.5">620+ (3.5% down eligible)</option><option value="10">580-619 (10% down required)</option></select></div>
+        <div class="input-group"><label class="input-label">Loan Term</label><select class="input-plain" id="fha-term" onchange="calcFHA()"><option value="30">30 Years</option><option value="15">15 Years</option></select></div>
+        <div class="input-group"><label class="input-label">Interest Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="fha-rate" value="7.0" step="0.1" oninput="calcFHA()"></div></div>
+        <div style="background:var(--indigo);background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(99,102,241,.05));border:1px solid rgba(99,102,241,.2);border-radius:var(--r-sm);padding:1rem;margin-bottom:1rem">
+          <div style="font-size:.7rem;font-weight:700;color:#818cf8;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem">2024 FHA Loan Limits</div>
+          <div class="grid-2">
+            <div><div style="font-size:.68rem;color:var(--text3)">Low-Cost Areas (Floor)</div><div style="font-family:var(--mono);font-weight:700;color:var(--text)">$498,257</div></div>
+            <div><div style="font-size:.68rem;color:var(--text3)">High-Cost Areas (Ceiling)</div><div style="font-family:var(--mono);font-weight:700;color:var(--text)">$1,149,825</div></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div style="font-size:.7rem;color:var(--text3)">✓ Minimum credit score: 580 (3.5% down) or 500 (10% down)</div>
+          <div style="font-size:.7rem;color:var(--text3)">✓ Debt-to-income ratio: Typically max 43%</div>
+          <div style="font-size:.7rem;color:var(--text3)">✓ Must be primary residence</div>
+          <div style="font-size:.7rem;color:var(--text3)">✓ MIP required for life of loan (if LTV &gt; 90%)</div>
+        </div>
+      </div>
+      <div>
+        <div class="grid-2" style="gap:.75rem;margin-bottom:1rem">
+          <div class="stat-card"><div class="stat-label">Min Down Payment (3.5%)</div><div class="stat-value green" id="fha-dp35">—</div><div class="stat-sub">For credit score 620+</div></div>
+          <div class="stat-card"><div class="stat-label">10% Down Option</div><div class="stat-value" id="fha-dp10">—</div><div class="stat-sub">For credit score 580-619</div></div>
+        </div>
+        <div class="result-box" style="margin-bottom:1rem">
+          <div class="section-label">Mortgage Insurance Premium (MIP)</div>
+          <div class="grid-3" style="gap:.6rem">
+            <div style="background:var(--surface3);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.25rem">Upfront MIP (1.75%)</div><div style="font-family:var(--mono);font-weight:700" id="fha-umip">—</div><div style="font-size:.65rem;color:var(--text3)">Added to loan balance</div></div>
+            <div style="background:var(--surface3);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.25rem">Annual MIP (0.55%)</div><div style="font-family:var(--mono);font-weight:700" id="fha-amip">—</div><div style="font-size:.65rem;color:var(--text3)">Per year</div></div>
+            <div style="background:var(--surface3);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.25rem">Monthly MIP</div><div style="font-family:var(--mono);font-weight:700;color:var(--amber)" id="fha-mmip">—</div><div style="font-size:.65rem;color:var(--text3)">In payment</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-label">Monthly Payment Breakdown</div>
+          <div id="fha-breakdown" style="display:flex;flex-direction:column;gap:.4rem"></div>
+        </div>
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">FHA loans allow lower down payments but cost more monthly due to MIP. Compare: if you invested the down payment difference at 7%, you could accumulate <strong id="fha-fire-inv">—</strong> in 10 years toward FIRE.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AFFORDABILITY -->
+<div class="tab-pane" id="tab-affordability">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Affordability Calculator</div>
+        <div class="card-sub">Find your maximum home price based on income and debt</div>
+        <div class="input-group"><label class="input-label">Gross Annual Income ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="aff-income" value="120000" oninput="calcAffordability()"></div></div>
+        <div class="input-group"><label class="input-label">Monthly Debt Payments ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="aff-debt" value="500" oninput="calcAffordability()"></div></div>
+        <div class="input-group"><label class="input-label">Down Payment ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="aff-down" value="60000" oninput="calcAffordability()"></div></div>
+        <div class="input-group"><label class="input-label">Interest Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="aff-rate" value="6.5" step="0.1" oninput="calcAffordability()"></div></div>
+        <div class="input-group"><label class="input-label">Monthly Expenses (tax+ins, $)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="aff-other" value="400" oninput="calcAffordability()"></div></div>
+        <div class="range-group">
+          <div class="range-header"><label class="input-label">DTI Limit</label><span class="range-val" id="aff-dti-val">36%</span></div>
+          <input type="range" id="aff-dti" min="28" max="50" step="1" value="36" oninput="syncR('aff-dti','aff-dti-val','%');calcAffordability()">
+        </div>
+      </div>
+      <div>
+        <div class="result-box" style="margin-bottom:1rem">
+          <div class="section-label">Affordability Results</div>
+          <div class="grid-2" style="gap:.75rem">
+            <div><div class="stat-label">Max Home Price</div><div class="stat-value green" id="aff-max-price">—</div></div>
+            <div><div class="stat-label">Max Loan Amount</div><div class="stat-value" id="aff-max-loan">—</div></div>
+            <div><div class="stat-label">Max Monthly Payment</div><div class="stat-value" id="aff-max-payment">—</div></div>
+            <div><div class="stat-label">Your DTI</div><div class="stat-value amber" id="aff-dti-actual">—</div></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:1.25rem">Monthly Budget Breakdown</div>
+          <div class="chart-wrap sm"><canvas id="aff-chart"></canvas></div>
+        </div>
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">FIRE tip: Keep housing costs under 25% of gross income. At your income, that's <strong id="aff-fire-target">—</strong>/mo — leaving more to invest toward financial independence.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RENT VS BUY -->
+<div class="tab-pane" id="tab-rentvbuy">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Rent vs. Buy Analysis</div>
+        <div class="card-sub">Compare the true long-term costs of renting vs owning</div>
+        <div style="font-size:.8rem;font-weight:700;color:var(--accent);margin-bottom:.75rem">Buying Costs</div>
+        <div class="grid-2">
+          <div class="input-group"><label class="input-label">Home Price ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="rvb-price" value="350000" oninput="calcRvB()"></div></div>
+          <div class="input-group"><label class="input-label">Down Payment ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="rvb-down" value="70000" oninput="calcRvB()"></div></div>
+          <div class="input-group"><label class="input-label">Mortgage Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="rvb-rate" value="6.5" step="0.1" oninput="calcRvB()"></div></div>
+          <div class="input-group"><label class="input-label">Annual Appreciation (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="rvb-app" value="3" step="0.1" oninput="calcRvB()"></div></div>
+        </div>
+        <div style="font-size:.8rem;font-weight:700;color:var(--text2);margin-bottom:.75rem;margin-top:.25rem">Renting Costs</div>
+        <div class="grid-2">
+          <div class="input-group"><label class="input-label">Monthly Rent ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="rvb-rent" value="2200" oninput="calcRvB()"></div></div>
+          <div class="input-group"><label class="input-label">Annual Rent Increase (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="rvb-rinc" value="3" step="0.1" oninput="calcRvB()"></div></div>
+          <div class="input-group"><label class="input-label">Investment Return (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="rvb-inv" value="7" step="0.1" oninput="calcRvB()"></div></div>
+          <div class="input-group"><label class="input-label">Years to Compare</label><input class="input-plain" type="number" id="rvb-years" value="10" oninput="calcRvB()"></div>
+        </div>
+      </div>
+      <div>
+        <div class="grid-2" style="gap:.75rem;margin-bottom:1rem">
+          <div class="stat-card" id="rvb-buy-card"><div class="stat-label">Net Buying Cost</div><div class="stat-value" id="rvb-buy-total">—</div><div class="stat-sub">after equity &amp; appreciation</div></div>
+          <div class="stat-card" id="rvb-rent-card"><div class="stat-label">Net Renting Cost</div><div class="stat-value" id="rvb-rent-total">—</div><div class="stat-sub">after investment returns</div></div>
+        </div>
+        <div class="result-box" style="margin-bottom:1rem">
+          <div class="stat-label" style="margin-bottom:.5rem">Verdict</div>
+          <div style="font-family:var(--display);font-size:1.4rem;font-weight:500" id="rvb-verdict">—</div>
+          <div style="font-size:.78rem;color:var(--text2);margin-top:.3rem" id="rvb-verdict-sub">—</div>
+          <div style="font-size:.75rem;color:var(--text3);margin-top:.5rem" id="rvb-breakeven">—</div>
+        </div>
+        <div class="chart-card">
+          <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:1.25rem">Cumulative Cost Comparison</div>
+          <div class="chart-wrap sm"><canvas id="rvb-chart"></canvas></div>
+        </div>
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text" id="rvb-fire-note">Run the analysis to see FIRE impact.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOUSE HACKING -->
+<div class="tab-pane" id="tab-hacking">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">House Hacking Calculator</div>
+        <div class="card-sub">Rent out rooms or units to dramatically reduce your housing cost — a powerful FIRE accelerator</div>
+        <div class="input-group"><label class="input-label">Property Purchase Price ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="hh-price" value="400000" oninput="calcHacking()"></div></div>
+        <div class="input-group"><label class="input-label">Down Payment (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="hh-down" value="10" oninput="calcHacking()"></div></div>
+        <div class="input-group"><label class="input-label">Interest Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="hh-rate" value="6.5" step="0.1" oninput="calcHacking()"></div></div>
+        <div class="input-group"><label class="input-label">Number of Rentable Units/Rooms</label><input class="input-plain" type="number" id="hh-units" value="2" oninput="calcHacking()"></div>
+        <div class="input-group"><label class="input-label">Rent Per Unit/Room ($/mo)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="hh-rent" value="800" oninput="calcHacking()"></div></div>
+        <div class="input-group"><label class="input-label">Monthly Operating Costs ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="hh-costs" value="400" oninput="calcHacking()"></div></div>
+      </div>
+      <div>
+        <div class="result-box" style="margin-bottom:1rem">
+          <div class="section-label">House Hacking Impact</div>
+          <div class="grid-2" style="gap:.75rem">
+            <div><div class="stat-label">Your Effective Rent</div><div class="stat-value green" id="hh-eff-rent">—</div><div class="stat-sub">what you actually pay monthly</div></div>
+            <div><div class="stat-label">Without House Hacking</div><div class="stat-value red" id="hh-full-payment">—</div><div class="stat-sub">full mortgage payment</div></div>
+            <div><div class="stat-label">Monthly Savings</div><div class="stat-value green" id="hh-savings">—</div><div class="stat-sub">from tenant income</div></div>
+            <div><div class="stat-label">Annual FIRE Boost</div><div class="stat-value amber" id="hh-annual-boost">—</div><div class="stat-sub">invested toward FIRE</div></div>
+          </div>
+        </div>
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">House hacking saves <strong id="hh-fire-savings">—</strong>/month. Investing that amount at 7% for 10 years = <strong id="hh-fire-10yr">—</strong> toward your FIRE number. This is one of the highest-leverage FIRE strategies for early retirees.</div>
+        </div>
+        <div class="chart-card" style="margin-top:1rem">
+          <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:1.25rem">FIRE Acceleration — Invested Savings Over Time</div>
+          <div class="chart-wrap sm"><canvas id="hh-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CLOSING COSTS -->
+<div class="tab-pane" id="tab-closing">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Closing Costs Estimator</div>
+        <div class="card-sub">Estimate all costs associated with purchasing your property</div>
+        <div class="input-group"><label class="input-label">Purchase Price ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="cl-price" value="300000" oninput="calcClosing()"></div></div>
+        <div class="input-group"><label class="input-label">Loan Amount ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="cl-loan" value="240000" oninput="calcClosing()"></div></div>
+        <div style="margin-top:1.25rem" id="cl-items"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 1rem;background:var(--surface2);border-radius:var(--r-sm);margin-top:.75rem;border-top:2px solid var(--accent)">
+          <span style="font-weight:700">Total Estimated</span>
+          <span style="font-family:var(--mono);font-weight:800;font-size:1.1rem;color:var(--accent)" id="cl-total">—</span>
+        </div>
+      </div>
+      <div>
+        <div class="chart-card" style="margin-bottom:1rem">
+          <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:1.25rem">Quick ROI Calculator</div>
+          <div class="input-group"><label class="input-label">Annual NOI ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="roi-noi" value="14700" oninput="calcROI()"></div></div>
+          <div class="input-group"><label class="input-label">Total Investment ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="roi-invest" value="300000" oninput="calcROI()"></div></div>
+          <div class="grid-3" style="gap:.6rem;margin-top:1rem">
+            <div style="background:var(--surface2);border-radius:6px;padding:.9rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">Annual NOI</div><div style="font-family:var(--mono);font-weight:700;color:var(--accent)" id="roi-annual">—</div></div>
+            <div style="background:var(--surface2);border-radius:6px;padding:.9rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">GRM</div><div style="font-family:var(--mono);font-weight:700" id="roi-grm">—</div></div>
+            <div style="background:var(--surface2);border-radius:6px;padding:.9rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">1% Rule</div><div style="font-family:var(--mono);font-weight:700" id="roi-1pct">—</div></div>
+          </div>
+        </div>
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">Closing costs of <strong id="cl-fire-cost">—</strong> represent capital that could otherwise be invested. Factor this into your total acquisition cost when evaluating the FIRE impact of any property purchase.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

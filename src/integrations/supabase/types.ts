@@ -172,45 +172,6 @@ export type Database = {
         }
         Relationships: []
       }
-      broker_connections: {
-        Row: {
-          access_token_encrypted: string | null
-          accounts: Json | null
-          broker_type: string
-          created_at: string
-          id: string
-          refresh_token_encrypted: string | null
-          status: string
-          token_expires_at: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          access_token_encrypted?: string | null
-          accounts?: Json | null
-          broker_type: string
-          created_at?: string
-          id?: string
-          refresh_token_encrypted?: string | null
-          status?: string
-          token_expires_at?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          access_token_encrypted?: string | null
-          accounts?: Json | null
-          broker_type?: string
-          created_at?: string
-          id?: string
-          refresh_token_encrypted?: string | null
-          status?: string
-          token_expires_at?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       optimization_results: {
         Row: {
           all_results: Json

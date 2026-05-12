@@ -16,8 +16,6 @@ import {
 import { useSnaptrade } from "@/hooks/useSnaptrade";
 import { useAuth } from "@/hooks/useAuth";
 import { SnaptradeConnection } from "@/components/brokers/SnaptradeConnection";
-import { SchwabConnection } from "@/components/brokers/SchwabConnection";
-import { IBKRConnection } from "@/components/brokers/IBKRConnection";
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -352,8 +350,6 @@ export default function Assets() {
         <TabsContent value="connections" className="space-y-6">
           <div className="grid gap-6">
             <SnaptradeConnection />
-            <SchwabConnection />
-            <IBKRConnection />
           </div>
 
           <Card>
