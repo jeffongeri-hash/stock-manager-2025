@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHero } from "@/components/layout/PageHero";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -183,7 +184,12 @@ const RiskMetrics = () => {
   };
 
   return (
-    <PageLayout title="Risk Metrics & Correlation">
+    <PageLayout>
+      <PageHero
+        eyebrow="Risk & Correlation"
+        title={<>Quantify <span className="gradient-text">portfolio risk</span></>}
+        description="Volatility, beta, Sharpe, drawdown, and correlation matrices across your holdings."
+      />
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between">

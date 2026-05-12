@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero } from '@/components/layout/PageHero';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -340,7 +341,12 @@ const PortfolioRebalancing = () => {
   };
 
   return (
-    <PageLayout title="Portfolio Rebalancing">
+    <PageLayout>
+      <PageHero
+        eyebrow="Rebalancing"
+        title={<>Stay on <span className="gradient-text">target</span></>}
+        description="Drift detection, tax-aware trades, and target allocations made simple."
+      />
       <Tabs defaultValue="rebalance" className="space-y-6">
         <TabsList className="bg-muted/50">
           <TabsTrigger value="rebalance">Rebalancing</TabsTrigger>
