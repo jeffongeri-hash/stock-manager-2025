@@ -19,7 +19,7 @@ const primaryNavItems: NavItem[] = [
 
 const moreNavItems: NavItem[] = [
   { icon: <Calculator className="h-5 w-5" />, label: 'Toolkit', path: '/trading-toolkit' },
-  { icon: <Newspaper className="h-5 w-5" />, label: 'Research', path: '/stock-research' },
+  { icon: <Newspaper className="h-5 w-5" />, label: 'Dividends', path: '/dividend-tracker' },
   { icon: <Target className="h-5 w-5" />, label: 'Retirement', path: '/retirement-planning' },
   { icon: <Settings className="h-5 w-5" />, label: 'Settings', path: '/settings' },
 ];

@@ -129,11 +129,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/zero-dte',
     },
     {
-      title: 'Multi-Stock Research',
-      icon: FlaskConical,
-      href: '/stock-research',
-    },
-    {
       title: 'Market Scanner',
       icon: Radar,
       href: '/market-scanner',
