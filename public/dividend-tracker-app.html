@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IgniteFIRE — Dividend Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:       #080b12;
+  --bg2:      #0d1120;
+  --surface:  #111827;
+  --surface2: #1a2235;
+  --surface3: #1f2a40;
+  --border:   rgba(99,102,241,0.18);
+  --border2:  rgba(255,255,255,0.06);
+  --indigo:   #6366f1;
+  --violet:   #8b5cf6;
+  --green:    #10b981;
+  --green-dim:rgba(16,185,129,0.12);
+  --amber:    #f59e0b;
+  --amber-dim:rgba(245,158,11,0.1);
+  --red:      #ef4444;
+  --red-dim:  rgba(239,68,68,0.1);
+  --cyan:     #06b6d4;
+  --indigo-dim:rgba(99,102,241,0.1);
+  --text:     #f1f5f9;
+  --text2:    #94a3b8;
+  --text3:    #475569;
+  --font:     'DM Sans', sans-serif;
+  --display:  'Cormorant Garamond', Georgia, serif;
+  --mono:     'JetBrains Mono', monospace;
+  --r:        12px;
+  --r-sm:     8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px}
+
+/* ── ORBS ── */
+.orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0;opacity:.12}
+.orb-1{width:600px;height:600px;background:var(--indigo);top:-200px;left:-150px}
+.orb-2{width:400px;height:400px;background:var(--green);bottom:-100px;right:-100px}
+
+/* ── API MODAL ── */
+.modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center}
+.modal-overlay.hidden{display:none}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:2.5rem;width:100%;max-width:460px;box-shadow:0 40px 80px rgba(0,0,0,.5);position:relative;z-index:1}
+.modal-logo{font-family:var(--display);font-size:2rem;font-weight:600;margin-bottom:.4rem}
+.modal-logo span{background:linear-gradient(135deg,var(--indigo),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.modal-sub{font-size:.85rem;color:var(--text2);margin-bottom:2rem;line-height:1.6}
+.modal-label{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:.45rem;display:block}
+.modal-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text);font-family:var(--mono);font-size:.9rem;padding:.75rem 1rem;outline:none;transition:border-color .2s;margin-bottom:1rem}
+.modal-input:focus{border-color:var(--indigo)}
+.modal-note{font-size:.72rem;color:var(--text3);margin-top:.5rem;line-height:1.5}
+.modal-note a{color:var(--indigo);text-decoration:none}
+.modal-actions{display:flex;gap:.75rem;margin-top:1.5rem}
+
+/* ── TOPNAV ── */
+nav.topnav{position:sticky;top:0;z-index:100;background:rgba(8,11,18,.92);border-bottom:1px solid var(--border2);backdrop-filter:blur(20px);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem}
+.nav-brand{display:flex;align-items:center;gap:.6rem;font-size:1.1rem;font-weight:700;font-family:var(--display);letter-spacing:.02em}
+.nav-brand-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--indigo),var(--green));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:white}
+.nav-brand span{background:linear-gradient(135deg,var(--indigo),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-right{display:flex;align-items:center;gap:.75rem}
+.nav-pill{font-size:.72rem;font-weight:600;padding:.3rem .8rem;border-radius:100px;background:var(--green-dim);border:1px solid rgba(16,185,129,.2);color:var(--green);display:flex;align-items:center;gap:.35rem}
+.nav-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.nav-btn{width:34px;height:34px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s;color:var(--text2)}
+.nav-btn:hover{background:var(--surface3);color:var(--text)}
+
+/* ── YTD HERO ── */
+.ytd-hero{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(16,185,129,.05));border-bottom:1px solid var(--border2);padding:1.75rem 2rem;position:relative;z-index:1}
+.ytd-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:auto 1fr repeat(3,auto);gap:2.5rem;align-items:center}
+.ytd-label{font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin-bottom:.3rem;display:flex;align-items:center;gap:.4rem}
+.ytd-label .icon{width:22px;height:22px;background:var(--green-dim);border:1px solid rgba(16,185,129,.2);border-radius:6px;display:flex;align-items:center;justify-content:center}
+.ytd-amount{font-family:var(--mono);font-size:2.2rem;font-weight:800;color:var(--green);letter-spacing:-.02em;line-height:1}
+.ytd-stat{text-align:center}
+.ytd-stat .lbl{font-size:.62rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.25rem;font-weight:700}
+.ytd-stat .val{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--green)}
+
+/* ── INCOME GOAL BANNER ── */
+.goal-banner{background:var(--surface);border-bottom:1px solid var(--border2);padding:1rem 2rem;position:relative;z-index:1}
+.goal-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:2rem;flex-wrap:wrap}
+.goal-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);white-space:nowrap}
+.goal-track{flex:1;min-width:200px;height:8px;background:var(--surface3);border-radius:4px;overflow:hidden;position:relative}
+.goal-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--indigo),var(--green));transition:width .6s cubic-bezier(.4,0,.2,1)}
+.goal-pct{font-family:var(--mono);font-size:.88rem;font-weight:700;color:var(--green);white-space:nowrap}
+.goal-meta{font-size:.75rem;color:var(--text2);white-space:nowrap}
+.goal-input-wrap{display:flex;align-items:center;gap:.5rem}
+.goal-input-wrap input{width:90px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:.85rem;padding:.35rem .6rem;outline:none;text-align:center}
+.goal-input-wrap input:focus{border-color:var(--indigo)}
+
+/* ── TAB NAV ── */
+.tab-nav{background:var(--bg2);border-bottom:1px solid var(--border2);padding:0 2rem;position:sticky;top:58px;z-index:90}
+.tab-nav-inner{max-width:1200px;margin:0 auto;display:flex;gap:0;overflow-x:auto}
+.tab-nav-inner::-webkit-scrollbar{height:0}
+.tab-btn{font-size:.78rem;font-weight:500;padding:0 1.1rem;height:44px;display:flex;align-items:center;gap:.45rem;color:var(--text3);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s;margin-bottom:-1px}
+.tab-btn:hover{color:var(--text2)}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--indigo)}
+.tab-btn svg{opacity:.7}
+.tab-btn.active svg{opacity:1}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ── LAYOUT ── */
+.page-content{max-width:1200px;margin:0 auto;padding:2rem;position:relative;z-index:1}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.25rem 1.5rem;transition:border-color .2s}
+.stat-card:hover{border-color:var(--border)}
+.stat-card .s-label{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:.4rem}
+.stat-card .s-value{font-family:var(--mono);font-size:1.6rem;font-weight:700;line-height:1}
+.stat-card .s-sub{font-size:.72rem;color:var(--text2);margin-top:.3rem}
+.stat-card .s-change{font-size:.72rem;margin-top:.3rem;display:flex;align-items:center;gap:.3rem}
+.up{color:var(--green)}.down{color:var(--red)}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem;transition:border-color .2s}
+.card:hover{border-color:var(--border)}
+.card-header{margin-bottom:1.25rem}
+.card-title{font-size:.95rem;font-weight:700;font-family:var(--display)}
+.card-sub{font-size:.75rem;color:var(--text2);margin-top:.2rem}
+.section-label{font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--indigo);display:flex;align-items:center;gap:.4rem;margin-bottom:1rem}
+.section-label::before{content:'';width:14px;height:2px;background:var(--indigo);border-radius:1px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:.45rem;font-family:var(--font);font-size:.8rem;font-weight:600;letter-spacing:.03em;padding:.6rem 1.25rem;border-radius:var(--r-sm);border:none;cursor:pointer;transition:all .15s}
+.btn-primary{background:linear-gradient(135deg,var(--indigo),var(--violet));color:white;box-shadow:0 4px 14px rgba(99,102,241,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,.4)}
+.btn-secondary{background:var(--surface2);color:var(--text2);border:1px solid var(--border2)}
+.btn-secondary:hover{background:var(--surface3);color:var(--text)}
+.btn-danger{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.btn-sm{padding:.4rem .85rem;font-size:.72rem}
+
+/* ── INPUTS ── */
+.input-group{margin-bottom:.9rem}
+.input-label{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:.4rem;display:block}
+.input-wrap{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);overflow:hidden;transition:border-color .2s}
+.input-wrap:focus-within{border-color:var(--indigo)}
+.input-prefix{padding:0 .7rem;color:var(--text3);font-size:.8rem;background:var(--surface3);border-right:1px solid var(--border2);align-self:stretch;display:flex;align-items:center;font-family:var(--mono);font-weight:600}
+.input-wrap input,.input-plain{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:.88rem;padding:.6rem .75rem}
+.input-plain{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);outline:none;transition:border-color .2s}
+.input-plain:focus{border-color:var(--indigo)}
+select.input-plain{cursor:pointer}
+
+/* ── ADD STOCK FORM ── */
+.add-form{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem;margin-bottom:1.5rem}
+.add-form-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:.75rem;align-items:end}
+
+/* ── HOLDINGS TABLE ── */
+.table-wrap{overflow-x:auto}
+table.data-table{width:100%;border-collapse:collapse;font-size:.84rem}
+table.data-table th{padding:.6rem 1rem;text-align:left;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border2);font-weight:700;white-space:nowrap}
+table.data-table td{padding:.75rem 1rem;border-bottom:1px solid var(--border2);vertical-align:middle}
+table.data-table tr:last-child td{border-bottom:none}
+table.data-table tr:hover td{background:var(--surface2)}
+.symbol-badge{font-family:var(--mono);font-weight:700;font-size:.82rem;background:var(--indigo-dim);border:1px solid var(--border);border-radius:5px;padding:.15rem .5rem;color:var(--text)}
+.yield-badge{font-family:var(--mono);font-size:.75rem;font-weight:700;padding:.2rem .55rem;border-radius:100px;display:inline-block}
+.yield-high{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.25)}
+.yield-mid{background:rgba(99,102,241,.12);color:var(--indigo);border:1px solid rgba(99,102,241,.2)}
+.yield-low{background:var(--surface2);color:var(--text2);border:1px solid var(--border2)}
+.drip-toggle{position:relative;display:inline-block;width:38px;height:22px}
+.drip-toggle input{opacity:0;width:0;height:0}
+.drip-slider{position:absolute;cursor:pointer;inset:0;background:var(--surface3);border-radius:11px;transition:.3s}
+.drip-slider:before{position:absolute;content:'';width:16px;height:16px;left:3px;bottom:3px;background:var(--text3);border-radius:50%;transition:.3s}
+.drip-toggle input:checked+.drip-slider{background:var(--indigo)}
+.drip-toggle input:checked+.drip-slider:before{transform:translateX(16px);background:white}
+.tax-badge{font-size:.65rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;white-space:nowrap}
+.tax-q{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+.tax-nq{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
+.safety-badge{font-size:.65rem;font-weight:700;padding:.15rem .5rem;border-radius:4px}
+.safe-high{background:var(--green-dim);color:var(--green)}
+.safe-med{background:var(--amber-dim);color:var(--amber)}
+.safe-low{background:var(--red-dim);color:var(--red)}
+.del-btn{background:none;border:none;color:var(--text3);cursor:pointer;padding:.25rem;border-radius:4px;transition:color .15s}
+.del-btn:hover{color:var(--red)}
+
+/* ── CHART CARD ── */
+.chart-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem}
+.chart-wrap{position:relative;height:260px}
+.chart-wrap.tall{height:320px}
+.chart-wrap.sm{height:200px}
+
+/* ── GRID HELPERS ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+
+/* ── PROGRESS ── */
+.progress-track{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--indigo),var(--green));transition:width .5s ease}
+
+/* ── BADGE / TAG ── */
+.badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.65rem;font-weight:700;letter-spacing:.06em;padding:.2rem .55rem;border-radius:100px}
+.badge-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+.badge-indigo{background:var(--indigo-dim);color:var(--indigo);border:1px solid var(--border)}
+.badge-amber{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
+.badge-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+
+/* ── RESULT BOX ── */
+.result-box{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(16,185,129,.04));border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-top:1rem}
+.result-label{font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin-bottom:.3rem}
+.result-value{font-family:var(--mono);font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--indigo),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.result-sub{font-size:.78rem;color:var(--text2);margin-top:.4rem;line-height:1.5}
+.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.75rem}
+.mini-stat{background:var(--surface2);border-radius:var(--r-sm);padding:.75rem}
+.mini-stat .ml{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:.2rem}
+.mini-stat .mv{font-family:var(--mono);font-size:.95rem;font-weight:700;color:var(--green)}
+
+/* ── RANGE SLIDER ── */
+.range-group{margin-bottom:.9rem}
+.range-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem}
+.range-val{font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--indigo);background:var(--indigo-dim);border:1px solid var(--border);border-radius:5px;padding:.1rem .45rem}
+input[type=range]{width:100%;appearance:none;background:transparent;cursor:pointer;height:4px}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--surface3);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:16px;height:16px;border-radius:50%;background:var(--indigo);margin-top:-6px;box-shadow:0 0 0 3px rgba(99,102,241,.2)}
+
+/* ── FIRE GAP ── */
+.fire-gap-card{background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.05));border:1px solid var(--border);border-radius:var(--r);padding:1.5rem}
+.fire-gap-pct{font-family:var(--mono);font-size:3rem;font-weight:800;background:linear-gradient(135deg,var(--indigo),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+
+/* ── CALENDAR ITEMS ── */
+.cal-item{display:flex;align-items:center;justify-content:space-between;padding:.65rem .9rem;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:.5rem;border:1px solid transparent;transition:border-color .15s}
+.cal-item:hover{border-color:var(--border)}
+.cal-item .ci-symbol{font-family:var(--mono);font-weight:700;font-size:.82rem}
+.cal-item .ci-type{font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:.1rem}
+.cal-item .ci-date{font-family:var(--mono);font-size:.8rem;color:var(--text2)}
+.cal-item .ci-amt{font-family:var(--mono);font-size:.88rem;font-weight:700;color:var(--green)}
+.cal-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:.6rem}
+
+/* ── SCENARIO CARDS ── */
+.scenario-card{border:1px solid var(--border2);border-radius:var(--r);overflow:hidden}
+.scenario-card-top{height:4px}
+.scenario-card-body{background:var(--surface);padding:1.25rem}
+.scenario-name{font-weight:700;font-size:.95rem;margin-bottom:.8rem;font-family:var(--display)}
+
+/* ── PORTFOLIO SUGGESTION ── */
+.suggestion-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.25rem;transition:border-color .2s,transform .15s}
+.suggestion-card:hover{border-color:var(--border);transform:translateY(-2px)}
+
+/* ── DRIP SIMULATOR ── */
+.drip-snowball{display:flex;gap:0;overflow:hidden;border-radius:var(--r);border:1px solid var(--border2);margin-top:1rem}
+.drip-year{flex:1;padding:.75rem .5rem;text-align:center;background:var(--surface2);border-right:1px solid var(--border2);transition:background .15s}
+.drip-year:last-child{border-right:none}
+.drip-year:hover{background:var(--surface3)}
+.drip-year .dy{font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.25rem}
+.drip-year .dv{font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--green)}
+.drip-year .ds{font-size:.65rem;color:var(--text3);margin-top:.15rem}
+
+/* ── WHAT-IF ── */
+.whatif-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .stats-row,.grid-2,.grid-3,.grid-4,.whatif-grid{grid-template-columns:1fr}
+  .add-form-grid{grid-template-columns:1fr 1fr}
+  .ytd-grid{grid-template-columns:1fr 1fr;gap:1rem}
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- ══ API KEY MODAL ═══════════════════════════════ -->
+<div class="modal-overlay" id="api-modal">
+  <div class="modal-box">
+    <div class="modal-logo"><span>IgniteFIRE</span> Dividends</div>
+    <p class="modal-sub">Enter your Finnhub API key to enable live stock prices, real-time yields, and up-to-date dividend data for your holdings.</p>
+    <label class="modal-label">Finnhub API Key</label>
+    <input class="modal-input" type="password" id="api-key-input" placeholder="pk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+    <p class="modal-note">Get a free API key at <a href="https://finnhub.io" target="_blank">finnhub.io</a> — the free tier supports all features used here. Your key is stored only in your browser.</p>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveApiKey()" style="flex:1">Connect Live Data</button>
+      <button class="btn btn-secondary" onclick="skipApiKey()">Use Sample Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOP NAV ════════════════════════════════════ -->
+<nav class="topnav">
+  <div class="nav-brand">
+    <div class="nav-brand-icon">IF</div>
+    <span>IgniteFIRE</span>
+  </div>
+  <div class="nav-right">
+    <div class="nav-pill" id="live-indicator" style="display:none">
+      <div class="dot"></div> Live Data
+    </div>
+    <button class="nav-btn" id="refresh-btn" title="Refresh prices" onclick="refreshPrices()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    </button>
+    <button class="nav-btn" title="Settings" onclick="showApiModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ══ YTD HERO ════════════════════════════════════ -->
+<div class="ytd-hero">
+  <div class="ytd-grid">
+    <div>
+      <div class="ytd-label">
+        <div class="icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        Dividends Earned (YTD Live Counter)
+      </div>
+      <div class="ytd-amount" id="ytd-counter">$0.0000</div>
+    </div>
+    <div></div>
+    <div class="ytd-stat"><div class="lbl">Collected This Year</div><div class="val" id="ytd-collected">$0</div></div>
+    <div class="ytd-stat"><div class="lbl">Payments/Year</div><div class="val" id="ytd-payments">0</div></div>
+    <div class="ytd-stat"><div class="lbl">Per Second</div><div class="val" id="ytd-per-second">$0.000000</div></div>
+  </div>
+</div>
+
+<!-- ══ INCOME GOAL BANNER ══════════════════════════ -->
+<div class="goal-banner">
+  <div class="goal-inner">
+    <div class="goal-label">Monthly Income Goal</div>
+    <div class="goal-input-wrap">
+      <span style="font-size:.75rem;color:var(--text3);font-family:var(--mono)">$</span>
+      <input type="number" id="income-goal" value="1000" oninput="updateGoal()" placeholder="1000">
+    </div>
+    <div class="goal-track">
+      <div class="goal-fill" id="goal-fill" style="width:0%"></div>
+    </div>
+    <div class="goal-pct" id="goal-pct">0%</div>
+    <div class="goal-meta" id="goal-meta">$0 / $1,000 monthly target</div>
+  </div>
+</div>
+
+<!-- ══ PAGE TABS ══════════════════════════════════ -->
+<div class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="switchTab('holdings',this)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Holdings
+    </button>
+    <button class="tab-btn" onclick="switchTab('growth',this)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>
+      Growth &amp; DRIP
+    </button>
+    <button class="tab-btn" onclick="switchTab('projections',this)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M3 12 7 8l4 4 4-6 4 3"/></svg>
+      Projections
+    </button>
+    <button class="tab-btn" onclick="switchTab('calendar',this)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Calendar
+    </button>
+    <button class="tab-btn" onclick="switchTab('whatif',this)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      What-If
+    </button>
+    <button class="tab-btn" onclick="switchTab('calculator',this)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+      Calculator
+    </button>
+    <button class="tab-btn" onclick="switchTab('fire-gap',this)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+      FIRE Gap
+    </button>
+    <button class="tab-btn" onclick="switchTab('drip-sim',this)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="4"/></svg>
+      DRIP Simulator
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB: HOLDINGS
+══════════════════════════════════════════════════ -->
+<div class="tab-pane active" id="tab-holdings">
+  <div class="page-content">
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="s-label">Portfolio Value</div>
+        <div class="s-value" id="stat-portfolio">$0</div>
+        <div class="s-sub">total cost basis</div>
+      </div>
+      <div class="stat-card">
+        <div class="s-label">Annual Income</div>
+        <div class="s-value up" id="stat-annual">$0</div>
+        <div class="s-sub" id="stat-monthly-income">$0/month</div>
+      </div>
+      <div class="stat-card">
+        <div class="s-label">Avg Yield</div>
+        <div class="s-value" id="stat-yield">0%</div>
+        <div class="s-sub">weighted average</div>
+      </div>
+      <div class="stat-card">
+        <div class="s-label">10Y DRIP Value</div>
+        <div class="s-value up" id="stat-drip">$0</div>
+        <div class="s-sub" id="stat-drip-growth">projected growth</div>
+      </div>
+    </div>
+
+    <!-- Add Stock Form -->
+    <div class="add-form">
+      <div class="section-label">Add Dividend Stock</div>
+      <div class="add-form-grid">
+        <div class="input-group" style="margin-bottom:0">
+          <label class="input-label">Symbol</label>
+          <input class="input-plain" type="text" id="add-symbol" placeholder="SCHD" style="text-transform:uppercase">
+        </div>
+        <div class="input-group" style="margin-bottom:0">
+          <label class="input-label">Shares</label>
+          <input class="input-plain" type="number" id="add-shares" placeholder="100">
+        </div>
+        <div class="input-group" style="margin-bottom:0">
+          <label class="input-label">Cost Basis ($)</label>
+          <input class="input-plain" type="number" id="add-cost" placeholder="7500">
+        </div>
+        <div class="input-group" style="margin-bottom:0">
+          <label class="input-label">Annual Div/Share ($)</label>
+          <input class="input-plain" type="number" id="add-div" placeholder="2.68" step="0.01">
+        </div>
+        <button class="btn btn-primary" onclick="addHolding()" style="align-self:end">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add
+        </button>
+      </div>
+    </div>
+
+    <!-- Holdings Table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Dividend Holdings</div>
+        <div class="card-sub">Your dividend-paying stocks with DRIP settings and tax classification</div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Shares</th>
+              <th>Cost Basis</th>
+              <th>Annual Div</th>
+              <th>Yield</th>
+              <th>Annual Income</th>
+              <th>Tax Type</th>
+              <th>Safety</th>
+              <th>DRIP</th>
+              <th>Next Ex-Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="holdings-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB: GROWTH & DRIP
+══════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-growth">
+  <div class="page-content">
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div class="chart-card">
+        <div class="card-header"><div class="card-title">Dividend Growth by Holding</div><div class="card-sub">Historical compound annual growth rate (CAGR)</div></div>
+        <div class="chart-wrap"><canvas id="cagr-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-label">Dividend Growth Insights</div>
+        <div id="growth-insights" style="display:flex;flex-direction:column;gap:.75rem"></div>
+      </div>
+    </div>
+    <div class="chart-card" style="margin-bottom:1rem">
+      <div class="card-header"><div class="card-title">Yield on Cost Tracker</div><div class="card-sub">Your effective yield grows as dividends increase on your original investment</div></div>
+      <div class="grid-4" style="margin-bottom:1.25rem">
+        <div class="stat-card"><div class="s-label">Current YOC</div><div class="s-value" id="yoc-current">0%</div><div class="s-sub" id="yoc-invested">on $0 invested</div></div>
+        <div class="stat-card"><div class="s-label">YOC in 10 Years</div><div class="s-value up" id="yoc-10yr">0%</div><div class="s-sub" id="yoc-10yr-inc">increase</div></div>
+        <div class="stat-card"><div class="s-label">Annual Income (10yr)</div><div class="s-value up" id="yoc-income-10">$0</div><div class="s-sub" id="yoc-mult">x starting income</div></div>
+        <div class="stat-card"><div class="s-label">Total Dividends (10yr)</div><div class="s-value" id="yoc-total">$0</div><div class="s-sub" id="yoc-recovery">% cost basis recovered</div></div>
+      </div>
+      <div class="chart-wrap sm"><canvas id="yoc-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header"><div class="card-title">YOC Milestones</div><div class="card-sub">Key yield on cost targets by holding</div></div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>Symbol</th><th>Current</th><th>5yr YOC</th><th>10yr YOC</th><th>Double In</th></tr></thead><tbody id="yoc-table"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB: PROJECTIONS
+══════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-projections">
+  <div class="page-content">
+    <div class="chart-card" style="margin-bottom:1rem">
+      <div class="card-header"><div class="card-title">Monthly Income Distribution</div><div class="card-sub">Expected dividend payments by month</div></div>
+      <div class="chart-wrap"><canvas id="monthly-chart"></canvas></div>
+    </div>
+    <div class="grid-2">
+      <div class="chart-card">
+        <div class="card-header"><div class="card-title">Income by Holding</div><div class="card-sub">Annual dividend income breakdown</div></div>
+        <div class="chart-wrap"><canvas id="income-donut"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-label">Income Breakdown</div>
+        <div id="income-breakdown" style="display:flex;flex-direction:column;gap:.6rem;margin-top:.5rem"></div>
+        <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border2)">
+          <div class="section-label">YOC Journey</div>
+          <div id="yoc-journey" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB: CALENDAR
+══════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-calendar">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.2rem">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--amber)"></div>
+            <div class="card-title">Ex-Dividend Dates</div>
+          </div>
+          <div class="card-sub">Next 30 days of ex-dividend events</div>
+        </div>
+        <div id="ex-div-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.2rem">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
+            <div class="card-title">Payment Dates</div>
+          </div>
+          <div class="card-sub">Upcoming dividend payment schedule</div>
+        </div>
+        <div id="pay-div-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB: WHAT-IF
+══════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-whatif">
+  <div class="page-content">
+    <div class="whatif-grid" id="whatif-cards"></div>
+    <div class="grid-2">
+      <div class="chart-card">
+        <div class="card-header"><div class="card-title">Portfolio Value Projection</div><div class="card-sub">Compare how your portfolio grows under different scenarios</div></div>
+        <div class="chart-wrap"><canvas id="whatif-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-label">20-Year Outcome Comparison</div>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Scenario</th><th>Monthly</th><th>Total Invested</th><th>Final Value</th><th>Annual Income</th><th>Total Gain</th></tr></thead><tbody id="whatif-table"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB: CALCULATOR
+══════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-calculator">
+  <div class="page-content">
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div class="card">
+        <div class="section-label">Reverse Dividend Calculator</div>
+        <div class="card-sub" style="margin-bottom:1.25rem">How much do you need to invest to achieve your target income?</div>
+        <div class="grid-2">
+          <div class="input-group">
+            <label class="input-label">Target Income ($)</label>
+            <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="rc-target" value="1000" oninput="calcReverse()"></div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Frequency</label>
+            <select class="input-plain" id="rc-freq" onchange="calcReverse()">
+              <option value="12">Monthly</option>
+              <option value="1">Annual</option>
+            </select>
+          </div>
+        </div>
+        <div class="range-group">
+          <div class="range-header"><label class="input-label">Portfolio Yield</label><span class="range-val" id="rc-yield-val">5%</span></div>
+          <input type="range" id="rc-yield" min="1" max="15" step="0.1" value="5" oninput="syncRange('rc-yield','rc-yield-val','%');calcReverse()">
+        </div>
+        <div class="result-box">
+          <div class="result-label">Required Investment</div>
+          <div class="result-value" id="rc-required">$240,000</div>
+          <div class="result-sub" id="rc-sub">to generate $1,000/month</div>
+        </div>
+        <div class="mini-grid">
+          <div class="mini-stat"><div class="ml">At 4% Yield</div><div class="mv" id="rc-4pct">--</div></div>
+          <div class="mini-stat"><div class="ml">At 6% Yield</div><div class="mv" id="rc-6pct">--</div></div>
+          <div class="mini-stat"><div class="ml">At 8% Yield</div><div class="mv" id="rc-8pct">--</div></div>
+          <div class="mini-stat"><div class="ml">At 10% Yield</div><div class="mv" id="rc-10pct">--</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-label">Portfolio Suggestions</div>
+        <div class="card-sub" style="margin-bottom:1.25rem">Choose a strategy based on your income vs growth preference</div>
+        <div id="suggestions-list" style="display:flex;flex-direction:column;gap:.75rem"></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header"><div class="card-title">Investment Required vs. Yield</div><div class="card-sub">See how higher yield reduces required capital for your target income</div></div>
+      <div class="chart-wrap sm"><canvas id="rc-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB: FIRE GAP
+══════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-fire-gap">
+  <div class="page-content">
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div class="fire-gap-card">
+        <div class="section-label">Dividend Coverage of FIRE Spending</div>
+        <div class="fire-gap-pct" id="fg-pct">0%</div>
+        <div style="font-family:var(--display);font-size:1.2rem;margin-top:.5rem" id="fg-label">No dividends yet</div>
+        <div style="font-size:.8rem;color:var(--text2);margin-top:.3rem" id="fg-sub">Set your FIRE spending target below</div>
+        <div class="progress-track" style="margin-top:1.25rem;height:10px">
+          <div class="progress-fill" id="fg-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-label">Your FIRE Spending Target</div>
+        <div class="input-group">
+          <label class="input-label">Annual FIRE Spending ($)</label>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="fg-spending" value="60000" oninput="calcFireGap()"></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Additional Income Sources (annual $)</label>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="fg-other" value="0" oninput="calcFireGap()"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.65rem;margin-top:1rem" id="fg-breakdown"></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header"><div class="card-title">Dividend Income vs. FIRE Target Over Time</div><div class="card-sub">How your dividends close the gap with assumed 5% annual growth</div></div>
+      <div class="chart-wrap"><canvas id="fg-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TAB: DRIP SIMULATOR
+══════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-drip-sim">
+  <div class="page-content">
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div class="card">
+        <div class="section-label">DRIP Simulation Inputs</div>
+        <div class="input-group">
+          <label class="input-label">Additional Monthly Investment ($)</label>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="ds-monthly" value="500" oninput="calcDRIPSim()"></div>
+        </div>
+        <div class="range-group">
+          <div class="range-header"><label class="input-label">Assumed Dividend Growth Rate</label><span class="range-val" id="ds-growth-val">5%</span></div>
+          <input type="range" id="ds-growth" min="0" max="15" step="0.5" value="5" oninput="syncRange('ds-growth','ds-growth-val','%');calcDRIPSim()">
+        </div>
+        <div class="range-group">
+          <div class="range-header"><label class="input-label">Simulation Years</label><span class="range-val" id="ds-years-val">20 yrs</span></div>
+          <input type="range" id="ds-years" min="5" max="30" step="1" value="20" oninput="syncRange('ds-years','ds-years-val',' yrs');calcDRIPSim()">
+        </div>
+        <div class="result-box">
+          <div class="result-label">Final Annual Income</div>
+          <div class="result-value" id="ds-final-income">--</div>
+          <div class="result-sub" id="ds-sub">from DRIP compounding + contributions</div>
+          <div class="mini-grid">
+            <div class="mini-stat"><div class="ml">Total Shares Added</div><div class="mv" id="ds-shares-added">--</div></div>
+            <div class="mini-stat"><div class="ml">Final Portfolio Value</div><div class="mv" id="ds-final-value">--</div></div>
+            <div class="mini-stat"><div class="ml">Income Multiple</div><div class="mv" id="ds-mult">--</div></div>
+            <div class="mini-stat"><div class="ml">Total DRIP Shares</div><div class="mv" id="ds-drip-shares">--</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-label">Per-Holding DRIP Shares (Annual)</div>
+        <div id="drip-per-holding" style="display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem"></div>
+      </div>
+    </div>
+    <div class="chart-card" style="margin-bottom:1rem">
+      <div class="card-header"><div class="card-title">DRIP Snowball Effect</div><div class="card-sub">Portfolio value and income compounding over time with DRIP reinvestment</div></div>
+      <div class="chart-wrap tall"><canvas id="drip-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-label">Snowball Milestones</div>
+      <div class="drip-snowball" id="drip-snowball"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// GLOBALS
+// ══════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const fmt = v => '$' + Math.round(v).toLocaleString();
+const fmtK = v => v >= 1e6 ? '$' + (v/1e6).toFixed(2)+'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1)+'K' : '$' + Math.round(v).toLocaleString();
+const fmtD = v => '$' + v.toFixed(2);
+let apiKey = '';
+let charts = {};
+
+// ── DEFAULT HOLDINGS (from screenshots) ──
+let holdings = [
+  {id:1, symbol:'JEPI',  shares:100, costBasis:5400,  annualDiv:4.32,  cagr:8.0,  exDate:'2026-01-05', payDate:'2026-01-08', freq:'monthly', taxType:'non-qualified', safetyScore:'high', drip:true},
+  {id:2, symbol:'JEPQ',  shares:80,  costBasis:4000,  annualDiv:4.50,  cagr:17.7, exDate:'2026-01-05', payDate:'2026-01-08', freq:'monthly', taxType:'non-qualified', safetyScore:'high', drip:true},
+  {id:3, symbol:'QYLD',  shares:200, costBasis:3400,  annualDiv:2.04,  cagr:-3.5, exDate:'2026-01-20', payDate:'2026-01-25', freq:'monthly', taxType:'non-qualified', safetyScore:'med',  drip:true},
+  {id:4, symbol:'O',     shares:75,  costBasis:4125,  annualDiv:3.08,  cagr:2.1,  exDate:'2026-01-31', payDate:'2026-02-15', freq:'monthly', taxType:'qualified',     safetyScore:'high', drip:false},
+  {id:5, symbol:'JNJ',   shares:30,  costBasis:4500,  annualDiv:4.76,  cagr:4.8,  exDate:'2026-02-18', payDate:'2026-03-10', freq:'quarterly', taxType:'qualified',   safetyScore:'high', drip:true},
+  {id:6, symbol:'SCHD',  shares:100, costBasis:7500,  annualDiv:2.68,  cagr:8.2,  exDate:'2026-03-15', payDate:'2026-03-20', freq:'quarterly', taxType:'qualified',   safetyScore:'high', drip:true},
+  {id:7, symbol:'VYM',   shares:50,  costBasis:5500,  annualDiv:3.21,  cagr:2.5,  exDate:'2026-03-20', payDate:'2026-03-25', freq:'quarterly', taxType:'qualified',   safetyScore:'high', drip:true},
+];
+let nextId = 8;
+
+// Chart defaults
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.family = 'DM Sans';
+const CGRID = 'rgba(255,255,255,0.04)';
+const COLORS = ['#6366f1','#10b981','#f59e0b','#06b6d4','#8b5cf6','#ec4899','#ef4444','#f97316'];
+function dc(key){if(charts[key]){charts[key].destroy();delete charts[key];}}
+function syncRange(id, lid, sfx){ $(lid).textContent = $(id).value + sfx; }
+
+// ══════════════════════════════════════════════
+// API KEY
+// ══════════════════════════════════════════════
+function saveApiKey(){
+  const k = $('api-key-input').value.trim();
+  if(k){ apiKey = k; localStorage.setItem('finnhub_key', k); $('live-indicator').style.display='flex'; }
+  $('api-modal').classList.add('hidden');
+  init();
+}
+function skipApiKey(){ $('api-modal').classList.add('hidden'); init(); }
+function showApiModal(){ $('api-modal').classList.remove('hidden'); }
+
+async function fetchQuote(symbol){
+  if(!apiKey) return null;
+  try{
+    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`);
+    return await r.json();
+  } catch(e){ return null; }
+}
+
+async function refreshPrices(){
+  if(!apiKey){ showApiModal(); return; }
+  const btn = $('refresh-btn');
+  btn.style.animation = 'spin 1s linear infinite';
+  for(const h of holdings){
+    const q = await fetchQuote(h.symbol);
+    if(q && q.c){ h.livePrice = q.c; h.change = q.dp; }
+  }
+  btn.style.animation = '';
+  renderAll();
+}
+
+// ══════════════════════════════════════════════
+// YTD COUNTER
+// ══════════════════════════════════════════════
+let ytdStartTime = Date.now();
+let ytdBase = 0;
+
+function startYTDCounter(){
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(),0,1);
+  const dayOfYear = Math.floor((now - startOfYear) / 86400000);
+  const annualIncome = holdings.reduce((a,h)=>a+h.shares*h.annualDiv,0);
+  const perSecond = annualIncome / (365*86400);
+  ytdBase = perSecond * dayOfYear * 86400;
+  ytdStartTime = Date.now();
+
+  setInterval(()=>{
+    const elapsed = (Date.now() - ytdStartTime) / 1000;
+    const current = ytdBase + perSecond * elapsed;
+    $('ytd-counter').textContent = '$' + current.toFixed(4);
+    $('ytd-per-second').textContent = '$' + perSecond.toFixed(6);
+  }, 100);
+
+  $('ytd-collected').textContent = fmtK(ytdBase);
+  const paymentsPerYear = holdings.reduce((a,h)=>a+(h.freq==='monthly'?12:h.freq==='quarterly'?4:2),0);
+  $('ytd-payments').textContent = paymentsPerYear;
+}
+
+// ══════════════════════════════════════════════
+// COMPUTED HELPERS
+// ══════════════════════════════════════════════
+function annualIncome(h){ return h.shares * h.annualDiv; }
+function yield_(h){ return h.costBasis > 0 ? h.annualDiv / (h.costBasis/h.shares) * 100 : 0; }
+function totalAnnualIncome(){ return holdings.reduce((a,h)=>a+annualIncome(h),0); }
+function totalCostBasis(){ return holdings.reduce((a,h)=>a+h.costBasis,0); }
+function avgYield(){ const tb=totalCostBasis(); return tb>0?totalAnnualIncome()/tb*100:0; }
+
+// ══════════════════════════════════════════════
+// UPDATE GOAL BANNER
+// ══════════════════════════════════════════════
+function updateGoal(){
+  const goal = parseFloat($('income-goal').value)||1000;
+  const monthly = totalAnnualIncome()/12;
+  const pct = Math.min(100, monthly/goal*100);
+  $('goal-fill').style.width = pct+'%';
+  $('goal-pct').textContent = pct.toFixed(1)+'%';
+  $('goal-meta').textContent = fmtK(monthly)+' / '+fmtK(goal)+' monthly target';
+}
+
+// ══════════════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════════════
+function switchTab(name, btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  $('tab-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name==='growth')     renderGrowth();
+  if(name==='projections')renderProjections();
+  if(name==='calendar')   renderCalendar();
+  if(name==='whatif')     renderWhatIf();
+  if(name==='calculator') { renderCalc(); calcReverse(); }
+  if(name==='fire-gap')   calcFireGap();
+  if(name==='drip-sim')   calcDRIPSim();
+}
+
+// ══════════════════════════════════════════════
+// HOLDINGS RENDER
+// ══════════════════════════════════════════════
+function renderHoldings(){
+  const tbody = $('holdings-tbody');
+  if(!holdings.length){ tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:2rem">No holdings yet. Add your first dividend stock above.</td></tr>`; return; }
+  tbody.innerHTML = holdings.map(h=>{
+    const y = yield_(h).toFixed(2);
+    const inc = annualIncome(h);
+    const yieldClass = y>8?'yield-high':y>4?'yield-mid':'yield-low';
+    const taxClass = h.taxType==='qualified'?'tax-q':'tax-nq';
+    const taxLabel = h.taxType==='qualified'?'Qualified':'Non-Qual';
+    const safeClass = h.safetyScore==='high'?'safe-high':h.safetyScore==='med'?'safe-med':'safe-low';
+    const safeLabel = h.safetyScore==='high'?'Strong':h.safetyScore==='med'?'Moderate':'Weak';
+    return `<tr>
+      <td><span class="symbol-badge">${h.symbol}</span>${h.livePrice?`<div style="font-size:.65rem;color:var(--text3);margin-top:.15rem">$${h.livePrice.toFixed(2)} <span class="${h.change>=0?'up':'down'}">${h.change>=0?'+':''}${(h.change||0).toFixed(2)}%</span></div>`:''}
+      </td>
+      <td style="font-family:var(--mono)">${h.shares.toLocaleString()}</td>
+      <td style="font-family:var(--mono)">${fmt(h.costBasis)}</td>
+      <td style="font-family:var(--mono)">${fmtD(h.annualDiv)}</td>
+      <td><span class="yield-badge ${yieldClass}">${y}%</span></td>
+      <td style="font-family:var(--mono);color:var(--green);font-weight:700">${fmtD(inc)}</td>
+      <td><span class="tax-badge ${taxClass}">${taxLabel}</span></td>
+      <td><span class="safety-badge ${safeClass}">${safeLabel}</span></td>
+      <td><label class="drip-toggle"><input type="checkbox" ${h.drip?'checked':''} onchange="toggleDRIP(${h.id},this.checked)"><span class="drip-slider"></span></label></td>
+      <td style="font-family:var(--mono);font-size:.78rem;color:var(--text2)">${h.exDate}</td>
+      <td><button class="del-btn" onclick="removeHolding(${h.id})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderStats(){
+  const tb = totalCostBasis();
+  const tai = totalAnnualIncome();
+  const ay = avgYield();
+  $('stat-portfolio').textContent = fmtK(tb);
+  $('stat-annual').textContent = fmtK(tai);
+  $('stat-monthly-income').textContent = fmtK(tai/12)+'/month';
+  $('stat-yield').textContent = ay.toFixed(2)+'%';
+  // 10Y DRIP approximation
+  const drip10 = tb * Math.pow(1+ay/100+0.05, 10);
+  const growth = tb > 0 ? ((drip10/tb-1)*100).toFixed(2) : 0;
+  $('stat-drip').textContent = fmtK(drip10);
+  $('stat-drip-growth').textContent = `+${growth}% projected growth`;
+}
+
+function addHolding(){
+  const sym = $('add-symbol').value.trim().toUpperCase();
+  const shares = parseFloat($('add-shares').value)||0;
+  const cost = parseFloat($('add-cost').value)||0;
+  const div = parseFloat($('add-div').value)||0;
+  if(!sym||!shares||!cost) return;
+  holdings.push({id:nextId++, symbol:sym, shares, costBasis:cost, annualDiv:div, cagr:5, exDate:'TBD', payDate:'TBD', freq:'quarterly', taxType:'qualified', safetyScore:'med', drip:true});
+  $('add-symbol').value=''; $('add-shares').value=''; $('add-cost').value=''; $('add-div').value='';
+  renderAll();
+}
+
+function removeHolding(id){ holdings=holdings.filter(h=>h.id!==id); renderAll(); }
+function toggleDRIP(id,val){ const h=holdings.find(x=>x.id===id); if(h) h.drip=val; renderStats(); }
+
+// ══════════════════════════════════════════════
+// GROWTH & DRIP TAB
+// ══════════════════════════════════════════════
+function renderGrowth(){
+  if(!holdings.length) return;
+  // CAGR chart
+  const sorted = [...holdings].sort((a,b)=>b.cagr-a.cagr);
+  dc('cagr');
+  charts.cagr = new Chart($('cagr-chart'),{
+    type:'bar',
+    data:{
+      labels:sorted.map(h=>h.symbol),
+      datasets:[{data:sorted.map(h=>h.cagr), backgroundColor:sorted.map(h=>h.cagr>=0?'#6366f1cc':'#ef4444cc'), borderColor:sorted.map(h=>h.cagr>=0?'#6366f1':'#ef4444'), borderWidth:1, borderRadius:4}]
+    },
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+(c.raw>0?'+':'')+c.raw+'%'}}},scales:{x:{grid:{color:CGRID},ticks:{callback:v=>v+'%',font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:11}}}}}
+  });
+  // Insights
+  const avgCAGR = (holdings.reduce((a,h)=>a+h.cagr,0)/holdings.length).toFixed(1);
+  const tai = totalAnnualIncome();
+  $('growth-insights').innerHTML = [
+    {icon:'up',label:'Growing Income',color:'var(--green)',body:`With ${avgCAGR}% avg dividend growth, your income doubles every ${(72/avgCAGR).toFixed(0)} years (Rule of 72).`,val:fmtK(tai*Math.pow(1+avgCAGR/100,10))+'/yr in 10 years'},
+    {icon:'recycle',label:'DRIP Compounds',color:'var(--indigo)',body:'Reinvesting dividends buys more shares, which generate more dividends…',val:'+'+Math.round(holdings.filter(h=>h.drip).reduce((a,h)=>a+h.shares*h.annualDiv/(h.costBasis/h.shares),0)*2)+' shares from DRIP in 10 years'},
+    {icon:'pct',label:'Yield on Cost',color:'var(--amber)',body:'As dividends grow, your effective yield on original investment increases dramatically.',val:(avgYield()*Math.pow(1+avgCAGR/100,10)).toFixed(1)+'% yield on cost in 10 years'},
+  ].map(i=>`<div style="background:var(--surface2);border-radius:var(--r-sm);padding:1rem;border-left:3px solid ${i.color}">
+    <div style="font-weight:700;font-size:.85rem;margin-bottom:.4rem">${i.label}</div>
+    <div style="font-size:.78rem;color:var(--text2);line-height:1.5;margin-bottom:.5rem">${i.body}</div>
+    <div style="font-family:var(--mono);font-weight:800;color:${i.color};font-size:1rem">${i.val}</div>
+  </div>`).join('');
+  // YOC stats
+  const ay = avgYield();
+  const avgCg = holdings.reduce((a,h)=>a+h.cagr,0)/holdings.length/100;
+  const yoc10 = ay * Math.pow(1+avgCg,10);
+  const inc = totalAnnualIncome();
+  const inc10 = inc * Math.pow(1+avgCg,10);
+  const totalDiv10 = Array.from({length:10},(_,i)=>inc*Math.pow(1+avgCg,i)).reduce((a,v)=>a+v,0);
+  const tb = totalCostBasis();
+  $('yoc-current').textContent = ay.toFixed(2)+'%';
+  $('yoc-invested').textContent = 'on '+fmtK(tb)+' invested';
+  $('yoc-10yr').textContent = yoc10.toFixed(2)+'%';
+  $('yoc-10yr-inc').textContent = '+'+(yoc10-ay).toFixed(1)+'% increase';
+  $('yoc-income-10').textContent = fmtK(inc10);
+  $('yoc-mult').textContent = inc>0?(inc10/inc).toFixed(1)+'x starting income':'';
+  $('yoc-total').textContent = fmtK(totalDiv10);
+  $('yoc-recovery').textContent = tb>0?(totalDiv10/tb*100).toFixed(0)+'% cost basis recovered':'';
+  // YOC chart
+  const labels = Array.from({length:11},(_,i)=>'Year '+i);
+  dc('yoc');
+  charts.yoc = new Chart($('yoc-chart'),{
+    type:'line',
+    data:{labels,datasets:[{label:'YOC %',data:labels.map((_,i)=>+(ay*Math.pow(1+avgCg,i)).toFixed(2)),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.08)',fill:true,tension:.4,pointRadius:0,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.raw+'%'}}},scales:{x:{grid:{color:CGRID},ticks:{font:{size:10}}},y:{grid:{color:CGRID},ticks:{callback:v=>v+'%',font:{size:10}}}}}
+  });
+  // YOC milestones table
+  $('yoc-table').innerHTML = holdings.map(h=>{
+    const y=yield_(h); const cg=h.cagr/100;
+    const y5=y*Math.pow(1+cg,5); const y10=y*Math.pow(1+cg,10);
+    const dbl=cg>0?Math.ceil(Math.log(2)/Math.log(1+cg)):null;
+    return `<tr>
+      <td><span style="width:8px;height:8px;border-radius:50%;background:${COLORS[holdings.indexOf(h)%COLORS.length]};display:inline-block;margin-right:.5rem"></span>${h.symbol}</td>
+      <td style="font-family:var(--mono)">${y.toFixed(1)}%</td>
+      <td style="font-family:var(--mono);color:var(--amber)">${y5.toFixed(1)}%</td>
+      <td style="font-family:var(--mono);color:var(--green);font-weight:700">${y10.toFixed(1)}%</td>
+      <td style="font-family:var(--mono)">${dbl&&dbl<=50?dbl+'yr':'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// PROJECTIONS TAB
+// ══════════════════════════════════════════════
+function renderProjections(){
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Monthly distribution
+  const monthly = Array(12).fill(0);
+  holdings.forEach(h=>{
+    const mInc = annualIncome(h);
+    if(h.freq==='monthly') for(let m=0;m<12;m++) monthly[m]+=mInc/12;
+    else if(h.freq==='quarterly'){ [2,5,8,11].forEach(m=>monthly[m]+=mInc/4); }
+    else monthly[0]+=mInc;
+  });
+  dc('monthly');
+  charts.monthly = new Chart($('monthly-chart'),{
+    type:'bar',
+    data:{labels:months,datasets:[{data:monthly,backgroundColor:'#10b981cc',borderColor:'#10b981',borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:CGRID},ticks:{callback:v=>fmt(v),font:{size:10}}}}}
+  });
+  // Income donut
+  dc('incomeDonut');
+  charts.incomeDonut = new Chart($('income-donut'),{
+    type:'doughnut',
+    data:{labels:holdings.map(h=>h.symbol),datasets:[{data:holdings.map(h=>annualIncome(h)),backgroundColor:COLORS.slice(0,holdings.length).map(c=>c+'cc'),borderWidth:0,borderRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:8,padding:10,font:{size:10}}},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}}}}
+  });
+  // Income breakdown
+  $('income-breakdown').innerHTML = holdings.map((h,i)=>{
+    const inc=annualIncome(h); const tai=totalAnnualIncome();
+    const pct=tai>0?inc/tai*100:0;
+    return `<div><div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.25rem"><span style="font-family:var(--mono);font-weight:700">${h.symbol}</span><span style="color:var(--green);font-family:var(--mono)">${fmt(inc)}</span></div><div class="progress-track" style="height:4px"><div class="progress-fill" style="width:${pct}%;background:${COLORS[i%COLORS.length]}"></div></div></div>`;
+  }).join('');
+  // YOC journey
+  const ay=avgYield(); const avgCg=holdings.length?holdings.reduce((a,h)=>a+h.cagr,0)/holdings.length/100:0;
+  const tai=totalAnnualIncome();
+  const tb=totalCostBasis();
+  $('yoc-journey').innerHTML = [0,5,10,15,20].map(yr=>{
+    const yoc=ay*Math.pow(1+avgCg,yr); const inc=tai*Math.pow(1+avgCg,yr);
+    const active=yr===0;
+    return `<div style="flex:1;background:${active?'var(--indigo-dim)':'var(--surface2)'};border:1px solid ${active?'var(--border)':'var(--border2)'};border-radius:var(--r-sm);padding:.75rem;text-align:center;min-width:80px">
+      <div style="font-size:.62rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.25rem">Year ${yr}</div>
+      <div style="font-family:var(--mono);font-size:1rem;font-weight:800;color:${yr===0?'var(--text)':yr<10?'var(--amber)':'var(--green)'}">${yoc.toFixed(1)}%</div>
+      <div style="font-size:.7rem;color:var(--text2);margin-top:.2rem">${fmtK(inc)}/yr</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// CALENDAR TAB
+// ══════════════════════════════════════════════
+function renderCalendar(){
+  const makeList = (key, colorClass, amtKey) => {
+    const items = holdings.map(h=>{
+      const amt = key==='exDate' ? annualIncome(h)/(h.freq==='monthly'?12:h.freq==='quarterly'?4:2) : annualIncome(h)/(h.freq==='monthly'?12:h.freq==='quarterly'?4:2);
+      return {symbol:h.symbol, date:h[key], freq:h.freq, amt};
+    }).sort((a,b)=>a.date.localeCompare(b.date));
+    return items.map(it=>`<div class="cal-item">
+      <div style="display:flex;align-items:center">
+        <div class="cal-dot" style="background:${key==='exDate'?'var(--amber)':'var(--green)'}"></div>
+        <div><div class="ci-symbol">${it.symbol}</div><div class="ci-type">${it.freq}</div></div>
+      </div>
+      <div class="ci-date">${it.date}</div>
+      <div class="ci-amt">${fmtD(it.amt)}</div>
+    </div>`).join('');
+  };
+  $('ex-div-list').innerHTML = makeList('exDate','amber');
+  $('pay-div-list').innerHTML = makeList('payDate','green');
+}
+
+// ══════════════════════════════════════════════
+// WHAT-IF TAB
+// ══════════════════════════════════════════════
+const wiScenarios = [
+  {name:'Conservative',color:'#6366f1',monthly:500,  growth:3, years:20},
+  {name:'Moderate',    color:'#10b981',monthly:1000, growth:5, years:20},
+  {name:'Aggressive',  color:'#f59e0b',monthly:2000, growth:7, years:20},
+];
+
+function renderWhatIf(){
+  const ay=avgYield()/100; const tb=totalCostBasis();
+  $('whatif-cards').innerHTML = wiScenarios.map(s=>`
+    <div class="scenario-card">
+      <div class="scenario-card-top" style="background:${s.color}"></div>
+      <div class="scenario-card-body">
+        <div class="scenario-name" style="color:${s.color}">${s.name}</div>
+        <div class="input-group" style="margin-bottom:.6rem"><label class="input-label">Monthly Contribution ($)</label><div class="input-wrap"><input type="number" value="${s.monthly}" oninput="wiScenarios[${wiScenarios.indexOf(s)}].monthly=+this.value;renderWhatIf()" style="padding:.5rem .75rem"></div></div>
+        <div class="range-group" style="margin-bottom:.4rem">
+          <div class="range-header"><label class="input-label" style="margin-bottom:0">Dividend Growth Rate</label><span class="range-val">${s.growth}%</span></div>
+          <input type="range" min="0" max="15" step="1" value="${s.growth}" oninput="wiScenarios[${wiScenarios.indexOf(s)}].growth=+this.value;this.previousElementSibling.lastChild.textContent=this.value+'%';renderWhatIf()">
+        </div>
+        <div style="font-size:.72rem;color:var(--text3);display:flex;justify-content:space-between;margin-top:.5rem">
+          <span>Yearly: <span style="color:var(--text2);font-family:var(--mono)">${fmt(s.monthly*12)}</span></span>
+          <span>20yr total: <span style="color:var(--text2);font-family:var(--mono)">${fmt(s.monthly*12*20)}</span></span>
+        </div>
+      </div>
+    </div>`).join('');
+
+  const yrs=20; const labels=Array.from({length:yrs+1},(_,i)=>'Year '+i);
+  function projValue(s){
+    let val=tb; const r=ay+s.growth/100; let mc=s.monthly;
+    return labels.map(()=>{ const v=val; val=val*(1+r/12)+mc; return v; });
+  }
+  dc('whatif');
+  charts.whatif = new Chart($('whatif-chart'),{
+    type:'line',
+    data:{labels,datasets:wiScenarios.map(s=>({label:s.name,data:projValue(s),borderColor:s.color,backgroundColor:s.color+'18',fill:true,tension:.4,pointRadius:0,borderWidth:2}))},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{boxWidth:8,padding:14,font:{size:11}}},tooltip:{callbacks:{label:c=>' '+fmtK(c.raw)}}},scales:{x:{grid:{color:CGRID},ticks:{font:{size:10}}},y:{grid:{color:CGRID},ticks:{callback:v=>fmtK(v),font:{size:10}}}}}
+  });
+
+  $('whatif-table').innerHTML = wiScenarios.map(s=>{
+    const r=ay+s.growth/100;
+    const finalVal = tb*Math.pow(1+r,yrs) + s.monthly*12*(Math.pow(1+r,yrs)-1)/r;
+    const annInc = finalVal*ay;
+    const totalInvested = tb + s.monthly*12*yrs;
+    const gain = finalVal - totalInvested;
+    return `<tr>
+      <td><span style="width:8px;height:8px;border-radius:50%;background:${s.color};display:inline-block;margin-right:.5rem"></span>${s.name}</td>
+      <td style="font-family:var(--mono)">${fmt(s.monthly)}</td>
+      <td style="font-family:var(--mono)">${fmtK(totalInvested)}</td>
+      <td style="font-family:var(--mono);font-weight:700">${fmtK(finalVal)}</td>
+      <td style="font-family:var(--mono);color:var(--green)">${fmtK(annInc)}</td>
+      <td><span style="background:${s.color}22;color:${s.color};border:1px solid ${s.color}44;border-radius:100px;font-family:var(--mono);font-size:.75rem;padding:.2rem .6rem;font-weight:700">+${fmtK(gain)}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// CALCULATOR TAB
+// ══════════════════════════════════════════════
+function calcReverse(){
+  const target = parseFloat($('rc-target').value)||1000;
+  const freq = parseFloat($('rc-freq').value)||12;
+  const yld = parseFloat($('rc-yield').value)/100;
+  const annTarget = target * freq;
+  const req = yld>0?annTarget/yld:0;
+  $('rc-required').textContent = fmtK(req);
+  $('rc-sub').textContent = `to generate ${fmt(target)}/${freq===12?'month':'year'}`;
+  [4,6,8,10].forEach(y=>{ const id='rc-'+y+'pct'; if($(id)) $(id).textContent = fmtK(annTarget/(y/100)); });
+  dc('rcChart');
+  const ylds=Array.from({length:30},(_,i)=>(i+1)*0.5);
+  charts.rcChart = new Chart($('rc-chart'),{
+    type:'bar',
+    data:{labels:ylds.map(y=>y+'%'),datasets:[{data:ylds.map(y=>annTarget/(y/100)),backgroundColor:ylds.map(y=>Math.abs(y-yld*100)<0.3?'#6366f1cc':'#6366f133'),borderColor:ylds.map(y=>Math.abs(y-yld*100)<0.3?'#6366f1':'transparent'),borderWidth:1,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtK(c.raw)}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45}},y:{grid:{color:CGRID},ticks:{callback:v=>fmtK(v),font:{size:9}}}}}
+  });
+}
+
+function renderCalc(){
+  const annTarget = (parseFloat($('rc-target').value)||1000)*12;
+  const strategies=[
+    {name:'Ultra High Yield',risk:'High Risk',riskColor:'var(--red)',desc:'Covered call ETFs, BDCs, mREITs. Maximum income, capital erosion risk.',yield_:11,growth:-2},
+    {name:'High Yield Income',risk:'Med Risk',riskColor:'var(--amber)',desc:'Premium income ETFs and REITs. Strong income, moderate capital preservation.',yield_:8,growth:1},
+    {name:'Dividend Aristocrats',risk:'Low Risk',riskColor:'var(--green)',desc:'Blue-chip companies with 25+ years of consecutive dividend increases.',yield_:3.2,growth:8},
+    {name:'Balanced Income',risk:'Med Risk',riskColor:'var(--amber)',desc:'Mix of yield and growth with diversified ETFs and quality dividend stocks.',yield_:5,growth:5},
+    {name:'Dividend Growth',risk:'Low Risk',riskColor:'var(--green)',desc:'Strong dividend growth rates. Lower yield today, higher yield on cost later.',yield_:2.8,growth:10},
+  ];
+  $('suggestions-list').innerHTML = strategies.map(s=>{
+    const req=annTarget/(s.yield_/100);
+    return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);padding:.9rem;display:flex;justify-content:space-between;align-items:center;transition:border-color .15s" onmouseover="this.style.borderColor='var(--border)'" onmouseout="this.style.borderColor='var(--border2)'">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.2rem">
+          <span style="font-weight:700;font-size:.85rem">${s.name}</span>
+          <span style="font-size:.62rem;font-weight:700;padding:.1rem .45rem;border-radius:4px;background:${s.riskColor}22;color:${s.riskColor}">${s.risk}</span>
+        </div>
+        <div style="font-size:.72rem;color:var(--text2)">${s.yield_}% yield · ${s.growth>=0?'+':''}${s.growth}%/yr growth</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Required</div>
+        <div style="font-family:var(--mono);font-weight:800;color:var(--indigo)">${fmtK(req)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// FIRE GAP TAB
+// ══════════════════════════════════════════════
+function calcFireGap(){
+  const spending = parseFloat($('fg-spending').value)||60000;
+  const other = parseFloat($('fg-other').value)||0;
+  const tai = totalAnnualIncome();
+  const totalIncome = tai + other;
+  const pct = Math.min(100, totalIncome/spending*100);
+  const gap = Math.max(0, spending - totalIncome);
+
+  $('fg-pct').textContent = pct.toFixed(1)+'%';
+  $('fg-bar').style.width = pct+'%';
+  const labels=['Not Started','Early Progress','One Quarter There','Halfway There','Almost Free','Financially Independent'];
+  const idx = Math.min(5, Math.floor(pct/20));
+  $('fg-label').textContent = labels[idx];
+  $('fg-sub').textContent = gap>0?`${fmtK(gap)}/year gap remaining`:'Your dividends cover all FIRE expenses!';
+
+  $('fg-breakdown').innerHTML = [
+    {label:'Annual Dividend Income', val:fmtK(tai), color:'var(--green)'},
+    {label:'Other Income Sources',   val:fmtK(other), color:'var(--cyan)'},
+    {label:'FIRE Spending Target',   val:fmtK(spending), color:'var(--text2)'},
+    {label:'Annual Gap',             val:gap>0?'-'+fmtK(gap):'Covered!', color:gap>0?'var(--red)':'var(--green)'},
+    {label:'Additional Portfolio Needed (4% SWR)', val:gap>0?fmtK(gap/0.04):'$0', color:'var(--amber)'},
+  ].map(s=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .75rem;background:var(--surface2);border-radius:6px">
+    <span style="font-size:.8rem;color:var(--text2)">${s.label}</span>
+    <span style="font-family:var(--mono);font-weight:700;color:${s.color}">${s.val}</span>
+  </div>`).join('');
+
+  // Chart
+  const years=20; const growth=0.05; const labels2=Array.from({length:years+1},(_,i)=>'Yr '+i);
+  dc('fgChart');
+  charts.fgChart = new Chart($('fg-chart'),{
+    type:'line',
+    data:{
+      labels:labels2,
+      datasets:[
+        {label:'Dividend Income',data:labels2.map((_,i)=>tai*Math.pow(1+growth,i)),borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.06)',fill:true,tension:.4,pointRadius:0,borderWidth:2},
+        {label:'FIRE Target',   data:labels2.map(()=>spending),borderColor:'#6366f1',backgroundColor:'transparent',borderDash:[6,4],pointRadius:0,borderWidth:1.5},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{boxWidth:8,padding:14,font:{size:11}}},tooltip:{callbacks:{label:c=>' '+fmtK(c.raw)}}},scales:{x:{grid:{color:CGRID},ticks:{font:{size:10}}},y:{grid:{color:CGRID},ticks:{callback:v=>fmtK(v),font:{size:10}}}}}
+  });
+}
+
+// ══════════════════════════════════════════════
+// DRIP SIMULATOR TAB
+// ══════════════════════════════════════════════
+function calcDRIPSim(){
+  const addMonthly = parseFloat($('ds-monthly').value)||0;
+  const growth = parseFloat($('ds-growth').value)/100;
+  const years = parseInt($('ds-years').value)||20;
+  const tb = totalCostBasis();
+  const tai = totalAnnualIncome();
+  const ay = avgYield()/100;
+
+  // Simulate year by year
+  let portVal = tb, annInc = tai, totalShares = 0, totalDripShares = 0;
+  const valData=[], incData=[], labels=[];
+
+  for(let y=0;y<=years;y++){
+    labels.push('Yr '+y);
+    valData.push(portVal);
+    incData.push(annInc);
+    const dripShares = ay > 0 ? annInc / (portVal > 0 ? portVal/holdings.reduce((a,h)=>a+h.shares,1) : 1) : 0;
+    totalDripShares += dripShares;
+    portVal = portVal*(1+ay+growth) + addMonthly*12;
+    annInc = portVal * ay;
+  }
+
+  const finalInc = incData[incData.length-1];
+  const finalVal = valData[valData.length-1];
+  $('ds-final-income').textContent = fmtK(finalInc);
+  $('ds-sub').textContent = `from DRIP compounding + $${addMonthly}/mo contributions over ${years} years`;
+  $('ds-shares-added').textContent = Math.round(totalDripShares*100)+' approx.';
+  $('ds-final-value').textContent = fmtK(finalVal);
+  $('ds-mult').textContent = tai>0?(finalInc/tai).toFixed(1)+'x':'—';
+  $('ds-drip-shares').textContent = Math.round(totalDripShares*10)+' est.';
+
+  // Per-holding DRIP
+  $('drip-per-holding').innerHTML = holdings.filter(h=>h.drip).map((h,i)=>{
+    const price = h.livePrice || h.costBasis/h.shares;
+    const annDiv = annualIncome(h);
+    const sharesPerQ = price>0?annDiv/(4*price):0;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .75rem;background:var(--surface2);border-radius:6px">
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <div style="width:8px;height:8px;border-radius:50%;background:${COLORS[i%COLORS.length]}"></div>
+        <span style="font-family:var(--mono);font-weight:700;font-size:.82rem">${h.symbol}</span>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:var(--mono);font-size:.82rem;color:var(--green)">${sharesPerQ.toFixed(3)} shares/qtr</div>
+        <div style="font-size:.65rem;color:var(--text3)">${(sharesPerQ*4).toFixed(2)} shares/yr</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Main chart
+  dc('dripChart');
+  charts.dripChart = new Chart($('drip-chart'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Portfolio Value',data:valData,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.06)',fill:true,tension:.4,pointRadius:0,borderWidth:2,yAxisID:'y'},
+      {label:'Annual Income', data:incData,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.06)',fill:true,tension:.4,pointRadius:0,borderWidth:2,yAxisID:'y2'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{boxWidth:8,padding:14,font:{size:11}}},tooltip:{callbacks:{label:c=>' '+fmtK(c.raw)}}},scales:{
+      x:{grid:{color:CGRID},ticks:{font:{size:10}}},
+      y:{position:'left',grid:{color:CGRID},ticks:{callback:v=>fmtK(v),font:{size:10}},title:{display:true,text:'Portfolio Value',font:{size:10}}},
+      y2:{position:'right',grid:{display:false},ticks:{callback:v=>fmtK(v),font:{size:10}},title:{display:true,text:'Annual Income',font:{size:10}}}
+    }}
+  });
+
+  // Snowball milestones
+  const milestoneYears=[1,2,5,10,15,20].filter(y=>y<=years);
+  $('drip-snowball').innerHTML = milestoneYears.map(y=>{
+    const inc=incData[Math.min(y,incData.length-1)]; const val=valData[Math.min(y,valData.length-1)];
+    return `<div class="drip-year"><div class="dy">Year ${y}</div><div class="dv">${fmtK(inc)}</div><div class="ds">${fmtK(val)}</div></div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════════════
+function renderAll(){
+  renderHoldings();
+  renderStats();
+  updateGoal();
+  startYTDCounter();
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+function init(){
+  renderAll();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const stored = localStorage.getItem('finnhub_key');
+  if(stored){ apiKey=stored; $('live-indicator').style.display='flex'; $('api-modal').classList.add('hidden'); init(); }
+  else{ /* modal shows by default */ }
+});
+</script>
+</body>
+</html>
