@@ -20,7 +20,9 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ['Inter', 'sans-serif'],
+				sans: ['DM Sans', 'system-ui', 'sans-serif'],
+				display: ['Cormorant Garamond', 'Georgia', 'serif'],
+				mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -161,10 +163,10 @@ export default {
 				'blur': 'blur(20px)'
 			},
 			boxShadow: {
-				'card': '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
-				'card-hover': '0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22)',
-				'neomorphic': '10px 10px 20px #d1d1d1, -10px -10px 20px #ffffff',
-				'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.1)'
+				'card': '0 1px 3px rgba(0,0,0,0.4), 0 8px 24px -12px rgba(0,0,0,0.5)',
+				'card-hover': '0 14px 28px rgba(0,0,0,0.45), 0 10px 10px rgba(0,0,0,0.35)',
+				'glass': '0 8px 32px 0 rgba(0,0,0,0.35)',
+				'glow': '0 20px 60px -20px hsl(239 84% 67% / 0.45)',
 			}
 		}
 	},
