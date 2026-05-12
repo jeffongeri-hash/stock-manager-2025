@@ -307,8 +307,6 @@ const Settings = () => {
                 <h2 className="text-xl font-semibold mb-6">Broker Connections</h2>
                 <div className="space-y-6">
                   <SnaptradeConnection />
-                  <SchwabConnection />
-                  <IBKRConnection />
                   
                   <div className="text-sm text-muted-foreground border-t pt-4">
                     <p>Connect your brokerage accounts to:</p>

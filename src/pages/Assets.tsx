@@ -352,8 +352,6 @@ export default function Assets() {
         <TabsContent value="connections" className="space-y-6">
           <div className="grid gap-6">
             <SnaptradeConnection />
-            <SchwabConnection />
-            <IBKRConnection />
           </div>
 
           <Card>
