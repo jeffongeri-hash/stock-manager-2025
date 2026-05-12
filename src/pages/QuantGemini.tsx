@@ -5,6 +5,7 @@ import InvestorCard from '@/components/quantgemini/InvestorCard';
 import FundamentalTable from '@/components/quantgemini/FundamentalTable';
 import CatalystList from '@/components/quantgemini/CatalystList';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero } from '@/components/layout/PageHero';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -246,7 +247,12 @@ const QuantGemini: React.FC = () => {
   ];
 
   return (
-    <PageLayout title="QuantGemini - AI Equity Research">
+    <PageLayout>
+      <PageHero
+        eyebrow="QuantGemini"
+        title={<>Institutional research, <span className="gradient-text">AI-priced</span></>}
+        description="Investor scorecards, YOY metrics, ratings, and analyst targets fused with Gemini AI commentary."
+      />
       {activeInfo && <MetricInfoPopup title={activeInfo} onClose={() => setActiveInfo(null)} />}
       
       {/* Search Header */}

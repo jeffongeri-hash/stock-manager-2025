@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero } from '@/components/layout/PageHero';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -491,7 +492,12 @@ const MarketScanner = () => {
   };
 
   return (
-    <PageLayout title="Options Scanner">
+    <PageLayout>
+      <PageHero
+        eyebrow="Options Scanner"
+        title={<>Find <span className="gradient-text">edges</span> across the chain</>}
+        description="Filter LEAPS and sub-$20 covered call setups with presets, IV, delta, premium yield, and risk guardrails."
+      />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between gap-4">
           <TabsList className="bg-muted/50">
