@@ -139,19 +139,9 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/market-scanner',
     },
     {
-      title: 'Reports',
-      icon: FileText,
-      href: '/reports',
-    },
-    {
       title: 'Dividend Tracker',
       icon: DollarSign,
       href: '/dividend-tracker',
-    },
-    {
-      title: 'Economic Calendar',
-      icon: CalendarDays,
-      href: '/economic-calendar',
     },
     {
       title: 'Risk & Correlation',
@@ -167,16 +157,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'ETF Comparison',
       icon: GitCompareArrows,
       href: '/etf-comparison',
-    },
-    {
-      title: 'TradingView Integration',
-      icon: Webhook,
-      href: '/tradingview-webhook',
-    },
-    {
-      title: 'Trading Automation',
-      icon: Cpu,
-      href: '/trading-automation',
     },
     {
       title: 'SmartTrade AI',
