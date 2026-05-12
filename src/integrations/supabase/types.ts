@@ -174,13 +174,11 @@ export type Database = {
       }
       broker_connections: {
         Row: {
-          access_token: string | null
           access_token_encrypted: string | null
           accounts: Json | null
           broker_type: string
           created_at: string
           id: string
-          refresh_token: string | null
           refresh_token_encrypted: string | null
           status: string
           token_expires_at: string | null
@@ -188,13 +186,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          access_token?: string | null
           access_token_encrypted?: string | null
           accounts?: Json | null
           broker_type: string
           created_at?: string
           id?: string
-          refresh_token?: string | null
           refresh_token_encrypted?: string | null
           status?: string
           token_expires_at?: string | null
@@ -202,13 +198,11 @@ export type Database = {
           user_id: string
         }
         Update: {
-          access_token?: string | null
           access_token_encrypted?: string | null
           accounts?: Json | null
           broker_type?: string
           created_at?: string
           id?: string
-          refresh_token?: string | null
           refresh_token_encrypted?: string | null
           status?: string
           token_expires_at?: string | null
@@ -1130,12 +1124,33 @@ export type Database = {
         Args: { encrypted_token: string; user_id_param: string }
         Returns: string
       }
+      get_broker_tokens: {
+        Args: { broker_type_param: string }
+        Returns: {
+          access_token: string
+          accounts: Json
+          refresh_token: string
+          status: string
+          token_expires_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      store_broker_tokens: {
+        Args: {
+          access_token_param: string
+          accounts_param?: Json
+          broker_type_param: string
+          expires_at_param: string
+          refresh_token_param: string
+          status_param?: string
+        }
+        Returns: string
       }
     }
     Enums: {
