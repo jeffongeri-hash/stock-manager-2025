@@ -25,17 +25,13 @@ const ZeroDTE = lazy(() => import("./pages/ZeroDTE"));
 const Auth = lazy(() => import("./pages/Auth"));
 const TradingToolkit = lazy(() => import("./pages/TradingToolkit"));
 const MarketScanner = lazy(() => import("./pages/MarketScanner"));
-const Reports = lazy(() => import("./pages/Reports"));
 const CreditOptionsGuide = lazy(() => import("./pages/CreditOptionsGuide"));
 const FundamentalAnalysisGuide = lazy(() => import("./pages/FundamentalAnalysisGuide"));
 const OptionsGuide = lazy(() => import("./pages/OptionsGuide"));
 
 const DividendTracker = lazy(() => import("./pages/DividendTracker"));
-const EconomicCalendar = lazy(() => import("./pages/EconomicCalendar"));
 const RiskMetrics = lazy(() => import("./pages/RiskMetrics"));
 const PortfolioRebalancing = lazy(() => import("./pages/PortfolioRebalancing"));
-const TradingViewWebhook = lazy(() => import("./pages/TradingViewWebhook"));
-const TradingAutomation = lazy(() => import("./pages/TradingAutomation"));
 const IgniteFire = lazy(() => import("./pages/IgniteFire"));
 const Install = lazy(() => import("./pages/Install"));
 const StockResearch = lazy(() => import("./pages/StockResearch"));
@@ -48,7 +44,7 @@ const Assets = lazy(() => import("./pages/Assets"));
 const SchwabCallback = lazy(() => import("./pages/SchwabCallback"));
 const SmartTradeAI = lazy(() => import("./pages/SmartTradeAI"));
 const QuantGemini = lazy(() => import("./pages/QuantGemini"));
-const SWRCalculator = lazy(() => import("./pages/SWRCalculator"));
+
 
 const queryClient = new QueryClient();
 
@@ -98,7 +94,7 @@ const App = () => (
                 <Route path="/fundamental-analysis-guide" element={<ProtectedRoute><FundamentalAnalysisGuide /></ProtectedRoute>} />
                 <Route path="/options-guide" element={<ProtectedRoute><OptionsGuide /></ProtectedRoute>} />
                 <Route path="/dividend-tracker" element={<ProtectedRoute><DividendTracker /></ProtectedRoute>} />
-                <Route path="/economic-calendar" element={<ProtectedRoute><EconomicCalendar /></ProtectedRoute>} />
+                
                 <Route path="/risk-metrics" element={<ProtectedRoute><RiskMetrics /></ProtectedRoute>} />
                 <Route path="/portfolio-rebalancing" element={<ProtectedRoute><PortfolioRebalancing /></ProtectedRoute>} />
                 <Route path="/stock-research" element={<ProtectedRoute><StockResearch /></ProtectedRoute>} />
@@ -108,15 +104,12 @@ const App = () => (
                 <Route path="/etf-comparison" element={<ProtectedRoute><ETFComparison /></ProtectedRoute>} />
                 <Route path="/smarttrade-ai" element={<ProtectedRoute><SmartTradeAI /></ProtectedRoute>} />
                 <Route path="/quantgemini" element={<ProtectedRoute><QuantGemini /></ProtectedRoute>} />
-                <Route path="/swr-calculator" element={<ProtectedRoute><SWRCalculator /></ProtectedRoute>} />
+                
                 <Route path="/assets" element={<ProtectedRoute requiresAuth><Assets /></ProtectedRoute>} />
                 <Route path="/schwab/callback" element={<SchwabCallback />} />
                 
                 {/* Routes requiring full authentication */}
                 <Route path="/settings" element={<ProtectedRoute requiresAuth><Settings /></ProtectedRoute>} />
-                <Route path="/reports" element={<ProtectedRoute requiresAuth><Reports /></ProtectedRoute>} />
-                <Route path="/tradingview-webhook" element={<ProtectedRoute requiresAuth><TradingViewWebhook /></ProtectedRoute>} />
-                <Route path="/trading-automation" element={<ProtectedRoute requiresAuth><TradingAutomation /></ProtectedRoute>} />
                 <Route path="/ignite-fire" element={<ProtectedRoute><IgniteFire /></ProtectedRoute>} />
                 <Route path="/saved-data" element={<ProtectedRoute requiresAuth><SavedData /></ProtectedRoute>} />
                 
