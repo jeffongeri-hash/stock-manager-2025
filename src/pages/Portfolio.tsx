@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero, HeroStat } from '@/components/layout/PageHero';
+import { Briefcase, Wallet, Layers, TrendingUp as TrendingUpIcon2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { PlusCircle, Trash2, TrendingUp, RefreshCw } from 'lucide-react';
@@ -294,54 +296,58 @@ const Portfolio = () => {
   }
   
   return (
-    <PageLayout title="Stock Portfolio">
-      {/* Portfolio Summary Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${portfolioMetrics.totalCurrentValue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Current market value</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cost Basis</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${portfolioMetrics.totalCostBasis.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Total invested</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total P&L</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${portfolioMetrics.totalPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              ${portfolioMetrics.totalPnL.toFixed(2)}
-            </div>
-            <p className={`text-xs mt-1 ${portfolioMetrics.totalPnLPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {portfolioMetrics.totalPnLPercent >= 0 ? '+' : ''}{portfolioMetrics.totalPnLPercent.toFixed(2)}%
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Shares</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{portfolioMetrics.totalShares}</div>
-            <p className="text-xs text-muted-foreground mt-1">{portfolioMetrics.positions.length} positions</p>
-          </CardContent>
-        </Card>
-      </div>
+    <PageLayout>
+      <PageHero
+        eyebrow="Stock Portfolio"
+        title={<>Your <span className="gradient-text">positions</span>, in real time</>}
+        description="Live mark-to-market across every open lot, with cost basis, unrealized P&L, and per-symbol breakdowns powered by Finnhub."
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refresh}
+            disabled={isRefreshing}
+            className="border-primary/30 text-primary hover:bg-primary/10"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing' : 'Refresh prices'}
+          </Button>
+        }
+        stats={
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <HeroStat
+              label="Total value"
+              tone="primary"
+              icon={<Wallet className="h-3.5 w-3.5" />}
+              value={`$${portfolioMetrics.totalCurrentValue.toFixed(2)}`}
+              sub="Current market value"
+            />
+            <HeroStat
+              label="Cost basis"
+              icon={<Briefcase className="h-3.5 w-3.5" />}
+              value={`$${portfolioMetrics.totalCostBasis.toFixed(2)}`}
+              sub="Total invested"
+            />
+            <HeroStat
+              label="Total P&L"
+              tone={portfolioMetrics.totalPnL >= 0 ? 'success' : 'danger'}
+              icon={<TrendingUpIcon2 className="h-3.5 w-3.5" />}
+              value={`${portfolioMetrics.totalPnL >= 0 ? '+' : ''}$${portfolioMetrics.totalPnL.toFixed(2)}`}
+              sub={
+                <span className={portfolioMetrics.totalPnLPercent >= 0 ? 'text-success' : 'text-danger'}>
+                  {portfolioMetrics.totalPnLPercent >= 0 ? '+' : ''}{portfolioMetrics.totalPnLPercent.toFixed(2)}%
+                </span>
+              }
+            />
+            <HeroStat
+              label="Total shares"
+              icon={<Layers className="h-3.5 w-3.5" />}
+              value={portfolioMetrics.totalShares.toLocaleString()}
+              sub={`${portfolioMetrics.positions.length} positions`}
+            />
+          </div>
+        }
+      />
 
       {/* Price Alerts */}
       <PriceAlerts userId={user.id} currentPrices={currentPricesMap} stockChanges={stockChangesMap} />

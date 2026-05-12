@@ -323,7 +323,7 @@ const Analysis = () => {
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <p className="text-2xl font-bold">${stockData.price.toFixed(2)}</p>
-                    <div className={`flex items-center gap-1 ${stockData.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    <div className={`flex items-center gap-1 ${stockData.change >= 0 ? 'text-success' : 'text-danger'}`}>
                       {stockData.change >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                       <span className="font-medium">
                         {stockData.change >= 0 ? '+' : ''}{stockData.change.toFixed(2)} ({stockData.changePercent >= 0 ? '+' : ''}{stockData.changePercent.toFixed(2)}%)
