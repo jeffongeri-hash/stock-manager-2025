@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero } from '@/components/layout/PageHero';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -247,20 +248,26 @@ const Analysis = () => {
   };
   
   return (
-    <PageLayout title="Stock Analysis">
+    <PageLayout>
+      <PageHero
+        eyebrow="Stock Analysis"
+        title={<>Comprehensive <span className="gradient-text">research</span> on any ticker</>}
+        description="Technical setups, fundamentals, catalysts, analyst targets, and Gemini AI commentary — refreshed every 30 seconds."
+      />
+
       {/* Search Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <LineChart className="h-5 w-5" />
-            Comprehensive Stock Analysis
+      <Card className="glass-card mb-6">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 font-display text-2xl">
+            <LineChart className="h-5 w-5 text-primary" />
+            Lookup ticker
           </CardTitle>
           <CardDescription>
-            Enter a stock symbol for technical analysis, fundamentals, catalysts, and analyst ratings
+            Enter a stock symbol for technical analysis, fundamentals, catalysts, and analyst ratings.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2 items-end">
+          <div className="flex flex-wrap gap-2 items-end">
             <TickerAutocomplete
               value={searchSymbol}
               onChange={setSearchSymbol}
@@ -268,7 +275,7 @@ const Analysis = () => {
               onKeyDown={handleKeyDown}
               label="Stock Symbol"
               placeholder="Enter stock symbol (e.g., AAPL, TSLA, NVDA)"
-              className="flex-1 max-w-md"
+              className="flex-1 min-w-[220px] max-w-md"
               isLoading={isLoading}
             />
             <Button onClick={handleSearch} disabled={isLoading}>
@@ -277,8 +284,8 @@ const Analysis = () => {
             </Button>
             {stockData && (
               <>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="icon"
                   onClick={manualRefresh}
                   disabled={isRefreshing}
@@ -286,8 +293,8 @@ const Analysis = () => {
                 >
                   <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => addToWatchlist(activeSymbol)}
                   disabled={!isLoggedIn}
                   title={!isLoggedIn ? 'Sign in to add to watchlist' : 'Add to watchlist'}
@@ -298,10 +305,9 @@ const Analysis = () => {
               </>
             )}
           </div>
-          
-          {/* Auto-refresh indicator */}
+
           {stockData && activeSymbol && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" />
               <span>
                 Auto-refresh every 30s
@@ -309,26 +315,22 @@ const Analysis = () => {
               </span>
             </div>
           )}
-          
+
           {/* Stock Summary */}
           {stockData && (
-            <div className="mt-4 p-4 rounded-lg border bg-muted/30">
+            <div className="mt-5 p-5 rounded-[var(--radius)] border border-primary/20 bg-gradient-to-br from-primary/8 via-transparent to-success/8">
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <h3 className="text-xl font-bold">{stockData.name}</h3>
-                    <Badge variant="outline">{stockData.symbol}</Badge>
-                  </div>
+                <div>
+                  <h3 className="font-display text-2xl font-semibold leading-tight">{stockData.name}</h3>
+                  <Badge variant="outline" className="mt-1 border-primary/40 text-primary font-mono">{stockData.symbol}</Badge>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-2xl font-bold">${stockData.price.toFixed(2)}</p>
-                    <div className={`flex items-center gap-1 ${stockData.change >= 0 ? 'text-success' : 'text-danger'}`}>
-                      {stockData.change >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                      <span className="font-medium">
-                        {stockData.change >= 0 ? '+' : ''}{stockData.change.toFixed(2)} ({stockData.changePercent >= 0 ? '+' : ''}{stockData.changePercent.toFixed(2)}%)
-                      </span>
-                    </div>
+                <div className="text-right">
+                  <p className="font-mono text-3xl font-extrabold tabular-nums">${stockData.price.toFixed(2)}</p>
+                  <div className={`flex items-center justify-end gap-1 font-mono ${stockData.change >= 0 ? 'text-success' : 'text-danger'}`}>
+                    {stockData.change >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                    <span className="font-semibold">
+                      {stockData.change >= 0 ? '+' : ''}{stockData.change.toFixed(2)} ({stockData.changePercent >= 0 ? '+' : ''}{stockData.changePercent.toFixed(2)}%)
+                    </span>
                   </div>
                 </div>
               </div>
