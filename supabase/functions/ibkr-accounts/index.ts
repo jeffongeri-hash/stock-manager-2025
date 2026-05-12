@@ -21,14 +21,14 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    
+
     const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
-    
+
     const token = authHeader.replace('Bearer ', '');
     const { data: userData, error: userError } = await userSupabase.auth.getUser(token);
-    
+
     if (userError || !userData?.user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized - Invalid token' }),
@@ -36,16 +36,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Get stored broker connection
-    const { data: connection, error: connError } = await supabase
-      .from('broker_connections')
-      .select('*')
-      .eq('user_id', userData.user.id)
-      .eq('broker_type', 'interactive_brokers')
-      .single();
+    const { data: rows, error: connError } = await userSupabase
+      .rpc('get_broker_tokens', { broker_type_param: 'ibkr' });
+    const connection = Array.isArray(rows) ? rows[0] : null;
 
     if (connError || !connection) {
       return new Response(
@@ -54,44 +47,29 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if token is expired
     const tokenExpired = new Date(connection.token_expires_at) < new Date();
-    
     if (tokenExpired) {
       return new Response(
-        JSON.stringify({ 
-          error: 'Token expired', 
-          connected: false,
-          needsReauth: true 
-        }),
+        JSON.stringify({ error: 'Token expired', connected: false, needsReauth: true }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Fetch live account data from IBKR
     try {
       const accountsResponse = await fetch('https://api.ibkr.com/v1/api/portfolio/accounts', {
-        headers: {
-          'Authorization': `Bearer ${connection.access_token}`,
-        },
+        headers: { 'Authorization': `Bearer ${connection.access_token}` },
       });
 
       if (accountsResponse.ok) {
         const accounts = await accountsResponse.json();
-        
-        // Fetch account summary for each account
+
         const accountsWithBalance = await Promise.all(
           accounts.map(async (account: any) => {
             try {
               const summaryResponse = await fetch(
                 `https://api.ibkr.com/v1/api/portfolio/${account.accountId}/summary`,
-                {
-                  headers: {
-                    'Authorization': `Bearer ${connection.access_token}`,
-                  },
-                }
+                { headers: { 'Authorization': `Bearer ${connection.access_token}` } }
               );
-              
               if (summaryResponse.ok) {
                 const summary = await summaryResponse.json();
                 return { ...account, summary };
@@ -104,35 +82,19 @@ Deno.serve(async (req) => {
         );
 
         return new Response(
-          JSON.stringify({ 
-            connected: true,
-            accounts: accountsWithBalance,
-            lastUpdated: new Date().toISOString()
-          }),
+          JSON.stringify({ connected: true, accounts: accountsWithBalance, lastUpdated: new Date().toISOString() }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } else {
-        // Return cached accounts if API call fails
         return new Response(
-          JSON.stringify({ 
-            connected: true,
-            accounts: connection.accounts || [],
-            cached: true,
-            lastUpdated: connection.updated_at
-          }),
+          JSON.stringify({ connected: true, accounts: connection.accounts || [], cached: true }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
     } catch (fetchError) {
       console.error('Failed to fetch live IBKR data:', fetchError);
-      // Return cached data
       return new Response(
-        JSON.stringify({ 
-          connected: true,
-          accounts: connection.accounts || [],
-          cached: true,
-          lastUpdated: connection.updated_at
-        }),
+        JSON.stringify({ connected: true, accounts: connection.accounts || [], cached: true }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

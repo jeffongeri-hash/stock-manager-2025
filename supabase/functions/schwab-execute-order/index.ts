@@ -16,30 +16,24 @@ interface OrderRequest {
   duration?: 'DAY' | 'GOOD_TILL_CANCEL' | 'FILL_OR_KILL';
 }
 
-async function refreshToken(supabase: any, userId: string, clientId: string, clientSecret: string): Promise<string | null> {
-  const { data: connection } = await supabase
-    .from('broker_connections')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('broker_type', 'schwab')
-    .single();
+async function getValidAccessToken(
+  userSupabase: any,
+  clientId: string,
+  clientSecret: string
+): Promise<string | null> {
+  const { data: rows } = await userSupabase
+    .rpc('get_broker_tokens', { broker_type_param: 'schwab' });
+  const connection = Array.isArray(rows) ? rows[0] : null;
+  if (!connection) return null;
 
-  if (!connection) {
-    return null;
-  }
-
-  // Check if token is expired or will expire soon
   const expiresAt = new Date(connection.token_expires_at);
-  const now = new Date();
-  const bufferTime = 5 * 60 * 1000; // 5 minutes buffer
+  const bufferTime = 5 * 60 * 1000;
 
-  if (expiresAt.getTime() - now.getTime() > bufferTime) {
+  if (expiresAt.getTime() - Date.now() > bufferTime) {
     return connection.access_token;
   }
 
-  // Refresh the token
   const encodedCredentials = btoa(`${clientId}:${clientSecret}`);
-
   const tokenBody = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: connection.refresh_token,
@@ -61,17 +55,14 @@ async function refreshToken(supabase: any, userId: string, clientId: string, cli
 
   const tokens = await tokenResponse.json();
 
-  // Update stored tokens
-  await supabase
-    .from('broker_connections')
-    .update({
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token || connection.refresh_token,
-      token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', userId)
-    .eq('broker_type', 'schwab');
+  await userSupabase.rpc('store_broker_tokens', {
+    broker_type_param: 'schwab',
+    access_token_param: tokens.access_token,
+    refresh_token_param: tokens.refresh_token || connection.refresh_token,
+    expires_at_param: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+    accounts_param: null,
+    status_param: 'connected',
+  });
 
   return tokens.access_token;
 }
@@ -82,7 +73,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
@@ -94,27 +84,23 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    // Create client with user's auth to validate the token
+
     const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
-    
-    // Validate the JWT token and get user claims
+
     const token = authHeader.replace('Bearer ', '');
     const { data: claimsData, error: claimsError } = await userSupabase.auth.getUser(token);
-    
+
     if (claimsError || !claimsData?.user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized - Invalid token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
+
     const userId = claimsData.user.id;
-    
     const orderRequest: OrderRequest = await req.json();
-    
     const { accountId, symbol, quantity, orderType, instruction, price, stopPrice, duration = 'DAY' } = orderRequest;
 
     if (!accountId || !symbol || !quantity || !instruction) {
@@ -134,11 +120,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use service role for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Get fresh access token
-    const accessToken = await refreshToken(supabase, userId, clientId, clientSecret);
+    const accessToken = await getValidAccessToken(userSupabase, clientId, clientSecret);
 
     if (!accessToken) {
       return new Response(
@@ -147,38 +130,29 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build order payload for Schwab API
-    // https://developer.schwab.com/products/trader-api--individual/details/specifications/Retail%20Trader%20API%20Production
     const orderPayload: any = {
-      orderType: orderType,
+      orderType,
       session: 'NORMAL',
-      duration: duration,
+      duration,
       orderStrategyType: 'SINGLE',
       orderLegCollection: [
         {
-          instruction: instruction,
-          quantity: quantity,
-          instrument: {
-            symbol: symbol,
-            assetType: 'EQUITY',
-          },
+          instruction,
+          quantity,
+          instrument: { symbol, assetType: 'EQUITY' },
         },
       ],
     };
 
-    // Add price for limit orders
     if ((orderType === 'LIMIT' || orderType === 'STOP_LIMIT') && price) {
       orderPayload.price = price.toFixed(2);
     }
-
-    // Add stop price for stop orders
     if ((orderType === 'STOP' || orderType === 'STOP_LIMIT') && stopPrice) {
       orderPayload.stopPrice = stopPrice.toFixed(2);
     }
 
     console.log('Submitting order to Schwab:', { symbol, quantity, orderType, instruction });
 
-    // Submit order to Schwab
     const orderResponse = await fetch(
       `https://api.schwabapi.com/trader/v1/accounts/${accountId}/orders`,
       {
@@ -194,63 +168,34 @@ Deno.serve(async (req) => {
     if (!orderResponse.ok) {
       const errorText = await orderResponse.text();
       console.error('Order submission failed:', errorText);
-      
-      // Log the failed order
-      await supabase
-        .from('order_executions')
-        .insert({
-          user_id: userId,
-          broker_type: 'schwab',
-          account_id: accountId,
-          symbol: symbol,
-          quantity: quantity,
-          order_type: orderType,
-          instruction: instruction,
-          price: price,
-          stop_price: stopPrice,
-          status: 'failed',
-          error_message: errorText,
-          created_at: new Date().toISOString(),
-        });
+
+      await supabase.from('order_executions').insert({
+        user_id: userId, broker_type: 'schwab', account_id: accountId, symbol, quantity,
+        order_type: orderType, instruction, price, stop_price: stopPrice,
+        status: 'failed', error_message: errorText, created_at: new Date().toISOString(),
+      });
 
       return new Response(
-        JSON.stringify({ 
-          error: 'Failed to submit order',
-          details: errorText,
-          status: orderResponse.status
-        }),
+        JSON.stringify({ error: 'Failed to submit order', details: errorText, status: orderResponse.status }),
         { status: orderResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get order ID from location header
     const locationHeader = orderResponse.headers.get('Location');
     const orderId = locationHeader ? locationHeader.split('/').pop() : null;
 
-    // Log the successful order execution
-    await supabase
-      .from('order_executions')
-      .insert({
-        user_id: userId,
-        broker_type: 'schwab',
-        account_id: accountId,
-        symbol: symbol,
-        quantity: quantity,
-        order_type: orderType,
-        instruction: instruction,
-        price: price,
-        stop_price: stopPrice,
-        order_id: orderId,
-        status: 'submitted',
-        created_at: new Date().toISOString(),
-      });
+    await supabase.from('order_executions').insert({
+      user_id: userId, broker_type: 'schwab', account_id: accountId, symbol, quantity,
+      order_type: orderType, instruction, price, stop_price: stopPrice,
+      order_id: orderId, status: 'submitted', created_at: new Date().toISOString(),
+    });
 
     console.log('Order submitted successfully:', orderId);
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
-        orderId: orderId,
+        orderId,
         message: `${instruction} order for ${quantity} shares of ${symbol} submitted successfully`,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

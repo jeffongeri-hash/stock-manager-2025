@@ -11,7 +11,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
@@ -22,24 +21,20 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    
-    // Create client with user's auth to validate the token
+
     const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
-    
-    // Validate the JWT token and get user
+
     const token = authHeader.replace('Bearer ', '');
     const { data: userData, error: userError } = await userSupabase.auth.getUser(token);
-    
+
     if (userError || !userData?.user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized - Invalid token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    const authenticatedUserId = userData.user.id;
 
     const { code } = await req.json();
 
@@ -61,22 +56,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Schwab requires Basic Auth header with base64 encoded credentials
     const encodedCredentials = btoa(`${clientId}:${clientSecret}`);
-
-    // Exchange authorization code for access token
-    // https://developer.schwab.com/user-guides/get-started/authenticate-with-oauth
-    const tokenUrl = 'https://api.schwabapi.com/v1/oauth/token';
-    
     const tokenBody = new URLSearchParams({
       grant_type: 'authorization_code',
-      code: code,
+      code,
       redirect_uri: redirectUri,
     });
 
     console.log('Exchanging code for token with Schwab API');
 
-    const tokenResponse = await fetch(tokenUrl, {
+    const tokenResponse = await fetch('https://api.schwabapi.com/v1/oauth/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -97,52 +86,36 @@ Deno.serve(async (req) => {
     const tokens = await tokenResponse.json();
     console.log('Token exchange successful, fetching accounts');
 
-    // Get account info using the Schwab Trader API
     const accountsResponse = await fetch('https://api.schwabapi.com/trader/v1/accounts', {
-      headers: {
-        'Authorization': `Bearer ${tokens.access_token}`,
-      },
+      headers: { 'Authorization': `Bearer ${tokens.access_token}` },
     });
 
-    let accounts = [];
+    let accounts: any = [];
     if (accountsResponse.ok) {
       accounts = await accountsResponse.json();
-      console.log('Fetched accounts:', accounts.length);
     } else {
       console.error('Failed to fetch accounts:', await accountsResponse.text());
     }
 
-    // Store tokens in Supabase using authenticated user ID
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Store the broker connection with encrypted tokens
-    const { error: dbError } = await supabase
-      .from('broker_connections')
-      .upsert({
-        user_id: authenticatedUserId,
-        broker_type: 'schwab',
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-        accounts: accounts,
-        status: 'connected',
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id,broker_type'
-      });
+    // Store tokens encrypted via secure RPC (uses auth.uid())
+    const { error: dbError } = await userSupabase.rpc('store_broker_tokens', {
+      broker_type_param: 'schwab',
+      access_token_param: tokens.access_token,
+      refresh_token_param: tokens.refresh_token,
+      expires_at_param: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+      accounts_param: accounts,
+      status_param: 'connected',
+    });
 
     if (dbError) {
       console.error('Failed to store broker connection:', dbError);
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
         expiresIn: tokens.expires_in,
-        accounts: accounts,
+        accounts,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

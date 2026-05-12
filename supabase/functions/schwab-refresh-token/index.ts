@@ -11,28 +11,41 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { userId } = await req.json();
-
-    if (!userId) {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ error: 'User ID is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Unauthorized - Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Get stored connection
-    const { data: connection, error: fetchError } = await supabase
-      .from('broker_connections')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('broker_type', 'schwab')
-      .single();
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
 
-    if (fetchError || !connection) {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: userError } = await userSupabase.auth.getUser(token);
+
+    if (userError || !userData?.user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = userData.user.id;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Decrypt current refresh token
+    const { data: rows, error: fetchError } = await userSupabase
+      .rpc('get_broker_tokens', { broker_type_param: 'schwab' });
+    const connection = Array.isArray(rows) ? rows[0] : null;
+
+    if (fetchError || !connection?.refresh_token) {
       return new Response(
         JSON.stringify({ error: 'No Schwab connection found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -49,10 +62,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Schwab requires Basic Auth header with base64 encoded credentials
     const encodedCredentials = btoa(`${clientId}:${clientSecret}`);
-
-    // Refresh the token
     const tokenBody = new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: connection.refresh_token,
@@ -72,52 +82,32 @@ Deno.serve(async (req) => {
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error('Token refresh failed:', errorText);
-      
-      // Mark connection as needing re-auth
+
       await supabase
         .from('broker_connections')
-        .update({
-          status: 'expired',
-          updated_at: new Date().toISOString(),
-        })
+        .update({ status: 'expired', updated_at: new Date().toISOString() })
         .eq('user_id', userId)
         .eq('broker_type', 'schwab');
 
       return new Response(
-        JSON.stringify({ 
-          error: 'Token refresh failed. Please reconnect your Schwab account.',
-          requiresReauth: true
-        }),
+        JSON.stringify({ error: 'Token refresh failed. Please reconnect your Schwab account.', requiresReauth: true }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const tokens = await tokenResponse.json();
-    console.log('Token refresh successful');
 
-    // Update stored tokens
-    const { error: updateError } = await supabase
-      .from('broker_connections')
-      .update({
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token || connection.refresh_token,
-        token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-        status: 'connected',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', userId)
-      .eq('broker_type', 'schwab');
-
-    if (updateError) {
-      console.error('Failed to update tokens:', updateError);
-    }
+    await userSupabase.rpc('store_broker_tokens', {
+      broker_type_param: 'schwab',
+      access_token_param: tokens.access_token,
+      refresh_token_param: tokens.refresh_token || connection.refresh_token,
+      expires_at_param: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+      accounts_param: null,
+      status_param: 'connected',
+    });
 
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        expiresIn: tokens.expires_in,
-        message: 'Token refreshed successfully'
-      }),
+      JSON.stringify({ success: true, expiresIn: tokens.expires_in, message: 'Token refreshed successfully' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: unknown) {
