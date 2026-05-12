@@ -734,34 +734,40 @@ function dc(key){if(charts[key]){charts[key].destroy();delete charts[key];}}
 function syncRange(id, lid, sfx){ $(lid).textContent = $(id).value + sfx; }
 
 // ══════════════════════════════════════════════
-// API KEY
+// PRICE FETCH (via Lovable Cloud edge function — Finnhub-backed)
 // ══════════════════════════════════════════════
-function saveApiKey(){
-  const k = $('api-key-input').value.trim();
-  if(k){ apiKey = k; localStorage.setItem('finnhub_key', k); $('live-indicator').style.display='flex'; }
-  $('api-modal').classList.add('hidden');
-  init();
-}
+function saveApiKey(){ $('api-modal').classList.add('hidden'); init(); }
 function skipApiKey(){ $('api-modal').classList.add('hidden'); init(); }
-function showApiModal(){ $('api-modal').classList.remove('hidden'); }
+function showApiModal(){ /* no-op: API key not required */ }
 
-async function fetchQuote(symbol){
-  if(!apiKey) return null;
+async function fetchQuotes(symbols){
   try{
-    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`);
-    return await r.json();
-  } catch(e){ return null; }
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/fetch-stock-data`, {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':`Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ symbols })
+    });
+    const data = await r.json();
+    return data.stocks || [];
+  } catch(e){ console.error('fetchQuotes', e); return []; }
 }
 
 async function refreshPrices(){
-  if(!apiKey){ showApiModal(); return; }
   const btn = $('refresh-btn');
-  btn.style.animation = 'spin 1s linear infinite';
+  if(btn) btn.style.animation = 'spin 1s linear infinite';
+  const symbols = holdings.map(h=>h.symbol);
+  const quotes = await fetchQuotes(symbols);
+  const map = {};
+  quotes.forEach(q=>{ map[q.symbol] = q; });
   for(const h of holdings){
-    const q = await fetchQuote(h.symbol);
-    if(q && q.c){ h.livePrice = q.c; h.change = q.dp; }
+    const q = map[h.symbol];
+    if(q && q.price){ h.livePrice = q.price; h.change = q.changePercent; }
   }
-  btn.style.animation = '';
+  if(btn) btn.style.animation = '';
   renderAll();
 }
 
