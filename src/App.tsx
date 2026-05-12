@@ -25,17 +25,13 @@ const ZeroDTE = lazy(() => import("./pages/ZeroDTE"));
 const Auth = lazy(() => import("./pages/Auth"));
 const TradingToolkit = lazy(() => import("./pages/TradingToolkit"));
 const MarketScanner = lazy(() => import("./pages/MarketScanner"));
-const Reports = lazy(() => import("./pages/Reports"));
 const CreditOptionsGuide = lazy(() => import("./pages/CreditOptionsGuide"));
 const FundamentalAnalysisGuide = lazy(() => import("./pages/FundamentalAnalysisGuide"));
 const OptionsGuide = lazy(() => import("./pages/OptionsGuide"));
 
 const DividendTracker = lazy(() => import("./pages/DividendTracker"));
-const EconomicCalendar = lazy(() => import("./pages/EconomicCalendar"));
 const RiskMetrics = lazy(() => import("./pages/RiskMetrics"));
 const PortfolioRebalancing = lazy(() => import("./pages/PortfolioRebalancing"));
-const TradingViewWebhook = lazy(() => import("./pages/TradingViewWebhook"));
-const TradingAutomation = lazy(() => import("./pages/TradingAutomation"));
 const IgniteFire = lazy(() => import("./pages/IgniteFire"));
 const Install = lazy(() => import("./pages/Install"));
 const StockResearch = lazy(() => import("./pages/StockResearch"));
@@ -48,7 +44,7 @@ const Assets = lazy(() => import("./pages/Assets"));
 const SchwabCallback = lazy(() => import("./pages/SchwabCallback"));
 const SmartTradeAI = lazy(() => import("./pages/SmartTradeAI"));
 const QuantGemini = lazy(() => import("./pages/QuantGemini"));
-const SWRCalculator = lazy(() => import("./pages/SWRCalculator"));
+
 
 const queryClient = new QueryClient();
 
