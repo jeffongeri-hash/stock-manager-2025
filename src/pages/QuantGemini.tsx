@@ -5,6 +5,7 @@ import InvestorCard from '@/components/quantgemini/InvestorCard';
 import FundamentalTable from '@/components/quantgemini/FundamentalTable';
 import CatalystList from '@/components/quantgemini/CatalystList';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero } from '@/components/layout/PageHero';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
