@@ -94,7 +94,7 @@ const App = () => (
                 <Route path="/fundamental-analysis-guide" element={<ProtectedRoute><FundamentalAnalysisGuide /></ProtectedRoute>} />
                 <Route path="/options-guide" element={<ProtectedRoute><OptionsGuide /></ProtectedRoute>} />
                 <Route path="/dividend-tracker" element={<ProtectedRoute><DividendTracker /></ProtectedRoute>} />
-                <Route path="/economic-calendar" element={<ProtectedRoute><EconomicCalendar /></ProtectedRoute>} />
+                
                 <Route path="/risk-metrics" element={<ProtectedRoute><RiskMetrics /></ProtectedRoute>} />
                 <Route path="/portfolio-rebalancing" element={<ProtectedRoute><PortfolioRebalancing /></ProtectedRoute>} />
                 <Route path="/stock-research" element={<ProtectedRoute><StockResearch /></ProtectedRoute>} />
@@ -104,15 +104,12 @@ const App = () => (
                 <Route path="/etf-comparison" element={<ProtectedRoute><ETFComparison /></ProtectedRoute>} />
                 <Route path="/smarttrade-ai" element={<ProtectedRoute><SmartTradeAI /></ProtectedRoute>} />
                 <Route path="/quantgemini" element={<ProtectedRoute><QuantGemini /></ProtectedRoute>} />
-                <Route path="/swr-calculator" element={<ProtectedRoute><SWRCalculator /></ProtectedRoute>} />
+                
                 <Route path="/assets" element={<ProtectedRoute requiresAuth><Assets /></ProtectedRoute>} />
                 <Route path="/schwab/callback" element={<SchwabCallback />} />
                 
                 {/* Routes requiring full authentication */}
                 <Route path="/settings" element={<ProtectedRoute requiresAuth><Settings /></ProtectedRoute>} />
-                <Route path="/reports" element={<ProtectedRoute requiresAuth><Reports /></ProtectedRoute>} />
-                <Route path="/tradingview-webhook" element={<ProtectedRoute requiresAuth><TradingViewWebhook /></ProtectedRoute>} />
-                <Route path="/trading-automation" element={<ProtectedRoute requiresAuth><TradingAutomation /></ProtectedRoute>} />
                 <Route path="/ignite-fire" element={<ProtectedRoute><IgniteFire /></ProtectedRoute>} />
                 <Route path="/saved-data" element={<ProtectedRoute requiresAuth><SavedData /></ProtectedRoute>} />
                 
