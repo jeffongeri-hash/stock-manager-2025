@@ -247,7 +247,12 @@ const QuantGemini: React.FC = () => {
   ];
 
   return (
-    <PageLayout title="QuantGemini - AI Equity Research">
+    <PageLayout>
+      <PageHero
+        eyebrow="QuantGemini"
+        title={<>Institutional research, <span className="gradient-text">AI-priced</span></>}
+        description="Investor scorecards, YOY metrics, ratings, and analyst targets fused with Gemini AI commentary."
+      />
       {activeInfo && <MetricInfoPopup title={activeInfo} onClose={() => setActiveInfo(null)} />}
       
       {/* Search Header */}
