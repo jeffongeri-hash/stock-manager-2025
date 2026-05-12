@@ -273,5 +273,5 @@ function calcROI(){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  calcInvestment();calcMortgage();calcFHA();calcAffordability();calcRvB();calcHacking();calcClosing();calcROI();
+  calcMortgage();calcFHA();calcAffordability();calcRvB();calcHacking();calcClosing();calcROI();
 });
