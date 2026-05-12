@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHero } from '@/components/layout/PageHero';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
