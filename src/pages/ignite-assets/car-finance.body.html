@@ -1,0 +1,420 @@
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- NAV -->
+<nav class="topnav">
+  <div class="nav-brand">
+    <div class="nav-brand-icon">IF</div>
+    <span>IgniteFIRE</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-pill">Car Finance</span>
+    <button class="nav-btn" onclick="window.history.back()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-tag">Car Finance Calculator</div>
+    <div class="page-title-main">Car Finance Calculator</div>
+    <div class="page-sub">Analyze auto loans, true costs, depreciation, lease vs buy — and the FIRE impact of every decision</div>
+  </div>
+</div>
+
+<!-- VEHICLE SELECTOR BAR -->
+<div class="vehicle-bar">
+  <div class="vehicle-bar-inner">
+    <div class="vehicle-bar-label">Select Vehicle</div>
+    <div class="vehicle-select-wrap">
+      <select id="vehicle-dropdown" onchange="applyVehicle()">
+        <optgroup label="Sedans">
+          <option value="toyota_camry">Toyota Camry LE (2024)</option>
+          <option value="honda_accord">Honda Accord EX (2024)</option>
+          <option value="tesla_model3">Tesla Model 3 Standard (2024)</option>
+          <option value="honda_civic">Honda Civic LX (2024)</option>
+          <option value="toyota_corolla">Toyota Corolla LE (2024)</option>
+          <option value="nissan_altima">Nissan Altima S (2024)</option>
+          <option value="hyundai_sonata">Hyundai Sonata SE (2024)</option>
+          <option value="kia_k5">Kia K5 LX (2024)</option>
+          <option value="volkswagen_jetta">Volkswagen Jetta S (2024)</option>
+          <option value="mazda6">Mazda6 Sport (2023)</option>
+        </optgroup>
+        <optgroup label="SUVs / Crossovers">
+          <option value="toyota_rav4">Toyota RAV4 LE (2024)</option>
+          <option value="honda_crv">Honda CR-V LX (2024)</option>
+          <option value="ford_escape">Ford Escape Active (2024)</option>
+          <option value="chevrolet_equinox">Chevrolet Equinox LS (2024)</option>
+          <option value="nissan_rogue">Nissan Rogue S (2024)</option>
+          <option value="hyundai_tucson">Hyundai Tucson SE (2024)</option>
+          <option value="kia_sportage">Kia Sportage LX (2024)</option>
+          <option value="subaru_forester">Subaru Forester Base (2024)</option>
+          <option value="mazda_cx5">Mazda CX-5 Sport (2024)</option>
+          <option value="volkswagen_tiguan">Volkswagen Tiguan S (2024)</option>
+          <option value="jeep_cherokee">Jeep Cherokee Latitude (2024)</option>
+          <option value="gmc_terrain">GMC Terrain SLE (2024)</option>
+        </optgroup>
+        <optgroup label="Trucks">
+          <option value="ford_f150">Ford F-150 XL (2024)</option>
+          <option value="chevrolet_silverado">Chevrolet Silverado 1500 WT (2024)</option>
+          <option value="ram_1500">Ram 1500 Tradesman (2024)</option>
+          <option value="toyota_tacoma">Toyota Tacoma SR (2024)</option>
+          <option value="gmc_sierra">GMC Sierra 1500 Pro (2024)</option>
+          <option value="ford_maverick">Ford Maverick XL (2024)</option>
+          <option value="hyundai_santa_cruz">Hyundai Santa Cruz XL (2024)</option>
+        </optgroup>
+        <optgroup label="Luxury">
+          <option value="bmw_3series">BMW 3 Series 330i (2024)</option>
+          <option value="mercedes_c300">Mercedes-Benz C 300 (2024)</option>
+          <option value="audi_a4">Audi A4 Premium (2024)</option>
+          <option value="lexus_es350">Lexus ES 350 (2024)</option>
+          <option value="genesis_g80">Genesis G80 Standard (2024)</option>
+          <option value="cadillac_ct5">Cadillac CT5 Luxury (2024)</option>
+          <option value="volvo_s60">Volvo S60 B5 Momentum (2024)</option>
+        </optgroup>
+        <optgroup label="Luxury SUVs">
+          <option value="bmw_x5">BMW X5 xDrive40i (2024)</option>
+          <option value="mercedes_gle">Mercedes-Benz GLE 350 (2024)</option>
+          <option value="audi_q7">Audi Q7 Premium (2024)</option>
+          <option value="lexus_rx350">Lexus RX 350 (2024)</option>
+          <option value="acura_mdx">Acura MDX Base (2024)</option>
+          <option value="volvo_xc90">Volvo XC90 B6 Plus (2024)</option>
+          <option value="genesis_gv80">Genesis GV80 Standard (2024)</option>
+        </optgroup>
+        <optgroup label="Electric Vehicles">
+          <option value="tesla_modelY">Tesla Model Y RWD (2024)</option>
+          <option value="tesla_model3lr">Tesla Model 3 Long Range (2024)</option>
+          <option value="ford_mache">Ford Mustang Mach-E Select (2024)</option>
+          <option value="chevrolet_bolt">Chevrolet Bolt EV 1LT (2024)</option>
+          <option value="rivian_r1t">Rivian R1T Standard (2024)</option>
+          <option value="hyundai_ioniq6">Hyundai IONIQ 6 SE (2024)</option>
+          <option value="kia_ev6">Kia EV6 Standard (2024)</option>
+          <option value="volkswagen_id4">Volkswagen ID.4 Standard (2024)</option>
+          <option value="bmw_i4">BMW i4 eDrive35 (2024)</option>
+          <option value="polestar2">Polestar 2 Standard (2024)</option>
+        </optgroup>
+        <optgroup label="Sports Cars">
+          <option value="ford_mustang">Ford Mustang EcoBoost (2024)</option>
+          <option value="chevrolet_camaro">Chevrolet Camaro 1LS (2024)</option>
+          <option value="dodge_challenger">Dodge Challenger SXT (2024)</option>
+          <option value="subaru_brz">Subaru BRZ Premium (2024)</option>
+          <option value="toyota_gr86">Toyota GR86 (2024)</option>
+          <option value="mazda_mx5">Mazda MX-5 Miata Sport (2024)</option>
+        </optgroup>
+        <optgroup label="Minivans / Vans">
+          <option value="toyota_sienna">Toyota Sienna LE (2024)</option>
+          <option value="honda_odyssey">Honda Odyssey LX (2024)</option>
+          <option value="chrysler_pacifica">Chrysler Pacifica Touring (2024)</option>
+          <option value="kia_carnival">Kia Carnival LX (2024)</option>
+        </optgroup>
+        <optgroup label="Custom">
+          <option value="custom">Custom Vehicle (Enter Manually)</option>
+        </optgroup>
+      </select>
+    </div>
+    <!-- Live vehicle info pills -->
+    <div class="vehicle-info-pill">
+      <div><div class="vip-label">MSRP</div><div class="vip-val" id="vip-msrp">$28,400</div></div>
+    </div>
+    <div class="vehicle-info-pill">
+      <div><div class="vip-label">MPG City/Hwy</div><div class="vip-val" id="vip-mpg">28 / 39</div></div>
+    </div>
+    <div class="vehicle-info-pill">
+      <div><div class="vip-label">Depreciation</div><div class="vip-val" id="vip-dep">15%/yr</div></div>
+    </div>
+    <div class="vehicle-info-pill">
+      <div><div class="vip-label">Type</div><div class="vip-val" id="vip-type">Sedan</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB NAV -->
+<div class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="switchTab('payment',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Payment
+    </button>
+    <button class="tab-btn" onclick="switchTab('depreciation',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+      Depreciation
+    </button>
+    <button class="tab-btn" onclick="switchTab('leasevbuy',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+      Lease vs Buy
+    </button>
+    <button class="tab-btn" onclick="switchTab('truecosts',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      True Costs
+    </button>
+    <button class="tab-btn" onclick="switchTab('opportunity',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+      FIRE Opportunity Cost
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════ PAYMENT TAB ══════════════ -->
+<div class="tab-pane active" id="tab-payment">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Loan Details</div>
+        <div class="card-sub">Adjust parameters — vehicle data pre-filled from your selection above</div>
+        <div class="input-group">
+          <label class="input-label">Vehicle Price ($)</label>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="cp-price" value="28400" oninput="calcPayment()"></div>
+        </div>
+        <div class="grid-2" style="gap:.75rem">
+          <div class="input-group" style="margin-bottom:0">
+            <label class="input-label">Down Payment ($)</label>
+            <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="cp-down" value="5000" oninput="calcPayment()"></div>
+          </div>
+          <div class="input-group" style="margin-bottom:0">
+            <label class="input-label">Trade-In Value ($)</label>
+            <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="cp-trade" value="0" oninput="calcPayment()"></div>
+          </div>
+        </div>
+        <div style="height:1rem"></div>
+        <div class="input-group">
+          <label class="input-label">Interest Rate (APR %)</label>
+          <div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="cp-rate" value="6.5" step="0.1" oninput="calcPayment()"></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Loan Term</label>
+          <select class="input-plain" id="cp-term" onchange="calcPayment()">
+            <option value="24">24 months (2 years)</option>
+            <option value="36">36 months (3 years)</option>
+            <option value="48">48 months (4 years)</option>
+            <option value="60" selected>60 months (5 years)</option>
+            <option value="72">72 months (6 years)</option>
+            <option value="84">84 months (7 years)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Sales Tax (%)</label>
+          <div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="cp-tax" value="6" step="0.1" oninput="calcPayment()"></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Fees / Other Costs ($)</label>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="cp-fees" value="1200" oninput="calcPayment()"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="grid-4" style="margin-bottom:1rem">
+          <div class="stat-card"><div class="s-label">Monthly Payment</div><div class="s-value blue" id="cp-monthly">—</div></div>
+          <div class="stat-card"><div class="s-label">Amount Financed</div><div class="s-value" id="cp-financed">—</div></div>
+          <div class="stat-card"><div class="s-label">Total Interest</div><div class="s-value red" id="cp-total-int">—</div></div>
+          <div class="stat-card"><div class="s-label">Total Cost</div><div class="s-value" id="cp-total-cost">—</div></div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom:1rem">
+          <div class="chart-card-title">Remaining Balance vs. Total Paid</div>
+          <div class="chart-card-sub">Hover over any point to see exact values at that month</div>
+          <div class="chart-wrap sm"><canvas id="cp-chart"></canvas></div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom:1rem">
+          <div class="chart-card-title">Payment Breakdown</div>
+          <div class="chart-card-sub">How each dollar of your monthly payment is allocated</div>
+          <div class="chart-wrap sm"><canvas id="cp-donut"></canvas></div>
+        </div>
+
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">This vehicle costs <strong id="cp-fire-total">—</strong> total. Invested at 7% over the same period → <strong id="cp-fire-invested">—</strong>. That represents approximately <strong id="cp-fire-delay">—</strong> of FIRE timeline delay at a $50K/yr spend target.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ DEPRECIATION TAB ══════════════ -->
+<div class="tab-pane" id="tab-depreciation">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Depreciation Calculator</div>
+        <div class="card-sub">Pre-filled from your vehicle selection — adjust as needed</div>
+        <div class="input-group">
+          <label class="input-label">Purchase Price ($)</label>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="dep-price" value="28400" oninput="calcDep()"></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Vehicle Type / Depreciation Rate</label>
+          <select class="input-plain" id="dep-type" onchange="calcDep()">
+            <option value="0.15" selected>Sedan — 15%/yr</option>
+            <option value="0.12">SUV / Truck — 12%/yr</option>
+            <option value="0.18">Luxury — 18%/yr</option>
+            <option value="0.10">Electric Vehicle — 10%/yr</option>
+            <option value="0.20">Sports Car — 20%/yr</option>
+            <option value="0.22">Exotic / Supercar — 22%/yr</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Projection Years</label>
+          <select class="input-plain" id="dep-years" onchange="calcDep()">
+            <option value="5">5 years</option>
+            <option value="10" selected>10 years</option>
+            <option value="15">15 years</option>
+          </select>
+        </div>
+        <div class="result-box" style="margin-top:.5rem">
+          <div class="section-label">Value Snapshots</div>
+          <div id="dep-snapshots" style="display:flex;flex-direction:column;gap:.5rem"></div>
+        </div>
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">Buying a <strong>3-year-old used vehicle</strong> saves <strong id="dep-fire-save">—</strong> vs. new by skipping peak depreciation. Invested at 7%, that grows to <strong id="dep-fire-invested">—</strong> in 10 years — a powerful FIRE move.</div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Vehicle Value Over Time</div>
+        <div class="chart-card-sub">Hover over any year to see exact value and total loss to date</div>
+        <div class="chart-wrap lg"><canvas id="dep-chart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ LEASE VS BUY TAB ══════════════ -->
+<div class="tab-pane" id="tab-leasevbuy">
+  <div class="page-content">
+    <div class="grid-3" style="margin-bottom:1.25rem">
+      <div class="card" id="lvb-lease-card">
+        <div class="section-label">Lease Option</div>
+        <div class="input-group"><label class="input-label">Monthly Lease Payment ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="lvb-lease-pmt" value="400" oninput="calcLVB()"></div></div>
+        <div class="input-group"><label class="input-label">Lease Term</label><select class="input-plain" id="lvb-lease-term" onchange="calcLVB()"><option value="24">24 months</option><option value="36" selected>36 months</option><option value="48">48 months</option></select></div>
+        <div class="input-group"><label class="input-label">Due at Signing ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="lvb-signing" value="2000" oninput="calcLVB()"></div></div>
+        <div class="input-group"><label class="input-label">Disposition Fee ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="lvb-disp" value="350" oninput="calcLVB()"></div></div>
+        <div style="margin-top:1.25rem;padding:1rem;border-radius:var(--r-sm);background:var(--surface2);border:1px solid var(--border2)" id="lvb-lease-result">
+          <div class="s-label">Total Lease Cost</div>
+          <div class="s-value blue" id="lvb-total-lease">—</div>
+          <div class="s-sub">No ownership at end</div>
+        </div>
+      </div>
+
+      <div class="card" id="lvb-buy-card">
+        <div class="section-label">Buy Option</div>
+        <div class="input-group"><label class="input-label">Purchase Price ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="lvb-price" value="28400" oninput="calcLVB()"></div></div>
+        <div class="input-group"><label class="input-label">Down Payment ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="lvb-down" value="5000" oninput="calcLVB()"></div></div>
+        <div class="input-group"><label class="input-label">Interest Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="lvb-rate" value="6.5" step="0.1" oninput="calcLVB()"></div></div>
+        <div class="input-group"><label class="input-label">Loan Term</label><select class="input-plain" id="lvb-buy-term" onchange="calcLVB()"><option value="48">48 months</option><option value="60" selected>60 months</option><option value="72">72 months</option></select></div>
+        <div class="input-group"><label class="input-label">Est. Residual Value ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="lvb-residual" value="16000" oninput="calcLVB()"></div></div>
+        <div style="margin-top:1.25rem;padding:1rem;border-radius:var(--r-sm);background:var(--surface2);border:1px solid var(--border2)" id="lvb-buy-result">
+          <div class="s-label">Net Buy Cost</div>
+          <div class="s-value green" id="lvb-net-buy">—</div>
+          <div class="s-sub">After selling vehicle</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Comparison &amp; Verdict</div>
+        <div id="lvb-verdict-box" style="padding:1rem;border-radius:var(--r-sm);background:var(--accent-dim);border:1px solid var(--accent-border);margin-bottom:1rem">
+          <div class="s-label">Recommendation</div>
+          <div style="font-family:var(--display);font-size:1.2rem;font-weight:500;margin-top:.25rem" id="lvb-verdict">—</div>
+          <div style="font-size:.78rem;color:var(--text2);margin-top:.4rem" id="lvb-verdict-sub">—</div>
+        </div>
+        <div id="lvb-breakdown" style="display:flex;flex-direction:column;gap:.4rem"></div>
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text" id="lvb-fire-note">Complete both columns to see FIRE impact.</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Cumulative Cost Comparison</div>
+      <div class="chart-card-sub">Hover over any month to compare exact cumulative costs for lease vs. buy</div>
+      <div class="chart-wrap"><canvas id="lvb-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TRUE COSTS TAB ══════════════ -->
+<div class="tab-pane" id="tab-truecosts">
+  <div class="page-content">
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div class="card">
+        <div class="section-label">Fuel Cost Calculator</div>
+        <div class="grid-2" style="gap:.75rem;margin-bottom:.75rem">
+          <div class="input-group" style="margin-bottom:0"><label class="input-label">Annual Miles Driven</label><input class="input-plain" type="number" id="tc-miles" value="12000" oninput="calcTrueCosts()"></div>
+          <div class="input-group" style="margin-bottom:0"><label class="input-label">Gas Price ($/gal)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="tc-gas" value="3.50" step="0.05" oninput="calcTrueCosts()"></div></div>
+        </div>
+        <div id="tc-fuel-list"></div>
+        <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border2)">
+          <div class="section-label">5-Year Fuel Cost Comparison</div>
+          <div class="chart-wrap sm"><canvas id="tc-fuel-chart"></canvas></div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:1rem">
+          <div class="section-label">Insurance Estimates</div>
+          <div style="font-size:.75rem;color:var(--text2);margin-bottom:.75rem" id="tc-ins-note">Based on selected vehicle</div>
+          <div id="tc-ins-list"></div>
+        </div>
+        <div class="card">
+          <div class="section-label">Annual Maintenance Estimates</div>
+          <div id="tc-maint-list"></div>
+          <div class="row-item total">
+            <span class="ri-label">Total Annual Ownership Cost</span>
+            <span class="ri-val" id="tc-total-annual">—</span>
+          </div>
+          <div class="fire-callout">
+            <div class="fire-callout-icon">FI</div>
+            <div class="fire-callout-text">Beyond your loan, this vehicle costs <strong id="tc-fire-annual">—</strong>/yr to run. Over 5 years that's <strong id="tc-fire-5yr">—</strong> in operating costs alone — factor this into your FIRE budget planning.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Total Cost of Ownership — 5 Year Breakdown</div>
+      <div class="chart-card-sub">Hover over any segment to see the exact cost category and amount</div>
+      <div class="chart-wrap"><canvas id="tc-tco-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ OPPORTUNITY COST TAB ══════════════ -->
+<div class="tab-pane" id="tab-opportunity">
+  <div class="page-content">
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div class="card">
+        <div class="card-title">FIRE Opportunity Cost Calculator</div>
+        <div class="card-sub">See exactly how much this vehicle decision costs your FIRE journey</div>
+        <div class="input-group"><label class="input-label">Vehicle Total Cost ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="oc-total" value="37000" oninput="calcOC()"></div></div>
+        <div class="input-group"><label class="input-label">Monthly Payment ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="oc-monthly" value="560" oninput="calcOC()"></div></div>
+        <div class="input-group"><label class="input-label">Loan Duration (months)</label><input class="input-plain" type="number" id="oc-term" value="60" oninput="calcOC()"></div>
+        <div class="range-group">
+          <div class="range-header"><label class="input-label">Investment Return Rate</label><span class="range-val" id="oc-rate-val">7%</span></div>
+          <input type="range" id="oc-rate" min="4" max="12" step="0.5" value="7" oninput="syncR('oc-rate','oc-rate-val','%');calcOC()">
+        </div>
+        <div class="input-group"><label class="input-label">FIRE Annual Spending Target ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="oc-fire-spend" value="50000" oninput="calcOC()"></div></div>
+        <div class="input-group"><label class="input-label">Projection Horizon (years)</label><select class="input-plain" id="oc-horizon" onchange="calcOC()"><option value="5">5 years</option><option value="10" selected>10 years</option><option value="20">20 years</option><option value="30">30 years</option></select></div>
+      </div>
+      <div>
+        <div class="result-box" style="margin-bottom:1rem">
+          <div class="section-label">FIRE Impact Analysis</div>
+          <div class="grid-2" style="gap:.75rem">
+            <div><div class="s-label">If Invested (end of loan)</div><div class="s-value blue" id="oc-eol">—</div><div class="s-sub" id="oc-eol-sub">—</div></div>
+            <div><div class="s-label">If Invested (full horizon)</div><div class="s-value green" id="oc-horizon-val">—</div><div class="s-sub" id="oc-horizon-sub">—</div></div>
+            <div><div class="s-label">FIRE Timeline Delay</div><div class="s-value red" id="oc-delay">—</div><div class="s-sub">at your spend target</div></div>
+            <div><div class="s-label">Annual Income Lost (4% SWR)</div><div class="s-value amber" id="oc-income-lost">—</div><div class="s-sub">perpetual passive income forgone</div></div>
+          </div>
+        </div>
+        <div style="padding:1rem;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);font-size:.82rem;line-height:1.7;color:var(--text2)" id="oc-narrative">—</div>
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text" id="oc-fire-note">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Vehicle Cost vs. Invested Monthly Payments Over Time</div>
+      <div class="chart-card-sub">Hover over any year to see the exact divergence between the car's value and what you'd have if payments were invested</div>
+      <div class="chart-wrap lg"><canvas id="oc-chart"></canvas></div>
+    </div>
+  </div>
+</div>

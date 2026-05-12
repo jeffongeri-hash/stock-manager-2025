@@ -1,0 +1,392 @@
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- NAV -->
+<nav class="topnav">
+  <div class="nav-brand">
+    <div class="nav-brand-icon">IF</div>
+    <span>IgniteFIRE</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-pill">Trading Toolkit</span>
+    <button class="nav-btn" title="Back to FIRE app" onclick="window.history.back()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-tag">Trading Toolkit</div>
+    <div class="page-title">Trading Toolkit</div>
+    <div class="page-sub">Precision tools for position sizing, risk management, and trade optimization</div>
+  </div>
+</div>
+
+<!-- TAB NAV -->
+<div class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="switchTab('position',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Position Sizing
+    </button>
+    <button class="tab-btn" onclick="switchTab('expected',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Expected Move
+    </button>
+    <button class="tab-btn" onclick="switchTab('greeks',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Greeks
+    </button>
+    <button class="tab-btn" onclick="switchTab('exit',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      Exit Strategy
+    </button>
+    <button class="tab-btn" onclick="switchTab('montecarlo',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M3 12 7 8l4 4 4-6 4 3"/></svg>
+      Monte Carlo
+    </button>
+    <button class="tab-btn" onclick="switchTab('rules',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Trading Rules
+    </button>
+    <button class="tab-btn" onclick="switchTab('journal',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/></svg>
+      Journal
+    </button>
+    <button class="tab-btn" onclick="switchTab('income',this)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Income Tracker
+    </button>
+  </div>
+</div>
+
+<!-- ═══ POSITION SIZING ═══ -->
+<div class="tab-pane active" id="tab-position">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Position Size Calculator</div>
+        <div class="card-sub">Calculate optimal position size based on your risk parameters</div>
+        <div class="input-group">
+          <label class="input-label">Stock Symbol</label>
+          <input class="input-plain" type="text" id="ps-symbol" value="AAPL" style="text-transform:uppercase;font-weight:700;font-size:1rem" oninput="calcPosition()">
+          <div style="font-size:.72rem;color:var(--text3);margin-top:.35rem" id="ps-price-note">Enter a symbol above</div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Account Size ($)</label>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="ps-account" value="10000" oninput="calcPosition()"></div>
+        </div>
+        <div class="range-group">
+          <div class="range-header"><label class="input-label">Risk Percentage</label><span class="range-val" id="ps-risk-val">2%</span></div>
+          <input type="range" id="ps-risk" min="0.5" max="5" step="0.5" value="2" oninput="syncR('ps-risk','ps-risk-val','%');calcPosition()">
+        </div>
+        <div class="grid-2">
+          <div class="input-group" style="margin-bottom:0">
+            <label class="input-label">Entry Price ($)</label>
+            <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="ps-entry" value="292.68" step="0.01" oninput="calcPosition()"></div>
+          </div>
+          <div class="input-group" style="margin-bottom:0">
+            <label class="input-label">Stop Loss ($)</label>
+            <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="ps-stop" value="283.90" step="0.01" oninput="calcPosition()"></div>
+          </div>
+        </div>
+        <div class="range-group" style="margin-top:1rem">
+          <div class="range-header"><label class="input-label">Confidence Level</label><span class="range-val" id="ps-conf-val">7/10</span></div>
+          <input type="range" id="ps-conf" min="1" max="10" step="1" value="7" oninput="syncR('ps-conf','ps-conf-val','/10');calcPosition()">
+        </div>
+        <div class="fire-callout" id="ps-fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">At 2% risk, this trade risks <strong id="ps-fire-days">—</strong> days of FIRE timeline progress at a $40K/yr spend rate.</div>
+        </div>
+      </div>
+      <div>
+        <div class="result-box">
+          <div class="section-label">Results</div>
+          <div class="result-grid">
+            <div><div class="stat-label">Risk Amount</div><div class="stat-value orange" id="ps-risk-amt">$200</div></div>
+            <div><div class="stat-label">Risk Per Share</div><div class="stat-value" id="ps-risk-share">$8.78</div></div>
+            <div><div class="stat-label">Base Shares</div><div class="stat-value" id="ps-base-shares">22</div></div>
+            <div><div class="stat-label">Adjusted Shares</div><div class="stat-value orange" id="ps-adj-shares">15</div></div>
+            <div><div class="stat-label">Total Cost</div><div class="stat-value" id="ps-total-cost">$4,390</div></div>
+            <div><div class="stat-label">Max Loss</div><div class="stat-value red" id="ps-max-loss">$131.70</div></div>
+          </div>
+          <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border2)">
+            <div class="stat-label" style="margin-bottom:.75rem">Risk/Reward Ratios</div>
+            <div class="grid-3" style="gap:.6rem">
+              <div style="text-align:center;background:var(--surface3);border-radius:6px;padding:.6rem"><div style="font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">1:1</div><div style="font-family:var(--mono);font-weight:700;color:var(--text2)" id="ps-t1">—</div></div>
+              <div style="text-align:center;background:var(--surface3);border-radius:6px;padding:.6rem"><div style="font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">1:2</div><div style="font-family:var(--mono);font-weight:700;color:var(--green)" id="ps-t2">—</div></div>
+              <div style="text-align:center;background:var(--surface3);border-radius:6px;padding:.6rem"><div style="font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">1:3</div><div style="font-family:var(--mono);font-weight:700;color:var(--accent)" id="ps-t3">—</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card" style="margin-top:1rem">
+          <div style="font-size:.85rem;font-weight:700;margin-bottom:1rem;font-family:var(--display)">Risk/Reward Visualization</div>
+          <div class="chart-wrap sm"><canvas id="ps-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EXPECTED MOVE ═══ -->
+<div class="tab-pane" id="tab-expected">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Expected Move Calculator</div>
+        <div class="card-sub">Calculate the expected price range based on implied volatility</div>
+        <div class="input-group"><label class="input-label">Stock Price ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="em-price" value="292.68" step="0.01" oninput="calcEM()"></div></div>
+        <div class="input-group"><label class="input-label">Implied Volatility (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="em-iv" value="25" step="0.1" oninput="calcEM()"></div></div>
+        <div class="input-group"><label class="input-label">Days to Expiration</label><input class="input-plain" type="number" id="em-dte" value="30" oninput="calcEM()"></div>
+        <div class="result-box" style="margin-top:1rem">
+          <div class="section-label">Expected Move</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+            <div><div class="stat-label">1 Std Dev Range</div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:800;color:var(--accent)" id="em-range">— to —</div></div>
+            <div style="text-align:right"><div class="stat-label">Move Amount</div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:800" id="em-move">±$0</div></div>
+          </div>
+          <div class="grid-2" style="gap:.6rem">
+            <div style="background:var(--green-dim);border:1px solid rgba(16,185,129,.2);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--green);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.25rem">Upside Target</div><div style="font-family:var(--mono);font-weight:800;color:var(--green)" id="em-up">—</div></div>
+            <div style="background:var(--red-dim);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.25rem">Downside Target</div><div style="font-family:var(--mono);font-weight:800;color:var(--red)" id="em-down">—</div></div>
+          </div>
+          <div class="fire-callout" style="margin-top:.75rem">
+            <div class="fire-callout-icon">FI</div>
+            <div class="fire-callout-text">At <strong id="em-iv-disp">25%</strong> IV, the market prices in a <strong id="em-pct-disp">—</strong> move over <strong id="em-dte-disp">30</strong> days. High IV = elevated premium — ideal for premium sellers building passive income.</div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:.25rem">Probability Distribution</div>
+        <div style="font-size:.75rem;color:var(--text2);margin-bottom:1.25rem">Bell curve showing expected price range</div>
+        <div class="chart-wrap"><canvas id="em-chart"></canvas></div>
+        <div class="grid-3" style="gap:.5rem;margin-top:1rem">
+          <div style="background:var(--surface2);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">1σ (68%)</div><div style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--accent)" id="em-1sd">—</div></div>
+          <div style="background:var(--surface2);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">2σ (95%)</div><div style="font-family:var(--mono);font-size:.9rem;font-weight:700" id="em-2sd">—</div></div>
+          <div style="background:var(--surface2);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">3σ (99.7%)</div><div style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--text2)" id="em-3sd">—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GREEKS ═══ -->
+<div class="tab-pane" id="tab-greeks">
+  <div class="page-content">
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div class="card">
+        <div class="card-title">Options Greeks Calculator</div>
+        <div class="card-sub">Black-Scholes model approximation for key options Greeks</div>
+        <div class="grid-2">
+          <div class="input-group"><label class="input-label">Stock Price ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="gr-stock" value="292.68" step="0.01" oninput="calcGreeks()"></div></div>
+          <div class="input-group"><label class="input-label">Strike Price ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="gr-strike" value="295" step="0.01" oninput="calcGreeks()"></div></div>
+          <div class="input-group"><label class="input-label">Days to Expiry</label><input class="input-plain" type="number" id="gr-dte" value="30" oninput="calcGreeks()"></div>
+          <div class="input-group"><label class="input-label">IV (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="gr-iv" value="25" step="0.1" oninput="calcGreeks()"></div></div>
+          <div class="input-group"><label class="input-label">Risk-Free Rate (%)</label><input class="input-plain" type="number" id="gr-rfr" value="5.3" step="0.1" oninput="calcGreeks()"></div>
+          <div class="input-group"><label class="input-label">Option Type</label><select class="input-plain" id="gr-type" onchange="calcGreeks()"><option value="call">Call</option><option value="put">Put</option></select></div>
+        </div>
+      </div>
+      <div class="result-box">
+        <div class="section-label">Greeks Output</div>
+        <div class="grid-2" style="gap:.75rem">
+          <div style="background:var(--surface3);border-radius:var(--r-sm);padding:1rem"><div class="stat-label">Delta</div><div class="stat-value orange" id="gr-delta">—</div><div class="stat-sub">Price sensitivity</div></div>
+          <div style="background:var(--surface3);border-radius:var(--r-sm);padding:1rem"><div class="stat-label">Gamma</div><div class="stat-value" id="gr-gamma">—</div><div class="stat-sub">Delta rate of change</div></div>
+          <div style="background:var(--surface3);border-radius:var(--r-sm);padding:1rem"><div class="stat-label">Theta ($/day)</div><div class="stat-value red" id="gr-theta">—</div><div class="stat-sub">Time decay</div></div>
+          <div style="background:var(--surface3);border-radius:var(--r-sm);padding:1rem"><div class="stat-label">Vega (per 1% IV)</div><div class="stat-value cyan" id="gr-vega">—</div><div class="stat-sub">Volatility sensitivity</div></div>
+          <div style="background:var(--surface3);border-radius:var(--r-sm);padding:1rem"><div class="stat-label">Option Price</div><div class="stat-value green" id="gr-price">—</div><div class="stat-sub">Theoretical value</div></div>
+          <div style="background:var(--surface3);border-radius:var(--r-sm);padding:1rem"><div class="stat-label">Breakeven</div><div class="stat-value" id="gr-be">—</div><div class="stat-sub">At expiration</div></div>
+        </div>
+        <div class="fire-callout" style="margin-top:1rem">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">Theta of <strong id="gr-theta-note">—</strong>/day means this contract loses value daily. Selling options with high theta accelerates passive income generation toward your FIRE goal.</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:1.25rem">P&amp;L at Expiration</div>
+      <div class="chart-wrap sm"><canvas id="gr-pnl-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EXIT STRATEGY ═══ -->
+<div class="tab-pane" id="tab-exit">
+  <div class="page-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Exit Strategy Planner</div>
+        <div class="card-sub">Plan your exits before entering — remove emotion from trading</div>
+        <div class="input-group"><label class="input-label">Entry Price ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="ex-entry" value="292.68" step="0.01" oninput="calcExit()"></div></div>
+        <div class="input-group"><label class="input-label">Stop Loss ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="ex-stop" value="283.90" step="0.01" oninput="calcExit()"></div></div>
+        <div class="input-group"><label class="input-label">Position Size (shares)</label><input class="input-plain" type="number" id="ex-shares" value="15" oninput="calcExit()"></div>
+        <div class="range-group">
+          <div class="range-header"><label class="input-label">Target R Multiple</label><span class="range-val" id="ex-r-val">2R</span></div>
+          <input type="range" id="ex-r" min="1" max="5" step="0.5" value="2" oninput="syncR('ex-r','ex-r-val','R');calcExit()">
+        </div>
+        <div class="result-box" style="margin-top:1rem">
+          <div class="section-label">Exit Levels</div>
+          <div style="display:flex;flex-direction:column;gap:.6rem" id="ex-levels"></div>
+        </div>
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">Planned exits with 2R+ targets give you a <strong>positive expectancy</strong> over time — the foundation of building consistent trading income toward FIRE.</div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:1.25rem">Exit Level Visualization</div>
+        <div class="chart-wrap"><canvas id="ex-chart"></canvas></div>
+        <div class="grid-4" style="gap:.6rem;margin-top:1rem">
+          <div style="background:var(--surface2);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">Max Loss</div><div style="font-family:var(--mono);font-weight:700;color:var(--red)" id="ex-max-loss">—</div></div>
+          <div style="background:var(--surface2);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">1R Profit</div><div style="font-family:var(--mono);font-weight:700;color:var(--text2)" id="ex-1r">—</div></div>
+          <div style="background:var(--surface2);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">2R Profit</div><div style="font-family:var(--mono);font-weight:700;color:var(--accent)" id="ex-2r">—</div></div>
+          <div style="background:var(--surface2);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">3R Profit</div><div style="font-family:var(--mono);font-weight:700;color:var(--green)" id="ex-3r">—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MONTE CARLO ═══ -->
+<div class="tab-pane" id="tab-montecarlo">
+  <div class="page-content">
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div class="card">
+        <div class="card-title">Monte Carlo Simulation</div>
+        <div class="card-sub">Simulate thousands of trade outcomes to model portfolio probability</div>
+        <div class="input-group"><label class="input-label">Win Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="mc-win" value="45" min="1" max="99" oninput="runMC()"></div></div>
+        <div class="input-group"><label class="input-label">Average Win ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="mc-avg-win" value="400" oninput="runMC()"></div></div>
+        <div class="input-group"><label class="input-label">Average Loss ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="mc-avg-loss" value="200" oninput="runMC()"></div></div>
+        <div class="input-group"><label class="input-label">Starting Capital ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="mc-capital" value="10000" oninput="runMC()"></div></div>
+        <div class="input-group"><label class="input-label">Number of Trades</label><input class="input-plain" type="number" id="mc-trades" value="100" oninput="runMC()"></div>
+        <div class="result-box" style="margin-top:1rem">
+          <div class="section-label">Simulation Results (500 runs)</div>
+          <div class="grid-2" style="gap:.6rem">
+            <div><div class="stat-label">Expected Value/Trade</div><div class="stat-value orange" id="mc-ev">—</div></div>
+            <div><div class="stat-label">Profit Factor</div><div class="stat-value green" id="mc-pf">—</div></div>
+            <div><div class="stat-label">Median Outcome</div><div class="stat-value" id="mc-median">—</div></div>
+            <div><div class="stat-label">Ruin Probability</div><div class="stat-value red" id="mc-ruin">—</div></div>
+          </div>
+        </div>
+        <div class="fire-callout">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">With a positive expected value, consistent trading compounds into <strong id="mc-annual-note">—</strong> estimated annual income — a meaningful FIRE income stream.</div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:1.25rem">Monte Carlo Equity Curves</div>
+        <div class="chart-wrap lg"><canvas id="mc-chart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TRADING RULES ═══ -->
+<div class="tab-pane" id="tab-rules">
+  <div class="page-content">
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title">My Trading Rules</div>
+      <div class="card-sub">Define and enforce your personal trading framework — rules protect your FIRE capital</div>
+      <div id="rules-list" style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem"></div>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <input class="input-plain" type="text" id="new-rule-input" placeholder="Add a new trading rule..." style="flex:1;min-width:200px">
+        <button class="btn btn-primary" onclick="addRule()">Add Rule</button>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="card"><div class="section-label">Risk Management</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div style="background:var(--surface2);padding:.75rem;border-radius:6px;font-size:.82rem;border-left:2px solid var(--accent)">Never risk more than 2% per trade</div>
+          <div style="background:var(--surface2);padding:.75rem;border-radius:6px;font-size:.82rem;border-left:2px solid var(--accent)">Max 6% portfolio at risk simultaneously</div>
+          <div style="background:var(--surface2);padding:.75rem;border-radius:6px;font-size:.82rem;border-left:2px solid var(--accent)">Stop daily loss limit at -3%</div>
+        </div>
+      </div>
+      <div class="card"><div class="section-label">Entry Rules</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div style="background:var(--surface2);padding:.75rem;border-radius:6px;font-size:.82rem;border-left:2px solid var(--green)">Only trade with the trend (above 200 SMA)</div>
+          <div style="background:var(--surface2);padding:.75rem;border-radius:6px;font-size:.82rem;border-left:2px solid var(--green)">Minimum 2:1 reward-to-risk ratio</div>
+          <div style="background:var(--surface2);padding:.75rem;border-radius:6px;font-size:.82rem;border-left:2px solid var(--green)">No trading 30 min after open</div>
+        </div>
+      </div>
+      <div class="card"><div class="section-label">FIRE-Aware Rules</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div style="background:rgba(249,115,22,.06);padding:.75rem;border-radius:6px;font-size:.82rem;border-left:2px solid var(--accent)">Trading income target: 10% of FIRE gap/yr</div>
+          <div style="background:rgba(249,115,22,.06);padding:.75rem;border-radius:6px;font-size:.82rem;border-left:2px solid var(--accent)">Never trade FIRE core portfolio positions</div>
+          <div style="background:rgba(249,115,22,.06);padding:.75rem;border-radius:6px;font-size:.82rem;border-left:2px solid var(--accent)">Take profits to dividend accounts quarterly</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ JOURNAL ═══ -->
+<div class="tab-pane" id="tab-journal">
+  <div class="page-content">
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div class="card">
+        <div class="card-title">Log a Trade</div>
+        <div class="grid-2">
+          <div class="input-group"><label class="input-label">Symbol</label><input class="input-plain" type="text" id="jn-symbol" placeholder="AAPL" style="text-transform:uppercase"></div>
+          <div class="input-group"><label class="input-label">Type</label><select class="input-plain" id="jn-type"><option>Long</option><option>Short</option><option>Call</option><option>Put</option></select></div>
+          <div class="input-group"><label class="input-label">Entry ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="jn-entry" step="0.01"></div></div>
+          <div class="input-group"><label class="input-label">Exit ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="jn-exit" step="0.01"></div></div>
+          <div class="input-group"><label class="input-label">Shares/Contracts</label><input class="input-plain" type="number" id="jn-size" value="10"></div>
+          <div class="input-group"><label class="input-label">Date</label><input class="input-plain" type="date" id="jn-date"></div>
+        </div>
+        <div class="input-group"><label class="input-label">Notes</label><textarea class="input-plain" id="jn-notes" rows="2" placeholder="What went well? What could improve?" style="resize:vertical"></textarea></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="addJournalEntry()">Log Trade</button>
+      </div>
+      <div class="chart-card">
+        <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:1.25rem">Cumulative P&amp;L</div>
+        <div class="chart-wrap"><canvas id="jn-chart"></canvas></div>
+        <div class="grid-3" style="gap:.5rem;margin-top:1rem">
+          <div style="background:var(--surface2);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">Total P&L</div><div style="font-family:var(--mono);font-weight:700;color:var(--green)" id="jn-total-pnl">$0</div></div>
+          <div style="background:var(--surface2);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">Win Rate</div><div style="font-family:var(--mono);font-weight:700;color:var(--accent)" id="jn-win-rate">0%</div></div>
+          <div style="background:var(--surface2);border-radius:6px;padding:.75rem;text-align:center"><div style="font-size:.6rem;color:var(--text3);margin-bottom:.2rem">Trades</div><div style="font-family:var(--mono);font-weight:700" id="jn-total-trades">0</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Trade History</div>
+      <div id="journal-entries" style="margin-top:.75rem"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ INCOME TRACKER ═══ -->
+<div class="tab-pane" id="tab-income">
+  <div class="page-content">
+    <div class="grid-4" style="margin-bottom:1rem">
+      <div class="stat-card"><div class="stat-label">Premium Collected (MTD)</div><div class="stat-value orange" id="inc-mtd">$0</div><div class="stat-sub">this month</div></div>
+      <div class="stat-card"><div class="stat-label">Premium Collected (YTD)</div><div class="stat-value green" id="inc-ytd">$0</div><div class="stat-sub">this year</div></div>
+      <div class="stat-card"><div class="stat-label">Monthly Target</div><div class="stat-value" id="inc-target">$500</div><div class="stat-sub"><input type="number" id="inc-target-input" value="500" style="background:transparent;border:none;width:80px;font-family:var(--mono);font-size:.8rem;color:var(--text2);outline:none" oninput="updateIncomeTarget()"></div></div>
+      <div class="stat-card"><div class="stat-label">Target Progress</div><div class="stat-value orange" id="inc-pct">0%</div><div style="height:4px;background:var(--surface3);border-radius:2px;margin-top:.5rem;overflow:hidden"><div id="inc-bar" style="height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;width:0%;transition:width .5s"></div></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Log Options Income</div>
+        <div class="card-sub">Track premium collected from selling options</div>
+        <div class="grid-2">
+          <div class="input-group"><label class="input-label">Symbol</label><input class="input-plain" type="text" id="inc-symbol" placeholder="SPY" style="text-transform:uppercase"></div>
+          <div class="input-group"><label class="input-label">Strategy</label><select class="input-plain" id="inc-strat"><option>Covered Call</option><option>Cash Secured Put</option><option>Iron Condor</option><option>Credit Spread</option><option>Strangle</option></select></div>
+          <div class="input-group"><label class="input-label">Premium Received ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="inc-premium" step="0.01"></div></div>
+          <div class="input-group"><label class="input-label">Date</label><input class="input-plain" type="date" id="inc-date"></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="addIncomeEntry()">Add Income</button>
+        <div class="fire-callout" style="margin-top:1rem">
+          <div class="fire-callout-icon">FI</div>
+          <div class="fire-callout-text">At your current pace, you're on track for <strong id="inc-annual-proj">$0</strong>/year in options income. That covers <strong id="inc-fire-pct">0%</strong> of a $40K/yr FIRE spend rate.</div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:1.25rem">Monthly Premium Income</div>
+        <div class="chart-wrap"><canvas id="inc-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1rem">
+      <div class="card-title">Income Log</div>
+      <div id="income-entries" style="margin-top:.75rem">
+        <div style="text-align:center;color:var(--text3);padding:2rem;font-size:.85rem">No income entries yet. Log your first options premium above.</div>
+      </div>
+    </div>
+  </div>
+</div>
