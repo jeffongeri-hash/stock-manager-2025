@@ -6,11 +6,13 @@ import { Orbs } from '@/components/layout/Orbs';
 import { GuestModeBanner } from '@/components/layout/GuestModeBanner';
 import { StockCard } from '@/components/stocks/StockCard';
 import { AnimatedStatsCard } from '@/components/ui/AnimatedStatsCard';
+import { TradingToolCard } from '@/components/dashboard/TradingToolCard';
+import { LiveMarketNews } from '@/components/news/LiveMarketNews';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PullToRefresh } from '@/components/mobile/PullToRefresh';
-import { BarChart3, TrendingUpIcon, Target, DollarSign, Activity, Plus, X } from 'lucide-react';
+import { BarChart3, TrendingUpIcon, Target, DollarSign, Activity, Plus, X, Calculator, Shield, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -282,26 +284,23 @@ export function Dashboard() {
   const gainers = stocks.filter(stock => stock.changePercent > 0);
   const losers = stocks.filter(stock => stock.changePercent < 0);
   
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(prev => !prev);
-  };
-  
   return (
-    <div className="min-h-screen flex flex-col">
-      <GuestModeBanner />
-      <Navbar />
-      
-      <div className="flex-1 flex relative">
-        {/* Sidebar - hidden on mobile by default */}
-        <div className="hidden lg:block">
-          <Sidebar isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
-        </div>
-        
-        <main className="flex-1 transition-all duration-300 w-full overflow-hidden">
+    <div className="relative min-h-screen flex flex-col">
+      <Orbs />
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <GuestModeBanner />
+        <TopNav />
+
+        <main className="flex-1 w-full">
           <PullToRefresh onRefresh={handleRefresh} className="h-full overflow-y-auto pb-20 lg:pb-0">
-            <div className="w-full p-3 sm:p-4 lg:p-6 animate-fade-in">
-              <div className="mobile-sticky-header mb-4">
-                <h1 className="text-xl sm:text-2xl font-bold">Market Dashboard</h1>
+            <div className="w-full max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8 animate-fade-in">
+              <div className="mb-6 sm:mb-8">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-1">
+                  Live overview
+                </p>
+                <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight">
+                  Market <span className="gradient-text">Dashboard</span>
+                </h1>
               </div>
             
             {/* Stats Row - Swipeable on mobile */}
