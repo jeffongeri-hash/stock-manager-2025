@@ -81,45 +81,55 @@ export default function Assets() {
   }
 
   return (
-    <PageLayout title="Assets">
-      {/* Portfolio Summary Stats */}
-      {/* Auto-sync indicator */}
-      {snaptrade.isConnected && snaptrade.lastSyncTime && (
-        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          <span>Last synced: {snaptrade.lastSyncTime.toLocaleTimeString()}</span>
-          <span className="text-xs">(auto-syncs every 5 min)</span>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <AnimatedStatsCard
-          title="Total Portfolio Value"
-          value={snaptrade.isLoading ? "Loading..." : formatCurrency(snaptrade.totalValue)}
-          icon={<Wallet className="h-5 w-5" />}
-          description={snaptrade.isConnected ? "From all connected accounts" : "Connect brokerages to see value"}
-        />
-        <AnimatedStatsCard
-          title="Total Gain/Loss"
-          value={snaptrade.isLoading ? "Loading..." : formatCurrency(snaptrade.totalPnL)}
-          icon={snaptrade.totalPnL >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-          trend={snaptrade.isLoading ? undefined : snaptrade.totalPnLPercent}
-          description="Unrealized P&L"
-          variant={snaptrade.totalPnL >= 0 ? "success" : "danger"}
-        />
-        <AnimatedStatsCard
-          title="Total Positions"
-          value={snaptrade.isLoading ? "..." : snaptrade.holdings.length.toString()}
-          icon={<PieChart className="h-5 w-5" />}
-          description="Unique holdings"
-        />
-        <AnimatedStatsCard
-          title="Dividends Received"
-          value={snaptrade.isLoading ? "Loading..." : formatCurrency(snaptrade.totalDividends)}
-          icon={<DollarSign className="h-5 w-5" />}
-          description="Historical dividends"
-        />
-      </div>
+    <PageLayout>
+      <PageHero
+        eyebrow="Brokerage Assets"
+        title={<>All your <span className="gradient-text">accounts</span>, one view</>}
+        description="Aggregated holdings, P&L, and dividends across every connected brokerage. Auto-syncs every 5 minutes."
+        actions={
+          snaptrade.isConnected && snaptrade.lastSyncTime ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              <span>Synced {snaptrade.lastSyncTime.toLocaleTimeString()}</span>
+            </div>
+          ) : null
+        }
+        stats={
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <HeroStat
+              label="Total value"
+              tone="primary"
+              icon={<Wallet className="h-3.5 w-3.5" />}
+              value={snaptrade.isLoading ? '…' : formatCurrency(snaptrade.totalValue)}
+              sub={snaptrade.isConnected ? 'All connected accounts' : 'Connect to view'}
+            />
+            <HeroStat
+              label="Unrealized P&L"
+              tone={snaptrade.totalPnL >= 0 ? 'success' : 'danger'}
+              icon={snaptrade.totalPnL >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+              value={snaptrade.isLoading ? '…' : formatCurrency(snaptrade.totalPnL)}
+              sub={
+                <span className={snaptrade.totalPnLPercent >= 0 ? 'text-success' : 'text-danger'}>
+                  {formatPercent(snaptrade.totalPnLPercent)}
+                </span>
+              }
+            />
+            <HeroStat
+              label="Positions"
+              icon={<PieChart className="h-3.5 w-3.5" />}
+              value={snaptrade.isLoading ? '…' : snaptrade.holdings.length.toString()}
+              sub="Unique holdings"
+            />
+            <HeroStat
+              label="Dividends"
+              tone="success"
+              icon={<DollarSign className="h-3.5 w-3.5" />}
+              value={snaptrade.isLoading ? '…' : formatCurrency(snaptrade.totalDividends)}
+              sub="Lifetime received"
+            />
+          </div>
+        }
+      />
 
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid grid-cols-3 w-full max-w-md">
