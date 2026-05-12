@@ -5,7 +5,8 @@ import { GuestModeBanner } from '@/components/layout/GuestModeBanner';
 
 interface PageLayoutProps {
   children: React.ReactNode;
-  title: string;
+  /** Optional fallback title. Pages can omit and render their own <PageHero /> instead. */
+  title?: string;
 }
 
 export function PageLayout({ children, title }: PageLayoutProps) {
@@ -17,9 +18,11 @@ export function PageLayout({ children, title }: PageLayoutProps) {
         <TopNav />
         <main className="flex-1 w-full">
           <div className="w-full max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8 animate-fade-in">
-            <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight mb-6 sm:mb-8">
-              {title}
-            </h1>
+            {title && (
+              <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight mb-6 sm:mb-8">
+                {title}
+              </h1>
+            )}
             {children}
           </div>
         </main>
