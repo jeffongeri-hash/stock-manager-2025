@@ -34,7 +34,6 @@ interface StockData {
 export function Dashboard() {
   const { user } = useAuth();
   const isMobile = useIsMobile();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [stocks, setStocks] = useState<StockData[]>([]);
   const [selectedStock, setSelectedStock] = useState<StockData | null>(null);
   const [newSymbol, setNewSymbol] = useState('');
