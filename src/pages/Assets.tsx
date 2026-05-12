@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AnimatedStatsCard } from "@/components/ui/AnimatedStatsCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHero, HeroStat } from "@/components/layout/PageHero";
 import { 
   Wallet, TrendingUp, TrendingDown, RefreshCw, Building2, 
   PieChart, BarChart3, DollarSign, Link2, ArrowUpRight, ArrowDownRight,
