@@ -127,18 +127,23 @@ export default function OptionsToolkit() {
   const totalSafe = portfolio.filter(p => p.riskFlag === 'Safe').length;
 
   return (
-    <PageLayout title="Options Toolkit">
-      <div className="mb-4">
-        <Link to="/options-guide">
-          <Button variant="outline" className="gap-2">
-            <BookOpen className="h-4 w-4" />
-            Options Strategy Guide (LEAPS, Covered Calls, 0DTE)
-          </Button>
-        </Link>
-      </div>
+    <PageLayout>
+      <PageHero
+        eyebrow="Options Toolkit"
+        title={<>Options, <span className="gradient-text">decoded</span></>}
+        description="Track positions and run ITM, Covered Call, Chain, Iron Condor, PMCC, and Wheel analyses with live market data."
+        actions={
+          <Link to="/options-guide">
+            <Button variant="outline" size="sm" className="gap-2 border-primary/30 text-primary hover:bg-primary/10">
+              <BookOpen className="h-4 w-4" />
+              Strategy Guide
+            </Button>
+          </Link>
+        }
+      />
 
       <Tabs defaultValue="portfolio" className="space-y-6">
-        <TabsList className="flex flex-wrap gap-1 h-auto p-1">
+        <TabsList className="flex flex-wrap gap-1 h-auto p-1 glass-card">
           <TabsTrigger value="portfolio" className="flex items-center gap-2">
             <FolderKanban className="h-4 w-4" />
             Portfolio
