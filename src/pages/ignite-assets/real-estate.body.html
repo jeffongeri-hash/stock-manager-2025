@@ -16,8 +16,7 @@
 </div>
 <div class="tab-nav">
   <div class="tab-nav-inner">
-    <button class="tab-btn active" onclick="switchTab('investment',this)">Investment Analysis</button>
-    <button class="tab-btn" onclick="switchTab('mortgage',this)">Mortgage</button>
+    <button class="tab-btn active" onclick="switchTab('mortgage',this)">Mortgage</button>
     <button class="tab-btn" onclick="switchTab('fha',this)">FHA Loan</button>
     <button class="tab-btn" onclick="switchTab('affordability',this)">Affordability</button>
     <button class="tab-btn" onclick="switchTab('rentvbuy',this)">Rent vs Buy</button>
@@ -26,53 +25,8 @@
   </div>
 </div>
 
-<!-- INVESTMENT ANALYSIS -->
-<div class="tab-pane active" id="tab-investment">
-  <div class="page-content">
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-title">Property Details</div>
-        <div class="card-sub">Enter property information for investment analysis</div>
-        <div class="input-group"><label class="input-label">Purchase Price ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="inv-price" value="300000" oninput="calcInvestment()"></div></div>
-        <div class="input-group"><label class="input-label">Down Payment (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="inv-down" value="20" oninput="calcInvestment()"></div></div>
-        <div class="input-group"><label class="input-label">Interest Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="inv-rate" value="6.5" step="0.1" oninput="calcInvestment()"></div></div>
-        <div class="input-group"><label class="input-label">Loan Term</label><select class="input-plain" id="inv-term" onchange="calcInvestment()"><option value="30">30 Years</option><option value="20">20 Years</option><option value="15">15 Years</option></select></div>
-        <div class="input-group"><label class="input-label">Monthly Rent ($)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="inv-rent" value="2000" oninput="calcInvestment()"></div></div>
-        <div class="input-group"><label class="input-label">Property Tax Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="inv-tax" value="1.2" step="0.1" oninput="calcInvestment()"></div></div>
-        <div class="input-group"><label class="input-label">Insurance ($/yr)</label><div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="inv-insurance" value="1800" oninput="calcInvestment()"></div></div>
-        <div class="input-group"><label class="input-label">Vacancy Rate (%)</label><div class="input-wrap"><span class="input-prefix">%</span><input type="number" id="inv-vacancy" value="8" oninput="calcInvestment()"></div></div>
-      </div>
-      <div>
-        <div class="grid-4" style="margin-bottom:1rem">
-          <div class="stat-card"><div class="stat-label">Monthly Cash Flow</div><div class="stat-value" id="inv-cashflow">—</div></div>
-          <div class="stat-card"><div class="stat-label">Cap Rate</div><div class="stat-value green" id="inv-cap">—</div></div>
-          <div class="stat-card"><div class="stat-label">Cash on Cash</div><div class="stat-value" id="inv-coc">—</div></div>
-          <div class="stat-card"><div class="stat-label">Monthly Mortgage</div><div class="stat-value" id="inv-mortgage">—</div></div>
-        </div>
-        <div class="chart-card" style="margin-bottom:1rem">
-          <div style="font-family:var(--display);font-size:1rem;font-weight:500;margin-bottom:1.25rem">Property Value &amp; Equity Over Time</div>
-          <div class="chart-wrap"><canvas id="inv-chart"></canvas></div>
-        </div>
-        <div class="result-box">
-          <div class="section-label">Investment Metrics</div>
-          <div class="grid-2" style="gap:.6rem">
-            <div><div class="stat-label">Annual NOI</div><div class="stat-value green" id="inv-noi">—</div></div>
-            <div><div class="stat-label">GRM</div><div class="stat-value" id="inv-grm">—</div></div>
-            <div><div class="stat-label">1% Rule Check</div><div class="stat-value" id="inv-1pct">—</div></div>
-            <div><div class="stat-label">Break-Even Rent</div><div class="stat-value amber" id="inv-ber">—</div></div>
-          </div>
-        </div>
-        <div class="fire-callout">
-          <div class="fire-callout-icon">FI</div>
-          <div class="fire-callout-text">Positive cash flow of <strong id="inv-fire-cf">$0/mo</strong> from this property contributes toward your FIRE passive income. <strong id="inv-fire-pct">0%</strong> of a $40K/yr FIRE spending target.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- MORTGAGE -->
-<div class="tab-pane" id="tab-mortgage">
+<div class="tab-pane active" id="tab-mortgage">
   <div class="page-content">
     <div class="grid-2">
       <div class="card">
