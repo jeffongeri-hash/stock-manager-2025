@@ -140,9 +140,9 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
             />
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{formatPrice(low52Week)}</span>
+            <span>{formatPrice(safeLow)}</span>
             <span className="font-medium text-foreground">{formatPrice(currentPrice)}</span>
-            <span>{formatPrice(high52Week)}</span>
+            <span>{formatPrice(safeHigh)}</span>
           </div>
         </div>
 
