@@ -55,6 +55,7 @@ const Analysis = () => {
   const [activeSymbol, setActiveSymbol] = useState<string>('');
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [fundamentals, setFundamentals] = useState<FundamentalsData | null>(null);
+  const [fundamentalsLoading, setFundamentalsLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const { addToWatchlist, isLoggedIn } = useWatchlistActions();
@@ -135,6 +136,7 @@ const Analysis = () => {
   }, [searchSymbol]);
 
   const fetchFundamentals = async (symbol: string, fallbackMarketCap?: number) => {
+    setFundamentalsLoading(true);
     try {
       const { data: fundData } = await supabase.functions.invoke('fetch-fundamentals', {
         body: { symbol }
