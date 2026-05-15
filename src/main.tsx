@@ -17,14 +17,18 @@ const APP_VERSION = 'v2026-05-15-landing';
       }
       if ('serviceWorker' in navigator) {
         const regs = await navigator.serviceWorker.getRegistrations();
+        const hadController = !!navigator.serviceWorker.controller;
         if (regs.length) {
           await Promise.all(regs.map((r) => r.unregister()));
-          // Reload once so the next load fetches fresh HTML and registers the
-          // new service worker cleanly.
-          if (stored !== null) {
-            window.location.reload();
-            return;
-          }
+        }
+        // If an old SW was controlling this page, force a hard reload that
+        // bypasses it. Append a cache-bust param so the HTML is re-fetched
+        // from the network, not from the SW's runtime cache.
+        if (stored !== null && (regs.length || hadController)) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('_v', APP_VERSION);
+          window.location.replace(url.toString());
+          return;
         }
       }
     }
