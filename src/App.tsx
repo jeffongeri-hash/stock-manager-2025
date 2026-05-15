@@ -14,6 +14,7 @@ import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 
 // Lazy load all page components for code splitting
 const Index = lazy(() => import("./pages/Index"));
+const Landing = lazy(() => import("./pages/Landing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
 const Performance = lazy(() => import("./pages/Performance"));
@@ -78,7 +79,8 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 {/* Public routes */}
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<Landing />} />
+                <Route path="/dashboard" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/install" element={<Install />} />
                 
