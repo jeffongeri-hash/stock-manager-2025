@@ -46,8 +46,13 @@ export const FundamentalAnalysis: React.FC<FundamentalAnalysisProps> = ({
     ...sectorAvg
   };
 
-  const compareValue = (value: number | undefined, benchmark: number | undefined, higherIsBetter: boolean = true) => {
-    if (!value || !benchmark) return { color: 'text-muted-foreground', icon: Minus, label: 'N/A' };
+  const isValidNumber = (v: unknown): v is number =>
+    typeof v === 'number' && Number.isFinite(v);
+
+  const compareValue = (value: number | undefined | null, benchmark: number | undefined | null, higherIsBetter: boolean = true) => {
+    if (!isValidNumber(value) || !isValidNumber(benchmark) || benchmark === 0) {
+      return { color: 'text-muted-foreground', icon: Minus, label: 'N/A' };
+    }
     const diff = ((value - benchmark) / benchmark) * 100;
     const isGood = higherIsBetter ? diff > 0 : diff < 0;
     
@@ -57,13 +62,13 @@ export const FundamentalAnalysis: React.FC<FundamentalAnalysisProps> = ({
       : { color: 'text-red-500', icon: TrendingDown, label: 'Below Avg' };
   };
 
-  const formatValue = (value: number | undefined, suffix: string = '', decimals: number = 2) => {
-    if (value === undefined || value === null) return 'N/A';
+  const formatValue = (value: number | undefined | null, suffix: string = '', decimals: number = 2) => {
+    if (!isValidNumber(value)) return 'N/A';
     return `${value.toFixed(decimals)}${suffix}`;
   };
 
-  const formatMarketCap = (value: number | undefined) => {
-    if (!value) return 'N/A';
+  const formatMarketCap = (value: number | undefined | null) => {
+    if (!isValidNumber(value)) return 'N/A';
     if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
     if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
     if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
@@ -159,7 +164,7 @@ export const FundamentalAnalysis: React.FC<FundamentalAnalysisProps> = ({
     let count = 0;
     
     metrics.forEach(m => {
-      if (m.value !== undefined && m.benchmark !== undefined) {
+      if (isValidNumber(m.value) && isValidNumber(m.benchmark) && m.benchmark !== 0) {
         const diff = ((m.value - m.benchmark) / m.benchmark);
         const impact = m.higherIsBetter ? diff : -diff;
         score += impact > 0.1 ? 1 : impact < -0.1 ? -1 : 0;
@@ -239,10 +244,10 @@ export const FundamentalAnalysis: React.FC<FundamentalAnalysisProps> = ({
                       {metric.label}
                     </TableCell>
                     <TableCell className="text-right font-semibold">
-                      {metric.value !== undefined ? metric.format(metric.value) : 'N/A'}
+                      {isValidNumber(metric.value) ? metric.format(metric.value) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground">
-                      {metric.benchmark !== undefined ? metric.format(metric.benchmark) : 'N/A'}
+                      {isValidNumber(metric.benchmark) ? metric.format(metric.benchmark) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right">
                       <span className={`flex items-center justify-end gap-1 ${comparison.color}`}>

@@ -20,6 +20,7 @@ import { AnalystRatings } from '@/components/analysis/AnalystRatings';
 import { useWatchlistActions } from '@/hooks/useWatchlistActions';
 import { TickerAutocomplete } from '@/components/trading/TickerAutocomplete';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface StockData {
   symbol: string;
@@ -366,43 +367,51 @@ const Analysis = () => {
           </TabsList>
 
           <TabsContent value="technical">
-            <TechnicalAnalysis
-              symbol={activeSymbol}
-              currentPrice={stockData.price}
-              high52Week={stockData.high52Week}
-              low52Week={stockData.low52Week}
-              volume={stockData.volume}
-            />
+            <ErrorBoundary fallbackTitle="Technical analysis unavailable" fallbackDescription="We couldn't render technical indicators for this ticker.">
+              <TechnicalAnalysis
+                symbol={activeSymbol}
+                currentPrice={stockData.price}
+                high52Week={stockData.high52Week}
+                low52Week={stockData.low52Week}
+                volume={stockData.volume}
+              />
+            </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="fundamental" className="space-y-6">
-            <FundamentalAnalysis
-              symbol={activeSymbol}
-              fundamentals={fundamentals || {
-                pe: 25,
-                forwardPe: 22,
-                ps: 5,
-                pb: 4,
-                roe: 15,
-                roa: 10,
-                revenueGrowth: 10,
-                epsGrowth: 12,
-                profitMargin: 15,
-                debtToEquity: 0.8,
-                marketCap: stockData.marketCap || 100000000000,
-              }}
-            />
+            <ErrorBoundary fallbackTitle="Fundamental analysis unavailable" fallbackDescription="Some metrics could not be loaded for this ticker.">
+              <FundamentalAnalysis
+                symbol={activeSymbol}
+                fundamentals={fundamentals || {
+                  pe: 25,
+                  forwardPe: 22,
+                  ps: 5,
+                  pb: 4,
+                  roe: 15,
+                  roa: 10,
+                  revenueGrowth: 10,
+                  epsGrowth: 12,
+                  profitMargin: 15,
+                  debtToEquity: 0.8,
+                  marketCap: stockData.marketCap || 100000000000,
+                }}
+              />
+            </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="catalysts">
-            <CatalystEvents symbol={activeSymbol} />
+            <ErrorBoundary fallbackTitle="Catalysts unavailable">
+              <CatalystEvents symbol={activeSymbol} />
+            </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="analysts">
-            <AnalystRatings 
-              symbol={activeSymbol} 
-              currentPrice={stockData.price} 
-            />
+            <ErrorBoundary fallbackTitle="Analyst ratings unavailable">
+              <AnalystRatings 
+                symbol={activeSymbol} 
+                currentPrice={stockData.price} 
+              />
+            </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="ai" className="space-y-4">
