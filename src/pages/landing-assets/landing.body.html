@@ -1,0 +1,512 @@
+
+
+<div class="bg-mesh">
+  <div class="mesh-orb mesh-orb-1"></div>
+  <div class="mesh-orb mesh-orb-2"></div>
+  <div class="mesh-orb mesh-orb-3"></div>
+</div>
+
+<!-- ══ TOPNAV ══════════════════════════════════════════════ -->
+<nav class="topnav" role="navigation" aria-label="Main navigation">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+    </div>
+    <div class="nav-logo-text"><span>Profit Pathway</span></div>
+  </div>
+  <nav class="nav-center" aria-label="Tool navigation">
+    <a class="nav-link" href="#tools">Tools</a>
+    <a class="nav-link" href="#fire-journey">FIRE Journey</a>
+    <a class="nav-link" href="#features">Features</a>
+    <a class="nav-link" href="#about">About</a>
+  </nav>
+  <div class="nav-right">
+    <div class="live-pill"><div class="live-dot"></div>Live</div>
+    <button class="btn-nav btn-ghost">Sign In</button>
+    <button class="btn-nav btn-grad">Get Started</button>
+  </div>
+</nav>
+
+<!-- ══ HERO ═════════════════════════════════════════════════ -->
+<main>
+<section class="hero" aria-labelledby="hero-heading">
+  <div class="hero-badge"><div class="hero-badge-dot"></div>Free · No Signup Required · 15+ Calculators</div>
+  <h1 class="hero-h1" id="hero-heading">
+    Your Complete Toolkit for<br><span class="grad-word">Financial Independence</span>
+  </h1>
+  <p class="hero-sub">
+    From FIRE calculators and dividend tracking to trading tools and real estate analysis — everything you need to plan, execute, and reach financial freedom. Free. Forever.
+  </p>
+  <div class="hero-ctas">
+    <button class="btn-hero-primary" onclick="document.getElementById('tools').scrollIntoView({behavior:'smooth'})">
+      Explore All Tools
+    </button>
+    <button class="btn-hero-secondary" onclick="document.getElementById('fire-journey').scrollIntoView({behavior:'smooth'})">
+      See the FIRE Journey →
+    </button>
+  </div>
+  <div class="hero-stats" role="region" aria-label="Platform statistics">
+    <div class="hero-stat">
+      <div class="hero-stat-num purple" id="stat-tools">0</div>
+      <div class="hero-stat-label">Free Tools</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num teal" id="stat-calcs">0</div>
+      <div class="hero-stat-label">Calculators</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num green" id="stat-charts">0</div>
+      <div class="hero-stat-label">Interactive Charts</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num amber" id="stat-free">$0</div>
+      <div class="hero-stat-label">Cost to Use</div>
+    </div>
+  </div>
+  <div class="scroll-hint" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    Scroll to explore
+  </div>
+</section>
+
+<!-- ══ TOOLS GRID ════════════════════════════════════════════ -->
+<section class="tools-section" id="tools" aria-labelledby="tools-heading">
+  <div class="section-inner">
+    <div class="section-header-row reveal">
+      <div>
+        <div class="section-tag">Platform Tools</div>
+        <h2 class="section-h2" id="tools-heading">Every tool you need,<br><em>in one place</em></h2>
+        <p class="section-sub">Purpose-built calculators that connect — your FIRE number flows into every tool automatically.</p>
+      </div>
+      <button class="view-all-btn">View All Tools <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+
+    <div class="tools-grid">
+
+      <!-- FIRE App — Featured -->
+      <article class="tool-card featured reveal" aria-label="FIRE Calculator Suite">
+        <div class="tool-preview">
+          <div class="preview-chrome">
+            <div class="preview-chrome-bar">
+              <div class="chrome-dot chrome-dot-r"></div><div class="chrome-dot chrome-dot-y"></div><div class="chrome-dot chrome-dot-g"></div>
+              <div class="chrome-url"></div>
+            </div>
+            <div class="preview-content">
+              <!-- FI Ratio Banner -->
+              <div style="background:linear-gradient(135deg,#7c3aed,#06b6d4);border-radius:6px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <div><div style="font-size:7px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px">FI Ratio</div><div style="font-family:var(--mono);font-size:22px;font-weight:800;color:white">67.3%</div></div>
+                <div style="text-align:right"><div style="font-size:8px;color:white;font-family:var(--display)">Gaining Ground</div><div style="height:4px;width:120px;background:rgba(255,255,255,.2);border-radius:2px;margin-top:4px;overflow:hidden"><div style="width:67%;height:100%;background:white;border-radius:2px"></div></div></div>
+              </div>
+              <!-- Mini stat row -->
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px">
+                <div style="background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.2);border-radius:4px;padding:6px;text-align:center"><div style="font-size:6px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px">FIRE #</div><div style="font-family:var(--mono);font-size:9px;font-weight:700;color:#8b5cf6">$1.5M</div></div>
+                <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.15);border-radius:4px;padding:6px;text-align:center"><div style="font-size:6px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px">SWR</div><div style="font-family:var(--mono);font-size:9px;font-weight:700;color:#06b6d4">4.0%</div></div>
+                <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15);border-radius:4px;padding:6px;text-align:center"><div style="font-size:6px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px">Saved</div><div style="font-family:var(--mono);font-size:9px;font-weight:700;color:#10b981">47%</div></div>
+                <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.15);border-radius:4px;padding:6px;text-align:center"><div style="font-size:6px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px">Years</div><div style="font-family:var(--mono);font-size:9px;font-weight:700;color:#f59e0b">11</div></div>
+              </div>
+              <!-- Sparkline -->
+              <div style="background:rgba(255,255,255,.03);border-radius:4px;padding:6px 8px;height:40px;position:relative;overflow:hidden">
+                <svg viewBox="0 0 200 30" style="position:absolute;inset:4px;width:calc(100% - 8px);height:calc(100% - 8px)">
+                  <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+                  <polyline fill="none" stroke="url(#sg)" stroke-width="2" points="0,25 25,22 50,18 75,15 100,12 125,9 150,7 175,5 200,3"/>
+                  <polygon fill="rgba(124,58,237,.1)" points="0,25 25,22 50,18 75,15 100,12 125,9 150,7 175,5 200,3 200,30 0,30"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tool-body">
+          <div class="tool-icon" style="background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.2)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+          </div>
+          <h3 class="tool-title">FIRE Calculator Suite</h3>
+          <p class="tool-desc">18 interconnected calculators — FIRE number, savings rate, Roth ladder, Social Security, sequence of returns, tax brackets, withdrawal strategies, and your live FI ratio. The most complete free FIRE platform available.</p>
+          <div class="tool-tags">
+            <span class="tool-tag tag-purple">FIRE Number</span>
+            <span class="tool-tag tag-teal">Roth Ladder</span>
+            <span class="tool-tag tag-green">Savings Rate</span>
+            <span class="tool-tag tag-amber">SWR Analysis</span>
+            <span class="tool-tag tag-purple">Seq. Returns</span>
+          </div>
+          <div class="tool-cta">Open FIRE Suite <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </article>
+
+      <!-- Dividend Tracker -->
+      <article class="tool-card reveal reveal-delay-1" aria-label="Dividend Tracker">
+        <div class="tool-preview">
+          <div class="preview-chrome">
+            <div class="preview-chrome-bar">
+              <div class="chrome-dot chrome-dot-r"></div><div class="chrome-dot chrome-dot-y"></div><div class="chrome-dot chrome-dot-g"></div>
+              <div class="chrome-url"></div>
+            </div>
+            <div class="preview-content">
+              <div style="font-family:var(--mono);font-size:18px;font-weight:800;color:#10b981;margin-bottom:6px">$2,002.30 <span style="font-size:9px;color:#94a3b8">/ year</span></div>
+              <div class="mini-chart">
+                <div class="mini-bar" style="height:35%;background:rgba(16,185,129,.4)"></div>
+                <div class="mini-bar" style="height:35%;background:rgba(16,185,129,.4)"></div>
+                <div class="mini-bar" style="height:80%;background:#10b981"></div>
+                <div class="mini-bar" style="height:35%;background:rgba(16,185,129,.4)"></div>
+                <div class="mini-bar" style="height:35%;background:rgba(16,185,129,.4)"></div>
+                <div class="mini-bar" style="height:80%;background:#10b981"></div>
+                <div class="mini-bar" style="height:35%;background:rgba(16,185,129,.4)"></div>
+                <div class="mini-bar" style="height:35%;background:rgba(16,185,129,.4)"></div>
+                <div class="mini-bar" style="height:80%;background:#10b981"></div>
+                <div class="mini-bar" style="height:35%;background:rgba(16,185,129,.4)"></div>
+                <div class="mini-bar" style="height:35%;background:rgba(16,185,129,.4)"></div>
+                <div class="mini-bar" style="height:80%;background:#10b981"></div>
+              </div>
+              <div class="preview-stats">
+                <div class="preview-stat"><div class="ps-l"></div><div class="ps-v" style="background:rgba(16,185,129,.4)"></div></div>
+                <div class="preview-stat"><div class="ps-l"></div><div class="ps-v" style="background:rgba(6,182,212,.4)"></div></div>
+                <div class="preview-stat"><div class="ps-l"></div><div class="ps-v" style="background:rgba(245,158,11,.35)"></div></div>
+                <div class="preview-stat"><div class="ps-l"></div><div class="ps-v" style="background:rgba(139,92,246,.4)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tool-body">
+          <div class="tool-icon" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3 class="tool-title">Dividend Tracker</h3>
+          <p class="tool-desc">Track dividend income, DRIP simulation, YOC milestones, ex-dividend calendar, and your FIRE income gap — with live Finnhub pricing.</p>
+          <div class="tool-tags"><span class="tool-tag tag-green">Live Prices</span><span class="tool-tag tag-teal">DRIP Sim</span><span class="tool-tag tag-purple">FIRE Gap</span></div>
+          <div class="tool-cta">Open Tracker <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </article>
+
+      <!-- Trading Toolkit -->
+      <article class="tool-card reveal reveal-delay-1" aria-label="Trading Toolkit">
+        <div class="tool-preview">
+          <div class="preview-chrome">
+            <div class="preview-chrome-bar">
+              <div class="chrome-dot chrome-dot-r"></div><div class="chrome-dot chrome-dot-y"></div><div class="chrome-dot chrome-dot-g"></div>
+              <div class="chrome-url"></div>
+            </div>
+            <div class="preview-content">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <div><div style="font-size:6px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px">Position Size</div><div style="font-family:var(--mono);font-size:14px;font-weight:800;color:#f97316">15 shares</div></div>
+                <div style="text-align:right"><div style="font-size:6px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px">Max Loss</div><div style="font-family:var(--mono);font-size:14px;font-weight:800;color:#ef4444">$131</div></div>
+              </div>
+              <div class="mini-chart">
+                <div class="mini-bar" style="height:60%;background:#ef444499"></div>
+                <div class="mini-bar" style="height:60%;background:#ef444499"></div>
+                <div class="mini-bar" style="height:50%;background:#94a3b833"></div>
+                <div class="mini-bar" style="height:70%;background:rgba(16,185,129,.5)"></div>
+                <div class="mini-bar" style="height:85%;background:rgba(16,185,129,.7)"></div>
+                <div class="mini-bar" style="height:100%;background:#10b981"></div>
+              </div>
+              <div style="margin-top:6px;font-size:7px;color:#94a3b8">1R → $131 &nbsp;·&nbsp; 2R → $262 &nbsp;·&nbsp; 3R → $393</div>
+            </div>
+          </div>
+        </div>
+        <div class="tool-body">
+          <div class="tool-icon" style="background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="1.8"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+          </div>
+          <h3 class="tool-title">Trading Toolkit</h3>
+          <p class="tool-desc">Position sizing, Black-Scholes Greeks, expected move, Monte Carlo simulation, exit strategy planner, trade journal, and options income tracker.</p>
+          <div class="tool-tags"><span class="tool-tag tag-amber">Position Sizing</span><span class="tool-tag tag-red">Greeks</span><span class="tool-tag tag-purple">Monte Carlo</span></div>
+          <div class="tool-cta">Open Toolkit <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </article>
+
+      <!-- Real Estate -->
+      <article class="tool-card reveal reveal-delay-2" aria-label="Real Estate Calculator">
+        <div class="tool-preview">
+          <div class="preview-chrome">
+            <div class="preview-chrome-bar">
+              <div class="chrome-dot chrome-dot-r"></div><div class="chrome-dot chrome-dot-y"></div><div class="chrome-dot chrome-dot-g"></div>
+              <div class="chrome-url"></div>
+            </div>
+            <div class="preview-content">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px">
+                <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15);border-radius:4px;padding:6px"><div style="font-size:6px;color:#94a3b8;margin-bottom:2px">Cap Rate</div><div style="font-family:var(--mono);font-size:11px;font-weight:700;color:#10b981">4.9%</div></div>
+                <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);border-radius:4px;padding:6px"><div style="font-size:6px;color:#94a3b8;margin-bottom:2px">Cash Flow</div><div style="font-family:var(--mono);font-size:11px;font-weight:700;color:#ef4444">-$292</div></div>
+              </div>
+              <div class="mini-line">
+                <svg viewBox="0 0 160 40" preserveAspectRatio="none">
+                  <polyline fill="none" stroke="#10b981" stroke-width="1.5" points="0,35 20,32 40,28 60,25 80,22 100,18 120,15 140,11 160,8"/>
+                  <polyline fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="3,2" points="0,38 20,36 40,34 60,32 80,29 100,26 120,24 140,21 160,19"/>
+                </svg>
+              </div>
+              <div style="margin-top:4px;font-size:7px;color:#94a3b8;display:flex;gap:10px">
+                <span style="color:#10b981">● Property Value</span>
+                <span style="color:#06b6d4">● Equity</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tool-body">
+          <div class="tool-icon" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          <h3 class="tool-title">Real Estate Analyzer</h3>
+          <p class="tool-desc">Cap rate, cash flow, FHA calculator, affordability, rent vs buy, house hacking, and closing cost estimator — all FIRE-integrated.</p>
+          <div class="tool-tags"><span class="tool-tag tag-green">Cap Rate</span><span class="tool-tag tag-teal">FHA Loans</span><span class="tool-tag tag-purple">House Hacking</span></div>
+          <div class="tool-cta">Analyze Property <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </article>
+
+      <!-- Car Finance -->
+      <article class="tool-card reveal reveal-delay-2" aria-label="Car Finance Calculator">
+        <div class="tool-preview">
+          <div class="preview-chrome">
+            <div class="preview-chrome-bar">
+              <div class="chrome-dot chrome-dot-r"></div><div class="chrome-dot chrome-dot-y"></div><div class="chrome-dot chrome-dot-g"></div>
+              <div class="chrome-url"></div>
+            </div>
+            <div class="preview-content">
+              <div style="font-family:var(--mono);font-size:7px;color:#94a3b8;margin-bottom:4px">Toyota Camry LE (2024) — $28,400</div>
+              <div style="display:flex;gap:4px;margin-bottom:6px">
+                <div style="flex:1;background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.2);border-radius:4px;padding:5px;text-align:center"><div style="font-size:6px;color:#94a3b8;margin-bottom:2px">Monthly</div><div style="font-family:var(--mono);font-size:10px;font-weight:700;color:#4a9eff">$471</div></div>
+                <div style="flex:1;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);border-radius:4px;padding:5px;text-align:center"><div style="font-size:6px;color:#94a3b8;margin-bottom:2px">Interest</div><div style="font-family:var(--mono);font-size:10px;font-weight:700;color:#ef4444">$4.2K</div></div>
+                <div style="flex:1;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15);border-radius:4px;padding:5px;text-align:center"><div style="font-size:6px;color:#94a3b8;margin-bottom:2px">FIRE cost</div><div style="font-family:var(--mono);font-size:10px;font-weight:700;color:#10b981">247d</div></div>
+              </div>
+              <div class="mini-chart">
+                <div class="mini-bar" style="height:90%;background:rgba(74,158,255,.5)"></div>
+                <div class="mini-bar" style="height:80%;background:rgba(74,158,255,.5)"></div>
+                <div class="mini-bar" style="height:70%;background:rgba(74,158,255,.5)"></div>
+                <div class="mini-bar" style="height:58%;background:rgba(74,158,255,.5)"></div>
+                <div class="mini-bar" style="height:45%;background:rgba(74,158,255,.5)"></div>
+                <div class="mini-bar" style="height:30%;background:rgba(74,158,255,.5)"></div>
+                <div class="mini-bar" style="height:15%;background:rgba(74,158,255,.5)"></div>
+                <div class="mini-bar" style="height:5%;background:rgba(74,158,255,.5)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tool-body">
+          <div class="tool-icon" style="background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.2)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          </div>
+          <h3 class="tool-title">Car Finance Calculator</h3>
+          <p class="tool-desc">60+ vehicle presets, payment breakdown, depreciation curves, lease vs buy analysis, true ownership costs, and FIRE opportunity cost.</p>
+          <div class="tool-tags"><span class="tool-tag tag-teal">60+ Vehicles</span><span class="tool-tag tag-purple">Lease vs Buy</span><span class="tool-tag tag-amber">FIRE Impact</span></div>
+          <div class="tool-cta">Calculate Car Cost <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </article>
+
+    </div><!-- /tools-grid -->
+  </div>
+</section>
+
+<!-- ══ NUMBERS ═══════════════════════════════════════════════ -->
+<section class="numbers-section" aria-labelledby="numbers-heading">
+  <div class="section-inner">
+    <div class="numbers-grid">
+      <div class="number-card reveal">
+        <div class="number-val">18+</div>
+        <div class="number-label">FIRE Calculators</div>
+        <div class="number-sub">in one connected suite</div>
+      </div>
+      <div class="number-card reveal reveal-delay-1">
+        <div class="number-val">60+</div>
+        <div class="number-label">Vehicle Presets</div>
+        <div class="number-sub">with real 2024 specs</div>
+      </div>
+      <div class="number-card reveal reveal-delay-2">
+        <div class="number-val">8</div>
+        <div class="number-label">Trading Tools</div>
+        <div class="number-sub">position to income tracking</div>
+      </div>
+      <div class="number-card reveal reveal-delay-3">
+        <div class="number-val">$0</div>
+        <div class="number-label">Cost to Access</div>
+        <div class="number-sub">free forever, no account needed</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FIRE JOURNEY ══════════════════════════════════════════ -->
+<section class="journey-section" id="fire-journey" aria-labelledby="journey-heading">
+  <div class="section-inner">
+    <div style="text-align:center;margin-bottom:3.5rem" class="reveal">
+      <div class="section-tag" style="justify-content:center">The FIRE Roadmap</div>
+      <h2 class="section-h2" id="journey-heading" style="text-align:center">Your path to<br><em>financial independence</em></h2>
+      <p class="section-sub" style="margin:0 auto">Every tool maps to a stage of your journey — from earning more to retiring early.</p>
+    </div>
+    <div class="journey-grid">
+      <div class="journey-step reveal">
+        <div class="journey-step-num"><span class="journey-step-icon">💰</span></div>
+        <div class="journey-step-title">Earn &amp; Budget</div>
+        <div class="journey-step-desc">Understand your income, taxes, and true savings capacity</div>
+        <div class="journey-step-tools">
+          <span class="journey-tool-chip">Paycheck Lab</span>
+          <span class="journey-tool-chip">Tax Brackets</span>
+          <span class="journey-tool-chip">Savings Rate</span>
+        </div>
+      </div>
+      <div class="journey-step reveal reveal-delay-1">
+        <div class="journey-step-num"><span class="journey-step-icon">📈</span></div>
+        <div class="journey-step-title">Invest Strategically</div>
+        <div class="journey-step-desc">Build passive income through dividends, trading, and real estate</div>
+        <div class="journey-step-tools">
+          <span class="journey-tool-chip">Dividend Tracker</span>
+          <span class="journey-tool-chip">Trading Toolkit</span>
+          <span class="journey-tool-chip">Real Estate</span>
+        </div>
+      </div>
+      <div class="journey-step reveal reveal-delay-2">
+        <div class="journey-step-num"><span class="journey-step-icon">🧮</span></div>
+        <div class="journey-step-title">Calculate Freedom</div>
+        <div class="journey-step-desc">Know your exact FIRE number, timeline, and strategy</div>
+        <div class="journey-step-tools">
+          <span class="journey-tool-chip">FIRE Calculator</span>
+          <span class="journey-tool-chip">Roth Ladder</span>
+          <span class="journey-tool-chip">Seq. Returns</span>
+        </div>
+      </div>
+      <div class="journey-step reveal reveal-delay-3">
+        <div class="journey-step-num"><span class="journey-step-icon">🛡️</span></div>
+        <div class="journey-step-title">Manage Risk</div>
+        <div class="journey-step-desc">Protect your portfolio and minimize the impact of debt</div>
+        <div class="journey-step-tools">
+          <span class="journey-tool-chip">Debt Lab</span>
+          <span class="journey-tool-chip">Monte Carlo</span>
+          <span class="journey-tool-chip">SWR Planner</span>
+        </div>
+      </div>
+      <div class="journey-step reveal reveal-delay-4">
+        <div class="journey-step-num"><span class="journey-step-icon">🔥</span></div>
+        <div class="journey-step-title">Retire Early</div>
+        <div class="journey-step-desc">Execute your withdrawal strategy and live on passive income</div>
+        <div class="journey-step-tools">
+          <span class="journey-tool-chip">Withdrawal Planner</span>
+          <span class="journey-tool-chip">Social Security</span>
+          <span class="journey-tool-chip">FI Ratio</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ HIGHLIGHTS ════════════════════════════════════════════ -->
+<section class="highlights-section" id="features" aria-labelledby="features-heading">
+  <div class="section-inner">
+    <div style="text-align:center;margin-bottom:3rem" class="reveal">
+      <div class="section-tag" style="justify-content:center">Why Profit Pathway</div>
+      <h2 class="section-h2" id="features-heading" style="text-align:center">Built differently,<br><em>for serious planners</em></h2>
+    </div>
+    <div class="highlights-grid">
+      <div class="highlight-card reveal">
+        <div class="highlight-icon-wrap" style="background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.2)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+        </div>
+        <h3 class="highlight-title">Every Tool is Connected</h3>
+        <p class="highlight-desc">Your income, savings rate, and FIRE number flow automatically into every calculator. Change one number — every tool updates.</p>
+        <div class="highlight-list">
+          <div class="highlight-item">Onboarding wizard pre-fills all tools simultaneously</div>
+          <div class="highlight-item">FIRE callout labels on every financial decision</div>
+          <div class="highlight-item">FI Ratio dashboard widget always visible</div>
+        </div>
+      </div>
+      <div class="highlight-card reveal reveal-delay-1">
+        <div class="highlight-icon-wrap" style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <h3 class="highlight-title">Real Data, Interactive Charts</h3>
+        <p class="highlight-desc">Every chart is fully interactive — hover to see exact values at any point. Live Finnhub pricing for dividend holdings. Real 2024 vehicle specs.</p>
+        <div class="highlight-list">
+          <div class="highlight-item">Hover tooltips on every chart showing x/y values</div>
+          <div class="highlight-item">Finnhub API integration for live dividend pricing</div>
+          <div class="highlight-item">60+ vehicles with real MSRP, MPG, depreciation rates</div>
+        </div>
+      </div>
+      <div class="highlight-card reveal reveal-delay-2">
+        <div class="highlight-icon-wrap" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 class="highlight-title">Free. Private. No Account Needed.</h3>
+        <p class="highlight-desc">All tools run locally in your browser. No account, no email, no data collected. Your financial data stays on your device, always.</p>
+        <div class="highlight-list">
+          <div class="highlight-item">Zero signup required for any tool</div>
+          <div class="highlight-item">Data never leaves your browser</div>
+          <div class="highlight-item">API keys stored only in your local storage</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SEO CONTENT SECTION ══════════════════════════════════ -->
+<section class="seo-section" id="about" aria-labelledby="seo-heading">
+  <div class="section-inner">
+    <div class="seo-grid">
+      <div class="reveal">
+        <div class="section-tag">Financial Independence</div>
+        <h2 class="section-h2" id="seo-heading">The most complete free<br><em>FIRE calculator</em> available</h2>
+        <p style="font-size:.88rem;color:var(--text2);line-height:1.8;margin-bottom:1.5rem">
+          Most FIRE calculators show you one number — your FIRE target — then stop. Profit Pathway gives you the full picture: your savings rate sensitivity, sequence of returns risk, Roth conversion ladder, Social Security optimization, inflation-adjusted targets, and your live FI ratio updating in real time.
+        </p>
+        <p style="font-size:.88rem;color:var(--text2);line-height:1.8;margin-bottom:2rem">
+          Whether you're just starting your financial independence journey or fine-tuning your withdrawal strategy, every tool is interconnected, interactive, and free to use without creating an account.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:.6rem">
+          <div style="display:flex;align-items:center;gap:.75rem;font-size:.82rem;color:var(--text2)">
+            <div style="width:24px;height:24px;border-radius:6px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+            FIRE number, savings rate, Roth ladder, Social Security optimizer
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem;font-size:.82rem;color:var(--text2)">
+            <div style="width:24px;height:24px;border-radius:6px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+            Dividend tracker with DRIP simulation and FIRE income gap analysis
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem;font-size:.82rem;color:var(--text2)">
+            <div style="width:24px;height:24px;border-radius:6px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+            Real estate investment analysis, house hacking, FHA calculator
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem;font-size:.82rem;color:var(--text2)">
+            <div style="width:24px;height:24px;border-radius:6px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+            Position sizing, Greeks, Monte Carlo, and options income tracking
+          </div>
+        </div>
+      </div>
+      <div class="seo-visual reveal reveal-delay-2">
+        <div class="seo-chart-demo">
+          <div style="font-family:var(--display);font-size:.95rem;font-weight:500;margin-bottom:1.25rem;position:relative;z-index:1">FIRE Progress by Tool Category</div>
+          <div style="position:relative;z-index:1">
+            <div class="seo-demo-row"><div class="seo-demo-label">FIRE Calculators</div><div class="seo-demo-bar-track"><div class="seo-demo-bar" style="width:95%"></div></div><div class="seo-demo-val">18 tools</div></div>
+            <div class="seo-demo-row"><div class="seo-demo-label">Dividend Tracking</div><div class="seo-demo-bar-track"><div class="seo-demo-bar" style="width:82%"></div></div><div class="seo-demo-val">8 tabs</div></div>
+            <div class="seo-demo-row"><div class="seo-demo-label">Trading Toolkit</div><div class="seo-demo-bar-track"><div class="seo-demo-bar" style="width:75%"></div></div><div class="seo-demo-val">8 tools</div></div>
+            <div class="seo-demo-row"><div class="seo-demo-label">Real Estate</div><div class="seo-demo-bar-track"><div class="seo-demo-bar" style="width:68%"></div></div><div class="seo-demo-val">7 tabs</div></div>
+            <div class="seo-demo-row"><div class="seo-demo-label">Car Finance</div><div class="seo-demo-bar-track"><div class="seo-demo-bar" style="width:55%"></div></div><div class="seo-demo-val">5 tabs</div></div>
+          </div>
+          <!-- Fake mini chart -->
+          <div style="margin-top:1.5rem;position:relative;z-index:1">
+            <div style="font-size:.72rem;color:var(--text3);margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.08em">Sample FI Ratio Growth</div>
+            <svg viewBox="0 0 300 80" style="width:100%;height:80px">
+              <defs>
+                <linearGradient id="gr2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient>
+                <linearGradient id="gr2f" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(124,58,237,.2)"/><stop offset="100%" stop-color="rgba(124,58,237,0)"/></linearGradient>
+              </defs>
+              <polygon fill="url(#gr2f)" points="0,70 30,65 60,57 90,48 120,40 150,32 180,24 210,17 240,11 270,6 300,3 300,80 0,80"/>
+              <polyline fill="none" stroke="url(#gr2)" stroke-width="2.5" stroke-linecap="round" points="0,70 30,65 60,57 90,48 120,40 150,32 180,24 210,17 240,11 270,6 300,3"/>
+              <line x1="180" y1="0" x2="180" y2="80" stroke="rgba(255,255,255,.08)" stroke-width="1" stroke-dasharray="3,3"/>
+              <text x="183" y="30" fill="#94a3b8" font-size="7" font-family="JetBrains Mono">100% FI</text>
+              <circle cx="180" cy="24" r="4" fill="#7c3aed"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA ═══════════════════════════════════════════════════ -->
+<section class="cta-section">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-tag" style="justify-content:center">Start Today</div>
+      <h2 class="cta-h2">Start your path to<br><em>financial freedom</em> now</h2>
+      <p class="cta-sub">Every tool is free. No account required. Your financial data stays in your browser. Begin in seconds.</p>
+      <div class="cta-features">
+        <div class="cta-feature"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>No signup</div>
+        <div class="cta-feature"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>No credit card</div>
+        <div class="cta-feature"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>No ads</svg>No ads</div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
