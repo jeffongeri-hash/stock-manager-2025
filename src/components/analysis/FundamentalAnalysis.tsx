@@ -164,7 +164,7 @@ export const FundamentalAnalysis: React.FC<FundamentalAnalysisProps> = ({
     let count = 0;
     
     metrics.forEach(m => {
-      if (m.value !== undefined && m.benchmark !== undefined) {
+      if (isValidNumber(m.value) && isValidNumber(m.benchmark) && m.benchmark !== 0) {
         const diff = ((m.value - m.benchmark) / m.benchmark);
         const impact = m.higherIsBetter ? diff : -diff;
         score += impact > 0.1 ? 1 : impact < -0.1 ? -1 : 0;
