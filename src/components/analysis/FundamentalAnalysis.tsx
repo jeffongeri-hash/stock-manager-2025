@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { TrendingUp, TrendingDown, Minus, Building, DollarSign, BarChart2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TrendingUp, TrendingDown, Minus, Building, AlertCircle } from 'lucide-react';
 
 interface FundamentalsData {
   pe?: number;
@@ -23,12 +24,17 @@ interface FundamentalAnalysisProps {
   symbol: string;
   fundamentals: FundamentalsData;
   sectorAvg?: Partial<FundamentalsData>;
+  loading?: boolean;
 }
+
+const isValidNumber = (v: unknown): v is number =>
+  typeof v === 'number' && Number.isFinite(v);
 
 export const FundamentalAnalysis: React.FC<FundamentalAnalysisProps> = ({
   symbol,
   fundamentals,
-  sectorAvg = {}
+  sectorAvg = {},
+  loading = false,
 }) => {
   // Default sector averages if not provided
   const defaults: FundamentalsData = {
