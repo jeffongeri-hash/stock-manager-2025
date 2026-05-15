@@ -62,13 +62,13 @@ export const FundamentalAnalysis: React.FC<FundamentalAnalysisProps> = ({
       : { color: 'text-red-500', icon: TrendingDown, label: 'Below Avg' };
   };
 
-  const formatValue = (value: number | undefined, suffix: string = '', decimals: number = 2) => {
-    if (value === undefined || value === null) return 'N/A';
+  const formatValue = (value: number | undefined | null, suffix: string = '', decimals: number = 2) => {
+    if (!isValidNumber(value)) return 'N/A';
     return `${value.toFixed(decimals)}${suffix}`;
   };
 
-  const formatMarketCap = (value: number | undefined) => {
-    if (!value) return 'N/A';
+  const formatMarketCap = (value: number | undefined | null) => {
+    if (!isValidNumber(value)) return 'N/A';
     if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
     if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
     if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
