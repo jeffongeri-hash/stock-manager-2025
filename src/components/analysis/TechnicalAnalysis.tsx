@@ -225,22 +225,25 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
           <div className="grid grid-cols-3 gap-3">
             <div className="p-3 rounded-lg border">
               <p className="text-xs text-muted-foreground">RSI (14)</p>
-              <p className="font-semibold">{rsi.toFixed(1)}</p>
-              <p className={`text-xs ${rsiColor}`}>{rsiSignal}</p>
+              <p className="font-semibold">N/A</p>
+              <p className="text-xs text-muted-foreground">Data unavailable</p>
             </div>
             <div className="p-3 rounded-lg border">
               <p className="text-xs text-muted-foreground">MACD</p>
-              <p className="font-semibold">{macdValue.toFixed(2)}</p>
-              <p className={`text-xs ${macdSignal === 'Bullish' ? 'text-green-500' : macdSignal === 'Bearish' ? 'text-red-500' : 'text-yellow-500'}`}>
-                {macdSignal}
-              </p>
+              <p className="font-semibold">N/A</p>
+              <p className="text-xs text-muted-foreground">Data unavailable</p>
             </div>
             <div className="p-3 rounded-lg border">
               <p className="text-xs text-muted-foreground">Volume</p>
-              <p className="font-semibold">{volumeRatio.toFixed(2)}x</p>
+              <p className="font-semibold">
+                {volumeRatio !== null ? `${volumeRatio.toFixed(2)}x` : 'N/A'}
+              </p>
               <p className="text-xs text-muted-foreground">{volumeSignal}</p>
             </div>
           </div>
+          <p className="text-[11px] text-muted-foreground">
+            RSI and MACD require historical price feeds not yet wired into the data provider — shown as N/A to avoid placeholder noise.
+          </p>
         </div>
       </CardContent>
     </Card>
