@@ -46,8 +46,13 @@ export const FundamentalAnalysis: React.FC<FundamentalAnalysisProps> = ({
     ...sectorAvg
   };
 
-  const compareValue = (value: number | undefined, benchmark: number | undefined, higherIsBetter: boolean = true) => {
-    if (!value || !benchmark) return { color: 'text-muted-foreground', icon: Minus, label: 'N/A' };
+  const isValidNumber = (v: unknown): v is number =>
+    typeof v === 'number' && Number.isFinite(v);
+
+  const compareValue = (value: number | undefined | null, benchmark: number | undefined | null, higherIsBetter: boolean = true) => {
+    if (!isValidNumber(value) || !isValidNumber(benchmark) || benchmark === 0) {
+      return { color: 'text-muted-foreground', icon: Minus, label: 'N/A' };
+    }
     const diff = ((value - benchmark) / benchmark) * 100;
     const isGood = higherIsBetter ? diff > 0 : diff < 0;
     
