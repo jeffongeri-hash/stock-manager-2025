@@ -52,8 +52,56 @@ export const FundamentalAnalysis: React.FC<FundamentalAnalysisProps> = ({
     ...sectorAvg
   };
 
-  const isValidNumber = (v: unknown): v is number =>
-    typeof v === 'number' && Number.isFinite(v);
+  // Loading state — skeleton placeholders
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="h-5 w-5" />
+            Fundamental Analysis - {symbol}
+          </CardTitle>
+          <CardDescription>Loading metrics…</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+          <Skeleton className="h-64 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Empty state — no usable metrics returned
+  const hasAnyMetric = [
+    fundamentals.pe, fundamentals.forwardPe, fundamentals.ps, fundamentals.pb,
+    fundamentals.roe, fundamentals.roa, fundamentals.revenueGrowth, fundamentals.epsGrowth,
+    fundamentals.profitMargin, fundamentals.debtToEquity, fundamentals.marketCap,
+  ].some(isValidNumber);
+
+  if (!hasAnyMetric) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="h-5 w-5" />
+            Fundamental Analysis - {symbol}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center gap-2">
+          <AlertCircle className="h-8 w-8 text-muted-foreground" />
+          <p className="text-sm font-medium">Fundamentals data unavailable</p>
+          <p className="text-xs text-muted-foreground max-w-sm">
+            We couldn't load valuation, profitability, or growth metrics for {symbol}. The data provider may not cover this ticker.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
 
   const compareValue = (value: number | undefined | null, benchmark: number | undefined | null, higherIsBetter: boolean = true) => {
     if (!isValidNumber(value) || !isValidNumber(benchmark) || benchmark === 0) {
