@@ -149,11 +149,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/portfolio-rebalancing',
     },
     {
-      title: 'ETF Comparison',
-      icon: GitCompareArrows,
-      href: '/etf-comparison',
-    },
-    {
       title: 'SmartTrade AI',
       icon: Bot,
       href: '/smarttrade-ai',

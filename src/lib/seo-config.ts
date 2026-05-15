@@ -167,18 +167,6 @@ export const pageSEO: Record<string, PageSEO> = {
       "description": "Comprehensive portfolio risk analysis and metrics"
     }
   },
-  "/etf-comparison": {
-    title: "ETF Comparison Tool - Compare ETFs Side by Side | Profit Pathway",
-    description: "Compare ETFs by expense ratio, holdings, performance, and sector allocation. Find the best ETFs for your portfolio.",
-    keywords: ["ETF comparison", "compare ETFs", "ETF analysis", "expense ratio", "ETF screener"],
-    jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "ETF Comparison Tool",
-      "applicationCategory": "FinanceApplication",
-      "description": "Compare ETFs side by side with detailed metrics"
-    }
-  },
   "/portfolio-rebalancing": {
     title: "Portfolio Rebalancing Calculator | Profit Pathway",
     description: "Rebalance your portfolio to target allocations. Calculate trades needed to maintain your desired asset allocation.",

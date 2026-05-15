@@ -39,7 +39,7 @@ const RetirementPlanning = lazy(() => import("./pages/RetirementPlanning"));
 const SavedData = lazy(() => import("./pages/SavedData"));
 const RealEstate = lazy(() => import("./pages/RealEstate"));
 const CarFinance = lazy(() => import("./pages/CarFinance"));
-const ETFComparison = lazy(() => import("./pages/ETFComparison"));
+
 const Assets = lazy(() => import("./pages/Assets"));
 
 const SmartTradeAI = lazy(() => import("./pages/SmartTradeAI"));
@@ -101,7 +101,7 @@ const App = () => (
                 <Route path="/retirement-planning" element={<ProtectedRoute><RetirementPlanning /></ProtectedRoute>} />
                 <Route path="/real-estate" element={<ProtectedRoute><RealEstate /></ProtectedRoute>} />
                 <Route path="/car-finance" element={<ProtectedRoute><CarFinance /></ProtectedRoute>} />
-                <Route path="/etf-comparison" element={<ProtectedRoute><ETFComparison /></ProtectedRoute>} />
+                
                 <Route path="/smarttrade-ai" element={<ProtectedRoute><SmartTradeAI /></ProtectedRoute>} />
                 <Route path="/quantgemini" element={<ProtectedRoute><QuantGemini /></ProtectedRoute>} />
                 

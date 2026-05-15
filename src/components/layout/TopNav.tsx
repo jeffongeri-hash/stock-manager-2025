@@ -26,7 +26,7 @@ const PRIMARY_NAV: NavItem[] = [
   { title: 'Dividends', href: '/dividend-tracker' },
   { title: 'Risk', href: '/risk-metrics' },
   { title: 'Rebalance', href: '/portfolio-rebalancing' },
-  { title: 'ETFs', href: '/etf-comparison' },
+  
   { title: 'SmartTrade', href: '/smarttrade-ai' },
   { title: 'QuantGemini', href: '/quantgemini' },
   { title: 'IgniteFIRE', href: '/ignite-fire' },
