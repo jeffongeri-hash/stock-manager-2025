@@ -190,7 +190,13 @@ const Analysis = () => {
         debtToEquity: 0.5 + Math.random() * 1.5,
         marketCap: fallbackMarketCap || 100000000000,
       });
+    } finally {
+      setFundamentalsLoading(false);
     }
+  };
+
+  const retryAnalysis = () => {
+    if (activeSymbol) fetchStockData(activeSymbol);
   };
 
   // Auto-refresh stock price every 30 seconds
