@@ -160,36 +160,12 @@ const Analysis = () => {
           marketCap: f.profile?.marketCapitalization,
         });
       } else {
-        // Set simulated fundamentals if API fails
-        setFundamentals({
-          pe: 20 + Math.random() * 15,
-          forwardPe: 18 + Math.random() * 12,
-          ps: 2 + Math.random() * 5,
-          pb: 2 + Math.random() * 4,
-          roe: 10 + Math.random() * 20,
-          roa: 5 + Math.random() * 15,
-          revenueGrowth: 5 + Math.random() * 25,
-          epsGrowth: 8 + Math.random() * 20,
-          profitMargin: 8 + Math.random() * 20,
-          debtToEquity: 0.5 + Math.random() * 1.5,
-          marketCap: fallbackMarketCap || 100000000000,
-        });
+        // No data — surface "data unavailable" empty state
+        setFundamentals({ marketCap: fallbackMarketCap });
       }
     } catch (fundError) {
       console.error('Error fetching fundamentals:', fundError);
-      setFundamentals({
-        pe: 20 + Math.random() * 15,
-        forwardPe: 18 + Math.random() * 12,
-        ps: 2 + Math.random() * 5,
-        pb: 2 + Math.random() * 4,
-        roe: 10 + Math.random() * 20,
-        roa: 5 + Math.random() * 15,
-        revenueGrowth: 5 + Math.random() * 25,
-        epsGrowth: 8 + Math.random() * 20,
-        profitMargin: 8 + Math.random() * 20,
-        debtToEquity: 0.5 + Math.random() * 1.5,
-        marketCap: fallbackMarketCap || 100000000000,
-      });
+      setFundamentals({ marketCap: fallbackMarketCap });
     } finally {
       setFundamentalsLoading(false);
     }
