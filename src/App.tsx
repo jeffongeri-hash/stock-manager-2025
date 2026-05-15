@@ -14,6 +14,7 @@ import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 
 // Lazy load all page components for code splitting
 const Index = lazy(() => import("./pages/Index"));
+const Landing = lazy(() => import("./pages/Landing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
 const Performance = lazy(() => import("./pages/Performance"));
