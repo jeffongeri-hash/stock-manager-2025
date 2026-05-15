@@ -55,6 +55,7 @@ const Analysis = () => {
   const [activeSymbol, setActiveSymbol] = useState<string>('');
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [fundamentals, setFundamentals] = useState<FundamentalsData | null>(null);
+  const [fundamentalsLoading, setFundamentalsLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const { addToWatchlist, isLoggedIn } = useWatchlistActions();
@@ -135,6 +136,7 @@ const Analysis = () => {
   }, [searchSymbol]);
 
   const fetchFundamentals = async (symbol: string, fallbackMarketCap?: number) => {
+    setFundamentalsLoading(true);
     try {
       const { data: fundData } = await supabase.functions.invoke('fetch-fundamentals', {
         body: { symbol }
@@ -158,37 +160,19 @@ const Analysis = () => {
           marketCap: f.profile?.marketCapitalization,
         });
       } else {
-        // Set simulated fundamentals if API fails
-        setFundamentals({
-          pe: 20 + Math.random() * 15,
-          forwardPe: 18 + Math.random() * 12,
-          ps: 2 + Math.random() * 5,
-          pb: 2 + Math.random() * 4,
-          roe: 10 + Math.random() * 20,
-          roa: 5 + Math.random() * 15,
-          revenueGrowth: 5 + Math.random() * 25,
-          epsGrowth: 8 + Math.random() * 20,
-          profitMargin: 8 + Math.random() * 20,
-          debtToEquity: 0.5 + Math.random() * 1.5,
-          marketCap: fallbackMarketCap || 100000000000,
-        });
+        // No data — surface "data unavailable" empty state
+        setFundamentals({ marketCap: fallbackMarketCap });
       }
     } catch (fundError) {
       console.error('Error fetching fundamentals:', fundError);
-      setFundamentals({
-        pe: 20 + Math.random() * 15,
-        forwardPe: 18 + Math.random() * 12,
-        ps: 2 + Math.random() * 5,
-        pb: 2 + Math.random() * 4,
-        roe: 10 + Math.random() * 20,
-        roa: 5 + Math.random() * 15,
-        revenueGrowth: 5 + Math.random() * 25,
-        epsGrowth: 8 + Math.random() * 20,
-        profitMargin: 8 + Math.random() * 20,
-        debtToEquity: 0.5 + Math.random() * 1.5,
-        marketCap: fallbackMarketCap || 100000000000,
-      });
+      setFundamentals({ marketCap: fallbackMarketCap });
+    } finally {
+      setFundamentalsLoading(false);
     }
+  };
+
+  const retryAnalysis = () => {
+    if (activeSymbol) fetchStockData(activeSymbol);
   };
 
   // Auto-refresh stock price every 30 seconds
@@ -367,49 +351,47 @@ const Analysis = () => {
           </TabsList>
 
           <TabsContent value="technical">
-            <ErrorBoundary fallbackTitle="Technical analysis unavailable" fallbackDescription="We couldn't render technical indicators for this ticker.">
+            <ErrorBoundary
+              fallbackTitle="Technical analysis unavailable"
+              fallbackDescription="We couldn't render technical indicators for this ticker."
+              onReset={retryAnalysis}
+            >
               <TechnicalAnalysis
                 symbol={activeSymbol}
                 currentPrice={stockData.price}
                 high52Week={stockData.high52Week}
                 low52Week={stockData.low52Week}
                 volume={stockData.volume}
+                loading={isLoading}
               />
             </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="fundamental" className="space-y-6">
-            <ErrorBoundary fallbackTitle="Fundamental analysis unavailable" fallbackDescription="Some metrics could not be loaded for this ticker.">
+            <ErrorBoundary
+              fallbackTitle="Fundamental analysis unavailable"
+              fallbackDescription="Some metrics could not be loaded for this ticker."
+              onReset={retryAnalysis}
+            >
               <FundamentalAnalysis
                 symbol={activeSymbol}
-                fundamentals={fundamentals || {
-                  pe: 25,
-                  forwardPe: 22,
-                  ps: 5,
-                  pb: 4,
-                  roe: 15,
-                  roa: 10,
-                  revenueGrowth: 10,
-                  epsGrowth: 12,
-                  profitMargin: 15,
-                  debtToEquity: 0.8,
-                  marketCap: stockData.marketCap || 100000000000,
-                }}
+                fundamentals={fundamentals || {}}
+                loading={fundamentalsLoading}
               />
             </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="catalysts">
-            <ErrorBoundary fallbackTitle="Catalysts unavailable">
+            <ErrorBoundary fallbackTitle="Catalysts unavailable" onReset={retryAnalysis}>
               <CatalystEvents symbol={activeSymbol} />
             </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="analysts">
-            <ErrorBoundary fallbackTitle="Analyst ratings unavailable">
-              <AnalystRatings 
-                symbol={activeSymbol} 
-                currentPrice={stockData.price} 
+            <ErrorBoundary fallbackTitle="Analyst ratings unavailable" onReset={retryAnalysis}>
+              <AnalystRatings
+                symbol={activeSymbol}
+                currentPrice={stockData.price}
               />
             </ErrorBoundary>
           </TabsContent>

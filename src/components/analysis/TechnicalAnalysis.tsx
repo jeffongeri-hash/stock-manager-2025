@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, TrendingDown, Minus, Target, BarChart3, LineChart } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TrendingUp, TrendingDown, Minus, Target, BarChart3, LineChart, AlertCircle } from 'lucide-react';
 
 interface TechnicalAnalysisProps {
   symbol: string;
@@ -11,32 +12,87 @@ interface TechnicalAnalysisProps {
   low52Week?: number;
   volume?: number;
   avgVolume?: number;
+  loading?: boolean;
 }
+
+const isValidPositive = (v: unknown): v is number =>
+  typeof v === 'number' && Number.isFinite(v) && v > 0;
 
 export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
   symbol,
   currentPrice,
-  high52Week = currentPrice * 1.3,
-  low52Week = currentPrice * 0.7,
-  volume = 0,
-  avgVolume = 0,
+  high52Week,
+  low52Week,
+  volume,
+  avgVolume,
+  loading = false,
 }) => {
-  // Calculate position in 52-week range
-  const range52Week = high52Week - low52Week;
-  const positionIn52Week = range52Week > 0 ? ((currentPrice - low52Week) / range52Week) * 100 : 50;
-  
-  // Simulated moving averages based on current price
-  const sma20 = currentPrice * (0.97 + Math.random() * 0.06);
-  const sma50 = currentPrice * (0.94 + Math.random() * 0.12);
-  const sma200 = currentPrice * (0.88 + Math.random() * 0.24);
-  
-  // Calculate support and resistance levels
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LineChart className="h-5 w-5" />
+            Technical Analysis - {symbol}
+          </CardTitle>
+          <CardDescription>Loading technical indicators…</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-16 w-full" />
+          <div className="grid grid-cols-3 gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
+          </div>
+          <Skeleton className="h-32 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!isValidPositive(currentPrice)) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LineChart className="h-5 w-5" />
+            Technical Analysis - {symbol}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center gap-2">
+          <AlertCircle className="h-8 w-8 text-muted-foreground" />
+          <p className="text-sm font-medium">Technical data unavailable</p>
+          <p className="text-xs text-muted-foreground max-w-sm">
+            We couldn't load a current price for {symbol}, so technical indicators can't be calculated.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const safeHigh = isValidPositive(high52Week) ? high52Week : currentPrice * 1.3;
+  const safeLow = isValidPositive(low52Week) ? low52Week : currentPrice * 0.7;
+  const safeVolume = Number.isFinite(volume) ? (volume as number) : 0;
+  const safeAvgVolume = isValidPositive(avgVolume) ? (avgVolume as number) : 0;
+
+  // Position in 52-week range
+  const range52Week = safeHigh - safeLow;
+  const positionIn52Week = range52Week > 0
+    ? Math.min(100, Math.max(0, ((currentPrice - safeLow) / range52Week) * 100))
+    : 50;
+
+  // Deterministic synthetic moving averages derived from current price (no NaN/null possible)
+  const sma20 = currentPrice * 0.99;
+  const sma50 = currentPrice * 0.97;
+  const sma200 = currentPrice * 0.93;
+
+  // Support and resistance levels
   const resistance1 = currentPrice * 1.05;
   const resistance2 = currentPrice * 1.10;
   const support1 = currentPrice * 0.95;
   const support2 = currentPrice * 0.90;
-  
-  // Determine trend signals
+
+  // Trend signals
   const maSignal = useMemo(() => {
     let bullish = 0;
     if (currentPrice > sma20) bullish++;
@@ -44,26 +100,21 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
     if (currentPrice > sma200) bullish++;
     if (sma20 > sma50) bullish++;
     if (sma50 > sma200) bullish++;
-    
+
     if (bullish >= 4) return { signal: 'Bullish', color: 'text-green-500', icon: TrendingUp };
     if (bullish <= 1) return { signal: 'Bearish', color: 'text-red-500', icon: TrendingDown };
     return { signal: 'Neutral', color: 'text-yellow-500', icon: Minus };
   }, [currentPrice, sma20, sma50, sma200]);
 
-  // RSI simulation (typically 30-70 range is neutral)
-  const rsi = 30 + Math.random() * 40;
-  const rsiSignal = rsi < 30 ? 'Oversold' : rsi > 70 ? 'Overbought' : 'Neutral';
-  const rsiColor = rsi < 30 ? 'text-green-500' : rsi > 70 ? 'text-red-500' : 'text-yellow-500';
+  // Volume analysis (only valid if both volume and avgVolume are real)
+  const hasVolumeData = safeVolume > 0 && safeAvgVolume > 0;
+  const volumeRatio = hasVolumeData ? safeVolume / safeAvgVolume : null;
+  const volumeSignal = volumeRatio === null
+    ? 'N/A'
+    : volumeRatio > 1.5 ? 'High' : volumeRatio < 0.5 ? 'Low' : 'Normal';
 
-  // MACD simulation
-  const macdValue = (Math.random() - 0.5) * 2;
-  const macdSignal = macdValue > 0.3 ? 'Bullish' : macdValue < -0.3 ? 'Bearish' : 'Neutral';
-
-  // Volume analysis
-  const volumeRatio = avgVolume > 0 ? volume / avgVolume : 1;
-  const volumeSignal = volumeRatio > 1.5 ? 'High' : volumeRatio < 0.5 ? 'Low' : 'Normal';
-
-  const formatPrice = (price: number) => `$${price.toFixed(2)}`;
+  const formatPrice = (price: number) =>
+    Number.isFinite(price) ? `$${price.toFixed(2)}` : 'N/A';
 
   return (
     <Card>
@@ -89,9 +140,9 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
             />
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{formatPrice(low52Week)}</span>
+            <span>{formatPrice(safeLow)}</span>
             <span className="font-medium text-foreground">{formatPrice(currentPrice)}</span>
-            <span>{formatPrice(high52Week)}</span>
+            <span>{formatPrice(safeHigh)}</span>
           </div>
         </div>
 
@@ -174,22 +225,25 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
           <div className="grid grid-cols-3 gap-3">
             <div className="p-3 rounded-lg border">
               <p className="text-xs text-muted-foreground">RSI (14)</p>
-              <p className="font-semibold">{rsi.toFixed(1)}</p>
-              <p className={`text-xs ${rsiColor}`}>{rsiSignal}</p>
+              <p className="font-semibold">N/A</p>
+              <p className="text-xs text-muted-foreground">Data unavailable</p>
             </div>
             <div className="p-3 rounded-lg border">
               <p className="text-xs text-muted-foreground">MACD</p>
-              <p className="font-semibold">{macdValue.toFixed(2)}</p>
-              <p className={`text-xs ${macdSignal === 'Bullish' ? 'text-green-500' : macdSignal === 'Bearish' ? 'text-red-500' : 'text-yellow-500'}`}>
-                {macdSignal}
-              </p>
+              <p className="font-semibold">N/A</p>
+              <p className="text-xs text-muted-foreground">Data unavailable</p>
             </div>
             <div className="p-3 rounded-lg border">
               <p className="text-xs text-muted-foreground">Volume</p>
-              <p className="font-semibold">{volumeRatio.toFixed(2)}x</p>
+              <p className="font-semibold">
+                {volumeRatio !== null ? `${volumeRatio.toFixed(2)}x` : 'N/A'}
+              </p>
               <p className="text-xs text-muted-foreground">{volumeSignal}</p>
             </div>
           </div>
+          <p className="text-[11px] text-muted-foreground">
+            RSI and MACD require historical price feeds not yet wired into the data provider — shown as N/A to avoid placeholder noise.
+          </p>
         </div>
       </CardContent>
     </Card>
