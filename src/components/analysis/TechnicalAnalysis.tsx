@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, TrendingDown, Minus, Target, BarChart3, LineChart } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TrendingUp, TrendingDown, Minus, Target, BarChart3, LineChart, AlertCircle } from 'lucide-react';
 
 interface TechnicalAnalysisProps {
   symbol: string;
@@ -11,16 +12,69 @@ interface TechnicalAnalysisProps {
   low52Week?: number;
   volume?: number;
   avgVolume?: number;
+  loading?: boolean;
 }
+
+const isValidPositive = (v: unknown): v is number =>
+  typeof v === 'number' && Number.isFinite(v) && v > 0;
 
 export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
   symbol,
   currentPrice,
-  high52Week = currentPrice * 1.3,
-  low52Week = currentPrice * 0.7,
-  volume = 0,
-  avgVolume = 0,
+  high52Week,
+  low52Week,
+  volume,
+  avgVolume,
+  loading = false,
 }) => {
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LineChart className="h-5 w-5" />
+            Technical Analysis - {symbol}
+          </CardTitle>
+          <CardDescription>Loading technical indicators…</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-16 w-full" />
+          <div className="grid grid-cols-3 gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
+          </div>
+          <Skeleton className="h-32 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!isValidPositive(currentPrice)) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LineChart className="h-5 w-5" />
+            Technical Analysis - {symbol}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center gap-2">
+          <AlertCircle className="h-8 w-8 text-muted-foreground" />
+          <p className="text-sm font-medium">Technical data unavailable</p>
+          <p className="text-xs text-muted-foreground max-w-sm">
+            We couldn't load a current price for {symbol}, so technical indicators can't be calculated.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const safeHigh = isValidPositive(high52Week) ? high52Week : currentPrice * 1.3;
+  const safeLow = isValidPositive(low52Week) ? low52Week : currentPrice * 0.7;
+  const safeVolume = Number.isFinite(volume) ? (volume as number) : 0;
+  const safeAvgVolume = isValidPositive(avgVolume) ? (avgVolume as number) : 0;
+
   // Calculate position in 52-week range
   const range52Week = high52Week - low52Week;
   const positionIn52Week = range52Week > 0 ? ((currentPrice - low52Week) / range52Week) * 100 : 50;
