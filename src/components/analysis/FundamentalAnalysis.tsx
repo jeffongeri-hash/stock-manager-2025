@@ -244,10 +244,10 @@ export const FundamentalAnalysis: React.FC<FundamentalAnalysisProps> = ({
                       {metric.label}
                     </TableCell>
                     <TableCell className="text-right font-semibold">
-                      {metric.value !== undefined ? metric.format(metric.value) : 'N/A'}
+                      {isValidNumber(metric.value) ? metric.format(metric.value) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground">
-                      {metric.benchmark !== undefined ? metric.format(metric.benchmark) : 'N/A'}
+                      {isValidNumber(metric.benchmark) ? metric.format(metric.benchmark) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right">
                       <span className={`flex items-center justify-end gap-1 ${comparison.color}`}>
