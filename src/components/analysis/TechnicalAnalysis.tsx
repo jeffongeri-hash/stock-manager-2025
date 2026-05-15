@@ -75,22 +75,24 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
   const safeVolume = Number.isFinite(volume) ? (volume as number) : 0;
   const safeAvgVolume = isValidPositive(avgVolume) ? (avgVolume as number) : 0;
 
-  // Calculate position in 52-week range
-  const range52Week = high52Week - low52Week;
-  const positionIn52Week = range52Week > 0 ? ((currentPrice - low52Week) / range52Week) * 100 : 50;
-  
-  // Simulated moving averages based on current price
-  const sma20 = currentPrice * (0.97 + Math.random() * 0.06);
-  const sma50 = currentPrice * (0.94 + Math.random() * 0.12);
-  const sma200 = currentPrice * (0.88 + Math.random() * 0.24);
-  
-  // Calculate support and resistance levels
+  // Position in 52-week range
+  const range52Week = safeHigh - safeLow;
+  const positionIn52Week = range52Week > 0
+    ? Math.min(100, Math.max(0, ((currentPrice - safeLow) / range52Week) * 100))
+    : 50;
+
+  // Deterministic synthetic moving averages derived from current price (no NaN/null possible)
+  const sma20 = currentPrice * 0.99;
+  const sma50 = currentPrice * 0.97;
+  const sma200 = currentPrice * 0.93;
+
+  // Support and resistance levels
   const resistance1 = currentPrice * 1.05;
   const resistance2 = currentPrice * 1.10;
   const support1 = currentPrice * 0.95;
   const support2 = currentPrice * 0.90;
-  
-  // Determine trend signals
+
+  // Trend signals
   const maSignal = useMemo(() => {
     let bullish = 0;
     if (currentPrice > sma20) bullish++;
@@ -98,26 +100,21 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
     if (currentPrice > sma200) bullish++;
     if (sma20 > sma50) bullish++;
     if (sma50 > sma200) bullish++;
-    
+
     if (bullish >= 4) return { signal: 'Bullish', color: 'text-green-500', icon: TrendingUp };
     if (bullish <= 1) return { signal: 'Bearish', color: 'text-red-500', icon: TrendingDown };
     return { signal: 'Neutral', color: 'text-yellow-500', icon: Minus };
   }, [currentPrice, sma20, sma50, sma200]);
 
-  // RSI simulation (typically 30-70 range is neutral)
-  const rsi = 30 + Math.random() * 40;
-  const rsiSignal = rsi < 30 ? 'Oversold' : rsi > 70 ? 'Overbought' : 'Neutral';
-  const rsiColor = rsi < 30 ? 'text-green-500' : rsi > 70 ? 'text-red-500' : 'text-yellow-500';
+  // Volume analysis (only valid if both volume and avgVolume are real)
+  const hasVolumeData = safeVolume > 0 && safeAvgVolume > 0;
+  const volumeRatio = hasVolumeData ? safeVolume / safeAvgVolume : null;
+  const volumeSignal = volumeRatio === null
+    ? 'N/A'
+    : volumeRatio > 1.5 ? 'High' : volumeRatio < 0.5 ? 'Low' : 'Normal';
 
-  // MACD simulation
-  const macdValue = (Math.random() - 0.5) * 2;
-  const macdSignal = macdValue > 0.3 ? 'Bullish' : macdValue < -0.3 ? 'Bearish' : 'Neutral';
-
-  // Volume analysis
-  const volumeRatio = avgVolume > 0 ? volume / avgVolume : 1;
-  const volumeSignal = volumeRatio > 1.5 ? 'High' : volumeRatio < 0.5 ? 'Low' : 'Normal';
-
-  const formatPrice = (price: number) => `$${price.toFixed(2)}`;
+  const formatPrice = (price: number) =>
+    Number.isFinite(price) ? `$${price.toFixed(2)}` : 'N/A';
 
   return (
     <Card>
