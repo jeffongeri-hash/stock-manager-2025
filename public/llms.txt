@@ -1,0 +1,31 @@
+# Profit Pathway
+
+> Free professional trading and personal-finance platform: portfolio tracking, options analysis, dividend income, retirement (FIRE) planning, real estate and auto-loan calculators, and AI-powered market research.
+
+## Pages
+
+- [Home](/): Overview of all Profit Pathway tools.
+- [Dashboard](/dashboard): Personal trading dashboard with watchlists and market overview.
+- [Portfolio](/portfolio): Track stock holdings, positions, and gains/losses in real time.
+- [Performance](/performance): Investment returns, benchmarking, and unrealized P&L breakdown.
+- [Analysis](/analysis): AI-powered stock analysis with technicals, fundamentals, catalysts, and analyst ratings.
+- [Trading Toolkit](/trading-toolkit): Position sizing, risk calculators, journals, and trade utilities.
+- [Options Toolkit](/options-portfolio): Covered calls, the Wheel, PMCC, iron condors, and Greeks.
+- [0DTE Scanner](/zero-dte): Same-day options chains for SPY, QQQ, and major indices.
+- [Market Scanner](/market-scanner): LEAPS and covered-call screeners with advanced filters.
+- [Options Guide](/options-guide): Educational guide to options strategies, basic to advanced.
+- [Credit Options Guide](/credit-options-guide): Credit spreads, cash-secured puts, and risk-defined income trades.
+- [Fundamental Analysis Guide](/fundamental-analysis-guide): CAN SLIM methodology and ratio appropriateness matrix.
+- [Dividend Tracker](/dividend-tracker): Yield-on-cost, CAGR, and dividend income projections.
+- [Risk Metrics](/risk-metrics): Portfolio VaR, Sharpe, beta, and Monte Carlo simulations.
+- [Portfolio Rebalancing](/portfolio-rebalancing): Calculate trades to hit target allocations.
+- [Retirement Planning](/retirement-planning): FIRE, Roth conversion, Social Security, and withdrawal strategies.
+- [Real Estate Calculator](/real-estate): Rental income, ROI, and mortgage analysis.
+- [Car Finance Calculator](/car-finance): Auto loans, depreciation, and total cost of ownership.
+- [SmartTrade AI](/smarttrade-ai): Gemini-powered trade planner and strategy simulator.
+- [QuantGemini](/quantgemini): Institutional-grade investor scorecards via Gemini AI.
+- [IgniteFIRE Suite](/ignite-fire): Advanced retirement and lifestyle planning hub.
+
+## Optional
+
+- [Install](/install): Install Profit Pathway as a mobile/desktop app.
