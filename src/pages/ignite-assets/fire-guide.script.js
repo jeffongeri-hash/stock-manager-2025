@@ -1042,16 +1042,22 @@ function renderCoastMainChart(current, coastNum, target, currentAge, coastAge, r
 // 
 // INIT
 // 
-document.addEventListener('DOMContentLoaded', () => {
+function __fireGuideInit() {
  renderExpenseBuilder();
  renderLearnCards();
  syncInflation();
  syncReturn();
  // Contrib mode default note
  setContribMode('fixed', document.querySelector('.contrib-mode-btn.active'));
- updateAll();  SECTIONS.forEach(id => {
+ updateAll();
+ SECTIONS.forEach(id => {
  const el = $(id);
  if (el) sectionObserver.observe(el);
  });
  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
-});
+}
+if (document.readyState === 'loading') {
+ document.addEventListener('DOMContentLoaded', __fireGuideInit);
+} else {
+ __fireGuideInit();
+}
