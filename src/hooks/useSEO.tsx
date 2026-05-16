@@ -29,7 +29,7 @@ export function useSEO(customMeta?: {
     updateMetaTag('og:title', title, 'property');
     updateMetaTag('og:description', description, 'property');
     updateMetaTag('og:url', canonicalUrl, 'property');
-    updateMetaTag('og:type', 'website', 'property');
+    updateMetaTag('og:type', pageSEO.ogType || 'website', 'property');
     updateMetaTag('og:image', `${siteConfig.url}${siteConfig.ogImage}`, 'property');
     updateMetaTag('og:site_name', siteConfig.name, 'property');
 
