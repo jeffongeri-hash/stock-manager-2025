@@ -61,6 +61,7 @@
 
   // Tool cards
   var routes = [
+    '/fire-guide',
     '/retirement-planning',
     '/dividend-tracker',
     '/trading-toolkit',

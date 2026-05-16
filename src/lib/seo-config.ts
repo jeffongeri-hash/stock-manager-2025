@@ -96,6 +96,19 @@ export const pageSEO: Record<string, PageSEO> = {
     keywords: ["dividend tracker", "dividend income", "yield on cost", "passive income"],
     ogType: "website",
   },
+  "/fire-guide": {
+    title: "FIRE Guide for Beginners — Profit Pathway",
+    description: "Calculate your real FIRE number with inflation-adjusted expenses, healthcare, family costs, and more. Free beginner's guide to retiring early.",
+    keywords: ["FIRE for beginners", "financial independence calculator", "retire early", "FIRE number", "lean FIRE", "fat FIRE", "barista FIRE"],
+    ogType: "article",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "FIRE Guide for Beginners",
+      "description": "Calculate your real financial independence number — beginner's guide to retiring early.",
+      "articleSection": "Finance Education",
+    },
+  },
   "/retirement-planning": {
     title: "Retirement Planning — Profit Pathway",
     description: "FIRE calculators, Roth conversion, Social Security estimator, withdrawal strategies, and healthcare costs.",
