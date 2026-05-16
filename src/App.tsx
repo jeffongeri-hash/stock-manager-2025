@@ -37,6 +37,7 @@ const IgniteFire = lazy(() => import("./pages/IgniteFire"));
 const Install = lazy(() => import("./pages/Install"));
 
 const RetirementPlanning = lazy(() => import("./pages/RetirementPlanning"));
+const FireGuide = lazy(() => import("./pages/FireGuide"));
 const SavedData = lazy(() => import("./pages/SavedData"));
 const RealEstate = lazy(() => import("./pages/RealEstate"));
 const CarFinance = lazy(() => import("./pages/CarFinance"));
@@ -101,6 +102,7 @@ const App = () => (
                 <Route path="/portfolio-rebalancing" element={<ProtectedRoute><PortfolioRebalancing /></ProtectedRoute>} />
                 
                 <Route path="/retirement-planning" element={<ProtectedRoute><RetirementPlanning /></ProtectedRoute>} />
+                <Route path="/fire-guide" element={<ProtectedRoute><FireGuide /></ProtectedRoute>} />
                 <Route path="/real-estate" element={<ProtectedRoute><RealEstate /></ProtectedRoute>} />
                 <Route path="/car-finance" element={<ProtectedRoute><CarFinance /></ProtectedRoute>} />
                 

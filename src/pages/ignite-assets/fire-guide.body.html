@@ -1,0 +1,670 @@
+
+<!-- NAV -->
+<nav class="topnav">
+ <div class="nav-brand">
+ <div class="nav-brand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg></div>
+ <span>Profit Pathway</span>
+ </div>
+ <div class="nav-center-label">FIRE Beginner's Guide</div>
+ <div class="nav-back" onclick="window.history.back()">
+ <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+ Back to Dashboard
+ </div>
+</nav>
+
+<!-- PROGRESS -->
+<div class="progress-bar-wrap">
+ <div class="progress-bar-inner">
+ <div class="progress-step active" id="ps-1" onclick="scrollToSection('sec-you')"><div class="progress-step-num">1</div><span>About You</span></div>
+ 
+ <div class="progress-step" id="ps-2" onclick="scrollToSection('sec-life')"><div class="progress-step-num">2</div><span>Your Life</span></div>
+ 
+ <div class="progress-step" id="ps-3" onclick="scrollToSection('sec-expenses')"><div class="progress-step-num">3</div><span>Expenses</span></div>
+ 
+ <div class="progress-step" id="ps-4" onclick="scrollToSection('sec-fire')"><div class="progress-step-num">4</div><span>Your Number</span></div>
+ 
+ <div class="progress-step" id="ps-4b" onclick="scrollToSection('sec-contrib')"><div class="progress-step-num">4b</div><span>Contributions</span></div>
+ 
+ <div class="progress-step" id="ps-4c" onclick="scrollToSection('sec-coast')"><div class="progress-step-num">4c</div><span>Coast FIRE</span></div>
+ 
+ <div class="progress-step" id="ps-5" onclick="scrollToSection('sec-path')"><div class="progress-step-num">5</div><span>Your Path</span></div>
+ 
+ <div class="progress-step" id="ps-6" onclick="scrollToSection('sec-learn')"><div class="progress-step-num">6</div><span>Learn</span></div>
+ </div>
+</div>
+
+<!-- HERO -->
+<div class="hero-banner">
+ <div class="hero-eyebrow"> FIRE Beginner's Guide</div>
+ <h1 class="hero-h1">What would it take for you<br>to <em>never need to work again?</em></h1>
+ <p class="hero-sub">We'll build your complete FIRE plan from scratch — including real inflation-adjusted expenses, family costs, healthcare, housing, and your exact retirement number. No finance degree required.</p>
+ <button class="hero-scroll-cta" onclick="scrollToSection('sec-you')">Build My Plan → </button>
+</div>
+
+<!-- PAGE WRAP -->
+<div class="page-wrap">
+<div class="main-col">
+
+<!--  SECTION 1 — ABOUT YOU
+ -->
+<section class="guide-section" id="sec-you">
+ <div class="section-marker reveal">
+ <div class="section-num">1</div>
+ <div><div class="section-title">Tell us about yourself</div><div class="section-desc">This shapes every number in your plan</div></div>
+ </div>  <div class="card reveal">
+ <div class="grid-2">
+ <div class="input-group">
+ <label class="input-label">Your Current Age</label>
+ <div class="input-wrap"><input type="number" id="age" value="25" min="16" max="70" oninput="updateAll()"></div>
+ <div style="font-size:.7rem;color:var(--text3);margin-top:.35rem" id="age-note">You have ~40 years until traditional retirement age</div>
+ </div>
+ <div class="input-group">
+ <label class="input-label">Target FIRE Age</label>
+ <div class="input-wrap"><input type="number" id="fire-age" value="50" min="30" max="70" oninput="updateAll()"></div>
+ <div style="font-size:.7rem;color:var(--text3);margin-top:.35rem" id="years-note">25 years to build your portfolio</div>
+ </div>
+ <div class="input-group">
+ <label class="input-label">Current Annual Income ($)</label>
+ <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="income" value="65000" oninput="updateAll()"></div>
+ </div>
+ <div class="input-group">
+ <label class="input-label">Current Savings / Investments ($)</label>
+ <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="saved" value="10000" oninput="updateAll()"></div>
+ </div>
+ </div>  <div class="input-group">
+ <label class="input-label">Relationship Status</label>
+ <div class="toggle-group">
+ <button class="toggle-btn active" onclick="setToggle('status','single',this)">Single</button>
+ <button class="toggle-btn" onclick="setToggle('status','partnered',this)">Partnered / Married</button>
+ <button class="toggle-btn" onclick="setToggle('status','divorced',this)">Divorced / Co-parenting</button>
+ </div>
+ </div>  <div id="partner-income-row" style="display:none" class="input-group">
+ <label class="input-label">Partner's Annual Income ($)</label>
+ <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="partner-income" value="55000" oninput="updateAll()"></div>
+ </div>
+ </div>  <div class="info-box amber reveal">
+ <strong>Why your age matters so much:</strong> A 20-year-old investing $500/month has <em>45 years</em> of compounding before age 65. The same $500/month started at 40 only compounds for 25 years — producing roughly 4× less despite the same monthly effort. Time is the most powerful tool in FIRE.
+ </div>
+</section>
+
+<!--  SECTION 2 — YOUR LIFE PLAN
+ -->
+<section class="guide-section" id="sec-life">
+ <div class="section-marker reveal">
+ <div class="section-num">2</div>
+ <div><div class="section-title">Plan your future life</div><div class="section-desc">Lifestyle choices are the biggest factor in your FIRE number</div></div>
+ </div>  <!-- Housing -->
+ <div class="card reveal">
+ <div class="mini-section-label"> Housing Plan</div>
+ <div class="input-group">
+ <label class="input-label">Housing Strategy at Retirement</label>
+ <div class="toggle-group">
+ <button class="toggle-btn active" onclick="setToggle('housing','own_paid',this)">Own — paid off</button>
+ <button class="toggle-btn" onclick="setToggle('housing','own_mortgage',this)">Own — with mortgage</button>
+ <button class="toggle-btn" onclick="setToggle('housing','rent',this)">Renting</button>
+ <button class="toggle-btn" onclick="setToggle('housing','geo_arb',this)">Geo-arbitrage abroad</button>
+ </div>
+ </div>
+ <div class="input-group" id="housing-cost-row">
+ <label class="input-label">Monthly Housing Cost at Retirement (today's $)</label>
+ <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="housing-cost" value="1500" oninput="updateAll()"></div>
+ 
+ 
+      <div style="font-size:.7rem;color:var(--text3);margin-top:.35rem" id="housing-inflated-note"></div></div>
+ </div>  <!-- Family / Children -->
+ <div class="card reveal">
+ <div class="mini-section-label"> Children &amp; Family</div>
+ <div class="info-box amber" style="margin-bottom:1rem">
+ <strong>Real cost of raising a child:</strong> USDA estimates <strong>$17,000–$26,000/year per child</strong> (2024), depending on location and lifestyle. This covers food, clothing, childcare/education, healthcare, activities, and transportation. These costs drop significantly after age 18. We'll add them to your expenses only during the years they apply.
+ </div>
+ <div class="input-group">
+ <label class="input-label">Do you plan to have children?</label>
+ <div class="toggle-group">
+ <button class="toggle-btn active" onclick="setToggle('kids','no',this);toggleKids(false)">No children</button>
+ <button class="toggle-btn" onclick="setToggle('kids','yes',this);toggleKids(true)">Yes, I plan to have kids</button>
+ <button class="toggle-btn" onclick="setToggle('kids','have',this);toggleKids(true)">I already have kids</button>
+ </div>
+ </div>
+ <div id="kids-section" style="display:none">
+ <div class="grid-3" style="margin-top:1rem">
+ <div class="input-group" style="margin-bottom:0">
+ <label class="input-label">Number of Children</label>
+ <div class="input-wrap"><input type="number" id="num-kids" value="2" min="1" max="8" oninput="updateKids();updateAll()"></div>
+ </div>
+ <div class="input-group" style="margin-bottom:0">
+ <label class="input-label">Annual Cost per Child (today's $)</label>
+ <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="kid-cost" value="18000" oninput="updateAll()"></div>
+ </div>
+ <div class="input-group" style="margin-bottom:0">
+ <label class="input-label">Years of Active Child Costs</label>
+ <div class="input-wrap"><input type="number" id="kid-years" value="18" min="1" max="25" oninput="updateAll()"></div>
+ </div>
+ </div>
+ <div class="info-box green" style="margin-top:1rem" id="kids-cost-note">—</div>
+ <div class="input-group" style="margin-top:1rem">
+ <label class="input-label">College Funding Plan</label>
+ <div class="toggle-group">
+ <button class="toggle-btn active" onclick="setToggle('college','none',this)">Not funding college</button>
+ <button class="toggle-btn" onclick="setToggle('college','partial',this)">Partial — $50K/child</button>
+ <button class="toggle-btn" onclick="setToggle('college','full',this)">Full 4yr — $120K/child</button>
+ </div>
+ </div>
+ </div>
+ </div>  <!-- Healthcare -->
+ <div class="card reveal">
+ <div class="mini-section-label"> Healthcare Planning</div>
+ <div class="info-box red" style="margin-bottom:1rem">
+ <strong>The #1 overlooked FIRE cost:</strong> Before Medicare eligibility at 65, you'll pay for private health insurance. In 2024, individual ACA marketplace plans average <strong>$583/month ($6,996/year)</strong> and family plans average <strong>$1,437/month ($17,244/year)</strong>. This is often what breaks early retirement plans.
+ </div>
+ <div class="input-group">
+ <label class="input-label">Healthcare Coverage Plan</label>
+ <div class="toggle-group">
+ <button class="toggle-btn active" onclick="setToggle('health','aca_individual',this)">ACA Individual (~$584/mo)</button>
+ <button class="toggle-btn" onclick="setToggle('health','aca_family',this)">ACA Family (~$1,437/mo)</button>
+ <button class="toggle-btn" onclick="setToggle('health','hsa_plan',this)">HDHP + HSA Strategy</button>
+ <button class="toggle-btn" onclick="setToggle('health','geo_abroad',this)">Retiring Abroad (low cost)</button>
+ </div>
+ </div>
+ <div class="input-group">
+ <label class="input-label">Monthly Healthcare Budget (today's $)</label>
+ <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="health-cost" value="584" oninput="updateAll()"></div>
+ 
+ 
+      <div style="font-size:.7rem;color:var(--text3);margin-top:.35rem" id="health-inflated-note"></div></div>
+ <div class="info-box amber" style="margin-bottom:0">
+ <strong>HSA Strategy tip:</strong> If you have a High-Deductible Health Plan, contribute the max to an HSA ($4,150 individual / $8,300 family in 2024). Invest it — it grows tax-free and withdrawals for medical expenses are tax-free at any age. It's the only triple-tax-advantaged account available.
+ </div>
+ </div>  <!-- Lifestyle -->
+ <div class="card reveal">
+ <div class="mini-section-label"> Lifestyle Tier</div>
+ <div class="input-group">
+ <label class="input-label">What lifestyle do you want in retirement?</label>
+ <div class="toggle-group">
+ <button class="toggle-btn" onclick="setLifestyle('lean',this)"> Lean FIRE<br><span style="font-size:.65rem;display:block;color:var(--text3)">$25-40K/yr · extreme frugality</span></button>
+ <button class="toggle-btn active" onclick="setLifestyle('regular',this)"> Regular FIRE<br><span style="font-size:.65rem;display:block;color:var(--text3)">$40-80K/yr · comfortable</span></button>
+ <button class="toggle-btn" onclick="setLifestyle('fat',this)"> Fat FIRE<br><span style="font-size:.65rem;display:block;color:var(--text3)">$100K+/yr · luxury</span></button>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!--  SECTION 3 — EXPENSE BUILDER
+ -->
+<section class="guide-section" id="sec-expenses">
+ <div class="section-marker reveal">
+ <div class="section-num">3</div>
+ <div><div class="section-title">Build your retirement budget</div><div class="section-desc">We've pre-filled today's real costs. They'll be inflation-adjusted to your FIRE year.</div></div>
+ </div>  <div class="info-box ember reveal">
+ <strong>How inflation works in your plan:</strong> At <strong>3% annual inflation</strong>, what costs $1,000 today costs $1,344 in 10 years and $1,806 in 20 years. We show you today's prices (so you can relate to them), then automatically inflate them to what you'll actually pay in your FIRE year. Every number below is in <em>today's dollars</em>.
+ </div>  <!-- Inflation rate control -->
+ <div class="card reveal" style="margin-bottom:1rem">
+ <div class="range-group">
+ <div class="range-header">
+ <label class="input-label" style="margin:0">Assumed Annual Inflation Rate</label>
+ <span class="range-val" id="inflation-val">3.0%</span>
+ </div>
+ <input type="range" id="inflation" min="1.5" max="6" step="0.1" value="3" oninput="syncInflation();updateAll()">
+ </div>
+ <div style="font-size:.75rem;color:var(--text2)" id="inflation-note">At 3% inflation, $60,000 today becomes $— in — years</div>
+ </div>  <!-- EXPENSE CATEGORIES -->
+   <div id="expense-builder" class="reveal"></div>
+  <!-- Expense total -->
+ <div class="card reveal" style="background:linear-gradient(135deg,rgba(29,185,84,.08),rgba(212,168,83,.04));border-color:var(--ember-brd)">
+ <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+ <div>
+ <div style="font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:.25rem">Total Annual Expenses</div>
+ <div style="font-family:var(--display);font-size:2rem;font-weight:400" id="total-today">$—</div>
+ <div style="font-size:.75rem;color:var(--text2)">in today's dollars</div>
+ </div>
+ <div style="text-align:right">
+ <div style="font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:.25rem">Inflation-Adjusted at FIRE Year</div>
+ <div style="font-family:var(--display);font-size:2rem;font-weight:400;color:var(--ember)" id="total-inflated">$—</div>
+ <div style="font-size:.75rem;color:var(--text2)" id="total-inflated-note">in future dollars</div>
+ </div>
+ </div>
+ </div>  <div class="chart-card reveal">
+ <div class="chart-title">Your Expense Breakdown</div>
+ <div class="chart-sub">Hover over any segment to see the category and annual amount</div>
+ <div class="chart-wrap"><canvas id="expense-chart"></canvas></div>
+ </div>
+</section>
+
+<!--  SECTION 4 — YOUR FIRE NUMBER
+ -->
+<section class="guide-section" id="sec-fire">
+ <div class="section-marker reveal">
+ <div class="section-num">4</div>
+ <div><div class="section-title">Your FIRE Number</div><div class="section-desc">The exact portfolio size that makes work optional</div></div>
+ </div>  <!-- SWR Explainer -->
+ <div class="info-box amber reveal">
+ <strong>The 4% Rule (Safe Withdrawal Rate):</strong> Research shows that withdrawing 4% of your portfolio per year has historically survived 30+ year retirements in almost all market conditions. Your FIRE Number = Annual Expenses ÷ 0.04, or Annual Expenses × 25. For a longer early retirement (40-50 years), many FIRE planners use a more conservative 3.5% or 3% SWR.
+ </div>  <!-- SWR selector -->
+ <div class="card reveal">
+ <div class="mini-section-label">Safe Withdrawal Rate</div>
+ <div class="toggle-group">
+ <button class="toggle-btn" onclick="setSWR(0.05,this)">5% — Aggressive</button>
+ <button class="toggle-btn active" onclick="setSWR(0.04,this)">4% — Standard</button>
+ <button class="toggle-btn" onclick="setSWR(0.035,this)">3.5% — Conservative</button>
+ <button class="toggle-btn" onclick="setSWR(0.03,this)">3% — Very Safe (40+ yr)</button>
+ </div>
+ </div>  <!-- FIRE Number Hero -->
+ <div class="fire-result-hero reveal">
+ <div class="fire-result-label"> Your FIRE Number</div>
+ <div class="fire-result-num" id="fire-num-display">$—</div>
+ <div class="fire-result-sub">This is the portfolio size where your investments generate enough passive income to cover all your expenses, forever — without ever needing to work again.</div>
+ </div>  <!-- FIRE Variant Toggle Panel -->
+ <div class="reveal">
+ <!-- Tab row -->
+ <div class="variant-tab-row">
+ <button class="variant-tab lean" onclick="switchVariant('lean',this)">
+ <span class="vt-name">Lean FIRE</span><span class="vt-sub">$25-40K/yr</span>
+ </button>
+ <button class="variant-tab regular active" onclick="switchVariant('regular',this)">
+ <span class="vt-name">Regular FIRE</span><span class="vt-sub">$40-80K/yr</span>
+ </button>
+ <button class="variant-tab fat" onclick="switchVariant('fat',this)">
+ <span class="vt-name">Fat FIRE</span><span class="vt-sub">$100K+/yr</span>
+ </button>
+ <button class="variant-tab barista" onclick="switchVariant('barista',this)">
+ <span class="vt-name">Barista FIRE</span><span class="vt-sub">Part-time work</span>
+ </button>
+ <button class="variant-tab coast" onclick="switchVariant('coast',this)">
+ <span class="vt-name">Coast FIRE</span><span class="vt-sub">Stop saving now</span>
+ </button>
+ </div>  <!-- LEAN FIRE panel -->
+ <div class="variant-panel" id="vp-lean">
+ <div class="variant-hero lean">
+ <div>
+ <div style="font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#1db954;margin-bottom:.35rem"> Lean FIRE Target</div>
+ <div class="variant-big-num" style="color:#1db954" id="lean-num-big">$—</div>
+ <div style="font-size:.78rem;color:var(--text2);margin-top:.35rem">portfolio needed for frugal early retirement</div>
+ </div>
+ <div style="text-align:right">
+ <div style="font-size:.68rem;color:var(--text3);margin-bottom:.25rem">Annual Spending</div>
+ <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:#1db954" id="lean-annual-disp">$30,000</div>
+ <div style="font-size:.68rem;color:var(--text3);margin-top:.35rem">Years to reach it</div>
+ <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700" id="lean-years-disp">—</div>
+ </div>
+ </div>
+ <div class="info-box green" style="margin-bottom:1rem">
+ <strong>What is Lean FIRE?</strong> Living on $25,000–$40,000/year in retirement. Think: no car payment, modest housing (van life, tiny home, or low-cost area), cooking most meals at home, free or cheap entertainment. Common in the FIRE community for people who value freedom over luxury. Smallest portfolio, earliest retirement. Works best in low cost-of-living areas or abroad.
+ </div>
+ <div class="variant-detail-grid">
+ <div class="variant-detail-card"><div class="variant-detail-label">FIRE Number</div><div class="variant-detail-val" style="color:#1db954" id="lean-d-num">$—</div></div>
+ <div class="variant-detail-card"><div class="variant-detail-label">Monthly Budget</div><div class="variant-detail-val" id="lean-d-monthly">$2,500</div></div>
+ <div class="variant-detail-card"><div class="variant-detail-label">Years to FIRE</div><div class="variant-detail-val" id="lean-d-years">—</div></div>
+ </div>
+ <div class="chart-card"><div class="chart-title" style="font-size:.85rem">Lean FIRE: Your path to $<span id="lean-chart-label">750K</span></div><div class="chart-wrap" style="height:200px"><canvas id="chart-lean"></canvas></div></div>
+ </div>  <!-- REGULAR FIRE panel -->
+ <div class="variant-panel active" id="vp-regular">
+ <div class="variant-hero regular">
+ <div>
+ <div style="font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--ember);margin-bottom:.35rem"> Regular FIRE Target</div>
+ <div class="variant-big-num" style="color:var(--ember)" id="regular-num-big">$—</div>
+ <div style="font-size:.78rem;color:var(--text2);margin-top:.35rem">comfortable middle-class retirement</div>
+ </div>
+ <div style="text-align:right">
+ <div style="font-size:.68rem;color:var(--text3);margin-bottom:.25rem">Annual Spending</div>
+ <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--ember)" id="regular-annual-disp">$—</div>
+ <div style="font-size:.68rem;color:var(--text3);margin-top:.35rem">Years to reach it</div>
+ <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700" id="regular-years-disp">—</div>
+ </div>
+ </div>
+ <div class="info-box ember" style="margin-bottom:1rem">
+ <strong>What is Regular FIRE?</strong> The most common FIRE target — living comfortably on your current lifestyle or slightly reduced version. Covers housing, healthcare, travel, dining out, and some luxuries. Usually $40K–$80K/year depending on location and family size. Requires a meaningful but achievable portfolio. The sweet spot of ambition and reality for most people.
+ </div>
+ <div class="variant-detail-grid">
+ <div class="variant-detail-card"><div class="variant-detail-label">FIRE Number</div><div class="variant-detail-val" style="color:var(--ember)" id="regular-d-num">$—</div></div>
+ <div class="variant-detail-card"><div class="variant-detail-label">Monthly Budget</div><div class="variant-detail-val" id="regular-d-monthly">$—</div></div>
+ <div class="variant-detail-card"><div class="variant-detail-label">Years to FIRE</div><div class="variant-detail-val" id="regular-d-years">—</div></div>
+ </div>
+ <div class="chart-card"><div class="chart-title" style="font-size:.85rem">Regular FIRE: Your path to <span id="regular-chart-label">your number</span></div><div class="chart-wrap" style="height:200px"><canvas id="chart-regular"></canvas></div></div>
+ </div>  <!-- FAT FIRE panel -->
+ <div class="variant-panel" id="vp-fat">
+ <div class="variant-hero fat">
+ <div>
+ <div style="font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--ember2);margin-bottom:.35rem"> Fat FIRE Target</div>
+ <div class="variant-big-num" style="color:var(--gold)" id="fat-num-big">$—</div>
+ <div style="font-size:.78rem;color:var(--text2);margin-top:.35rem">luxury early retirement lifestyle</div>
+ </div>
+ <div style="text-align:right">
+ <div style="font-size:.68rem;color:var(--text3);margin-bottom:.25rem">Annual Spending</div>
+ <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--gold)" id="fat-annual-disp">$120,000</div>
+ <div style="font-size:.68rem;color:var(--text3);margin-top:.35rem">Years to reach it</div>
+ <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700" id="fat-years-disp">—</div>
+ </div>
+ </div>
+ <div class="info-box amber" style="margin-bottom:1rem">
+ <strong>What is Fat FIRE?</strong> Retiring with $100,000–$200,000+ per year in spending. Business class flights, premium healthcare, dining at nice restaurants, owning a home outright in a desirable area, supporting adult children. Requires a $2.5M–$5M portfolio. Takes longer to reach but delivers maximum freedom and comfort. Common among high earners in tech, medicine, law, and finance.
+ </div>
+ <div class="variant-detail-grid">
+ <div class="variant-detail-card"><div class="variant-detail-label">FIRE Number</div><div class="variant-detail-val" style="color:var(--gold)" id="fat-d-num">$—</div></div>
+ <div class="variant-detail-card"><div class="variant-detail-label">Monthly Budget</div><div class="variant-detail-val" id="fat-d-monthly">$10,000</div></div>
+ <div class="variant-detail-card"><div class="variant-detail-label">Years to FIRE</div><div class="variant-detail-val" id="fat-d-years">—</div></div>
+ </div>
+ <div class="chart-card"><div class="chart-title" style="font-size:.85rem">Fat FIRE: Your path to <span id="fat-chart-label">$3M</span></div><div class="chart-wrap" style="height:200px"><canvas id="chart-fat"></canvas></div></div>
+ </div>  <!-- BARISTA FIRE panel -->
+ <div class="variant-panel" id="vp-barista">
+ <div class="variant-hero barista">
+ <div>
+ <div style="font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--sky);margin-bottom:.35rem"> Barista FIRE Target</div>
+ <div class="variant-big-num" style="color:var(--sky)" id="barista-num-big">$—</div>
+ <div style="font-size:.78rem;color:var(--text2);margin-top:.35rem">portfolio with part-time work covering the gap</div>
+ </div>
+ <div style="text-align:right">
+ <div style="font-size:.68rem;color:var(--text3);margin-bottom:.25rem">Part-Time Income</div>
+ <div class="input-wrap" style="width:130px;margin-left:auto">
+ <span class="input-prefix">$</span>
+ <input type="number" id="barista-income" value="20000" style="padding:.4rem .5rem;font-size:.82rem" oninput="updateAll()">
+ </div>
+ <div style="font-size:.62rem;color:var(--text3);margin-top:.25rem">annual part-time income</div>
+ </div>
+ </div>
+ <div class="info-box" style="background:rgba(74,184,160,.08);border:1px solid rgba(74,184,160,.2);border-left:3px solid var(--sky);margin-bottom:1rem">
+ <strong>What is Barista FIRE?</strong> You retire from your career but work a low-stress, part-time job — barista, bookstore clerk, park ranger, consultant — earning $15K–$30K/year. This income covers part of your expenses, so you need a much smaller portfolio. Named after the Starbucks barista job that provides healthcare benefits. Popular for people who want to leave their career but aren't ready to fully stop working.
+ </div>
+ <div class="variant-detail-grid">
+ <div class="variant-detail-card"><div class="variant-detail-label">Portfolio Needed</div><div class="variant-detail-val" style="color:var(--sky)" id="barista-d-num">$—</div></div>
+ <div class="variant-detail-card"><div class="variant-detail-label">Gap to Cover</div><div class="variant-detail-val" id="barista-d-gap">$—</div></div>
+ <div class="variant-detail-card"><div class="variant-detail-label">Years Saved</div><div class="variant-detail-val" style="color:#1db954" id="barista-d-saved">—</div></div>
+ </div>
+ <div class="chart-card"><div class="chart-title" style="font-size:.85rem">Barista FIRE: Path comparison — full FIRE vs. Barista FIRE</div><div class="chart-wrap" style="height:200px"><canvas id="chart-barista"></canvas></div></div>
+ </div>  <!-- COAST FIRE panel (in variants) -->
+ <div class="variant-panel" id="vp-coast">
+ <div class="variant-hero coast">
+ <div>
+ <div style="font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#8b5cf6;margin-bottom:.35rem"> Coast FIRE Number</div>
+ <div class="variant-big-num" style="color:#8b5cf6" id="coast-num-big">$—</div>
+ <div style="font-size:.78rem;color:var(--text2);margin-top:.35rem">invest this now, then stop — you'll coast to FIRE by <span id="coast-fire-age-inline">65</span></div>
+ </div>
+ <div style="text-align:right">
+ <div style="font-size:.68rem;color:var(--text3);margin-bottom:.25rem">Coast-to Age</div>
+ <select class="input-plain" id="coast-to-age" style="width:120px;font-size:.82rem" onchange="updateAll()">
+ <option value="55">Age 55</option>
+ <option value="60">Age 60</option>
+ <option value="65" selected>Age 65</option>
+ <option value="67">Age 67 (SS)</option>
+ </select>
+ <div style="font-size:.62rem;color:var(--text3);margin-top:.25rem">traditional retirement age</div>
+ </div>
+ </div>
+ <div class="info-box" style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-left:3px solid #8b5cf6;margin-bottom:1rem">
+ <strong>What is Coast FIRE?</strong> You've invested enough that if you <em>stop contributing today</em>, your portfolio will compound to your full FIRE number by traditional retirement age. At Coast FIRE you only need to earn enough to cover current living expenses — zero additional savings required. Many people use Coast FIRE as a "permission to breathe" milestone — shift to lower-stress work, take a sabbatical, or pursue passion projects knowing retirement is locked in.
+ </div>
+ <div class="variant-detail-grid" style="grid-template-columns:repeat(3,1fr)">
+ <div class="variant-detail-card"><div class="variant-detail-label">Coast Number</div><div class="variant-detail-val" style="color:#8b5cf6" id="coast-d-num">$—</div></div>
+ <div class="variant-detail-card"><div class="variant-detail-label">You Currently Have</div><div class="variant-detail-val" id="coast-d-have">$—</div></div>
+ <div class="variant-detail-card"><div class="variant-detail-label">Coast Status</div><div class="variant-detail-val" id="coast-d-status">—</div></div>
+ </div>
+ <div class="chart-card"><div class="chart-title" style="font-size:.85rem">Coast FIRE: Portfolio compounding without contributions</div><div class="chart-wrap" style="height:200px"><canvas id="chart-coast"></canvas></div></div>
+ </div>
+ </div>  <!-- Timeline + Savings needed -->
+ <div class="grid-2 reveal" style="margin-bottom:1rem">
+ <div class="card">
+ <div class="mini-section-label">Monthly Savings Needed</div>
+ <div style="font-family:var(--display);font-size:2rem;font-weight:400;color:var(--ember)" id="monthly-needed">$—</div>
+ <div style="font-size:.75rem;color:var(--text2);margin-top:.35rem" id="savings-pct-note">—</div>
+ <div style="margin-top:1rem">
+ <div style="font-size:.72rem;color:var(--text3);margin-bottom:.5rem">What if I can save more?</div>
+ 
+ </div>
+ </div>
+ <div class="card">
+ <div class="mini-section-label">Expected Return Rate</div>
+ <div class="range-group">
+ <div class="range-header">
+ <label class="input-label" style="margin:0">Annual Portfolio Return</label>
+ <span class="range-val" id="return-val">7%</span>
+ </div>
+ <input type="range" id="return-rate" min="4" max="12" step="0.5" value="7" oninput="syncReturn();updateAll()">
+ </div>
+ <div style="font-size:.7rem;color:var(--text2);margin-bottom:.75rem">S&amp;P 500 has historically returned ~10% nominal, ~7% real (inflation-adjusted). Conservative planners use 6-7%.</div>
+ 
+ </div>
+ </div>  <!-- Timeline chart -->
+ <div class="chart-card reveal">
+ <div class="chart-title">Portfolio Growth to Your FIRE Number</div>
+ <div class="chart-sub">Hover to see your projected portfolio value in any year</div>
+ <div class="chart-wrap"><canvas id="growth-chart"></canvas></div>
+ </div>
+</section>  <!--  SECTION 4b — CONTRIBUTION SIMULATOR
+ -->
+<section class="guide-section" id="sec-contrib">
+ <div class="section-marker reveal">
+ <div class="section-num" style="border-color:rgba(76,175,125,.3);color:#1db954">4b</div>
+ <div><div class="section-title">Monthly Contribution Simulator</div><div class="section-desc">See exactly how much monthly savings accelerates your FIRE date</div></div>
+ </div>  <div class="card reveal">
+ <div class="mini-section-label">What can you actually save each month?</div>
+ <div class="grid-2" style="margin-bottom:1.25rem">
+ <div class="input-group" style="margin-bottom:0">
+ <label class="input-label">Your Monthly Contribution ($)</label>
+ <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="contrib-monthly" value="1000" min="0" oninput="calcContrib()"></div>
+ </div>
+ <div class="input-group" style="margin-bottom:0">
+ <label class="input-label">Annual Contribution Increase (%)</label>
+ <div class="range-group" style="margin-bottom:0">
+ <div class="range-header"><label class="input-label" style="margin:0">Raise % applied to savings</label><span class="range-val" id="contrib-raise-val">3%</span></div>
+ <input type="range" id="contrib-raise" min="0" max="10" step="0.5" value="3" oninput="document.getElementById('contrib-raise-val').textContent=this.value+'%';calcContrib()">
+ </div>
+ </div>
+ </div>
+ <div id="contrib-mode-note" style="font-size:.75rem;color:var(--text2);margin-bottom:1rem;padding:.6rem .9rem;background:var(--surface2);border-radius:6px"></div>
+    <div class="contrib-mode-row">
+ <button class="contrib-mode-btn active" onclick="setContribMode('fixed',this)"> Fixed amount</button>
+ <button class="contrib-mode-btn" onclick="setContribMode('pct',this)"> % of income</button>
+ <button class="contrib-mode-btn" onclick="setContribMode('maxima',this)"> Max accounts</button>
+ </div>
+ 
+ </div>  <!-- Scenarios -->
+ <div class="reveal">
+ <div style="font-family:var(--display);font-size:1rem;font-weight:400;margin-bottom:.75rem">How different contribution amounts change your timeline</div>
+ 
+ </div>  <div id="contrib-scenarios" style="margin-bottom:1rem"></div>
+  <!-- Multi-line chart -->
+ <div class="chart-card reveal">
+ <div class="chart-title">Portfolio Growth at Different Monthly Contributions</div>
+ <div class="chart-sub">Hover any year to compare all contribution levels side by side</div>
+ <div class="chart-wrap" style="height:280px"><canvas id="contrib-chart"></canvas></div>
+ </div>  <!-- "Years to FIRE" impact table -->
+ <div class="card reveal">
+ <div class="mini-section-label">Contribution → FIRE Date Impact</div>
+ <div style="overflow-x:auto">
+ <table style="width:100%;border-collapse:collapse;font-size:.82rem" id="contrib-table">
+ <thead>
+ <tr>
+ <th style="text-align:left;padding:.6rem 1rem;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border2)">Monthly Savings</th>
+ <th style="text-align:left;padding:.6rem 1rem;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border2)">Savings Rate</th>
+ <th style="text-align:left;padding:.6rem 1rem;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border2)">Years to FIRE</th>
+ <th style="text-align:left;padding:.6rem 1rem;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border2)">FIRE Age</div></th>
+ <th style="text-align:left;padding:.6rem 1rem;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border2)">Portfolio at FIRE</th>
+ </tr>
+ </thead>
+ <tbody id="contrib-table-body"></tbody>
+ </table>
+ </div>
+ </div>
+</section>
+
+<!--  SECTION 4c — COAST FIRE DEEP DIVE
+ -->
+<section class="guide-section" id="sec-coast">
+ <div class="section-marker reveal">
+ <div class="section-num" style="border-color:rgba(139,92,246,.3);color:#8b5cf6">4c</div>
+ <div><div class="section-title">Coast FIRE — Stop Saving, Keep Compounding</div><div class="section-desc">The milestone that gives you permission to breathe</div></div>
+ </div>  <div class="info-box reveal" style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-left:3px solid #8b5cf6">
+ <strong>The Coast FIRE insight:</strong> Every dollar invested today doubles roughly every 10 years at 7% real return (Rule of 72). If you invest enough <em>right now</em>, you never need to save another dollar — your money does all the work. Coast FIRE calculates exactly how much that is.
+ </div>  <div class="grid-2 reveal" style="margin-bottom:1rem">
+ <div class="card">
+ <div class="mini-section-label">Coast FIRE Inputs</div>
+ <div class="input-group">
+ <label class="input-label">Current Portfolio ($)</label>
+ <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="coast-current" value="50000" oninput="calcCoast()"></div>
+ </div>
+ <div class="input-group">
+ <label class="input-label">Full FIRE Number Needed ($)</label>
+ <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="coast-target" value="1500000" oninput="calcCoast()"></div>
+ <div style="font-size:.7rem;color:var(--text3);margin-top:.3rem">From your FIRE number above — or enter manually</div>
+ </div>
+ <div class="input-group">
+ <label class="input-label">Current Age</label>
+ <div class="input-wrap"><input type="number" id="coast-age" value="30" oninput="calcCoast()"></div>
+ </div>
+ <div class="input-group">
+ <label class="input-label">Coast-To Age (when you want full portfolio)</label>
+ <select class="input-plain" id="coast-target-age" onchange="calcCoast()">
+ <option value="55">Age 55 — Early traditional</option>
+ <option value="60">Age 60 — Early retirement</option>
+ <option value="65" selected>Age 65 — Medicare age</option>
+ <option value="67">Age 67 — Full SS benefits</option>
+ <option value="70">Age 70 — Maximum SS</option>
+ </select>
+ </div>
+ <div class="range-group">
+ <div class="range-header"><label class="input-label">Real Return Rate (inflation-adj.)</label><span class="range-val" id="coast-return-val">7%</span></div>
+ <input type="range" id="coast-return" min="4" max="10" step="0.5" value="7" oninput="document.getElementById('coast-return-val').textContent=this.value+'%';calcCoast()">
+ </div>
+ </div>  <div>
+ <!-- Coast FIRE result -->
+ <div class="coast-hero">
+ <div style="font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#8b5cf6;margin-bottom:.5rem"> Your Coast FIRE Number</div>
+ <div class="coast-num" id="coast-result-num">$—</div>
+ <div style="font-size:.8rem;color:var(--text2);margin-top:.5rem" id="coast-result-sub">invest this today, then never save another dollar</div>
+ </div>  <div id="coast-status-box" style="margin-bottom:1rem"></div>
+      <!-- Status: have you hit Coast FIRE? -->
+   <div class="variant-detail-grid" style="grid-template-columns:1fr 1fr">
+ <div class="variant-detail-card">
+ <div class="variant-detail-label">Coast Number</div>
+ <div class="variant-detail-val" style="color:#8b5cf6" id="coast-dd-num">$—</div>
+ </div>
+ <div class="variant-detail-card">
+ <div class="variant-detail-label">You Currently Have</div>
+ <div class="variant-detail-val" id="coast-dd-have">$—</div>
+ </div>
+ <div class="variant-detail-card">
+ <div class="variant-detail-label">Still Need to Coast</div>
+ <div class="variant-detail-val" style="color:var(--ember)" id="coast-dd-gap">$—</div>
+ </div>
+ <div class="variant-detail-card">
+ <div class="variant-detail-label">Years Until Coast FIRE</div>
+ <div class="variant-detail-val" id="coast-dd-years">—</div>
+ </div>
+ </div>
+ </div>
+ </div>  <!-- Coast FIRE phases -->
+ <div class="card reveal" style="margin-bottom:1rem">
+ <div class="mini-section-label">The Two Phases of Coast FIRE</div>
+ <div class="coast-phase-row">
+ <div class="coast-phase-num">1</div>
+ <div>
+ <div style="font-weight:700;font-size:.88rem;margin-bottom:.25rem">Accumulation Phase — Save aggressively until Coast Number</div>
+ <div style="font-size:.78rem;color:var(--text2);line-height:1.6" id="coast-phase1-desc">Invest as much as possible. Every dollar invested now needs to grow to cover your retirement. This phase ends when you hit your Coast number — often much sooner than full FIRE.</div>
+ </div>
+ </div>
+ <div class="coast-phase-row">
+ <div class="coast-phase-num">2</div>
+ <div>
+ <div style="font-weight:700;font-size:.88rem;margin-bottom:.25rem">Coasting Phase — Only cover current expenses</div>
+ <div style="font-size:.78rem;color:var(--text2);line-height:1.6">You no longer need to save a dollar. Your portfolio compounds uninterrupted. Work a lower-stress job, part-time, or pursue creative work. The psychological benefit is enormous — financial anxiety largely disappears.</div>
+ </div>
+ </div>
+ <div class="coast-phase-row" style="border-bottom:none">
+ <div class="coast-phase-num">3</div>
+ <div>
+ <div style="font-weight:700;font-size:.88rem;margin-bottom:.25rem">Full FIRE — Portfolio reaches target, work is optional forever</div>
+ <div style="font-size:.78rem;color:var(--text2);line-height:1.6" id="coast-phase3-desc">At your coast-to age, your portfolio has compounded to your full FIRE number. You can fully retire, keep working because you love it, or draw down the portfolio at your SWR rate.</div>
+ </div>
+ </div>
+ </div>  <!-- Coast FIRE chart -->
+ <div class="chart-card reveal">
+ <div class="chart-title">Coast FIRE Projection — Portfolio Growth Without Contributions</div>
+ <div class="chart-sub">Hover to see your portfolio value at any age after you stop contributing</div>
+ <div class="chart-wrap" style="height:280px"><canvas id="coast-main-chart"></canvas></div>
+ </div>  <!-- Coast FIRE by age table -->
+ <div class="card reveal">
+ <div class="mini-section-label">Coast FIRE Number by Age — How Much You Need Invested Today</div>
+ <div style="font-size:.78rem;color:var(--text2);margin-bottom:1rem">If you invest this amount right now and never save another dollar, your portfolio compounds to <span id="coast-table-target">$1.5M</span> by the target age.</div>
+ 
+ 
+    <div id="coast-age-table" style="display:flex;flex-direction:column;gap:.4rem;margin-top:1rem"></div></div>
+</section>  <!--  SECTION 5 — YOUR PATH
+ -->
+<section class="guide-section" id="sec-path">
+ <div class="section-marker reveal">
+ <div class="section-num">5</div>
+ <div><div class="section-title">Your personalized FIRE path</div><div class="section-desc">Age-specific milestones and actionable next steps</div></div>
+ </div>  <div class="card reveal" id="fire-milestones-card">
+ <div class="mini-section-label">Your FIRE Timeline Milestones</div>
+ 
+ </div>  <div class="card reveal">
+ <div class="mini-section-label">Your Next 5 Steps — Starting Today</div>
+ 
+ </div>  <div class="chart-card reveal">
+ <div class="chart-title">Accounts to Use — Tax Efficiency Order</div>
+ <div class="chart-sub">Max these in order. Each saves thousands in lifetime taxes.</div>
+ 
+ </div>
+</section>
+
+<!--  SECTION 6 — LEARN FIRE
+ -->
+<section class="guide-section" id="sec-learn">
+ <div class="section-marker reveal">
+ <div class="section-num">6</div>
+ <div><div class="section-title">Understanding FIRE</div><div class="section-desc">The concepts that power financial independence — explained simply</div></div>
+ </div>  
+  <div class="learn-grid reveal" id="learn-cards"></div>
+</section>
+
+</div><!-- /main-col -->
+
+<!-- SIDEBAR -->
+<div class="sidebar-col">
+ <div class="sidebar-sticky">
+ <div class="plan-card">
+ <div class="plan-card-header">
+ <div class="plan-card-title"> Your Live FIRE Plan</div>
+ <div class="plan-card-sub">Updates as you fill in your details</div>
+ </div>
+ <div class="plan-metric"><div class="plan-metric-label">FIRE Number</div><div class="plan-metric-val ember" id="sb-fire-num">$—</div></div>
+ <div class="plan-metric"><div class="plan-metric-label">Annual Expenses (today)</div><div class="plan-metric-val" id="sb-expenses">$—</div></div>
+ <div class="plan-metric"><div class="plan-metric-label">Annual Expenses (FIRE year)</div><div class="plan-metric-val gold" id="sb-expenses-inflated">$—</div></div>
+ <div class="plan-metric"><div class="plan-metric-label">Years to FIRE</div><div class="plan-metric-val" id="sb-years">—</div></div>
+ <div class="plan-metric"><div class="plan-metric-label">FIRE Age</div><div class="plan-metric-val ember" id="sb-fire-age">—</div></div>
+ <div class="plan-metric"><div class="plan-metric-label">Monthly Savings Needed</div><div class="plan-metric-val green" id="sb-monthly">$—</div></div>
+ <div class="plan-metric"><div class="plan-metric-label">Current Progress</div><div class="plan-metric-val" id="sb-progress">0%</div></div>
+ <div class="plan-fi-bar"><div class="plan-fi-fill" id="sb-fi-bar" style="width:0%"></div></div>
+ <div style="padding:.5rem 1.25rem 0;font-size:.68rem;color:var(--text3)">Portfolio growth projection</div>
+ <div class="plan-chart-wrap"><canvas id="sidebar-chart"></canvas></div>
+ <div class="plan-actions">
+ <button class="btn-plan btn-plan-primary" onclick="scrollToSection('sec-fire')">See My FIRE Number →</button>
+ <button class="btn-plan btn-plan-secondary" onclick="scrollToSection('sec-path')">View My Path</button>
+ </div>
+ </div>  <!-- Quick facts box -->
+ <div class="card" style="margin-top:1rem;font-size:.78rem">
+ <div class="mini-section-label"> FIRE Quick Facts</div>
+ <div style="display:flex;flex-direction:column;gap:.6rem;color:var(--text2)">
+ <div><strong style="color:var(--text)">F.I.R.E.</strong> = Financial Independence, Retire Early</div>
+ <div><strong style="color:var(--text)">4% Rule:</strong> Withdraw 4%/year from your portfolio. 96% historical success over 30 years.</div>
+ <div><strong style="color:var(--text)">25× Rule:</strong> Save 25× your annual expenses = financial independence.</div>
+ <div><strong style="color:var(--text)">Savings Rate</strong> matters more than income. 50% savings rate → FIRE in ~17 years regardless of income.</div>
+ <div><strong style="color:var(--text)">Index funds</strong> outperform 90%+ of actively managed funds over 20-year periods.</div>
+ </div>
+ </div>
+ </div>
+</div>
+
+
+<!-- Hidden value carriers for legacy JS references -->
+<div style="display:none" aria-hidden="true">
+  <span id="lean-fire-num"></span>
+  <span id="regular-fire-num"></span>
+  <span id="fat-fire-num"></span>
+  <span id="barista-fire-num"></span>
+  <div id="savings-sensitivity"></div>
+  <div id="return-breakdown"></div>
+  <div id="fire-milestones"></div>
+  <div id="next-steps"></div>
+  <div id="account-priority"></div>
+</div>
+</div><!-- /page-wrap -->
+
