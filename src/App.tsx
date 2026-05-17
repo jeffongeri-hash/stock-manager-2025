@@ -80,6 +80,7 @@ const App = () => (
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Landing />} />
+                <Route path="/index" element={<Landing />} />
                 <Route path="/dashboard" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/install" element={<Install />} />
