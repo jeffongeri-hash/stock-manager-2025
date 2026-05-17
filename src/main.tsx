@@ -79,4 +79,6 @@ window.addEventListener('unhandledrejection', (e) => handleChunkLoadFailure(e.re
       <App />
     </ThemeProvider>
   );
+  // App mounted successfully — clear chunk-reload cooldown so future stale chunks can recover.
+  sessionStorage.removeItem('pp_chunk_reloaded_at');
 })();
