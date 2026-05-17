@@ -17,8 +17,10 @@ function handleChunkLoadFailure(reason: unknown) {
   if (!/Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module/i.test(msg)) {
     return;
   }
-  if (sessionStorage.getItem('pp_chunk_reloaded')) return;
-  sessionStorage.setItem('pp_chunk_reloaded', '1');
+  // Cooldown: avoid reload loops, but allow recovery from new stale chunks later in session.
+  const last = Number(sessionStorage.getItem('pp_chunk_reloaded_at') || '0');
+  if (Date.now() - last < 10_000) return;
+  sessionStorage.setItem('pp_chunk_reloaded_at', String(Date.now()));
   (async () => {
     try {
       if ('caches' in window) {
@@ -77,4 +79,6 @@ window.addEventListener('unhandledrejection', (e) => handleChunkLoadFailure(e.re
       <App />
     </ThemeProvider>
   );
+  // App mounted successfully — clear chunk-reload cooldown so future stale chunks can recover.
+  sessionStorage.removeItem('pp_chunk_reloaded_at');
 })();
