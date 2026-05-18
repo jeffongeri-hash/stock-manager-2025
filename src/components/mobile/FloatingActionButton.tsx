@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, X, TrendingUp, Bell, BookOpen, Search, Briefcase } from 'lucide-react';
+import { Plus, X, BookOpen, Search, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 const quickActions = [
   { icon: Search, label: 'Analysis', path: '/analysis', color: 'bg-blue-500' },
-  { icon: Bell, label: 'New Alert', path: '/alerts', color: 'bg-amber-500' },
-  { icon: TrendingUp, label: 'View Watchlist', path: '/watchlist', color: 'bg-green-500' },
   { icon: BookOpen, label: 'Trade Journal', path: '/trade-journal', color: 'bg-purple-500' },
   { icon: Briefcase, label: 'Portfolio', path: '/portfolio', color: 'bg-indigo-500' },
 ];
