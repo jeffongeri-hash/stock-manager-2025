@@ -46,6 +46,12 @@ const Assets = lazy(() => import("./pages/Assets"));
 const SmartTradeAI = lazy(() => import("./pages/SmartTradeAI"));
 const QuantGemini = lazy(() => import("./pages/QuantGemini"));
 
+// Public SEO landing pages
+const CoastFireCalculator = lazy(() => import("./pages/CoastFireCalculator"));
+const FinancialIndependenceCalculator = lazy(() => import("./pages/FinancialIndependenceCalculator"));
+const CoveredCallCalculator = lazy(() => import("./pages/CoveredCallCalculator"));
+const MonthlyDividendCalculator = lazy(() => import("./pages/MonthlyDividendCalculator"));
+
 
 const queryClient = new QueryClient();
 
@@ -84,6 +90,12 @@ const App = () => (
                 <Route path="/dashboard" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/install" element={<Install />} />
+
+                {/* Public SEO calculator landing pages */}
+                <Route path="/coast-fire-calculator" element={<CoastFireCalculator />} />
+                <Route path="/financial-independence-calculator" element={<FinancialIndependenceCalculator />} />
+                <Route path="/covered-call-calculator" element={<CoveredCallCalculator />} />
+                <Route path="/monthly-dividend-calculator" element={<MonthlyDividendCalculator />} />
                 
                 {/* Protected routes - allow guest mode */}
                 <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
