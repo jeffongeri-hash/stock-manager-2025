@@ -1,13 +1,23 @@
-import { useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { getPageSEO, siteConfig } from '@/lib/seo-config';
 
-export function useSEO(customMeta?: {
+interface CustomMeta {
   title?: string;
   description?: string;
   keywords?: string[];
   jsonLd?: object;
-}) {
+}
+
+/**
+ * SEO head component using react-helmet-async.
+ * Renders per-route <title>, meta, canonical, OG/Twitter, and JSON-LD tags
+ * so JS-executing crawlers (Googlebot) see accurate per-page metadata.
+ *
+ * Note: social-preview crawlers (LinkedIn, Slack, Facebook) don't execute JS
+ * and only see the static head in index.html. Keep sitewide og:* fallbacks there.
+ */
+export function SEOHead({ customMeta }: { customMeta?: CustomMeta } = {}) {
   const location = useLocation();
   const pageSEO = getPageSEO(location.pathname);
 
@@ -16,86 +26,48 @@ export function useSEO(customMeta?: {
   const keywords = customMeta?.keywords || pageSEO.keywords || siteConfig.keywords;
   const jsonLd = customMeta?.jsonLd || pageSEO.jsonLd;
   const canonicalUrl = `${siteConfig.url}${location.pathname}`;
+  const ogImage = `${siteConfig.url}${siteConfig.ogImage}`;
 
-  useEffect(() => {
-    // Update title
-    document.title = title;
+  return (
+    <Helmet>
+      <title>{title}</title>
+      <meta name="description" content={description} />
+      <meta name="keywords" content={keywords.join(', ')} />
+      <link rel="canonical" href={canonicalUrl} />
 
-    // Update or create meta tags
-    updateMetaTag('description', description);
-    updateMetaTag('keywords', keywords.join(', '));
+      {/* Open Graph */}
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:type" content={pageSEO.ogType || 'website'} />
+      <meta property="og:image" content={ogImage} />
+      <meta property="og:site_name" content={siteConfig.name} />
 
-    // Open Graph tags
-    updateMetaTag('og:title', title, 'property');
-    updateMetaTag('og:description', description, 'property');
-    updateMetaTag('og:url', canonicalUrl, 'property');
-    updateMetaTag('og:type', pageSEO.ogType || 'website', 'property');
-    updateMetaTag('og:image', `${siteConfig.url}${siteConfig.ogImage}`, 'property');
-    updateMetaTag('og:site_name', siteConfig.name, 'property');
+      {/* Twitter */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={title} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={ogImage} />
 
-    // Twitter Card tags
-    updateMetaTag('twitter:card', 'summary_large_image', 'name');
-    updateMetaTag('twitter:title', title, 'name');
-    updateMetaTag('twitter:description', description, 'name');
-    updateMetaTag('twitter:image', `${siteConfig.url}${siteConfig.ogImage}`, 'name');
-
-    // Canonical URL
-    updateCanonicalLink(canonicalUrl);
-
-    // JSON-LD structured data
-    if (jsonLd) {
-      updateJsonLd(jsonLd);
-    }
-
-    // Cleanup function to remove JSON-LD on unmount
-    return () => {
-      const existingScript = document.getElementById('json-ld-seo');
-      if (existingScript) {
-        existingScript.remove();
-      }
-    };
-  }, [title, description, keywords, canonicalUrl, jsonLd]);
+      {jsonLd && (
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      )}
+    </Helmet>
+  );
 }
 
-function updateMetaTag(name: string, content: string, attribute: 'name' | 'property' = 'name') {
-  let element = document.querySelector(`meta[${attribute}="${name}"]`) as HTMLMetaElement;
-  
-  if (!element) {
-    element = document.createElement('meta');
-    element.setAttribute(attribute, name);
-    document.head.appendChild(element);
-  }
-  
-  element.content = content;
+/**
+ * Hook form for pages that want to override SEO for the current route.
+ * Renders nothing on its own — use <PageSEO /> wrapper below in JSX.
+ */
+export function useSEO(_customMeta?: CustomMeta) {
+  // kept for backwards compatibility; prefer <PageSEO /> in route components.
 }
 
-function updateCanonicalLink(url: string) {
-  let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
-  
-  if (!link) {
-    link = document.createElement('link');
-    link.rel = 'canonical';
-    document.head.appendChild(link);
-  }
-  
-  link.href = url;
-}
-
-function updateJsonLd(data: object) {
-  let script = document.getElementById('json-ld-seo') as HTMLScriptElement;
-  
-  if (!script) {
-    script = document.createElement('script');
-    script.id = 'json-ld-seo';
-    script.type = 'application/ld+json';
-    document.head.appendChild(script);
-  }
-  
-  script.textContent = JSON.stringify(data);
-}
-
-// Component version for use in any component
-export function SEOHead() {
-  useSEO();
-  return null;
+/**
+ * Drop into any page component to override the default per-route SEO:
+ *   <PageSEO title="Custom" description="..." />
+ */
+export function PageSEO(customMeta: CustomMeta) {
+  return <SEOHead customMeta={customMeta} />;
 }

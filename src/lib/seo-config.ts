@@ -33,12 +33,6 @@ export const pageSEO: Record<string, PageSEO> = {
       "featureList": ["Portfolio Tracking", "Options Analysis", "Dividend Tracking", "Market Scanner", "Retirement Planning"],
     },
   },
-  "/dashboard": {
-    title: "Dashboard — Profit Pathway",
-    description: "Your personalized trading dashboard with watchlists, market overview, and tools at a glance.",
-    keywords: ["trading dashboard", "market overview", "watchlist"],
-    ogType: "website",
-  },
   "/portfolio": {
     title: "Portfolio Tracker — Profit Pathway",
     description: "Track your stock portfolio, analyze positions, and monitor gains/losses in real-time. Free portfolio tool.",
@@ -121,28 +115,16 @@ export const pageSEO: Record<string, PageSEO> = {
     keywords: ["0DTE options", "zero DTE", "same day options", "SPY options"],
     ogType: "website",
   },
-  "/market-scanner": {
-    title: "Market Scanner — Profit Pathway",
-    description: "Scan markets for trades with filters for price, volume, technicals, and fundamentals.",
-    keywords: ["stock scanner", "market scanner", "stock screener"],
-    ogType: "website",
-  },
   "/analysis": {
     title: "Stock Analysis — Profit Pathway",
     description: "AI-powered market and stock analysis with technicals, fundamentals, catalysts, and analyst ratings.",
     keywords: ["market analysis", "stock analysis", "AI analysis"],
     ogType: "website",
   },
-  "/risk-metrics": {
-    title: "Risk Analysis — Profit Pathway",
-    description: "Portfolio risk metrics: Value at Risk, Sharpe ratio, beta, correlation, and Monte Carlo.",
-    keywords: ["risk analysis", "portfolio risk", "VaR", "Sharpe ratio"],
-    ogType: "website",
-  },
   "/portfolio-rebalancing": {
-    title: "Portfolio Rebalancing — Profit Pathway",
-    description: "Rebalance to target allocations. Calculate trades to maintain your desired asset mix.",
-    keywords: ["portfolio rebalancing", "asset allocation", "rebalance calculator"],
+    title: "Risk & Rebalance — Profit Pathway",
+    description: "Portfolio risk metrics (VaR, Sharpe, beta), drift detection, tax-aware trades, and target allocations in one place.",
+    keywords: ["portfolio rebalancing", "asset allocation", "portfolio risk", "VaR", "Sharpe ratio"],
     ogType: "website",
   },
   "/real-estate": {
