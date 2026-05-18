@@ -25,4 +25,8 @@
   <url><loc>https://profitpathfinder.online/quantgemini</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://profitpathfinder.online/ignite-fire</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://profitpathfinder.online/install</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://profitpathfinder.online/coast-fire-calculator</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://profitpathfinder.online/financial-independence-calculator</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://profitpathfinder.online/covered-call-calculator</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://profitpathfinder.online/monthly-dividend-calculator</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
 </urlset>
