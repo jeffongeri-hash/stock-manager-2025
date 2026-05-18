@@ -54,6 +54,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://uvqrdzwimiszqkmyzbvf.supabase.co">
     <link rel="dns-prefetch" href="https://finnhub.io">
+    <!-- Non-render-blocking font load: preload + async stylesheet swap -->
     <link
       rel="preload"
       as="style"
@@ -63,7 +64,15 @@
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap"
+      />
+    </noscript>
   </head>
 
   <body>
