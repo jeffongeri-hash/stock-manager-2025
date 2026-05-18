@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client'
+import { HelmetProvider } from 'react-helmet-async'
 import App from './App.tsx'
 import './index.css'
 import { ThemeProvider } from './components/ThemeProvider'
@@ -75,9 +76,11 @@ window.addEventListener('unhandledrejection', (e) => handleChunkLoadFailure(e.re
   }
 
   createRoot(document.getElementById('root')!).render(
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-      <App />
-    </ThemeProvider>
+    <HelmetProvider>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        <App />
+      </ThemeProvider>
+    </HelmetProvider>
   );
   // App mounted successfully — clear chunk-reload cooldown so future stale chunks can recover.
   sessionStorage.removeItem('pp_chunk_reloaded_at');
