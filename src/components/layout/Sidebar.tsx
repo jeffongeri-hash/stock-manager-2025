@@ -89,7 +89,7 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
   
   const navItems = [
     {
-      title: 'Dashboard',
+      title: 'Home',
       icon: Home,
       href: '/',
     },
@@ -129,22 +129,12 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/zero-dte',
     },
     {
-      title: 'Market Scanner',
-      icon: Radar,
-      href: '/market-scanner',
-    },
-    {
       title: 'Dividend Tracker',
       icon: DollarSign,
       href: '/dividend-tracker',
     },
     {
-      title: 'Risk & Correlation',
-      icon: Shield,
-      href: '/risk-metrics',
-    },
-    {
-      title: 'Portfolio Rebalancing',
+      title: 'Risk & Rebalance',
       icon: Scale,
       href: '/portfolio-rebalancing',
     },

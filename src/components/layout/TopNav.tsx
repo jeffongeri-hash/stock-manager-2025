@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 interface NavItem { title: string; href: string; }
 
 const PRIMARY_NAV: NavItem[] = [
-  { title: 'Dashboard', href: '/' },
+  { title: 'Home', href: '/' },
   { title: 'Assets', href: '/assets' },
   { title: 'Portfolio', href: '/portfolio' },
   { title: 'Performance', href: '/performance' },
@@ -21,12 +21,10 @@ const PRIMARY_NAV: NavItem[] = [
   { title: 'Trading', href: '/trading-toolkit' },
   { title: 'Options', href: '/options-portfolio' },
   { title: '0DTE', href: '/zero-dte' },
-  
-  { title: 'Scanner', href: '/market-scanner' },
+
   { title: 'Dividends', href: '/dividend-tracker' },
-  { title: 'Risk', href: '/risk-metrics' },
-  { title: 'Rebalance', href: '/portfolio-rebalancing' },
-  
+  { title: 'Risk & Rebalance', href: '/portfolio-rebalancing' },
+
   { title: 'SmartTrade', href: '/smarttrade-ai' },
   { title: 'QuantGemini', href: '/quantgemini' },
   { title: 'IgniteFIRE', href: '/ignite-fire' },
