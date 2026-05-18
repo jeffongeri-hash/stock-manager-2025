@@ -201,7 +201,7 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
           "font-semibold tracking-tight transition-opacity duration-200",
           isCollapsed ? "opacity-0" : "opacity-100"
         )}>
-          Profit Pathway
+          Profit Pathfinder
         </h2>
         
         <Button

@@ -74,7 +74,7 @@ export function TopNav() {
               PP
             </span>
             <span className="font-display text-lg sm:text-xl font-semibold tracking-tight gradient-text">
-              Profit Pathway
+              Profit Pathfinder
             </span>
           </Link>
         </div>
