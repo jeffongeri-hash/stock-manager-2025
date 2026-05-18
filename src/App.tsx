@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/mobile/BottomNavigation";
 import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
 import { SwipeNavigation } from "@/components/mobile/SwipeNavigation";
@@ -24,13 +24,13 @@ const OptionsPortfolio = lazy(() => import("./pages/OptionsPortfolio"));
 const ZeroDTE = lazy(() => import("./pages/ZeroDTE"));
 const Auth = lazy(() => import("./pages/Auth"));
 const TradingToolkit = lazy(() => import("./pages/TradingToolkit"));
-const MarketScanner = lazy(() => import("./pages/MarketScanner"));
+
 const CreditOptionsGuide = lazy(() => import("./pages/CreditOptionsGuide"));
 const FundamentalAnalysisGuide = lazy(() => import("./pages/FundamentalAnalysisGuide"));
 const OptionsGuide = lazy(() => import("./pages/OptionsGuide"));
 
 const DividendTracker = lazy(() => import("./pages/DividendTracker"));
-const RiskMetrics = lazy(() => import("./pages/RiskMetrics"));
+
 const PortfolioRebalancing = lazy(() => import("./pages/PortfolioRebalancing"));
 const IgniteFire = lazy(() => import("./pages/IgniteFire"));
 const Install = lazy(() => import("./pages/Install"));
@@ -92,13 +92,13 @@ const App = () => (
                 <Route path="/trading-toolkit" element={<ProtectedRoute><TradingToolkit /></ProtectedRoute>} />
                 <Route path="/options-portfolio" element={<ProtectedRoute><OptionsPortfolio /></ProtectedRoute>} />
                 <Route path="/zero-dte" element={<ProtectedRoute><ZeroDTE /></ProtectedRoute>} />
-                <Route path="/market-scanner" element={<ProtectedRoute><MarketScanner /></ProtectedRoute>} />
+                <Route path="/market-scanner" element={<Navigate to="/portfolio" replace />} />
                 <Route path="/credit-options-guide" element={<ProtectedRoute><CreditOptionsGuide /></ProtectedRoute>} />
                 <Route path="/fundamental-analysis-guide" element={<ProtectedRoute><FundamentalAnalysisGuide /></ProtectedRoute>} />
                 <Route path="/options-guide" element={<ProtectedRoute><OptionsGuide /></ProtectedRoute>} />
                 <Route path="/dividend-tracker" element={<ProtectedRoute><DividendTracker /></ProtectedRoute>} />
                 
-                <Route path="/risk-metrics" element={<ProtectedRoute><RiskMetrics /></ProtectedRoute>} />
+                <Route path="/risk-metrics" element={<Navigate to="/portfolio-rebalancing" replace />} />
                 <Route path="/portfolio-rebalancing" element={<ProtectedRoute><PortfolioRebalancing /></ProtectedRoute>} />
                 
                 <Route path="/retirement-planning" element={<ProtectedRoute><RetirementPlanning /></ProtectedRoute>} />
