@@ -31,7 +31,7 @@ export const MainVideo: React.FC = () => {
           <SceneDividend />
         </TransitionSeries.Sequence>
         <TransitionSeries.Transition presentation={fade()} timing={T} />
-        <TransitionSeries.Sequence durationInFrames={130}>
+        <TransitionSeries.Sequence durationInFrames={190}>
           <SceneOutro />
         </TransitionSeries.Sequence>
       </TransitionSeries>
