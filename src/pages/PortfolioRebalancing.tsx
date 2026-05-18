@@ -343,9 +343,9 @@ const PortfolioRebalancing = () => {
   return (
     <PageLayout>
       <PageHero
-        eyebrow="Rebalancing"
+        eyebrow="Risk & Rebalance"
         title={<>Stay on <span className="gradient-text">target</span></>}
-        description="Drift detection, tax-aware trades, and target allocations made simple."
+        description="Risk metrics, drift detection, tax-aware trades, and target allocations in one place."
       />
       <Tabs defaultValue="rebalance" className="space-y-6">
         <TabsList className="bg-muted/50">

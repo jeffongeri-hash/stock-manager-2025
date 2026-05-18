@@ -13,8 +13,7 @@ interface NavItem {
 const primaryNavItems: NavItem[] = [
   { icon: <Home className="h-5 w-5" />, label: 'Home', path: '/' },
   { icon: <Briefcase className="h-5 w-5" />, label: 'Portfolio', path: '/portfolio' },
-  { icon: <TrendingUp className="h-5 w-5" />, label: 'Markets', path: '/market-scanner' },
-  { icon: <Bell className="h-5 w-5" />, label: 'Alerts', path: '/watchlist' },
+  { icon: <TrendingUp className="h-5 w-5" />, label: 'Analysis', path: '/analysis' },
 ];
 
 const moreNavItems: NavItem[] = [
