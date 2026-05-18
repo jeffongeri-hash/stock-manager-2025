@@ -32,17 +32,42 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "Profit Pathway",
-      "applicationCategory": "FinanceApplication",
-      "operatingSystem": "Web",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
-      "description": "Professional trading platform for portfolio management, options analysis, dividend tracking, and market insights",
-      "featureList": ["Portfolio Tracking", "Options Analysis", "Dividend Tracking", "Market Scanner", "Retirement Planning", "Risk Analysis", "ETF Comparison"]
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://profitpathfinder.online/#organization",
+          "name": "Profit Pathway",
+          "url": "https://profitpathfinder.online/",
+          "logo": "https://profitpathfinder.online/pwa-512x512.png",
+          "description": "Professional trading and personal finance platform offering portfolio management, options analysis, dividend tracking, and retirement planning."
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://profitpathfinder.online/#website",
+          "url": "https://profitpathfinder.online/",
+          "name": "Profit Pathway",
+          "publisher": { "@id": "https://profitpathfinder.online/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://profitpathfinder.online/analysis?ticker={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Profit Pathway",
+          "url": "https://profitpathfinder.online/",
+          "applicationCategory": "FinanceApplication",
+          "operatingSystem": "Web",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "description": "Professional trading platform for portfolio management, options analysis, dividend tracking, and market insights",
+          "featureList": ["Portfolio Tracking", "Options Analysis", "Dividend Tracking", "Market Scanner", "Retirement Planning", "Risk Analysis", "ETF Comparison"]
+        }
+      ]
     }
     </script>
     
