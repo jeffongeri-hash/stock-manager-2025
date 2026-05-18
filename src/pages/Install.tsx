@@ -60,7 +60,7 @@ export default function Install() {
               </div>
               <CardTitle>App Installed!</CardTitle>
               <CardDescription>
-                Profit Pathway is already installed on your device. You can access it from your home screen.
+                Profit Pathfinder is already installed on your device. You can access it from your home screen.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -71,7 +71,7 @@ export default function Install() {
                 <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
                   <Smartphone className="h-8 w-8 text-primary" />
                 </div>
-                <CardTitle>Install Profit Pathway</CardTitle>
+                <CardTitle>Install Profit Pathfinder</CardTitle>
                 <CardDescription>
                   Install this app on your device for quick access and a native app experience.
                 </CardDescription>

@@ -1,10 +1,10 @@
-# Profit Pathway
+# Profit Pathfinder
 
 > Free professional trading and personal-finance platform: portfolio tracking, options analysis, dividend income, retirement (FIRE) planning, real estate and auto-loan calculators, and AI-powered market research.
 
 ## Pages
 
-- [Home](/): Overview of all Profit Pathway tools.
+- [Home](/): Overview of all Profit Pathfinder tools.
 - [Dashboard](/dashboard): Personal trading dashboard with watchlists and market overview.
 - [Portfolio](/portfolio): Track stock holdings, positions, and gains/losses in real time.
 - [Performance](/performance): Investment returns, benchmarking, and unrealized P&L breakdown.
@@ -28,4 +28,4 @@
 
 ## Optional
 
-- [Install](/install): Install Profit Pathway as a mobile/desktop app.
+- [Install](/install): Install Profit Pathfinder as a mobile/desktop app.

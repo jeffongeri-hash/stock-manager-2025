@@ -77,7 +77,7 @@ export function SeoCalculatorPage({
             <h2 className="font-display text-2xl font-semibold mb-2">Get the full toolkit</h2>
             <p className="text-muted-foreground mb-4">
               This calculator is a quick preview. Sign in (free) to track your real numbers,
-              save scenarios, and unlock the full Profit Pathway suite.
+              save scenarios, and unlock the full Profit Pathfinder suite.
             </p>
             <Button asChild size="lg">
               <Link to={ctaHref}>{ctaLabel}</Link>

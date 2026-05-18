@@ -9,7 +9,7 @@ export function PWAUpdateNotification() {
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         toast({
           title: '🔄 New version available!',
-          description: 'A new version of Profit Pathway is ready. Refresh to update.',
+          description: 'A new version of Profit Pathfinder is ready. Refresh to update.',
           duration: 0,
           action: (
             <button

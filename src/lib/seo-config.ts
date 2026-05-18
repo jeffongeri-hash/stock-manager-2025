@@ -1,6 +1,6 @@
 // SEO configuration for all pages
 export const siteConfig = {
-  name: "Profit Pathway",
+  name: "Profit Pathfinder",
   description: "Professional trading platform for portfolio management, options analysis, dividend tracking, and market insights.",
   url: "https://profitpathfinder.online",
   ogImage: "/og-image.png",
@@ -18,14 +18,14 @@ export interface PageSEO {
 
 export const pageSEO: Record<string, PageSEO> = {
   "/": {
-    title: "Profit Pathway — Trading & Portfolio Tools",
+    title: "Profit Pathfinder — Trading & Portfolio Tools",
     description: "Free professional trading tools for portfolio, options, dividends, and market insights. Start investing smarter today.",
     keywords: ["trading platform", "portfolio tracker", "stock analysis", "free trading tools"],
     ogType: "website",
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "Profit Pathway",
+      "name": "Profit Pathfinder",
       "applicationCategory": "FinanceApplication",
       "operatingSystem": "Web",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -34,19 +34,19 @@ export const pageSEO: Record<string, PageSEO> = {
     },
   },
   "/portfolio": {
-    title: "Portfolio Tracker — Profit Pathway",
+    title: "Portfolio Tracker — Profit Pathfinder",
     description: "Track your stock portfolio, analyze positions, and monitor gains/losses in real-time. Free portfolio tool.",
     keywords: ["portfolio tracker", "stock portfolio", "investment tracking"],
     ogType: "website",
   },
   "/options-portfolio": {
-    title: "Options Toolkit — Profit Pathway",
+    title: "Options Toolkit — Profit Pathfinder",
     description: "Options trading toolkit: covered call analyzer, wheel tracker, PMCC calculator, iron condors, and Greeks.",
     keywords: ["options trading", "covered calls", "wheel strategy", "PMCC calculator"],
     ogType: "website",
   },
   "/options-guide": {
-    title: "Options Strategy Guide — Profit Pathway",
+    title: "Options Strategy Guide — Profit Pathfinder",
     description: "Guide to options strategies: covered calls, cash-secured puts, spreads, iron condors, and the wheel.",
     keywords: ["options guide", "options strategies", "learn options trading"],
     ogType: "article",
@@ -59,7 +59,7 @@ export const pageSEO: Record<string, PageSEO> = {
     },
   },
   "/credit-options-guide": {
-    title: "Credit Options Guide — Profit Pathway",
+    title: "Credit Options Guide — Profit Pathfinder",
     description: "Learn credit spreads, cash-secured puts, and risk-defined income trades with worked examples.",
     keywords: ["credit spreads", "cash secured puts", "credit options", "income options"],
     ogType: "article",
@@ -72,7 +72,7 @@ export const pageSEO: Record<string, PageSEO> = {
     },
   },
   "/fundamental-analysis-guide": {
-    title: "Fundamental Analysis Guide — Profit Pathway",
+    title: "Fundamental Analysis Guide — Profit Pathfinder",
     description: "CAN SLIM methodology, ratio appropriateness matrix, and how to evaluate company fundamentals.",
     keywords: ["fundamental analysis", "CAN SLIM", "financial ratios", "stock research"],
     ogType: "article",
@@ -85,13 +85,13 @@ export const pageSEO: Record<string, PageSEO> = {
     },
   },
   "/dividend-tracker": {
-    title: "Dividend Tracker — Profit Pathway",
+    title: "Dividend Tracker — Profit Pathfinder",
     description: "Track dividend income, yield on cost, and build passive income streams. Free dividend tool.",
     keywords: ["dividend tracker", "dividend income", "yield on cost", "passive income"],
     ogType: "website",
   },
   "/fire-guide": {
-    title: "FIRE Guide for Beginners — Profit Pathway",
+    title: "FIRE Guide for Beginners — Profit Pathfinder",
     description: "Calculate your real FIRE number with inflation-adjusted expenses, healthcare, family costs, and more. Free beginner's guide to retiring early.",
     keywords: ["FIRE for beginners", "financial independence calculator", "retire early", "FIRE number", "lean FIRE", "fat FIRE", "barista FIRE"],
     ogType: "article",
@@ -104,80 +104,80 @@ export const pageSEO: Record<string, PageSEO> = {
     },
   },
   "/retirement-planning": {
-    title: "Retirement Planning — Profit Pathway",
+    title: "Retirement Planning — Profit Pathfinder",
     description: "FIRE calculators, Roth conversion, Social Security estimator, withdrawal strategies, and healthcare costs.",
     keywords: ["retirement calculator", "FIRE calculator", "Roth conversion", "401k planning"],
     ogType: "website",
   },
   "/zero-dte": {
-    title: "0DTE Options Scanner — Profit Pathway",
+    title: "0DTE Options Scanner — Profit Pathfinder",
     description: "Scan zero days to expiration (0DTE) options for SPY, QQQ, and major indices with live chains.",
     keywords: ["0DTE options", "zero DTE", "same day options", "SPY options"],
     ogType: "website",
   },
   "/analysis": {
-    title: "Stock Analysis — Profit Pathway",
+    title: "Stock Analysis — Profit Pathfinder",
     description: "AI-powered market and stock analysis with technicals, fundamentals, catalysts, and analyst ratings.",
     keywords: ["market analysis", "stock analysis", "AI analysis"],
     ogType: "website",
   },
   "/portfolio-rebalancing": {
-    title: "Risk & Rebalance — Profit Pathway",
+    title: "Risk & Rebalance — Profit Pathfinder",
     description: "Portfolio risk metrics (VaR, Sharpe, beta), drift detection, tax-aware trades, and target allocations in one place.",
     keywords: ["portfolio rebalancing", "asset allocation", "portfolio risk", "VaR", "Sharpe ratio"],
     ogType: "website",
   },
   "/real-estate": {
-    title: "Real Estate Calculator — Profit Pathway",
+    title: "Real Estate Calculator — Profit Pathfinder",
     description: "Analyze real estate investments with ROI, rental income, mortgage, and property comparison tools.",
     keywords: ["real estate calculator", "investment property", "rental income", "property ROI"],
     ogType: "website",
   },
   "/car-finance": {
-    title: "Car Finance Calculator — Profit Pathway",
+    title: "Car Finance Calculator — Profit Pathfinder",
     description: "Calculate car payments, compare financing, analyze depreciation, and total cost of ownership.",
     keywords: ["car loan calculator", "auto finance", "car depreciation"],
     ogType: "website",
   },
   "/trading-toolkit": {
-    title: "Trading Toolkit — Profit Pathway",
+    title: "Trading Toolkit — Profit Pathfinder",
     description: "Trading tools: position sizing, risk calculators, trade journal, and performance analytics.",
     keywords: ["trading tools", "position sizing", "trade journal"],
     ogType: "website",
   },
   "/performance": {
-    title: "Performance Analytics — Profit Pathway",
+    title: "Performance Analytics — Profit Pathfinder",
     description: "Analyze investment returns with benchmarking, attribution, and unrealized P&L breakdowns.",
     keywords: ["performance tracking", "investment returns", "portfolio performance"],
     ogType: "website",
   },
   "/smarttrade-ai": {
-    title: "SmartTrade AI — Profit Pathway",
+    title: "SmartTrade AI — Profit Pathfinder",
     description: "Gemini-powered trade planner and strategy simulator for smarter, faster trade ideas.",
     keywords: ["AI trading", "trade planner", "Gemini AI trading"],
     ogType: "website",
   },
   "/quantgemini": {
-    title: "QuantGemini Research — Profit Pathway",
+    title: "QuantGemini Research — Profit Pathfinder",
     description: "Institutional-grade investor scorecards and quantitative research via Gemini AI.",
     keywords: ["quant research", "investor scorecard", "AI stock research"],
     ogType: "website",
   },
   "/ignite-fire": {
-    title: "IgniteFIRE Suite — Profit Pathway",
+    title: "IgniteFIRE Suite — Profit Pathfinder",
     description: "Advanced FIRE retirement suite with scenario modeling, withdrawals, and lifestyle planning.",
     keywords: ["FIRE", "retirement suite", "financial independence"],
     ogType: "website",
   },
   "/auth": {
-    title: "Sign In — Profit Pathway",
+    title: "Sign In — Profit Pathfinder",
     description: "Sign in or create an account to access your personalized trading dashboard and saved data.",
     keywords: ["login", "sign in", "create account"],
     ogType: "website",
   },
   "/install": {
-    title: "Install App — Profit Pathway",
-    description: "Install Profit Pathway as a mobile or desktop app for quick access to your trading tools.",
+    title: "Install App — Profit Pathfinder",
+    description: "Install Profit Pathfinder as a mobile or desktop app for quick access to your trading tools.",
     keywords: ["install app", "mobile app", "PWA"],
     ogType: "website",
   },
@@ -192,8 +192,8 @@ export function getPageSEO(path: string): PageSEO {
     ? slug.replace(/\b\w/g, (c) => c.toUpperCase())
     : "Home";
   return {
-    title: `${titleized} — Profit Pathway`,
-    description: `${titleized} on Profit Pathway — ${siteConfig.description}`,
+    title: `${titleized} — Profit Pathfinder`,
+    description: `${titleized} on Profit Pathfinder — ${siteConfig.description}`,
     keywords: siteConfig.keywords,
     ogType: "website",
   };

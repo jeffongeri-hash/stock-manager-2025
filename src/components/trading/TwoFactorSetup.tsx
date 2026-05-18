@@ -71,7 +71,7 @@ export const TwoFactorSetup: React.FC = () => {
     // Generate QR code
     const otpauth = OTPAuth.authenticator.keyuri(
       user?.email || 'user',
-      'Profit Pathway Trading',
+      'Profit Pathfinder Trading',
       newSecret
     );
     
