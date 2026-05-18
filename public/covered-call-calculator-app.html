@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Covered Call Calculator — Options Income Strategy | Profit Pathway</title>
+<meta name="description" content="The most complete free covered call calculator. Calculate premium income, annualized yield, breakeven, Greeks, rolling strategies, and compare covered calls vs cash-secured puts. Includes earnings calendar avoidance.">
+<meta name="keywords" content="covered call calculator, covered call strategy, how to sell covered calls, covered call income, options income strategy, covered call vs cash secured put, wheel strategy options, call option premium calculator, annualized yield covered call">
+<link rel="canonical" href="https://profitpathfinder.online/covered-call-calculator">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Covered Call Calculator","description":"Calculate covered call income, annualized yield, breakeven, and Greeks. Compare with cash-secured puts and model the wheel strategy.","url":"https://profitpathfinder.online/covered-call-calculator"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#080612;--bg2:#0d0a1c;--surface:#130f24;--surface2:#1a1530;--surface3:#221d3c;
+  --border:rgba(139,92,246,.15);--border2:rgba(255,255,255,.06);
+  --p1:#7c3aed;--p2:#8b5cf6;--p3:#a78bfa;
+  --pdim:rgba(124,58,237,.1);--pbrd:rgba(124,58,237,.22);
+  --teal:#0d9488;--tealdim:rgba(13,148,136,.1);
+  --green:#16a34a;--greendim:rgba(22,163,74,.1);
+  --amber:#d97706;--amberdim:rgba(217,119,6,.1);
+  --red:#dc2626;--reddim:rgba(220,38,38,.1);
+  --text:#ede9fe;--text2:#8b83b8;--text3:#44385a;
+  --font:'DM Sans',sans-serif;--display:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:12px;--rsm:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 50% at 60% -10%,rgba(124,58,237,.14) 0%,transparent 60%),radial-gradient(ellipse 40% 30% at 10% 80%,rgba(13,148,136,.06) 0%,transparent 50%)}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;background:rgba(8,6,18,.92);border-bottom:1px solid var(--border2);backdrop-filter:blur(20px)}
+.brand{display:flex;align-items:center;gap:.6rem;font-family:var(--display);font-size:1rem;font-weight:600;letter-spacing:-.02em}
+.brand-dot{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--p1),var(--p3));display:flex;align-items:center;justify-content:center}
+.brand-dot svg{width:13px;height:13px}
+.brand span{background:linear-gradient(135deg,var(--p2),var(--p3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-right{display:flex;align-items:center;gap:.75rem}
+.nav-back{font-size:.75rem;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:.35rem;transition:color .15s}
+.nav-back:hover{color:var(--text2)}
+.nav-cta{font-size:.75rem;font-weight:700;padding:.4rem 1rem;border-radius:7px;background:linear-gradient(135deg,var(--p1),var(--p2));color:white;border:none;cursor:pointer}
+
+/* HERO */
+.hero{padding:5rem 2rem 4rem;position:relative;z-index:1;border-bottom:1px solid var(--border2);background:linear-gradient(180deg,rgba(124,58,237,.06) 0%,transparent 100%)}
+.hero-inner{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.hero-kicker{font-size:.65rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--p3);margin-bottom:1rem}
+.hero h1{font-family:var(--display);font-size:clamp(2rem,4.5vw,3.5rem);font-weight:300;line-height:1.1;letter-spacing:-.03em;margin-bottom:1.25rem}
+.hero h1 strong{font-weight:700;background:linear-gradient(135deg,var(--p2),var(--p3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:.88rem;color:var(--text2);line-height:1.8;margin-bottom:2rem}
+.hero-what{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem}
+.hero-what-title{font-family:var(--display);font-size:1.05rem;font-weight:600;margin-bottom:.75rem;color:var(--p3)}
+.hero-what-step{display:flex;gap:.75rem;align-items:flex-start;margin-bottom:.65rem}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--pdim);border:1px solid var(--pbrd);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.65rem;font-weight:700;color:var(--p2);flex-shrink:0;margin-top:.05rem}
+.step-text{font-size:.8rem;color:var(--text2);line-height:1.55}
+.step-text strong{color:var(--text)}
+
+/* LAYOUT */
+.wrap{max-width:1180px;margin:0 auto;padding:2.5rem 2rem;position:relative;z-index:1}
+.two-col{display:grid;grid-template-columns:1fr 380px;gap:1.5rem;align-items:start}
+.sticky-col{position:sticky;top:68px}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem;margin-bottom:1.25rem;transition:border-color .2s}
+.card:hover{border-color:var(--border)}
+.card-title{font-family:var(--display);font-size:1.05rem;font-weight:600;margin-bottom:.25rem;letter-spacing:-.01em}
+.card-sub{font-size:.75rem;color:var(--text2);margin-bottom:1.25rem}
+.sec-label{font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--p3);display:flex;align-items:center;gap:.4rem;margin-bottom:.9rem}
+.sec-label::before{content:'';width:12px;height:2px;background:linear-gradient(90deg,var(--p1),var(--p3));border-radius:1px}
+
+/* RESULT PANEL */
+.result-panel{background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(167,139,250,.05));border:1px solid var(--pbrd);border-radius:var(--r);overflow:hidden;margin-bottom:1.25rem}
+.result-top{padding:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;border-bottom:1px solid var(--border2)}
+.result-big{font-family:var(--mono);font-size:3rem;font-weight:700;color:var(--p3);line-height:1}
+.result-label{font-size:.6rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:.25rem}
+.result-ann{font-family:var(--mono);font-size:1.8rem;font-weight:700;color:var(--green)}
+.result-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+.rg-cell{padding:1rem;border-right:1px solid var(--border2);text-align:center}
+.rg-cell:last-child{border-right:none}
+.rg-label{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:.3rem}
+.rg-val{font-family:var(--mono);font-size:1rem;font-weight:700}
+
+/* INPUTS */
+.ig{margin-bottom:.9rem}
+.il{font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:.35rem;display:block}
+.iw{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rsm);overflow:hidden;transition:border-color .2s}
+.iw:focus-within{border-color:var(--pbrd)}
+.ip{padding:0 .65rem;color:var(--text3);font-size:.78rem;background:var(--surface3);border-right:1px solid var(--border2);align-self:stretch;display:flex;align-items:center;font-family:var(--mono)}
+.iw input,.ipl{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:.88rem;padding:.6rem .75rem}
+.ipl{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rsm);outline:none;transition:border-color .2s}
+.ipl:focus{border-color:var(--pbrd)}
+select.ipl{cursor:pointer}
+.rg{margin-bottom:.9rem}
+.rh{display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem}
+.rvl{font-family:var(--mono);font-size:.8rem;font-weight:700;color:var(--p2);background:var(--pdim);border:1px solid var(--pbrd);border-radius:4px;padding:.1rem .4rem}
+input[type=range]{width:100%;appearance:none;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:3px;background:var(--surface3);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:var(--p2);margin-top:-5.5px;box-shadow:0 0 0 3px rgba(124,58,237,.2)}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
+
+/* METRIC CARDS */
+.mc{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rsm);padding:1rem}
+.mc-label{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:.35rem}
+.mc-val{font-family:var(--mono);font-size:1.2rem;font-weight:700}
+.mc-sub{font-size:.67rem;color:var(--text3);margin-top:.2rem}
+
+/* CHARTS */
+.cc{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem;margin-bottom:1.25rem}
+.ct{font-family:var(--display);font-size:.95rem;font-weight:600;margin-bottom:.2rem;letter-spacing:-.01em}
+.cs{font-size:.7rem;color:var(--text2);margin-bottom:1rem}
+.cw{position:relative;height:260px}
+.cw.sm{height:200px}
+.cw.lg{height:320px}
+
+/* INFO BOXES */
+.ib{padding:.9rem 1.1rem;border-radius:var(--rsm);font-size:.8rem;line-height:1.65;margin-bottom:1rem}
+.ib strong{font-weight:700;color:var(--text)}
+.ib.purple{background:var(--pdim);border:1px solid var(--pbrd);border-left:3px solid var(--p2);color:var(--text2)}
+.ib.green{background:var(--greendim);border:1px solid rgba(22,163,74,.2);border-left:3px solid var(--green);color:var(--text2)}
+.ib.amber{background:var(--amberdim);border:1px solid rgba(217,119,6,.2);border-left:3px solid var(--amber);color:var(--text2)}
+.ib.red{background:var(--reddim);border:1px solid rgba(220,38,38,.2);border-left:3px solid var(--red);color:var(--text2)}
+.ib.teal{background:var(--tealdim);border:1px solid rgba(13,148,136,.2);border-left:3px solid var(--teal);color:var(--text2)}
+
+/* TABS */
+.tab-row{display:flex;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rsm);overflow:hidden;margin-bottom:1.25rem}
+.tab-btn{flex:1;padding:.65rem .5rem;font-size:.74rem;font-weight:600;color:var(--text3);background:transparent;border:none;cursor:pointer;transition:all .2s;text-align:center;white-space:nowrap}
+.tab-btn.active{background:var(--pdim);color:var(--p3)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* TOGGLE */
+.tg{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.45rem}
+.tb{padding:.38rem .8rem;font-size:.75rem;font-weight:600;border-radius:100px;border:1px solid var(--border2);background:var(--surface2);color:var(--text3);cursor:pointer;transition:all .15s}
+.tb.on{background:var(--pdim);border-color:var(--pbrd);color:var(--p3)}
+.tb:hover{color:var(--text2)}
+
+/* TABLE */
+.dt{width:100%;border-collapse:collapse;font-size:.82rem}
+.dt th{padding:.55rem .9rem;text-align:left;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border2);font-weight:700}
+.dt td{padding:.7rem .9rem;border-bottom:1px solid var(--border2)}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:var(--surface2)}
+
+/* STRIKE SELECTOR */
+.strike-grid{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.5rem}
+.strike-btn{padding:.4rem .8rem;font-family:var(--mono);font-size:.78rem;font-weight:700;border-radius:var(--rsm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .15s}
+.strike-btn:hover{border-color:var(--border);color:var(--text)}
+.strike-btn.selected{background:var(--pdim);border-color:var(--pbrd);color:var(--p3)}
+.strike-btn.itm{border-color:rgba(220,38,38,.3);color:var(--red)}
+.strike-btn.atm{border-color:rgba(124,58,237,.4);color:var(--p2)}
+.strike-btn.otm{border-color:rgba(22,163,74,.3);color:var(--green)}
+
+/* EARNINGS CALENDAR */
+.earnings-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem .85rem;border-radius:var(--rsm);margin-bottom:.4rem;background:var(--surface2);border:1px solid var(--border2);cursor:pointer;transition:border-color .15s}
+.earnings-row:hover{border-color:var(--border)}
+.earnings-row.danger{border-color:rgba(220,38,38,.3);background:rgba(220,38,38,.05)}
+.earnings-sym{font-family:var(--mono);font-weight:700;font-size:.85rem}
+.earnings-date{font-size:.75rem;color:var(--text2)}
+.earnings-warn{font-size:.65rem;color:var(--red);font-weight:700}
+.earnings-safe{font-size:.65rem;color:var(--green);font-weight:700}
+
+/* ROLLING TABLE */
+.roll-row{padding:.75rem;background:var(--surface2);border-radius:var(--rsm);margin-bottom:.5rem;border:1px solid var(--border2)}
+.roll-row.recommended{border-color:var(--pbrd);background:var(--pdim)}
+
+/* SCREENER */
+.screen-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--rsm);padding:1rem;margin-bottom:.65rem;cursor:pointer;transition:all .2s}
+.screen-card:hover{border-color:var(--border);transform:translateY(-1px)}
+.screen-card.featured{border-color:var(--pbrd)}
+
+/* PAGE SECTIONS */
+.page-section{margin-bottom:3rem}
+.page-section-title{font-family:var(--display);font-size:1.5rem;font-weight:300;margin-bottom:.3rem;letter-spacing:-.02em}
+.page-section-title strong{font-weight:700;background:linear-gradient(135deg,var(--p2),var(--p3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.page-section-sub{font-size:.83rem;color:var(--text2);margin-bottom:1.75rem;line-height:1.65}
+
+/* PROGRESS */
+.pb-track{height:5px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.pb-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--p1),var(--p3));transition:width .5s}
+
+/* LEARN */
+.learn-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem}
+.lc{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.25rem;cursor:pointer;transition:all .2s}
+.lc:hover{border-color:var(--border);transform:translateY(-2px)}
+.lc-title{font-family:var(--display);font-size:.98rem;font-weight:600;margin-bottom:.4rem;letter-spacing:-.01em}
+.lc-body{font-size:.76rem;color:var(--text2);line-height:1.65}
+.lc-more{font-size:.7rem;color:var(--p3);margin-top:.6rem}
+.lc-long{display:none;font-size:.74rem;color:var(--text2);line-height:1.7;margin-top:.5rem;white-space:pre-line}
+
+/* FOOTER */
+footer{background:var(--bg2);border-top:1px solid var(--border2);padding:2.5rem 2rem;margin-top:4rem;position:relative;z-index:1}
+.footer-inner{max-width:1180px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.footer-copy{font-size:.72rem;color:var(--text3)}
+.footer-links{display:flex;gap:1.25rem;flex-wrap:wrap}
+.footer-link{font-size:.7rem;color:var(--text3);text-decoration:none;transition:color .15s}
+.footer-link:hover{color:var(--text2)}
+
+/* RESPONSIVE */
+@media(max-width:900px){.hero-inner,.two-col{grid-template-columns:1fr}.sticky-col{position:static}.g2,.g3,.g4{grid-template-columns:1fr}.learn-grid{grid-template-columns:1fr}.result-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.result-grid{grid-template-columns:1fr}}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .5s,transform .5s}
+.reveal.show{opacity:1;transform:none}
+.reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">
+    <div class="brand-dot"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg></div>
+    <span>Profit Pathway</span>
+  </div>
+  <div class="nav-right">
+    <div class="nav-back" onclick="window.history.back()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Dashboard
+    </div>
+    <button class="nav-cta">Get Started Free</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-kicker">Covered Call Calculator 2024</div>
+      <h1>Generate <strong>consistent income</strong> from stocks you already own</h1>
+      <p class="hero-sub">Covered calls let you collect premium income every month by selling call options on shares you hold. Calculate your premium income, annualized yield, breakeven price, and Greeks — then compare with cash-secured puts and model the Wheel Strategy.</p>
+    </div>
+    <div class="hero-what">
+      <div class="hero-what-title">What is a covered call?</div>
+      <div class="hero-what-step"><div class="step-num">1</div><div class="step-text"><strong>Own 100 shares</strong> of a stock at any price</div></div>
+      <div class="hero-what-step"><div class="step-num">2</div><div class="step-text"><strong>Sell a call option</strong> above the current price with an expiration date</div></div>
+      <div class="hero-what-step"><div class="step-num">3</div><div class="step-text"><strong>Collect the premium</strong> immediately — it's yours to keep regardless</div></div>
+      <div class="hero-what-step"><div class="step-num">4</div><div class="step-text"><strong>If price stays below strike:</strong> option expires, keep shares and premium. Repeat.</div></div>
+      <div class="hero-what-step" style="margin-bottom:0"><div class="step-num">5</div><div class="step-text"><strong>If price rises above strike:</strong> shares get called away at the strike price. Still profitable.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN WRAP -->
+<div class="wrap">
+<div class="two-col">
+
+<!-- LEFT COL -->
+<div>
+
+<!-- SECTION 1: CORE CALCULATOR -->
+<div class="page-section reveal">
+  <div class="page-section-title">Covered Call <strong>Calculator</strong></div>
+  <div class="page-section-sub">Enter your position details. Strike price suggestions update automatically based on your stock price and implied volatility.</div>
+
+  <div class="card">
+    <div class="sec-label">Position Details</div>
+    <div class="g2">
+      <div class="ig"><label class="il">Stock Symbol</label><input class="ipl" type="text" id="sym" value="AAPL" style="text-transform:uppercase;font-weight:700;font-size:1rem" oninput="this.value=this.value.toUpperCase();calc()"></div>
+      <div class="ig"><label class="il">Stock Price ($)</label><div class="iw"><span class="ip">$</span><input type="number" id="stock-price" value="195.00" step="0.01" oninput="updateStrikes();calc()"></div></div>
+      <div class="ig"><label class="il">Number of Shares (multiples of 100)</label><div class="iw"><input type="number" id="num-shares" value="100" step="100" oninput="calc()"></div></div>
+      <div class="ig"><label class="il">Cost Basis per Share ($)</label><div class="iw"><span class="ip">$</span><input type="number" id="cost-basis" value="175.00" step="0.01" oninput="calc()"></div></div>
+    </div>
+    <div class="sec-label" style="margin-top:.5rem">Option Details</div>
+    <div class="g2">
+      <div class="ig">
+        <label class="il">Strike Price ($)</label>
+        <div class="iw"><span class="ip">$</span><input type="number" id="strike" value="200.00" step="0.50" oninput="calc()"></div>
+        <div style="margin-top:.5rem">
+          <div style="font-size:.62rem;color:var(--text3);margin-bottom:.35rem">Quick select:</div>
+          <div class="strike-grid" id="strike-grid"></div>
+        </div>
+      </div>
+      <div class="ig">
+        <label class="il">Days to Expiration (DTE)</label>
+        <select class="ipl" id="dte" onchange="calc()">
+          <option value="7">7 DTE — Weekly</option>
+          <option value="14">14 DTE — Bi-weekly</option>
+          <option value="21">21 DTE — 3-week</option>
+          <option value="30" selected>30 DTE — Monthly</option>
+          <option value="45">45 DTE — 45-day (optimal theta)</option>
+          <option value="60">60 DTE — 2-month</option>
+          <option value="90">90 DTE — Quarterly</option>
+        </select>
+      </div>
+      <div class="ig"><label class="il">Premium Received per Share ($)</label><div class="iw"><span class="ip">$</span><input type="number" id="premium" value="2.85" step="0.01" oninput="calc()"></div></div>
+      <div class="ig"><label class="il">Implied Volatility (%)</label><div class="iw"><span class="ip">%</span><input type="number" id="iv" value="28" step="0.1" oninput="calcGreeks();calc()"></div></div>
+    </div>
+    <div class="rg">
+      <div class="rh"><label class="il" style="margin:0">Risk-Free Rate</label><span class="rvl" id="rfr-val">5.3%</span></div>
+      <input type="range" id="rfr" min="1" max="8" step=".1" value="5.3" oninput="syncRng('rfr','rfr-val','%');calcGreeks();calc()">
+    </div>
+  </div>
+
+  <!-- RESULT PANEL -->
+  <div class="result-panel">
+    <div class="result-top">
+      <div>
+        <div class="result-label">Total Premium Income</div>
+        <div class="result-big" id="total-premium">$285</div>
+        <div style="font-size:.72rem;color:var(--text2);margin-top:.3rem" id="premium-per">$2.85 per share × 100 shares</div>
+      </div>
+      <div style="text-align:right">
+        <div class="result-label">Annualized Yield on Stock</div>
+        <div class="result-ann" id="ann-yield">5.34%</div>
+        <div style="font-size:.72rem;color:var(--text2);margin-top:.3rem" id="ann-yield-sub">on current stock price</div>
+      </div>
+    </div>
+    <div class="result-grid">
+      <div class="rg-cell"><div class="rg-label">Breakeven Price</div><div class="rg-val" id="breakeven" style="color:var(--p3)">$—</div></div>
+      <div class="rg-cell"><div class="rg-label">Max Profit</div><div class="rg-val" id="max-profit" style="color:var(--green)">$—</div></div>
+      <div class="rg-cell"><div class="rg-label">Static Return</div><div class="rg-val" id="static-ret" style="color:var(--p2)">$—</div></div>
+      <div class="rg-cell"><div class="rg-label">Called Away Return</div><div class="rg-val" id="called-ret" style="color:var(--teal)">$—</div></div>
+    </div>
+  </div>
+
+  <!-- KEY METRICS -->
+  <div class="g4" style="margin-bottom:1.25rem">
+    <div class="mc"><div class="mc-label">Delta</div><div class="mc-val" id="delta" style="color:var(--p3)">—</div><div class="mc-sub">Prob. ITM at expiry</div></div>
+    <div class="mc"><div class="mc-label">Theta ($/day)</div><div class="mc-val" id="theta" style="color:var(--green)">—</div><div class="mc-sub">Daily premium decay</div></div>
+    <div class="mc"><div class="mc-label">Prob. OTM</div><div class="mc-val" id="prob-otm" style="color:var(--green)">—</div><div class="mc-sub">Expires worthless</div></div>
+    <div class="mc"><div class="mc-label">Yield on Cost</div><div class="mc-val" id="yoc-yield" style="color:var(--amber)">—</div><div class="mc-sub">On your cost basis</div></div>
+  </div>
+
+  <!-- P&L CHART -->
+  <div class="cc">
+    <div class="ct">Covered Call P&L at Expiration</div>
+    <div class="cs">Hover any stock price to see your exact profit or loss at expiration</div>
+    <div class="cw"><canvas id="pnl-chart"></canvas></div>
+  </div>
+
+  <!-- INCOME PROJECTION -->
+  <div class="cc">
+    <div class="ct">Annualized Income Projection</div>
+    <div class="cs">If you repeat this covered call every month, year, or quarter — total premium collected over time</div>
+    <div class="cw sm"><canvas id="income-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- SECTION 2: GREEKS -->
+<div class="page-section reveal d1">
+  <div class="page-section-title">Options <strong>Greeks Breakdown</strong></div>
+  <div class="page-section-sub">Understanding your Greeks tells you how the option's value will change with price movement, time, and volatility.</div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="sec-label">Your Option's Greeks</div>
+      <div style="display:flex;flex-direction:column;gap:.75rem" id="greeks-detail"></div>
+    </div>
+    <div class="cc" style="margin-bottom:0">
+      <div class="ct">Delta vs Stock Price</div>
+      <div class="cs">How probability of assignment changes as stock moves</div>
+      <div class="cw sm"><canvas id="delta-chart"></canvas></div>
+    </div>
+  </div>
+  <div class="cc">
+    <div class="ct">Theta Decay Curve</div>
+    <div class="cs">How much premium erodes per day — hover any DTE to see exact daily decay and remaining value</div>
+    <div class="cw sm"><canvas id="theta-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- SECTION 3: STRIKE SELECTION -->
+<div class="page-section reveal">
+  <div class="page-section-title">Strike <strong>Selection Guide</strong></div>
+  <div class="page-section-sub">The strike you choose determines everything — premium collected, probability of assignment, and whether you're optimizing for income or capital gains.</div>
+
+  <div class="card">
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab2('itm',this)">ITM Strikes</button>
+      <button class="tab-btn" onclick="switchTab2('atm',this)">ATM Strikes</button>
+      <button class="tab-btn" onclick="switchTab2('otm',this)">OTM Strikes</button>
+      <button class="tab-btn" onclick="switchTab2('strategy',this)">Strategy Match</button>
+    </div>
+    <div class="tab-pane active" id="t2-itm">
+      <div class="ib amber"><strong>In-the-Money (ITM) Strikes — Below current stock price</strong><br>Higher premium. Higher probability of assignment. Provides more downside protection. Best for: bearish-neutral outlook, maximum income, volatile markets where you want more cushion.</div>
+      <div id="itm-table" style="margin-top:1rem"></div>
+    </div>
+    <div class="tab-pane" id="t2-atm">
+      <div class="ib purple"><strong>At-the-Money (ATM) Strikes — Near current stock price</strong><br>Highest premium as a percentage of stock price. High probability of assignment (~50%). Best for: neutral outlook, maximum immediate income regardless of direction.</div>
+      <div id="atm-table" style="margin-top:1rem"></div>
+    </div>
+    <div class="tab-pane" id="t2-otm">
+      <div class="ib green"><strong>Out-of-the-Money (OTM) Strikes — Above current stock price</strong><br>Lower premium but participates in upside. Lower assignment probability. Best for: bullish outlook, want to keep shares but collect income, classic income generation strategy.</div>
+      <div id="otm-table" style="margin-top:1rem"></div>
+    </div>
+    <div class="tab-pane" id="t2-strategy">
+      <div style="display:flex;flex-direction:column;gap:.75rem" id="strat-match"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 4: ROLLING -->
+<div class="page-section reveal d1">
+  <div class="page-section-title"><strong>Rolling Strategies</strong></div>
+  <div class="page-section-sub">When your covered call is at risk of assignment — or you want to extend your income — rolling lets you close the current position and open a new one to collect more premium.</div>
+
+  <div class="card">
+    <div class="sec-label">Current Position</div>
+    <div class="g2" style="margin-bottom:1.25rem">
+      <div class="ig"><label class="il">Current Strike ($)</label><div class="iw"><span class="ip">$</span><input type="number" id="roll-cur-strike" value="200" step=".5" oninput="calcRolling()"></div></div>
+      <div class="ig"><label class="il">Current DTE</label><input class="ipl" type="number" id="roll-cur-dte" value="5" oninput="calcRolling()"></div>
+      <div class="ig"><label class="il">Cost to Close (debit $)</label><div class="iw"><span class="ip">$</span><input type="number" id="roll-cost" value="4.50" step=".01" oninput="calcRolling()"></div></div>
+      <div class="ig"><label class="il">Current Stock Price ($)</label><div class="iw"><span class="ip">$</span><input type="number" id="roll-stock" value="199" step=".01" oninput="calcRolling()"></div></div>
+    </div>
+    <div id="roll-options" style="display:flex;flex-direction:column;gap:.6rem"></div>
+  </div>
+
+  <div class="ib amber">
+    <strong>The 21-day rule:</strong> Many experienced options traders roll covered calls when they reach 21 DTE, regardless of profit level. At 21 DTE, theta decay accelerates significantly — closing and re-opening at 30-45 DTE captures maximum time value on the new position while avoiding gamma risk near expiration.
+  </div>
+</div>
+
+<!-- SECTION 5: EARNINGS AVOIDANCE -->
+<div class="page-section reveal">
+  <div class="page-section-title">Earnings <strong>Avoidance Calendar</strong></div>
+  <div class="page-section-sub">Selling covered calls through earnings is extremely risky — implied volatility is artificially elevated (IV crush risk) and the stock can move 10-20% in either direction overnight. Always check earnings dates before selling.</div>
+
+  <div class="ib red"><strong>IV Crush warning:</strong> After earnings are announced, implied volatility typically collapses 30-60% regardless of whether the move was expected. If you sold a covered call with inflated IV and the stock stays flat through earnings, your option loses value rapidly — which is actually good if you're the seller. But if you're LONG options through earnings, IV crush destroys your position.</div>
+
+  <div class="card">
+    <div class="sec-label">Popular Covered Call Stocks — Earnings Dates</div>
+    <div id="earnings-cal" style="display:flex;flex-direction:column;gap:.35rem"></div>
+    <div class="ib green" style="margin-bottom:0;margin-top:1rem"><strong>Safe rule:</strong> Only sell covered calls that expire BEFORE the earnings date, or AFTER earnings (to capture IV crush as premium seller). Never straddle an earnings announcement with a short call position.</div>
+  </div>
+</div>
+
+<!-- SECTION 6: CC vs CSP -->
+<div class="page-section reveal d1">
+  <div class="page-section-title">Covered Call <strong>vs Cash-Secured Put</strong></div>
+  <div class="page-section-sub">Synthetically equivalent at the same strike — but practically different in capital requirements, assignment outcome, and tax treatment. Understanding both is the foundation of the Wheel Strategy.</div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-title" style="color:var(--p3)">Covered Call</div>
+      <div class="card-sub">Own 100 shares, sell 1 call above current price</div>
+      <div id="cc-comparison" style="display:flex;flex-direction:column;gap:.5rem"></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--teal)">Cash-Secured Put</div>
+      <div class="card-sub">Hold cash = 100 × strike price, sell 1 put below current price</div>
+      <div id="csp-comparison" style="display:flex;flex-direction:column;gap:.5rem"></div>
+    </div>
+  </div>
+
+  <div class="cc">
+    <div class="ct">CC vs CSP — P&L Comparison at Expiration</div>
+    <div class="cs">Both strategies are synthetically equivalent — hover to compare payoffs at each price</div>
+    <div class="cw sm"><canvas id="cc-csp-chart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">The Wheel Strategy</div>
+    <div class="card-sub">Combining CSPs and covered calls into a continuous income engine</div>
+    <div style="display:flex;gap:1rem;overflow-x:auto;padding-bottom:.5rem">
+      <div style="flex-shrink:0;width:180px;background:var(--surface2);border:1px solid var(--pbrd);border-radius:var(--rsm);padding:1rem;text-align:center">
+        <div style="font-size:.7rem;font-weight:700;color:var(--p3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">Step 1</div>
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:.35rem">Sell Cash-Secured Put</div>
+        <div style="font-size:.72rem;color:var(--text2)">Below current price. Collect premium. If assigned, you buy 100 shares at the strike.</div>
+      </div>
+      <div style="flex-shrink:0;display:flex;align-items:center;color:var(--text3);font-size:1.2rem">→</div>
+      <div style="flex-shrink:0;width:180px;background:var(--surface2);border:1px solid rgba(13,148,136,.3);border-radius:var(--rsm);padding:1rem;text-align:center">
+        <div style="font-size:.7rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">Step 2</div>
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:.35rem">Assigned Shares</div>
+        <div style="font-size:.72rem;color:var(--text2)">You now own 100 shares at your strike price (lower than market when put was sold).</div>
+      </div>
+      <div style="flex-shrink:0;display:flex;align-items:center;color:var(--text3);font-size:1.2rem">→</div>
+      <div style="flex-shrink:0;width:180px;background:var(--surface2);border:1px solid var(--pbrd);border-radius:var(--rsm);padding:1rem;text-align:center">
+        <div style="font-size:.7rem;font-weight:700;color:var(--p3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">Step 3</div>
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:.35rem">Sell Covered Call</div>
+        <div style="font-size:.72rem;color:var(--text2)">Above your cost basis. Collect more premium. If called away, you profit. Start over.</div>
+      </div>
+      <div style="flex-shrink:0;display:flex;align-items:center;color:var(--text3);font-size:1.2rem">→</div>
+      <div style="flex-shrink:0;width:180px;background:var(--surface2);border:1px solid rgba(22,163,74,.3);border-radius:var(--rsm);padding:1rem;text-align:center">
+        <div style="font-size:.7rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">Step 4</div>
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:.35rem">Called Away / Repeat</div>
+        <div style="font-size:.72rem;color:var(--text2)">Shares sold at profit. Return to Step 1 with fresh cash. The wheel keeps generating income.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 7: SCREENER -->
+<div class="page-section reveal">
+  <div class="page-section-title">Stock Screener — <strong>Best Covered Call Candidates</strong></div>
+  <div class="page-section-sub">Not all stocks make good covered call candidates. You want liquid options, meaningful implied volatility, and a stock you're comfortable holding. Click any to load into the calculator.</div>
+
+  <div class="g2">
+    <div class="ig"><label class="il">Minimum IV Rank</label><div class="iw"><span class="ip">%</span><input type="number" id="min-iv" value="20" oninput="renderScreener()"></div></div>
+    <div class="ig"><label class="il">Minimum Premium Yield</label><div class="iw"><span class="ip">%</span><input type="number" id="min-yield" value="1" step=".1" oninput="renderScreener()"></div></div>
+  </div>
+  <div id="screener-list"></div>
+
+  <div class="ib teal"><strong>What makes a good covered call stock?</strong> High IV (25%+) gives better premium. Large market cap ensures liquid options with tight bid-ask spreads. Avoid meme stocks, biotech, and anything with binary events. Dividend-paying stocks add an additional return layer — but watch ex-dividend dates to avoid early assignment.</div>
+</div>
+
+<!-- SECTION 8: TAX TREATMENT -->
+<div class="page-section reveal d1">
+  <div class="page-section-title">Tax <strong>Considerations</strong></div>
+  <div class="page-section-sub">Covered call tax treatment is more complex than it appears. The qualified covered call rules affect your holding period and can convert long-term gains to short-term.</div>
+
+  <div class="card">
+    <div style="display:flex;flex-direction:column;gap:.75rem">
+      <div style="background:var(--surface2);border-radius:var(--rsm);padding:1rem;border-left:3px solid var(--p2)">
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:.3rem">Premium Income is Short-Term</div>
+        <div style="font-size:.78rem;color:var(--text2)">All covered call premium is taxed as short-term capital gains, regardless of how long you've held the stock. This is ordinary income tax rates for most taxpayers.</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--rsm);padding:1rem;border-left:3px solid var(--amber)">
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:.3rem">Qualified Covered Call Rules (IRC Section 1092)</div>
+        <div style="font-size:.78rem;color:var(--text2)">If you sell a call that is "not qualified" (too deep ITM), it suspends your holding period on the underlying shares. This can convert a long-term capital gain on the stock to short-term when/if called away. Qualified calls must have a strike above a specific level relative to the stock price and must have more than 30 days to expiration.</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--rsm);padding:1rem;border-left:3px solid var(--green)">
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:.3rem">Best Practice for Tax Efficiency</div>
+        <div style="font-size:.78rem;color:var(--text2)">Sell OTM covered calls (5-10% above stock price) with 30+ DTE. This satisfies qualified covered call rules and preserves your long-term capital gains treatment on the underlying. Use tax-advantaged accounts (IRA) for premium income to avoid short-term tax drag.</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--rsm);padding:1rem;border-left:3px solid var(--red)">
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:.3rem">Wash Sale Rules Don't Apply to Options Premiums</div>
+        <div style="font-size:.78rem;color:var(--text2)">The wash sale rule (which prevents claiming losses if you rebuy within 30 days) does not apply to covered call premiums. However, if you sell a covered call on a stock you've taken a loss on and the call creates a "substantially identical" security situation, wash sale rules may apply to the underlying stock loss.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LEARN GRID -->
+<div class="page-section reveal">
+  <div class="page-section-title">Learn <strong>Covered Calls</strong></div>
+  <div class="learn-grid" id="cc-learn-grid"></div>
+</div>
+
+<!-- SEO CONTENT -->
+<section class="reveal" style="padding:2rem;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);margin-bottom:2rem">
+  <h2 style="font-family:var(--display);font-size:1.4rem;font-weight:600;margin-bottom:.75rem;letter-spacing:-.02em">How does a covered call work?</h2>
+  <p style="font-size:.85rem;color:var(--text2);line-height:1.8;margin-bottom:1rem">A covered call is an options strategy where you own at least 100 shares of a stock and sell (write) one call option contract for every 100 shares. You receive the premium from the buyer immediately. In exchange, you agree to sell your shares at the strike price if the stock rises above it by expiration. If it doesn't, the option expires worthless and you keep both your shares and the premium.</p>
+  <h3 style="font-family:var(--display);font-size:1.1rem;font-weight:600;margin-bottom:.6rem;letter-spacing:-.01em">What is the maximum profit on a covered call?</h3>
+  <p style="font-size:.85rem;color:var(--text2);line-height:1.8;margin-bottom:1rem">Maximum profit = (Strike Price - Cost Basis) × 100 + Premium Received. For example: own 100 shares at $175, sell the $200 call for $2.85 premium. If called away: ($200 - $175) × 100 + $285 = $2,785 maximum profit.</p>
+  <h3 style="font-family:var(--display);font-size:1.1rem;font-weight:600;margin-bottom:.6rem;letter-spacing:-.01em">What is the breakeven on a covered call?</h3>
+  <p style="font-size:.85rem;color:var(--text2);line-height:1.8">Breakeven = Cost Basis - Premium Received. If you paid $175/share and received $2.85 in premium, your breakeven is $172.15. This means even if the stock drops to $172.15, you neither profit nor lose from the entire covered call position.</p>
+</section>
+
+</div><!-- /left col -->
+
+<!-- RIGHT: SIDEBAR -->
+<div class="sticky-col">
+  <div class="card">
+    <div class="sec-label">Position Summary</div>
+    <div style="text-align:center;padding:.5rem 0 1.25rem">
+      <div style="font-size:.6rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:.3rem">Premium Per Contract</div>
+      <div style="font-family:var(--mono);font-size:2.5rem;font-weight:700;color:var(--p3);line-height:1" id="sb-premium">$285</div>
+      <div style="font-size:.72rem;color:var(--text3);margin-top:.2rem" id="sb-sym">AAPL · 100 shares</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.05rem">
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">Annualized Yield</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--green)" id="sb-yield">—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">Breakeven Price</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700" id="sb-be">—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">Max Profit (if called)</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--green)" id="sb-maxp">—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">Delta</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--p3)" id="sb-delta">—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">Theta ($/day)</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--teal)" id="sb-theta">—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">Prob. Expires OTM</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--green)" id="sb-prob">—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem"><span style="font-size:.72rem;color:var(--text2)">Annual Income (×12)</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--amber)" id="sb-annual">—</span></div>
+    </div>
+    <div style="margin-top:1.25rem;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden"><div id="sb-prob-bar" style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--p1),var(--p3));transition:width .5s;width:0%"></div></div>
+    <div style="font-size:.62rem;color:var(--text3);text-align:center;margin-top:.35rem">Probability of profitable expiration</div>
+    <div style="height:140px;margin-top:1.25rem;position:relative"><canvas id="sb-mini-chart"></canvas></div>
+  </div>
+
+  <!-- Monthly income tracker -->
+  <div class="card">
+    <div class="sec-label">Income Tracker</div>
+    <div style="font-size:.75rem;color:var(--text2);margin-bottom:.75rem">If you sell this covered call every 30 days:</div>
+    <div id="income-tracker"></div>
+    <div class="ib purple" style="margin-top:.75rem;margin-bottom:0"><strong>FIRE context:</strong> <span id="fire-context">—</span></div>
+  </div>
+</div>
+
+</div><!-- /two-col -->
+</div><!-- /wrap -->
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-copy">© 2025 Profit Pathway · Covered Call Calculator · Free options income tools</div>
+    <div class="footer-links">
+      <a class="footer-link" href="#">FIRE Calculator</a>
+      <a class="footer-link" href="#">Coast FIRE Calculator</a>
+      <a class="footer-link" href="#">Dividend Tracker</a>
+      <a class="footer-link" href="#">Trading Toolkit</a>
+      <a class="footer-link" href="#">Position Sizing</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = v => '$' + Math.round(v).toLocaleString();
+const fmtD = v => '$' + parseFloat(v||0).toFixed(2);
+const fmtK = v => v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':fmt(v);
+let charts = {};
+function dc(k){if(charts[k]){charts[k].destroy();delete charts[k];}}
+Chart.defaults.color='#8b83b8';
+Chart.defaults.font.family='DM Sans';
+const CG='rgba(255,255,255,.035)';
+
+function syncRng(id,lid,sfx){const el=$(lid);if(el)el.textContent=$(id).value+sfx;}
+
+// ── Black-Scholes ──
+function norm(x){const a1=.254829592,a2=-.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=.3275911;const sign=x<0?-1:1;x=Math.abs(x);const t=1/(1+p*x);const y=1-((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);return .5*(1+sign*y);}
+
+function bs(S,K,T,r,sigma,type='call'){
+  if(T<=0)return{price:Math.max(0,type==='call'?S-K:K-S),delta:type==='call'?(S>K?1:0):(S<K?-1:0),gamma:0,theta:0,vega:0};
+  const d1=(Math.log(S/K)+(r+.5*sigma*sigma)*T)/(sigma*Math.sqrt(T));
+  const d2=d1-sigma*Math.sqrt(T);
+  const phi=Math.exp(-.5*d1*d1)/Math.sqrt(2*Math.PI);
+  let price,delta,theta;
+  if(type==='call'){
+    price=S*norm(d1)-K*Math.exp(-r*T)*norm(d2);
+    delta=norm(d1);
+    theta=(-S*phi*sigma/(2*Math.sqrt(T))-r*K*Math.exp(-r*T)*norm(d2))/365;
+  } else {
+    price=K*Math.exp(-r*T)*norm(-d2)-S*norm(-d1);
+    delta=norm(d1)-1;
+    theta=(-S*phi*sigma/(2*Math.sqrt(T))+r*K*Math.exp(-r*T)*norm(-d2))/365;
+  }
+  const gamma=phi/(S*sigma*Math.sqrt(T));
+  const vega=S*phi*Math.sqrt(T)/100;
+  return{price,delta,gamma,theta,vega,d1,d2};
+}
+
+function getInputs(){
+  return{
+    sym:$('sym').value||'AAPL',
+    S:parseFloat($('stock-price').value)||195,
+    K:parseFloat($('strike').value)||200,
+    shares:parseFloat($('num-shares').value)||100,
+    basis:parseFloat($('cost-basis').value)||175,
+    dte:parseFloat($('dte').value)||30,
+    prem:parseFloat($('premium').value)||2.85,
+    iv:parseFloat($('iv').value)/100||.28,
+    rfr:parseFloat($('rfr').value)/100||.053,
+  };
+}
+
+function calc(){
+  const{sym,S,K,shares,basis,dte,prem,iv,rfr}=getInputs();
+  const T=dte/365;
+  const g=bs(S,K,T,rfr,iv,'call');
+  const contracts=shares/100;
+  const totalPrem=prem*shares;
+  const annYield=(prem/S)*(365/dte)*100;
+  const yocYield=(prem/basis)*(365/dte)*100;
+  const breakeven=S-prem;
+  const maxProfit=(K-basis)*shares+totalPrem;
+  const staticRet=(prem/S*100).toFixed(2)+'%';
+  const calledRet=((K-basis+prem)/basis*100).toFixed(2)+'%';
+  const probOTM=((1-g.delta)*100).toFixed(1)+'%';
+
+  // Main results
+  if($('total-premium')) $('total-premium').textContent=fmt(totalPrem);
+  if($('premium-per')) $('premium-per').textContent=`$${prem.toFixed(2)} per share × ${shares} shares`;
+  if($('ann-yield')) $('ann-yield').textContent=annYield.toFixed(2)+'%';
+  if($('ann-yield-sub')) $('ann-yield-sub').textContent=`on current stock price ($${S})`;
+  if($('breakeven')) $('breakeven').textContent=fmtD(breakeven);
+  if($('max-profit')) $('max-profit').textContent=fmt(maxProfit);
+  if($('static-ret')) $('static-ret').textContent=staticRet;
+  if($('called-ret')) $('called-ret').textContent=calledRet;
+
+  // Greeks
+  if($('delta')) $('delta').textContent=g.delta.toFixed(3);
+  if($('theta')) $('theta').textContent='$'+Math.abs(g.theta).toFixed(3)+'/day';
+  if($('prob-otm')) $('prob-otm').textContent=probOTM;
+  if($('yoc-yield')) $('yoc-yield').textContent=yocYield.toFixed(2)+'%';
+
+  // Sidebar
+  if($('sb-premium')) $('sb-premium').textContent=fmt(totalPrem);
+  if($('sb-sym')) $('sb-sym').textContent=`${sym} · ${shares} shares`;
+  if($('sb-yield')) $('sb-yield').textContent=annYield.toFixed(2)+'%';
+  if($('sb-be')) $('sb-be').textContent=fmtD(breakeven);
+  if($('sb-maxp')) $('sb-maxp').textContent=fmt(maxProfit);
+  if($('sb-delta')) $('sb-delta').textContent=g.delta.toFixed(3);
+  if($('sb-theta')) $('sb-theta').textContent='-$'+Math.abs(g.theta).toFixed(3)+'/day';
+  if($('sb-prob')) $('sb-prob').textContent=probOTM;
+  if($('sb-annual')) $('sb-annual').textContent=fmtK(totalPrem*(365/dte));
+  if($('sb-prob-bar')) $('sb-prob-bar').style.width=((1-g.delta)*100)+'%';
+
+  // Income tracker
+  const annIncome=totalPrem*(365/dte);
+  const firePct=(annIncome/50000*100).toFixed(1);
+  if($('income-tracker')) $('income-tracker').innerHTML=[
+    {p:'Monthly Premium',v:fmt(totalPrem)},
+    {p:'Quarterly Premium',v:fmt(totalPrem*3)},
+    {p:'Annual Premium',v:fmtK(annIncome)},
+    {p:'5-Year Total',v:fmtK(annIncome*5)},
+  ].map(r=>`<div style="display:flex;justify-content:space-between;padding:.5rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">${r.p}</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700">${r.v}</span></div>`).join('');
+  if($('fire-context')) $('fire-context').textContent=`${fmtK(annIncome)}/year in covered call income covers ${firePct}% of a $50K FIRE spending target.`;
+
+  renderPnLChart(S,K,basis,prem,shares);
+  renderIncomeChart(totalPrem,dte);
+  calcGreeks();
+  updateStrikes();
+  renderStrikeTables(S,K,iv,rfr,dte,basis,shares);
+  calcRolling();
+  renderCCvCSP(S,K,basis,prem,shares);
+  renderSidebarMini(S,K,basis,prem);
+}
+
+// ── P&L CHART ──
+function renderPnLChart(S,K,basis,prem,shares){
+  const range=S*.35;
+  const prices=Array.from({length:80},(_,i)=>+(S-range+i*(range*2/79)).toFixed(2));
+  const ccPnL=prices.map(p=>{
+    const stockGL=(p-basis)*shares;
+    const optionGL=p>=K?-(p-K)*shares:prem*shares;
+    return stockGL+optionGL;
+  });
+  const stockOnly=prices.map(p=>(p-basis)*shares);
+  dc('pnl-chart');
+  if(!$('pnl-chart'))return;
+  charts['pnl-chart']=new Chart($('pnl-chart'),{type:'line',
+    data:{labels:prices.map(p=>'$'+p.toFixed(0)),datasets:[
+      {label:'Covered Call P&L',data:ccPnL,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.07)',fill:true,tension:.3,pointRadius:0,borderWidth:2.5,pointHoverRadius:6},
+      {label:'Stock Only P&L',data:stockOnly,borderColor:'rgba(139,92,246,.3)',borderDash:[5,4],backgroundColor:'transparent',tension:.3,pointRadius:0,borderWidth:1.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:true,labels:{boxWidth:8,padding:12,font:{size:10}}},
+        tooltip:{backgroundColor:'rgba(8,6,18,.97)',borderColor:'rgba(139,92,246,.3)',borderWidth:1,padding:12,
+          titleFont:{family:'JetBrains Mono',size:10,weight:700},bodyFont:{family:'JetBrains Mono',size:11},
+          callbacks:{title:c=>'Price: '+c[0].label,label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`,
+            afterBody:c=>{const v=c[0]?.raw;return v!==null?[`  ${v>=0?'Profitable':'Loss'} at this price`]:[]}}}},
+      scales:{x:{grid:{color:CG},ticks:{font:{size:9},maxTicksLimit:8}},y:{grid:{color:CG},ticks:{callback:v=>fmt(v),font:{size:9}}}}}
+  });
+}
+
+// ── INCOME CHART ──
+function renderIncomeChart(totalPrem,dte){
+  const months=12,labels=[],data=[];
+  for(let m=1;m<=months;m++){labels.push('Mo '+m);data.push(+(totalPrem*(30/dte)*m).toFixed(0));}
+  dc('income-chart');
+  if(!$('income-chart'))return;
+  charts['income-chart']=new Chart($('income-chart'),{type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:'rgba(139,92,246,.6)',borderColor:'#8b5cf6',borderWidth:1,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(8,6,18,.97)',borderColor:'rgba(139,92,246,.3)',borderWidth:1,callbacks:{label:c=>` Cumulative: ${fmt(c.raw)}`}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:CG},ticks:{callback:v=>fmt(v),font:{size:10}}}}}
+  });
+}
+
+// ── GREEKS ──
+function calcGreeks(){
+  const{S,K,iv,rfr,dte}=getInputs();
+  const T=dte/365;
+  const g=bs(S,K,T,rfr,iv,'call');
+  if($('greeks-detail')) $('greeks-detail').innerHTML=[
+    {name:'Delta',val:g.delta.toFixed(4),color:'var(--p3)',desc:'For every $1 the stock moves, this call moves $'+g.delta.toFixed(4)+'. Also represents approximate probability of expiring ITM.'},
+    {name:'Gamma',val:g.gamma.toFixed(5),color:'var(--text)',desc:'Rate of change of delta. Highest when ATM and near expiration. Increases assignment risk quickly when stock approaches strike.'},
+    {name:'Theta',val:'-$'+Math.abs(g.theta).toFixed(4)+'/day',color:'var(--green)',desc:`You collect $${Math.abs(g.theta).toFixed(2)}/day in time decay as the option seller. Over ${dte} days, this is $${(Math.abs(g.theta)*dte).toFixed(2)} in theoretical decay.`},
+    {name:'Vega',val:'$'+g.vega.toFixed(4)+'/1% IV',color:'var(--amber)',desc:`For every 1% change in implied volatility, your option changes by $${g.vega.toFixed(2)}. As a seller, rising IV hurts you (option worth more).`},
+    {name:'Option Price (BS)',val:'$'+g.price.toFixed(2),color:'var(--text2)',desc:`Black-Scholes theoretical value. Compare to the actual premium you can receive. If market premium is higher, there's an IV edge.`},
+  ].map(row=>`<div style="background:var(--surface2);border-radius:var(--rsm);padding:.85rem;border-left:3px solid ${row.color}">
+    <div style="display:flex;justify-content:space-between;margin-bottom:.3rem">
+      <span style="font-weight:700;font-size:.85rem">${row.name}</span>
+      <span style="font-family:var(--mono);font-weight:700;font-size:.88rem;color:${row.color}">${row.val}</span>
+    </div>
+    <div style="font-size:.73rem;color:var(--text2);line-height:1.55">${row.desc}</div>
+  </div>`).join('');
+
+  // Delta chart
+  const prices=Array.from({length:50},(_,i)=>S*.8+i*(S*.4/49));
+  const deltas=prices.map(p=>{const r=bs(p,K,T,rfr,iv,'call');return r.delta;});
+  dc('delta-chart');
+  if($('delta-chart')) charts['delta-chart']=new Chart($('delta-chart'),{type:'line',
+    data:{labels:prices.map(p=>'$'+p.toFixed(0)),datasets:[{label:'Delta',data:deltas,borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.08)',fill:true,tension:.4,pointRadius:0,borderWidth:2,pointHoverRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(8,6,18,.97)',borderColor:'rgba(139,92,246,.25)',borderWidth:1,callbacks:{label:c=>` Delta: ${c.raw.toFixed(3)} (${(c.raw*100).toFixed(0)}% chance ITM)`}}},
+      scales:{x:{grid:{color:CG},ticks:{font:{size:9},maxTicksLimit:7}},y:{min:0,max:1,grid:{color:CG},ticks:{callback:v=>v.toFixed(1),font:{size:9}}}}}
+  });
+
+  // Theta chart
+  const dtes=Array.from({length:dte},(_,i)=>dte-i);
+  const thetas=dtes.map(d=>{if(d<=0)return 0;const r=bs(S,K,d/365,rfr,iv,'call');return Math.abs(r.theta);});
+  const premRemain=dtes.map(d=>{if(d<=0)return 0;return bs(S,K,d/365,rfr,iv,'call').price;});
+  dc('theta-chart');
+  if($('theta-chart')) charts['theta-chart']=new Chart($('theta-chart'),{type:'line',
+    data:{labels:dtes.map(d=>'DTE '+d),datasets:[
+      {label:'Daily Theta Decay',data:thetas,borderColor:'#22c55e',backgroundColor:'transparent',tension:.3,pointRadius:0,borderWidth:2,yAxisID:'y'},
+      {label:'Option Price',data:premRemain,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.08)',fill:true,tension:.4,pointRadius:0,borderWidth:2,yAxisID:'y2'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:true,labels:{boxWidth:8,padding:10,font:{size:10}}},
+        tooltip:{backgroundColor:'rgba(8,6,18,.97)',borderColor:'rgba(139,92,246,.25)',borderWidth:1,padding:10,callbacks:{label:c=>` ${c.dataset.label}: $${c.raw.toFixed(3)}`}}},
+      scales:{
+        x:{grid:{color:CG},ticks:{font:{size:9},maxTicksLimit:8},reverse:true},
+        y:{position:'left',grid:{color:CG},ticks:{callback:v=>'$'+v.toFixed(3),font:{size:9}},title:{display:true,text:'Theta/day',font:{size:9}}},
+        y2:{position:'right',grid:{display:false},ticks:{callback:v=>'$'+v.toFixed(2),font:{size:9}},title:{display:true,text:'Option Price',font:{size:9}}}}}
+  });
+}
+
+// ── STRIKE SELECTOR ──
+function updateStrikes(){
+  const{S,iv,rfr,dte}=getInputs();
+  const T=dte/365;
+  const strikes=[.85,.90,.92,.95,.97,.98,1.0,1.02,1.03,1.05,1.08,1.10,1.15].map(m=>Math.round(S*m/2.5)*2.5);
+  const grid=$('strike-grid');if(!grid)return;
+  const curStrike=parseFloat($('strike').value)||S;
+  grid.innerHTML=strikes.map(k=>{
+    const g=bs(S,k,T,rfr,iv,'call');
+    let cls='strike-btn';
+    if(k<S*.99)cls+=' itm';
+    else if(k>S*1.01)cls+=' otm';
+    else cls+=' atm';
+    if(Math.abs(k-curStrike)<1.3)cls+=' selected';
+    const pct=((k-S)/S*100).toFixed(1);
+    return `<button class="${cls}" onclick="setStrike(${k})">${k.toFixed(1)}<div style="font-size:.6rem;margin-top:.1rem;opacity:.7">${k<S?'ITM':k>S?'+'+pct+'%':'ATM'}</div></button>`;
+  }).join('');
+}
+
+function setStrike(k){
+  $('strike').value=k.toFixed(2);
+  // Estimate premium using BS
+  const{S,iv,rfr,dte}=getInputs();
+  const T=dte/365;
+  const g=bs(S,k,T,rfr,iv,'call');
+  $('premium').value=g.price.toFixed(2);
+  calc();
+}
+
+// ── STRIKE TABLES ──
+function renderStrikeTables(S,K,iv,rfr,dte,basis,shares){
+  const T=dte/365;
+  function mkRow(k){
+    const g=bs(S,k,T,rfr,iv,'call');
+    const ann=((g.price/S)*(365/dte)*100).toFixed(2);
+    const be=(S-g.price).toFixed(2);
+    const maxP=((k>basis?k-basis:0)+g.price)*shares;
+    return `<tr onclick="setStrike(${k});switchTab2('otm',document.querySelector('.tab-btn'));calc()" style="cursor:pointer">
+      <td style="font-family:var(--mono);font-weight:700">$${k.toFixed(1)}</td>
+      <td style="font-family:var(--mono);color:var(--p3)">$${g.price.toFixed(2)}</td>
+      <td style="font-family:var(--mono)">${ann}%</td>
+      <td style="font-family:var(--mono);color:var(--text2)">$${be}</td>
+      <td style="font-family:var(--mono)">${(g.delta*100).toFixed(0)}%</td>
+      <td style="font-family:var(--mono);color:var(--green)">${fmt(maxP)}</td>
+    </tr>`;
+  }
+  const thead=`<thead><tr><th>Strike</th><th>Premium</th><th>Ann. Yield</th><th>Breakeven</th><th>Delta</th><th>Max Profit</th></tr></thead>`;
+  const itmStrikes=[.92,.94,.96,.97,.98,.99].map(m=>Math.round(S*m/2.5)*2.5).filter(k=>k<S);
+  const atmStrikes=[.995,1.0,1.005].map(m=>Math.round(S*m/2.5)*2.5);
+  const otmStrikes=[1.01,1.02,1.03,1.05,1.08,1.10].map(m=>Math.round(S*m/2.5)*2.5);
+  if($('itm-table')) $('itm-table').innerHTML=`<table class="dt">${thead}<tbody>${itmStrikes.map(mkRow).join('')}</tbody></table>`;
+  if($('atm-table')) $('atm-table').innerHTML=`<table class="dt">${thead}<tbody>${atmStrikes.map(mkRow).join('')}</tbody></table>`;
+  if($('otm-table')) $('otm-table').innerHTML=`<table class="dt">${thead}<tbody>${otmStrikes.map(mkRow).join('')}</tbody></table>`;
+  if($('strat-match')) $('strat-match').innerHTML=[
+    {name:'Maximum Income — Neutral Outlook',k:.97*S,desc:'5% below current price. Highest premium, high assignment probability. Use when you want max income and don\'t mind selling.'},
+    {name:'Balanced Income — Slight Bullish',k:Math.round(S*1.02/2.5)*2.5,desc:'2-3% above current price. Good premium with room for some upside. Most common approach.'},
+    {name:'Capital Appreciation First',k:Math.round(S*1.07/2.5)*2.5,desc:'7-10% above current price. Lower premium but keeps most upside. Use for growth stocks you want to hold.'},
+  ].map(s=>{
+    const g=bs(S,s.k,T,rfr,iv,'call');
+    return `<div class="roll-row"><div style="font-weight:700;font-size:.85rem;margin-bottom:.3rem">${s.name}</div><div style="font-size:.75rem;color:var(--text2);margin-bottom:.5rem">${s.desc}</div><div style="display:flex;gap:.75rem;flex-wrap:wrap"><span style="font-family:var(--mono);font-size:.78rem">Strike: $${s.k.toFixed(1)}</span><span style="font-family:var(--mono);font-size:.78rem;color:var(--p3)">Premium: $${g.price.toFixed(2)}</span><span style="font-family:var(--mono);font-size:.78rem;color:var(--green)">Ann. Yield: ${((g.price/S)*(365/dte)*100).toFixed(1)}%</span></div></div>`;
+  }).join('');
+}
+
+// ── ROLLING ──
+function calcRolling(){
+  const{S,K,iv,rfr,dte,basis,shares,prem}=getInputs();
+  const curK=parseFloat($('roll-cur-strike').value)||K;
+  const curDTE=parseFloat($('roll-cur-dte').value)||5;
+  const closeCost=parseFloat($('roll-cost').value)||4.5;
+  const rollStock=parseFloat($('roll-stock').value)||S;
+  const T30=30/365,T45=45/365,T60=60/365;
+  const rolls=[
+    {name:'Roll Out 30 Days (same strike)',k:curK,newDte:30,color:'var(--p3)'},
+    {name:'Roll Out 30 Days + Up $5',k:curK+5,newDte:30,color:'var(--teal)'},
+    {name:'Roll Out 45 Days (optimal theta)',k:curK,newDte:45,color:'var(--green)',rec:true},
+    {name:'Roll Out 45 Days + Up $2.50',k:curK+2.5,newDte:45,color:'var(--green)'},
+    {name:'Roll Out 60 Days',k:curK,newDte:60,color:'var(--text2)'},
+  ];
+  if(!$('roll-options'))return;
+  $('roll-options').innerHTML=rolls.map(r=>{
+    const T=r.newDte/365;
+    const g=bs(rollStock,r.k,T,rfr,iv,'call');
+    const newPrem=g.price;
+    const netCredit=newPrem-closeCost;
+    return `<div class="${r.rec?'roll-row recommended':'roll-row'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem">
+        <div><div style="font-weight:700;font-size:.85rem;color:${r.color};margin-bottom:.2rem">${r.name}${r.rec?' (Recommended)':''}</div><div style="font-size:.72rem;color:var(--text3)">New strike: $${r.k.toFixed(1)} · DTE: ${r.newDte}</div></div>
+        <div style="text-align:right">
+          <div style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:${netCredit>0?'var(--green)':'var(--red)'}">${netCredit>0?'+'+fmt(netCredit*100):fmt(netCredit*100)} net ${netCredit>0?'credit':'debit'}</div>
+          <div style="font-size:.68rem;color:var(--text3)">New premium: $${newPrem.toFixed(2)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── CC vs CSP ──
+function renderCCvCSP(S,K,basis,prem,shares){
+  const comparisons=(type)=>{
+    const cspK=Math.max(basis,S*.96);
+    const{S:s,K:k,iv,rfr,dte}=getInputs();
+    const g=bs(s,k,dte/365,rfr,iv,type==='cc'?'call':'put');
+    const pct=((g.price/s)*(365/dte)*100).toFixed(2);
+    return[
+      {label:'Capital Required',val:type==='cc'?fmt(s*shares):'$'+fmt(k*shares)+' (cash secured)'},
+      {label:'Premium',val:'$'+g.price.toFixed(2)+' per share'},
+      {label:'Annual. Yield',val:pct+'%'},
+      {label:'Assignment Outcome',val:type==='cc'?'Shares called away at strike':'Shares purchased at strike'},
+      {label:'Ideal For',val:type==='cc'?'Already own shares, want income':'Want to buy dip, get paid to wait'},
+    ].map(r=>`<div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border2)"><span style="font-size:.75rem;color:var(--text2)">${r.label}</span><span style="font-size:.75rem;font-weight:600;color:var(--text);text-align:right;max-width:55%">${r.val}</span></div>`).join('');
+  };
+  if($('cc-comparison')) $('cc-comparison').innerHTML=comparisons('cc');
+  if($('csp-comparison')) $('csp-comparison').innerHTML=comparisons('csp');
+
+  // CC vs CSP chart
+  const range=S*.3;
+  const prices=Array.from({length:60},(_,i)=>+(S-range+i*(range*2/59)).toFixed(2));
+  const T=parseFloat($('dte').value)/365;
+  const iv=parseFloat($('iv').value)/100;
+  const rfr2=parseFloat($('rfr').value)/100;
+  const K2=parseFloat($('strike').value);
+  const ccPrem=parseFloat($('premium').value);
+  const ccPnL=prices.map(p=>Math.min((K2-basis+ccPrem)*shares,(p-basis)*shares+ccPrem*shares));
+  const cspK=K2*0.96;
+  const cspPrem=bs(S,cspK,T,rfr2,iv,'put').price;
+  const cspPnL=prices.map(p=>p>=cspK?(cspPrem*shares):(cspPrem+p-cspK)*shares);
+  dc('cc-csp-chart');
+  if($('cc-csp-chart')) charts['cc-csp-chart']=new Chart($('cc-csp-chart'),{type:'line',
+    data:{labels:prices.map(p=>'$'+p.toFixed(0)),datasets:[
+      {label:'Covered Call',data:ccPnL,borderColor:'#8b5cf6',backgroundColor:'transparent',tension:.3,pointRadius:0,borderWidth:2.5},
+      {label:'Cash-Secured Put',data:cspPnL,borderColor:'#0d9488',backgroundColor:'transparent',tension:.3,pointRadius:0,borderWidth:2.5,borderDash:[5,4]},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:true,labels:{boxWidth:8,padding:10,font:{size:10}}},
+        tooltip:{backgroundColor:'rgba(8,6,18,.97)',borderColor:'rgba(139,92,246,.25)',borderWidth:1,padding:10,callbacks:{title:c=>'Price: '+c[0].label,label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},
+      scales:{x:{grid:{color:CG},ticks:{font:{size:9},maxTicksLimit:8}},y:{grid:{color:CG},ticks:{callback:v=>fmt(v),font:{size:9}}}}}
+  });
+}
+
+// ── SIDEBAR MINI CHART ──
+function renderSidebarMini(S,K,basis,prem){
+  const prices=Array.from({length:30},(_,i)=>S*.85+i*(S*.3/29));
+  const data=prices.map(p=>Math.min((K-basis+prem)*100,(p-basis)*10

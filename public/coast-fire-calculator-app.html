@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coast FIRE Calculator — Stop Saving, Start Living | Profit Pathway</title>
+<meta name="description" content="The most complete Coast FIRE calculator. Find your Coast FIRE number, compare scenarios, model geo-arbitrage, simulate partial contributions, and see exactly when you can stop saving forever.">
+<meta name="keywords" content="coast fire calculator, coast fire number, what is coast fire, coast fire vs lean fire, coast fire by age, financial independence coast, stop saving retire early, coast fire 2024">
+<link rel="canonical" href="https://profitpathfinder.online/coast-fire-calculator">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Coast FIRE Calculator","description":"Calculate your Coast FIRE number — the portfolio size where you can stop contributing and still retire comfortably.","url":"https://profitpathfinder.online/coast-fire-calculator"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,500&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#060e08;--bg2:#091209;--surface:#0f1c10;--surface2:#162018;--surface3:#1d2a1e;
+  --border:rgba(34,197,94,.14);--border2:rgba(255,255,255,.06);
+  --g1:#16a34a;--g2:#22c55e;--g3:#4ade80;
+  --gdim:rgba(22,163,74,.1);--gbrd:rgba(22,163,74,.22);
+  --teal:#0d9488;--tealdim:rgba(13,148,136,.1);
+  --amber:#d97706;--amberdim:rgba(217,119,6,.1);
+  --red:#dc2626;--reddim:rgba(220,38,38,.1);
+  --purple:#7c3aed;--purpledim:rgba(124,58,237,.1);
+  --text:#e8f5e9;--text2:#6fae78;--text3:#2d5c33;
+  --font:'DM Sans',sans-serif;--display:'Fraunces',Georgia,serif;--mono:'JetBrains Mono',monospace;
+  --r:12px;--rsm:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 70% 50% at 50% -5%,rgba(22,163,74,.12) 0%,transparent 65%)}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;background:rgba(6,14,8,.92);border-bottom:1px solid var(--border2);backdrop-filter:blur(20px)}
+.brand{display:flex;align-items:center;gap:.6rem;font-family:var(--display);font-size:1rem;font-weight:400}
+.brand-dot{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--g1),var(--g3));display:flex;align-items:center;justify-content:center}
+.brand-dot svg{width:13px;height:13px}
+.brand span{background:linear-gradient(135deg,var(--g2),var(--g3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;gap:.25rem}
+.nav-link{font-size:.75rem;font-weight:500;color:var(--text3);padding:.35rem .7rem;border-radius:6px;text-decoration:none;transition:color .15s}
+.nav-link:hover{color:var(--text2)}
+.nav-cta{font-size:.75rem;font-weight:700;padding:.4rem 1rem;border-radius:7px;background:linear-gradient(135deg,var(--g1),var(--g2));color:white;border:none;cursor:pointer;letter-spacing:.03em}
+
+/* HERO */
+.hero{padding:5rem 2rem 4rem;text-align:center;position:relative;z-index:1;border-bottom:1px solid var(--border2);background:linear-gradient(180deg,rgba(22,163,74,.05) 0%,transparent 100%)}
+.hero-kicker{display:inline-flex;align-items:center;gap:.5rem;font-size:.65rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--g2);margin-bottom:1.25rem;padding:.3rem .9rem;border:1px solid var(--gbrd);border-radius:100px;background:var(--gdim)}
+.hero h1{font-family:var(--display);font-size:clamp(2.5rem,6vw,4.5rem);font-weight:300;line-height:1.08;letter-spacing:-.025em;margin-bottom:1.25rem}
+.hero h1 em{font-style:italic;color:var(--g2)}
+.hero-sub{font-size:1rem;color:var(--text2);max-width:580px;margin:0 auto 2.5rem;line-height:1.75;font-weight:300}
+.hero-stat-strip{display:inline-flex;gap:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;margin-bottom:0}
+.hstat{padding:1rem 1.75rem;text-align:center;border-right:1px solid var(--border2)}
+.hstat:last-child{border-right:none}
+.hstat-num{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--g2);line-height:1}
+.hstat-lbl{font-size:.62rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-top:.3rem}
+
+/* LAYOUT */
+.wrap{max-width:1180px;margin:0 auto;padding:2.5rem 2rem;position:relative;z-index:1}
+.two-col{display:grid;grid-template-columns:1fr 360px;gap:1.5rem;align-items:start}
+.sticky-col{position:sticky;top:68px}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem;margin-bottom:1.25rem;transition:border-color .2s}
+.card:hover{border-color:var(--border)}
+.card-title{font-family:var(--display);font-size:1.05rem;font-weight:400;margin-bottom:.25rem}
+.card-sub{font-size:.75rem;color:var(--text2);margin-bottom:1.25rem;line-height:1.5}
+.sec-label{font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--g2);display:flex;align-items:center;gap:.4rem;margin-bottom:.9rem}
+.sec-label::before{content:'';width:12px;height:2px;background:linear-gradient(90deg,var(--g1),var(--g2));border-radius:1px}
+
+/* RESULT HERO */
+.result-hero{background:linear-gradient(135deg,rgba(22,163,74,.1),rgba(74,222,128,.05));border:1px solid var(--gbrd);border-radius:var(--r);padding:2rem;text-align:center;margin-bottom:1.25rem}
+.result-big{font-family:var(--display);font-size:3.5rem;font-weight:400;color:var(--g2);line-height:1;margin:.3rem 0}
+.result-label{font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--text3)}
+.result-sub{font-size:.8rem;color:var(--text2);margin-top:.5rem;line-height:1.6}
+
+/* STATUS BOX */
+.status-box{border-radius:var(--rsm);padding:1rem 1.25rem;margin-bottom:1rem;font-size:.82rem;line-height:1.65}
+.status-achieved{background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);border-left:3px solid var(--g2);color:var(--text2)}
+.status-progress{background:rgba(13,148,136,.08);border:1px solid rgba(13,148,136,.2);border-left:3px solid var(--teal);color:var(--text2)}
+.status-box strong{color:var(--text)}
+
+/* INPUTS */
+.ig{margin-bottom:.9rem}
+.il{font-size:.63rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:.35rem;display:block}
+.iw{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rsm);overflow:hidden;transition:border-color .2s}
+.iw:focus-within{border-color:var(--gbrd)}
+.ip{padding:0 .65rem;color:var(--text3);font-size:.78rem;background:var(--surface3);border-right:1px solid var(--border2);align-self:stretch;display:flex;align-items:center;font-family:var(--mono)}
+.iw input,.ipl{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:.88rem;padding:.6rem .75rem}
+.ipl{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rsm);outline:none;transition:border-color .2s}
+.ipl:focus{border-color:var(--gbrd)}
+select.ipl{cursor:pointer}
+.rg{margin-bottom:.9rem}
+.rh{display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem}
+.rv{font-family:var(--mono);font-size:.8rem;font-weight:700;color:var(--g2);background:var(--gdim);border:1px solid var(--gbrd);border-radius:4px;padding:.1rem .4rem}
+input[type=range]{width:100%;appearance:none;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:3px;background:var(--surface3);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:var(--g2);margin-top:-5.5px;box-shadow:0 0 0 3px rgba(34,197,94,.15)}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
+
+/* METRIC CARDS */
+.mc{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rsm);padding:1rem;transition:border-color .15s}
+.mc:hover{border-color:var(--border)}
+.mc-label{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:.35rem}
+.mc-val{font-family:var(--mono);font-size:1.25rem;font-weight:700;line-height:1}
+.mc-sub{font-size:.67rem;color:var(--text3);margin-top:.2rem}
+
+/* CHARTS */
+.cc{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem;margin-bottom:1.25rem}
+.ct{font-family:var(--display);font-size:.95rem;font-weight:400;margin-bottom:.2rem}
+.cs{font-size:.7rem;color:var(--text2);margin-bottom:1rem}
+.cw{position:relative;height:260px}
+.cw.lg{height:320px}
+.cw.sm{height:190px}
+
+/* INFO BOXES */
+.ib{padding:.9rem 1.1rem;border-radius:var(--rsm);font-size:.8rem;line-height:1.65;margin-bottom:1rem}
+.ib strong{font-weight:700;color:var(--text)}
+.ib.green{background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.18);border-left:3px solid var(--g2);color:var(--text2)}
+.ib.teal{background:var(--tealdim);border:1px solid rgba(13,148,136,.2);border-left:3px solid var(--teal);color:var(--text2)}
+.ib.amber{background:var(--amberdim);border:1px solid rgba(217,119,6,.18);border-left:3px solid var(--amber);color:var(--text2)}
+.ib.red{background:var(--reddim);border:1px solid rgba(220,38,38,.18);border-left:3px solid var(--red);color:var(--text2)}
+
+/* TABS */
+.tab-row{display:flex;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rsm);overflow:hidden;margin-bottom:1.25rem}
+.tab-btn{flex:1;padding:.65rem .5rem;font-size:.75rem;font-weight:600;color:var(--text3);background:transparent;border:none;cursor:pointer;transition:all .2s;text-align:center}
+.tab-btn.active{background:var(--gdim);color:var(--g2);border-bottom:2px solid var(--g2)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* TOGGLE BTNS */
+.tg{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.45rem}
+.tb{padding:.38rem .8rem;font-size:.75rem;font-weight:600;border-radius:100px;border:1px solid var(--border2);background:var(--surface2);color:var(--text3);cursor:pointer;transition:all .15s}
+.tb:hover{color:var(--text2);border-color:var(--border)}
+.tb.on{background:var(--gdim);border-color:var(--gbrd);color:var(--g2)}
+
+/* TABLE */
+.dt{width:100%;border-collapse:collapse;font-size:.82rem}
+.dt th{padding:.55rem .9rem;text-align:left;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border2);font-weight:700}
+.dt td{padding:.7rem .9rem;border-bottom:1px solid var(--border2)}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:var(--surface2)}
+
+/* SCENARIO CARD */
+.sc-card{border:1px solid var(--border2);border-radius:var(--rsm);padding:1.1rem;margin-bottom:.65rem;transition:border-color .15s}
+.sc-card:hover{border-color:var(--border)}
+.sc-card.highlight{border-color:var(--gbrd);background:var(--gdim)}
+
+/* PHASE ROW */
+.phase-row{display:flex;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--border2)}
+.phase-row:last-child{border-bottom:none}
+.phase-num{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.72rem;font-weight:700;background:var(--gdim);border:1px solid var(--gbrd);color:var(--g2)}
+.phase-title{font-weight:700;font-size:.85rem;margin-bottom:.2rem}
+.phase-body{font-size:.76rem;color:var(--text2);line-height:1.6}
+
+/* GEO TABLE */
+.geo-row{display:flex;align-items:center;justify-content:space-between;padding:.65rem .9rem;border-radius:var(--rsm);margin-bottom:.4rem;background:var(--surface2);border:1px solid transparent;transition:border-color .15s;cursor:pointer}
+.geo-row:hover{border-color:var(--border)}
+.geo-row.selected{border-color:var(--gbrd);background:var(--gdim)}
+.geo-city{font-weight:600;font-size:.83rem}
+.geo-cost{font-family:var(--mono);font-size:.82rem;color:var(--g2)}
+.geo-tag{font-size:.62rem;color:var(--text3);margin-top:.1rem}
+.geo-impact{font-size:.75rem;color:var(--text3);font-family:var(--mono)}
+
+/* PROGRESS BAR */
+.pb-track{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.pb-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--g1),var(--g3));transition:width .5s ease}
+
+/* LEARN GRID */
+.learn-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem}
+.learn-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.25rem;cursor:pointer;transition:all .2s}
+.learn-card:hover{border-color:var(--border);transform:translateY(-2px)}
+.lc-title{font-family:var(--display);font-size:1rem;font-weight:400;margin-bottom:.4rem}
+.lc-body{font-size:.76rem;color:var(--text2);line-height:1.65}
+.lc-more{font-size:.7rem;color:var(--g2);margin-top:.6rem;cursor:pointer}
+.lc-long{display:none;font-size:.74rem;color:var(--text2);line-height:1.7;margin-top:.5rem;white-space:pre-line}
+
+/* SECTION TITLES */
+.page-section{margin-bottom:3rem}
+.page-section-title{font-family:var(--display);font-size:1.6rem;font-weight:300;margin-bottom:.35rem;letter-spacing:-.01em}
+.page-section-title em{font-style:italic;color:var(--g2)}
+.page-section-sub{font-size:.83rem;color:var(--text2);margin-bottom:1.75rem;line-height:1.65}
+
+/* FOOTER */
+footer{background:var(--bg2);border-top:1px solid var(--border2);padding:2.5rem 2rem;margin-top:4rem;position:relative;z-index:1}
+.footer-inner{max-width:1180px;margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;flex-wrap:wrap}
+.footer-copy{font-size:.72rem;color:var(--text3)}
+.footer-links{display:flex;gap:1.25rem;flex-wrap:wrap}
+.footer-link{font-size:.7rem;color:var(--text3);text-decoration:none;transition:color .15s}
+.footer-link:hover{color:var(--text2)}
+
+/* RESPONSIVE */
+@media(max-width:900px){.two-col{grid-template-columns:1fr}.sticky-col{position:static}.g2,.g3,.g4{grid-template-columns:1fr}.learn-grid{grid-template-columns:1fr}.nav-links{display:none}}
+
+/* REVEAL */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s}
+.rv.show{opacity:1;transform:none}
+.rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">
+    <div class="brand-dot"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg></div>
+    <span>Profit Pathway</span>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">FIRE Tools</a>
+    <a class="nav-link" href="#">Calculators</a>
+    <a class="nav-link" href="#">Learn</a>
+  </div>
+  <button class="nav-cta">Get Started Free</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-kicker">Coast FIRE Calculator 2024</div>
+  <h1>Find the number that lets you<br><em>stop saving forever</em></h1>
+  <p class="hero-sub">Coast FIRE is the portfolio milestone where you never need to invest another dollar. Your money compounds on its own to full financial independence. Calculate yours in 60 seconds.</p>
+  <div class="hero-stat-strip">
+    <div class="hstat"><div class="hstat-num" id="h-coast-num">$—</div><div class="hstat-lbl">Your Coast Number</div></div>
+    <div class="hstat"><div class="hstat-num" id="h-years">—</div><div class="hstat-lbl">Years to Reach It</div></div>
+    <div class="hstat"><div class="hstat-num" id="h-coast-age">—</div><div class="hstat-lbl">Coast FIRE Age</div></div>
+    <div class="hstat"><div class="hstat-num" id="h-gap">$—</div><div class="hstat-lbl">Gap Remaining</div></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="wrap">
+<div class="two-col">
+
+<!-- LEFT: CALCULATOR -->
+<div>
+
+<!-- SECTION: CORE INPUTS -->
+<div class="page-section rv">
+  <div class="page-section-title">Your <em>Coast FIRE number</em></div>
+  <div class="page-section-sub">Enter your details below. Every number updates in real time as you type.</div>
+
+  <div class="card">
+    <div class="sec-label">Your Situation</div>
+    <div class="g2">
+      <div class="ig"><label class="il">Current Age</label><div class="iw"><input type="number" id="age" value="30" oninput="calc()"></div></div>
+      <div class="ig"><label class="il">Target Full Retirement Age</label>
+        <select class="ipl" id="retire-age" onchange="calc()">
+          <option value="55">55 — Early traditional</option>
+          <option value="60">60 — Pre-Medicare</option>
+          <option value="65" selected>65 — Medicare age</option>
+          <option value="67">67 — Full Social Security</option>
+          <option value="70">70 — Max Social Security</option>
+        </select>
+      </div>
+      <div class="ig"><label class="il">Current Portfolio ($)</label><div class="iw"><span class="ip">$</span><input type="number" id="current" value="75000" oninput="calc()"></div></div>
+      <div class="ig"><label class="il">Annual FIRE Spending Goal ($)</label><div class="iw"><span class="ip">$</span><input type="number" id="spending" value="60000" oninput="calc()"></div></div>
+      <div class="ig"><label class="il">Annual Income ($)</label><div class="iw"><span class="ip">$</span><input type="number" id="income" value="85000" oninput="calc()"></div></div>
+      <div class="ig"><label class="il">Monthly Contribution ($)</label><div class="iw"><span class="ip">$</span><input type="number" id="monthly" value="1500" oninput="calc()"></div></div>
+    </div>
+    <div class="rg"><div class="rh"><label class="il" style="margin:0">Real Return Rate (inflation-adjusted)</label><span class="rv2" id="ret-val">7%</span></div><input type="range" id="ret" min="3" max="12" step=".5" value="7" oninput="syncR('ret','ret-val','%');calc()"></div>
+    <div class="rg"><div class="rh"><label class="il" style="margin:0">Safe Withdrawal Rate</label><span class="rv2" id="swr-val">4%</span></div><input type="range" id="swr" min="2.5" max="5" step=".1" value="4" oninput="syncR('swr','swr-val','%');calc()"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="status-box"></div>
+  <div class="result-hero">
+    <div class="result-label">Your Coast FIRE Number</div>
+    <div class="result-big" id="coast-num">$—</div>
+    <div class="result-sub" id="coast-sub">Invest this amount today and never contribute another dollar — your portfolio reaches your FIRE target by your chosen retirement age.</div>
+  </div>
+
+  <div class="g4">
+    <div class="mc"><div class="mc-label">Full FIRE Target</div><div class="mc-val" id="full-fire" style="color:var(--g2)">$—</div></div>
+    <div class="mc"><div class="mc-label">Coast Number</div><div class="mc-val" id="coast-num2" style="color:var(--g2)">$—</div></div>
+    <div class="mc"><div class="mc-label">Gap to Coast</div><div class="mc-val" id="gap-val" style="color:var(--amber)">$—</div></div>
+    <div class="mc"><div class="mc-label">Years to Coast FIRE</div><div class="mc-val" id="yrs-val">—</div></div>
+  </div>
+</div>
+
+<!-- SECTION: MAIN CHART -->
+<div class="page-section rv d1">
+  <div class="page-section-title">Your <em>Coast FIRE projection</em></div>
+  <div class="page-section-sub">The orange phase shows active saving. The green phase shows your money compounding without any additional contributions.</div>
+  <div class="cc">
+    <div class="ct">Portfolio Growth: Accumulation then Coasting</div>
+    <div class="cs">Hover any age to see exact portfolio value and progress toward FIRE target</div>
+    <div class="cw lg"><canvas id="main-chart"></canvas></div>
+  </div>
+  <div class="cc">
+    <div class="ct">Coast FIRE Number by Age</div>
+    <div class="cs">If you invested this much right now and contributed nothing else, you would reach your FIRE target by retirement age</div>
+    <div id="age-table" style="display:flex;flex-direction:column;gap:.4rem"></div>
+  </div>
+</div>
+
+<!-- SECTION: WHAT IF SIMULATOR -->
+<div class="page-section rv">
+  <div class="page-section-title">What if I <em>keep saving a little?</em></div>
+  <div class="page-section-sub">You don't have to go cold-turkey. Partial contributions after Coast FIRE either accelerate your retirement date or reduce the portfolio you need. See every scenario.</div>
+
+  <div class="card">
+    <div class="sec-label">Partial Contribution Simulator</div>
+    <div class="rg"><div class="rh"><label class="il" style="margin:0">Monthly contribution after reaching Coast FIRE</label><span class="rv2" id="partial-val">$500/mo</span></div><input type="range" id="partial" min="0" max="3000" step="100" value="500" oninput="updatePartialLabel();calcPartial()"></div>
+    <div class="ig"><label class="il">How do you want to use extra contributions?</label>
+      <div class="tg">
+        <button class="tb on" onclick="setPartialMode('earlier',this)">Retire earlier</button>
+        <button class="tb" onclick="setPartialMode('less',this)">Need less portfolio</button>
+        <button class="tb" onclick="setPartialMode('spend',this)">Spend more in retirement</button>
+      </div>
+    </div>
+    <div id="partial-result" style="margin-top:1rem"></div>
+  </div>
+
+  <div class="cc">
+    <div class="ct">Impact of Partial Contributions After Coast</div>
+    <div class="cs">Hover any point to see portfolio value and retirement age for each contribution level</div>
+    <div class="cw"><canvas id="partial-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- SECTION: GEO-ARBITRAGE -->
+<div class="page-section rv">
+  <div class="page-section-title">Geo-arbitrage — <em>retire abroad sooner</em></div>
+  <div class="page-section-sub">Lower your spending in a lower cost-of-living country and your Coast FIRE number drops dramatically. The same portfolio that barely covers expenses in a high-cost city funds a comfortable life abroad.</div>
+
+  <div class="card">
+    <div class="sec-label">Select a Location</div>
+    <div id="geo-list" style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.25rem"></div>
+    <div class="g2">
+      <div class="mc"><div class="mc-label">Adjusted Annual Spending</div><div class="mc-val" id="geo-spending" style="color:var(--g2)">$—</div></div>
+      <div class="mc"><div class="mc-label">Adjusted Coast Number</div><div class="mc-val" id="geo-coast" style="color:var(--g2)">$—</div></div>
+      <div class="mc"><div class="mc-label">Years Saved vs Home</div><div class="mc-val" id="geo-years-saved" style="color:var(--teal)">—</div></div>
+      <div class="mc"><div class="mc-label">Retire At</div><div class="mc-val" id="geo-retire-age">—</div></div>
+    </div>
+  </div>
+  <div class="cc">
+    <div class="ct">Coast FIRE Timeline by Location</div>
+    <div class="cs">Hover to compare your portfolio path in each location</div>
+    <div class="cw"><canvas id="geo-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- SECTION: SCENARIOS -->
+<div class="page-section rv">
+  <div class="page-section-title">Real <em>Coast FIRE scenarios</em></div>
+  <div class="page-section-sub">Five different income levels, same principle — Coast FIRE works at every salary. Click any to load it into the calculator.</div>
+  <div id="scenarios"></div>
+</div>
+
+<!-- SECTION: COAST VS COMPARISON -->
+<div class="page-section rv">
+  <div class="page-section-title">Coast FIRE vs <em>other FIRE strategies</em></div>
+  <div class="page-section-sub">How does Coast FIRE compare to the other approaches? Each suits a different personality and timeline.</div>
+  <div class="cc">
+    <div class="ct">FIRE Strategies Compared</div>
+    <div class="cs">Hover each bar to see the required portfolio, annual spending, and key tradeoffs</div>
+    <div class="cw"><canvas id="compare-chart"></canvas></div>
+  </div>
+  <table class="dt" style="margin-top:1.25rem">
+    <thead><tr><th>Strategy</th><th>Portfolio Needed</th><th>Annual Spending</th><th>Work After</th><th>Best For</th></tr></thead>
+    <tbody id="compare-table"></tbody>
+  </table>
+</div>
+
+<!-- SECTION: HOW TO INVEST DURING COAST -->
+<div class="page-section rv">
+  <div class="page-section-title">How to invest <em>during the coast phase</em></div>
+  <div class="page-section-sub">Once you hit Coast FIRE, you no longer need to save — but how you handle your existing portfolio still matters enormously.</div>
+  <div class="card">
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('allocation',this)">Asset Allocation</button>
+      <button class="tab-btn" onclick="switchTab('accounts',this)">Account Order</button>
+      <button class="tab-btn" onclick="switchTab('rebalance',this)">Rebalancing</button>
+      <button class="tab-btn" onclick="switchTab('mistakes',this)">Common Mistakes</button>
+    </div>
+    <div class="tab-pane active" id="tp-allocation">
+      <div class="ib green"><strong>The Coast FIRE portfolio question:</strong> Should you shift to more conservative investments once you stop contributing? Most experts say no — you still have decades of compounding ahead. A 30-year-old who hits Coast FIRE at $150K should stay mostly in equities for another 20-30 years.</div>
+      <div style="display:flex;flex-direction:column;gap:.65rem">
+        <div class="phase-row"><div class="phase-num">1</div><div><div class="phase-title">Ages 20-45: 90-100% equities</div><div class="phase-body">Total market index funds (VTI, VXUS). You have decades to recover from downturns. Bonds reduce your expected return without meaningful protection at this age.</div></div></div>
+        <div class="phase-row"><div class="phase-num">2</div><div><div class="phase-title">Ages 45-55: 80% equities, 20% bonds</div><div class="phase-body">Begin adding short-duration bond funds. This reduces sequence-of-returns risk as you approach retirement without sacrificing too much growth.</div></div></div>
+        <div class="phase-row" style="border-bottom:none"><div class="phase-num">3</div><div><div class="phase-title">Ages 55-65+: Build the bond tent</div><div class="phase-body">Increase bonds to 30-40% in the 5 years before retirement (the "bond tent"), then gradually reduce back to 60-70% equities post-retirement. This protects against a crash in your first retirement years.</div></div></div>
+      </div>
+    </div>
+    <div class="tab-pane" id="tp-accounts">
+      <div style="display:flex;flex-direction:column;gap:.65rem">
+        <div class="phase-row"><div class="phase-num">1</div><div><div class="phase-title">Keep maxing Roth IRA ($7,000/yr)</div><div class="phase-body">Even after Coast FIRE, if you're still working part-time, max your Roth IRA. Tax-free growth for decades is extremely valuable. Roth withdrawals don't affect your ACA subsidy calculation either.</div></div></div>
+        <div class="phase-row"><div class="phase-num">2</div><div><div class="phase-title">Consider Roth conversions</div><div class="phase-body">During low-income coast years, convert Traditional IRA/401k money to Roth. You're in a lower tax bracket now, and the money grows tax-free afterward. The ladder takes 5 years to season.</div></div></div>
+        <div class="phase-row" style="border-bottom:none"><div class="phase-num">3</div><div><div class="phase-title">Taxable brokerage is your bridge</div><div class="phase-body">If you need income before 59.5, access taxable brokerage gains (LTCG at 0-15%) before touching retirement accounts. FIFO cost basis often means much of early withdrawals is return of principal.</div></div></div>
+      </div>
+    </div>
+    <div class="tab-pane" id="tp-rebalance">
+      <div class="ib teal"><strong>Rebalance annually, not reactively.</strong> Set a calendar reminder for January 1st. Sell what's overweight, buy what's underweight. Never rebalance in response to market news — that's just emotional trading with extra steps.</div>
+      <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.75rem">
+        <div style="background:var(--surface2);border-radius:var(--rsm);padding:.85rem;font-size:.8rem;color:var(--text2)"><strong style="color:var(--text)">Tax-efficient rebalancing:</strong> Rebalance inside tax-advantaged accounts first (no tax consequences). In taxable accounts, direct new dividends to underweight assets instead of selling.</div>
+        <div style="background:var(--surface2);border-radius:var(--rsm);padding:.85rem;font-size:.8rem;color:var(--text2)"><strong style="color:var(--text)">Bands, not calendar:</strong> Some prefer 5% threshold bands — rebalance only when an asset class drifts more than 5% from target. This reduces unnecessary transactions.</div>
+        <div style="background:var(--surface2);border-radius:var(--rsm);padding:.85rem;font-size:.8rem;color:var(--text2)"><strong style="color:var(--text)">Tax loss harvesting:</strong> When markets drop, harvest losses in taxable accounts. Sell a losing position, buy a similar (not identical) fund, and book the tax loss while maintaining market exposure.</div>
+      </div>
+    </div>
+    <div class="tab-pane" id="tp-mistakes">
+      <div style="display:flex;flex-direction:column;gap:.65rem">
+        <div class="sc-card"><div style="font-weight:700;font-size:.85rem;color:var(--red);margin-bottom:.2rem">Mistake: Shifting to cash or bonds too early</div><div style="font-size:.78rem;color:var(--text2)">A 35-year-old with $200K who moves to 50% bonds loses approximately $1.2M in expected terminal wealth by age 65, assuming 7% equity vs 3.5% bond returns. You need decades of equity exposure.</div></div>
+        <div class="sc-card"><div style="font-weight:700;font-size:.85rem;color:var(--red);margin-bottom:.2rem">Mistake: Stopping all contributions in high-income years</div><div style="font-size:.78rem;color:var(--text2)">Coast FIRE means you CAN stop — not that you MUST. If you're earning well and enjoying your work, keep contributing. Every extra dollar invested during high-earning years compounds to significant wealth.</div></div>
+        <div class="sc-card" style="border-bottom:none"><div style="font-weight:700;font-size:.85rem;color:var(--red);margin-bottom:.2rem">Mistake: Using nominal returns instead of real returns</div><div style="font-size:.78rem;color:var(--text2)">If you use 10% (nominal S&P 500 return) to calculate your coast number, you'll undershoot. Use 7% real (inflation-adjusted). Your spending needs at 65 will be higher than today due to inflation — the portfolio needs to keep up.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION: LEARN -->
+<div class="page-section rv">
+  <div class="page-section-title">Everything you need to know about <em>Coast FIRE</em></div>
+  <div class="page-section-sub">The complete guide — from the math to the psychology to the practical execution.</div>
+  <div class="learn-grid" id="learn-grid"></div>
+</div>
+
+<!-- SEO CONTENT -->
+<section class="rv" style="padding:2rem;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);margin-bottom:2rem">
+  <h2 style="font-family:var(--display);font-size:1.4rem;font-weight:400;margin-bottom:.75rem">What is Coast FIRE?</h2>
+  <p style="font-size:.85rem;color:var(--text2);line-height:1.8;margin-bottom:1rem">Coast FIRE (Financial Independence, Retire Early) is the point at which you have accumulated enough in investment accounts that you no longer need to contribute anything more. Your portfolio will grow on its own — through compound interest — to reach your full FIRE number by your target retirement age.</p>
+  <h3 style="font-family:var(--display);font-size:1.1rem;font-weight:400;margin-bottom:.6rem">How is the Coast FIRE number calculated?</h3>
+  <p style="font-size:.85rem;color:var(--text2);line-height:1.8;margin-bottom:1rem">Coast FIRE Number = FIRE Target / (1 + Real Return Rate) ^ Years to Retirement. For example: if you need $1.5M by age 65 and you're 35 (30 years), at 7% real return: $1,500,000 / (1.07)^30 = approximately $197,000. Invest $197,000 today, contribute nothing else, and your portfolio reaches $1.5M by 65.</p>
+  <h3 style="font-family:var(--display);font-size:1.1rem;font-weight:400;margin-bottom:.6rem">Coast FIRE vs Lean FIRE vs Regular FIRE</h3>
+  <p style="font-size:.85rem;color:var(--text2);line-height:1.8">Coast FIRE is a milestone on the journey — not a final destination. It's unique because it doesn't require you to fully retire immediately. After hitting your Coast number, you still work — but only enough to cover current living expenses, with zero pressure to save. This is why Coast FIRE is especially popular with people who want to leave high-stress careers, take sabbaticals, or transition to passion-based work without financial anxiety.</p>
+</section>
+
+</div><!-- /left col -->
+
+<!-- RIGHT: STICKY SIDEBAR -->
+<div class="sticky-col">
+  <div class="card">
+    <div style="text-align:center;padding:.5rem 0 1.25rem">
+      <div style="font-size:.6rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:.4rem">Coast FIRE Number</div>
+      <div style="font-family:var(--display);font-size:2.8rem;font-weight:300;color:var(--g2);line-height:1" id="sb-coast-num">$—</div>
+      <div style="font-size:.72rem;color:var(--text3);margin-top:.25rem" id="sb-sub">Loading...</div>
+    </div>
+    <div style="height:5px;background:var(--surface3);border-radius:3px;overflow:hidden;margin-bottom:1.25rem">
+      <div id="sb-bar" style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--g1),var(--g3));transition:width .5s;width:0%"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.1rem;margin-bottom:1.25rem">
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">Full FIRE Target</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700" id="sb-full">$—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">Coast Number</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--g2)" id="sb-coast">$—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">You Have Now</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700" id="sb-have">$—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">Gap Remaining</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--amber)" id="sb-gap">$—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">Years to Coast FIRE</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700" id="sb-yrs">—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem;border-bottom:1px solid var(--border2)"><span style="font-size:.72rem;color:var(--text2)">Coast FIRE Age</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700;color:var(--g2)" id="sb-cfage">—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.55rem .1rem"><span style="font-size:.72rem;color:var(--text2)">Full Retirement Age</span><span style="font-family:var(--mono);font-size:.82rem;font-weight:700" id="sb-frage">—</span></div>
+    </div>
+    <div style="height:140px;position:relative"><canvas id="sb-chart"></canvas></div>
+    <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:.5rem">
+      <button style="width:100%;padding:.65rem;background:linear-gradient(135deg,var(--g1),var(--g2));color:white;border:none;border-radius:var(--rsm);font-family:var(--font);font-size:.8rem;font-weight:700;cursor:pointer" onclick="scrollTo({top:0,behavior:'smooth'})">Recalculate</button>
+      <button style="width:100%;padding:.65rem;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:var(--rsm);font-family:var(--font);font-size:.78rem;font-weight:600;cursor:pointer" onclick="document.getElementById('sec-learn').scrollIntoView({behavior:'smooth'})">Learn More</button>
+    </div>
+  </div>
+
+  <!-- Quick Coast by Decade -->
+  <div class="card">
+    <div class="sec-label">Coast Number by Age Today</div>
+    <div style="font-size:.72rem;color:var(--text2);margin-bottom:.75rem">Target: <span id="sidebar-target">$1.5M</span> at age <span id="sidebar-retire">65</span></div>
+    <div id="decade-table" style="display:flex;flex-direction:column;gap:.35rem"></div>
+  </div>
+</div>
+
+</div><!-- /two-col -->
+</div><!-- /wrap -->
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-copy">© 2025 Profit Pathway · Coast FIRE Calculator · Free financial tools</div>
+    <div class="footer-links">
+      <a class="footer-link" href="#">FIRE Calculator</a>
+      <a class="footer-link" href="#">Dividend Tracker</a>
+      <a class="footer-link" href="#">Trading Toolkit</a>
+      <a class="footer-link" href="#">Covered Call Calculator</a>
+      <a class="footer-link" href="#">Real Estate Calculator</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = v => '$' + Math.round(v).toLocaleString();
+const fmtK = v => v>=1e6 ? '$'+(v/1e6).toFixed(2)+'M' : v>=1e3 ? '$'+(v/1e3).toFixed(1)+'K' : fmt(v);
+let charts = {};
+function dc(k){if(charts[k]){charts[k].destroy();delete charts[k];}}
+Chart.defaults.color='#6fae78';
+Chart.defaults.font.family='DM Sans';
+const CG='rgba(255,255,255,0.035)';
+let partialMode='earlier';
+let selectedGeo='home';
+
+function syncR(id,lid,sfx){
+  const el=$(lid); if(el) el.textContent=$(id).value+sfx;
+}
+// Fix: rv2 class not rv (rv is used for reveal)
+function syncR2(id,lid,sfx){
+  const el=document.querySelector(`[id="${lid}"]`); if(el) el.textContent=$(id).value+sfx;
+}
+
+function getInputs(){
+  return {
+    age:    parseInt($('age').value)||30,
+    retAge: parseInt($('retire-age').value)||65,
+    curr:   parseFloat($('current').value)||0,
+    spend:  parseFloat($('spending').value)||60000,
+    inc:    parseFloat($('income').value)||85000,
+    mo:     parseFloat($('monthly').value)||1500,
+    ret:    parseFloat($('ret').value)/100||0.07,
+    swr:    parseFloat($('swr').value)/100||0.04,
+  };
+}
+
+function fvA(pmt,r,n){ return r===0?pmt*n:pmt*((Math.pow(1+r,n)-1)/r); }
+function pv(fv,r,n){ return fv/Math.pow(1+r,n); }
+function yearsTo(curr,mo,target,rMo){
+  if(curr>=target)return 0;
+  let b=curr,m=0;
+  while(b<target&&m<1200){b=b*(1+rMo)+mo;m++;}
+  return m<1200?m/12:999;
+}
+
+function calc(){
+  const {age,retAge,curr,spend,inc,mo,ret,swr}=getInputs();
+  const yrsToRetire=Math.max(0,retAge-age);
+  const fireTgt=spend/swr;
+  const coastNum=pv(fireTgt,ret,yrsToRetire);
+  const gap=Math.max(0,coastNum-curr);
+  const rMo=ret/12;
+  const yrsToCoast=yearsTo(curr,mo,coastNum,rMo);
+  const coastAge=Math.min(retAge,Math.round(age+yrsToCoast));
+  const progress=Math.min(100,curr/coastNum*100);
+  const alreadyCoasting=curr>=coastNum;
+
+  // Hero strip
+  if($('h-coast-num')) $('h-coast-num').textContent=fmtK(coastNum);
+  if($('h-years')) $('h-years').textContent=alreadyCoasting?'Achieved!':Math.ceil(yrsToCoast)+' yrs';
+  if($('h-coast-age')) $('h-coast-age').textContent='Age '+coastAge;
+  if($('h-gap')) $('h-gap').textContent=alreadyCoasting?'$0':fmtK(gap);
+
+  // Status box
+  if($('status-box')) $('status-box').innerHTML=alreadyCoasting
+    ?`<div class="status-box status-achieved"><strong>You have already reached Coast FIRE.</strong> Your current ${fmtK(curr)} portfolio will compound to ${fmtK(fireTgt)} by age ${retAge} without another dollar of contributions. You only need to earn enough to cover your current living expenses.</div>`
+    :`<div class="status-box status-progress"><strong>You need ${fmtK(gap)} more to reach Coast FIRE.</strong> At ${fmtK(mo)}/month, you'll get there in approximately ${Math.ceil(yrsToCoast)} years (age ${coastAge}). After that, your ${fmtK(coastNum)} portfolio compounds to ${fmtK(fireTgt)} by age ${retAge} on its own.</div>`;
+
+  // Result hero
+  if($('coast-num')) $('coast-num').textContent=fmtK(coastNum);
+  if($('coast-sub')) $('coast-sub').textContent=`Reach ${fmtK(coastNum)} by age ${coastAge} and your ${fmtK(fireTgt)} FIRE target at age ${retAge} is locked in — no more contributions needed.`;
+  if($('full-fire')) $('full-fire').textContent=fmtK(fireTgt);
+  if($('coast-num2')) $('coast-num2').textContent=fmtK(coastNum);
+  if($('gap-val')) $('gap-val').textContent=alreadyCoasting?'$0 (done!)':fmtK(gap);
+  if($('gap-val')) $('gap-val').style.color=alreadyCoasting?'var(--g2)':'var(--amber)';
+  if($('yrs-val')) $('yrs-val').textContent=alreadyCoasting?'Achieved':Math.ceil(yrsToCoast)+' yrs';
+
+  // Sidebar
+  if($('sb-coast-num')) $('sb-coast-num').textContent=fmtK(coastNum);
+  if($('sb-sub')) $('sb-sub').textContent=alreadyCoasting?'Coast FIRE achieved!':'Invest this to never save again';
+  if($('sb-bar')) $('sb-bar').style.width=progress+'%';
+  if($('sb-full')) $('sb-full').textContent=fmtK(fireTgt);
+  if($('sb-coast')) $('sb-coast').textContent=fmtK(coastNum);
+  if($('sb-have')) $('sb-have').textContent=fmtK(curr);
+  if($('sb-gap')) $('sb-gap').textContent=alreadyCoasting?'$0':fmtK(gap);
+  if($('sb-yrs')) $('sb-yrs').textContent=alreadyCoasting?'Done!':Math.ceil(yrsToCoast)+' yrs';
+  if($('sb-cfage')) $('sb-cfage').textContent='Age '+coastAge;
+  if($('sb-frage')) $('sb-frage').textContent='Age '+retAge;
+  if($('sidebar-target')) $('sidebar-target').textContent=fmtK(fireTgt);
+  if($('sidebar-retire')) $('sidebar-retire').textContent=retAge;
+
+  renderMainChart(curr,mo,coastNum,fireTgt,age,retAge,ret,coastAge);
+  renderAgeTable(fireTgt,ret,retAge,age,curr);
+  renderDecadeTable(fireTgt,ret,retAge,curr);
+  renderSidebarChart(curr,mo,coastNum,age,coastAge,ret);
+  renderPartialChart();
+  renderGeoChart(coastNum,fireTgt,age,retAge,ret,mo);
+  renderCompareChart(fireTgt,swr);
+  renderCompareTable(fireTgt,swr,spend);
+  renderScenarios();
+  calcPartial();
+  renderGeoList(spend,coastNum,age,retAge,ret,mo);
+}
+
+// ── MAIN CHART ──
+function renderMainChart(curr,mo,coastNum,fireTgt,age,retAge,ret,coastAge){
+  const rMo=ret/12;
+  const labels=[],accum=[],coast=[],target=[];
+  let bal=curr;
+  const coastReached=curr>=coastNum;
+  const coastAtAge=coastAge;
+
+  for(let a=age;a<=retAge;a++){
+    labels.push('Age '+a);
+    if(!coastReached&&a<=coastAtAge){
+      accum.push(+bal.toFixed(0));
+      coast.push(null);
+    } else {
+      accum.push(null);
+      coast.push(+bal.toFixed(0));
+    }
+    target.push(+fireTgt.toFixed(0));
+    for(let m=0;m<12;m++){
+      if(!coastReached&&a<coastAtAge) bal=bal*(1+rMo)+mo;
+      else bal=bal*(1+rMo);
+    }
+  }
+
+  dc('main-chart');
+  charts['main-chart']=new Chart($('main-chart'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Accumulation (saving)',data:accum,borderColor:'#d97706',backgroundColor:'rgba(217,119,6,.08)',fill:true,tension:.4,pointRadius:0,borderWidth:2.5,spanGaps:false,pointHoverRadius:6},
+      {label:'Coasting (no contributions)',data:coast,borderColor:'#16a34a',backgroundColor:'rgba(22,163,74,.08)',fill:true,tension:.4,pointRadius:0,borderWidth:2.5,spanGaps:false,pointHoverRadius:6},
+      {label:'FIRE Target',data:target,borderColor:'rgba(74,222,128,.4)',borderDash:[6,4],pointRadius:0,borderWidth:1.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:true,labels:{boxWidth:8,padding:14,font:{size:11}}},
+        tooltip:{backgroundColor:'rgba(10,18,12,.97)',borderColor:'rgba(22,163,74,.3)',borderWidth:1,padding:12,
+          titleFont:{family:'JetBrains Mono',size:11,weight:700},bodyFont:{family:'JetBrains Mono',size:12},
+          callbacks:{title:c=>c[0].label,
+            label:c=>c.raw!==null?` ${c.dataset.label}: ${fmtK(c.raw)}`:null,
+            afterBody:c=>{const v=c.find(x=>x.raw!==null&&x.datasetIndex<2)?.raw;return v?[`  ${(v/fireTgt*100).toFixed(1)}% of FIRE target`]:[];}}
+        }},
+      scales:{x:{grid:{color:CG},ticks:{font:{size:10},maxTicksLimit:8}},y:{grid:{color:CG},ticks:{callback:v=>fmtK(v),font:{size:10}}}}}
+  });
+}
+
+// ── AGE TABLE ──
+function renderAgeTable(fireTgt,ret,retAge,currentAge,curr){
+  const ages=[20,25,30,35,40,45,50,55,60].filter(a=>a<retAge);
+  if(!$('age-table'))return;
+  $('age-table').innerHTML=ages.map(a=>{
+    const yrs=retAge-a;
+    const cn=pv(fireTgt,ret,yrs);
+    const isCurr=a===currentAge;
+    const achieved=curr>=cn;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .9rem;border-radius:6px;background:${isCurr?'var(--gdim)':'var(--surface2)'};border:1px solid ${isCurr?'var(--gbrd)':'transparent'};margin-bottom:.3rem">
+      <div style="font-size:.82rem;font-weight:${isCurr?700:400}">Age ${a}${isCurr?' — You':''}</div>
+      <div style="font-family:var(--mono);font-weight:700;color:${achieved?'var(--g2)':isCurr?'var(--g2)':'var(--text2)'}">${fmtK(cn)}</div>
+      <div style="font-size:.68rem;color:var(--text3)">${yrs} yrs to compound</div>
+      ${achieved?'<div style="font-size:.65rem;color:var(--g2);font-weight:700">Achieved</div>':''}
+    </div>`;
+  }).join('');
+}
+
+// ── DECADE TABLE (SIDEBAR) ──
+function renderDecadeTable(fireTgt,ret,retAge,curr){
+  const ages=[25,30,35,40,45,50,55];
+  if(!$('decade-table'))return;
+  $('decade-table').innerHTML=ages.filter(a=>a<retAge).map(a=>{
+    const cn=pv(fireTgt,ret,retAge-a);
+    const hit=curr>=cn;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .1rem;border-bottom:1px solid var(--border2)">
+      <span style="font-size:.75rem;color:var(--text2)">Age ${a}</span>
+      <span style="font-family:var(--mono);font-size:.78rem;font-weight:700;color:${hit?'var(--g2)':'var(--text)'}">${fmtK(cn)}${hit?' ✓':''}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── SIDEBAR CHART ──
+function renderSidebarChart(curr,mo,coastNum,age,coastAge,ret){
+  const rMo=ret/12;const labels=[],data=[];let bal=curr;
+  for(let a=age;a<=coastAge+5;a++){
+    labels.push('Age '+a);
+    data.push(+bal.toFixed(0));
+    for(let m=0;m<12;m++) bal=a<=coastAge?bal*(1+rMo)+mo:bal*(1+rMo);
+  }
+  dc('sb-chart');
+  charts['sb-chart']=new Chart($('sb-chart'),{type:'line',
+    data:{labels,datasets:[{data,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.1)',fill:true,tension:.4,pointRadius:0,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(10,18,12,.97)',borderColor:'rgba(22,163,74,.25)',borderWidth:1,callbacks:{label:c=>' '+fmtK(c.raw)}}},scales:{x:{display:false},y:{display:false}},animation:{duration:400}}
+  });
+}
+
+// ── PARTIAL CONTRIBUTIONS ──
+function setPartialMode(m,btn){
+  partialMode=m;
+  btn.closest('.tg').querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  calcPartial();
+}
+function updatePartialLabel(){
+  const v=parseInt($('partial').value)||0;
+  if($('partial-val')) $('partial-val').textContent=fmt(v)+'/mo';
+}
+function calcPartial(){
+  const {age,retAge,curr,spend,inc,mo,ret,swr}=getInputs();
+  const partial=parseInt($('partial').value)||0;
+  const rMo=ret/12;
+  const fireTgt=spend/swr;
+  const coastNum=pv(fireTgt,ret,retAge-age);
+  const yrsBase=yearsTo(curr,mo,coastNum,rMo);
+  const coastAge=Math.round(age+yrsBase);
+
+  let result='';
+  if(partialMode==='earlier'){
+    const newMo=mo+partial;
+    const yrsNew=yearsTo(curr,newMo,fireTgt,rMo);
+    const newRetire=Math.round(age+yrsNew);
+    const saved=Math.max(0,retAge-newRetire);
+    result=`<div class="sc-card highlight"><div style="font-size:.82rem;font-weight:700;margin-bottom:.35rem">Contributing ${fmt(partial)}/mo after Coast FIRE</div><div class="g2" style="gap:.6rem;margin-top:.5rem"><div class="mc"><div class="mc-label">Full Retirement Age</div><div class="mc-val" style="color:var(--g2)">Age ${newRetire}</div></div><div class="mc"><div class="mc-label">Years Saved</div><div class="mc-val" style="color:var(--teal)">${saved} yrs earlier</div></div></div></div>`;
+  } else if(partialMode==='less'){
+    // Same retirement age, smaller portfolio needed
+    let adjFire=fireTgt;
+    // Future value of partial contributions from coast age to retAge
+    const coastYrs=Math.max(0,retAge-coastAge);
+    const fvExtra=fvA(partial,rMo,coastYrs*12);
+    const reduced=Math.max(0,fireTgt-fvExtra);
+    const reducedCoast=pv(reduced,ret,retAge-age);
+    result=`<div class="sc-card highlight"><div style="font-size:.82rem;font-weight:700;margin-bottom:.35rem">Contributing ${fmt(partial)}/mo — smaller portfolio needed</div><div class="g2" style="gap:.6rem;margin-top:.5rem"><div class="mc"><div class="mc-label">Reduced FIRE Target</div><div class="mc-val" style="color:var(--g2)">${fmtK(reduced)}</div></div><div class="mc"><div class="mc-label">Reduced Coast Number</div><div class="mc-val" style="color:var(--teal)">${fmtK(reducedCoast)}</div></div></div></div>`;
+  } else {
+    const coastYrs=Math.max(0,retAge-coastAge);
+    const fvExtra=fvA(partial,rMo,coastYrs*12);
+    const extraSpend=(fireTgt+fvExtra)*swr;
+    result=`<div class="sc-card highlight"><div style="font-size:.82rem;font-weight:700;margin-bottom:.35rem">Contributing ${fmt(partial)}/mo — spend more in retirement</div><div class="g2" style="gap:.6rem;margin-top:.5rem"><div class="mc"><div class="mc-label">Annual Spending at Retirement</div><div class="mc-val" style="color:var(--g2)">${fmtK(extraSpend)}</div></div><div class="mc"><div class="mc-label">Monthly Retirement Income</div><div class="mc-val" style="color:var(--teal)">${fmtK(extraSpend/12)}/mo</div></div></div></div>`;
+  }
+  if($('partial-result')) $('partial-result').innerHTML=result;
+
+  // Partial chart
+  const {age:a2,retAge:ra,curr:c2,mo:baseMo,ret:r2,swr:s2,spend:sp2}=getInputs();
+  const ft=sp2/s2;const rM2=r2/12;
+  const partials=[0,250,500,1000,2000];
+  const colors=['#2d5c33','#16a34a','#22c55e','#4ade80','#86efac'];
+  const maxYrs=50;
+  const labels=Array.from({length:maxYrs+1},(_,i)=>'Age '+(a2+i));
+  dc('partial-chart');
+  if($('partial-chart')){
+    charts['partial-chart']=new Chart($('partial-chart'),{type:'line',
+      data:{labels,datasets:[
+        ...partials.map((p,i)=>{
+          let bal=c2;const data=[];
+          for(let y=0;y<=maxYrs;y++){data.push(+bal.toFixed(0));for(let m=0;m<12;m++)bal=bal*(1+rM2)+(y<=(yearsTo(c2,baseMo,pv(ft,r2,ra-a2),rM2))?baseMo:p);}
+          return{label:p===0?'Pure Coast':fmt(p)+'/mo extra',data,borderColor:colors[i],backgroundColor:'transparent',tension:.4,pointRadius:0,borderWidth:p===partial?3:1.5,borderDash:i===0?[5,4]:[]};
+        }),
+        {label:'FIRE Target',data:Array(maxYrs+1).fill(ft),borderColor:'rgba(74,222,128,.3)',borderDash:[6,4],pointRadius:0,borderWidth:1.5}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:true,labels:{boxWidth:8,padding:10,font:{size:10}}},
+          tooltip:{backgroundColor:'rgba(10,18,12,.97)',borderColor:'rgba(22,163,74,.25)',borderWidth:1,padding:10,callbacks:{label:c=>c.raw!==null?` ${c.dataset.label}: ${fmtK(c.raw)}`:null}}},
+        scales:{x:{grid:{color:CG},ticks:{font:{size:9},maxTicksLimit:8}},y:{grid:{color:CG},ticks:{callback:v=>fmtK(v),font:{size:9}}}}}
+    });
+  }
+}
+
+// ── GEO-ARBITRAGE ──
+const GEOS=[
+  {id:'home',name:'Your Home City',tag:'Baseline',mult:1.0,flag:''},
+  {id:'lisbon',name:'Lisbon, Portugal',tag:'Low cost EU · NHR tax regime',mult:.52,flag:'PT'},
+  {id:'medellin',name:'Medellin, Colombia',tag:'Digital nomad hub · warm year-round',mult:.38,flag:'CO'},
+  {id:'chiang_mai',name:'Chiang Mai, Thailand',tag:'Most popular FIRE expat city',mult:.32,flag:'TH'},
+  {id:'mexico',name:'Mexico City, Mexico',tag:'Vibrant culture · close to US',mult:.44,flag:'MX'},
+  {id:'bali',name:'Bali, Indonesia',tag:'Tropical · arts · growing expat scene',mult:.35,flag:'ID'},
+  {id:'madrid',name:'Madrid, Spain',tag:'EU quality of life · excellent healthcare',mult:.60,flag:'ES'},
+  {id:'tbilisi',name:'Tbilisi, Georgia',tag:'1% flat income tax · extremely affordable',mult:.28,flag:'GE'},
+  {id:'porto',name:'Porto, Portugal',tag:'NHR tax status · coastal quality of life',mult:.48,flag:'PT'},
+  {id:'us_midwest',name:'US Midwest (e.g. Omaha, NE)',tag:'Domestic geo-arb · no language barrier',mult:.65,flag:'US'},
+];
+
+function renderGeoList(baseSpend,baseCoast,age,retAge,ret,mo){
+  if(!$('geo-list'))return;
+  $('geo-list').innerHTML=GEOS.map(g=>{
+    const adjSpend=baseSpend*g.mult;
+    const swr=parseFloat($('swr').value)/100||0.04;
+    const adjFire=adjSpend/swr;
+    const adjCoast=pv(adjFire,ret,retAge-age);
+    const isSelected=g.id===selectedGeo;
+    return `<div class="geo-row ${isSelected?'selected':''}" onclick="selectGeo('${g.id}',${g.mult})">
+      <div><div class="geo-city">${g.name}</div><div class="geo-tag">${g.tag}</div></div>
+      <div style="text-align:right">
+        <div class="geo-cost">${fmtK(adjSpend)}/yr</div>
+        <div class="geo-impact">Coast: ${fmtK(adjCoast)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectGeo(id,mult){
+  selectedGeo=id;
+  const {spend,swr,curr,age,retAge,ret,mo}=getInputs();
+  const adjSpend=spend*mult;
+  const adjFire=adjSpend/swr;
+  const adjCoast=pv(adjFire,ret,retAge-age);
+  const rMo=ret/12;
+  const baseCoast=pv(spend/swr,ret,retAge-age);
+  const baseYrs=yearsTo(curr,mo,baseCoast,rMo);
+  const adjYrs=yearsTo(curr,mo,adjCoast,rMo);
+  const yrsSaved=Math.max(0,baseYrs-adjYrs);
+  if($('geo-spending')) $('geo-spending').textContent=fmtK(adjSpend)+'/yr';
+  if($('geo-coast')) $('geo-coast').textContent=fmtK(adjCoast);
+  if($('geo-years-saved')) $('geo-years-saved').textContent=yrsSaved>0?Math.ceil(yrsSaved)+' yrs earlier':'Same';
+  if($('geo-retire-age')) $('geo-retire-age').textContent='Age '+(mult<1?Math.round(age+adjYrs):Math.round(age+baseYrs));
+  renderGeoList(spend,baseCoast,age,retAge,ret,mo);
+  renderGeoChart(baseCoast,spend/swr,age,retAge,ret,mo);
+}
+
+function renderGeoChart(baseCoast,fireTgt,age,retAge,ret,mo){
+  const rMo=ret/12;
+  const {spend,swr,curr}=getInputs();
+  const subsets=GEOS.slice(0,5);
+  const maxYrs=Math.min(50,retAge-age+5);
+  const labels=Array.from({length:maxYrs+1},(_,i)=>'Age '+(age+i));
+  const colors=['#2d5c33','#16a34a','#22c55e','#4ade80','#86efac'];
+  dc('geo-chart');
+  if(!$('geo-chart'))return;
+  charts['geo-chart']=new Chart($('geo-chart'),{type:'line',
+    data:{labels,datasets:subsets.map((g,i)=>{
+      const adjFire=(spend*g.mult)/swr;
+      const adjCoast=pv(adjFire,ret,retAge-age);
+      let bal=curr;const data=[];
+      for(let y=0;y<=maxYrs;y++){
+        data.push(+Math.min(bal,adjFire*1.5).toFixed(0));
+        for(let m=0;m<12;m++) bal=bal*(1+rMo)+(bal>=adjCoast?0:mo);
+      }
+      return{label:g.name.split(',')[0],data,borderColor:colors[i],backgroundColor:'transparent',tension:.4,pointRadius:0,borderWidth:g.id===selectedGeo?3:1.5};
+    })},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:true,labels:{boxWidth:8,padding:10,font:{size:10}}},
+        tooltip:{backgroundColor:'rgba(10,18,12,.97)',borderColor:'rgba(22,163,74,.25)',borderWidth:1,padding:10,callbacks:{label:c=>` ${c.dataset.label}: ${fmtK(c.raw)}`}}},
+      scales:{x:{grid:{color:CG},ticks:{font:{size:9},maxTicksLimit:8}},y:{grid:{color:CG},ticks:{callback:v=>fmtK(v),font:{size:9}}}}}
+  });
+}
+
+// ── SCENARIOS ──
+function renderScenarios(){
+  const {age,retAge,ret,swr}=getInputs();
+  const scenarios=[
+    {name:'Recent Graduate',income:42000,curr:5000,mo:400,spend:40000,age:23},
+    {name:'Mid-Career Professional',income:85000,curr:75000,mo:1500,spend:60000,age:32},
+    {name:'Dual-Income Couple',income:160000,curr:200000,mo:4000,spend:80000,age:38},
+    {name:'High Earner, Late Start',income:220000,curr:50000,mo:6000,spend:100000,age:42},
+    {name:'Near-Retiree',income:95000,curr:800000,mo:2000,spend:70000,age:55},
+  ];
+  if(!$('scenarios'))return;
+  $('scenarios').innerHTML=scenarios.map((s,i)=>{
+    const ft=s.spend/swr;
+    const cn=pv(ft,ret,retAge-s.age);
+    const rMo=ret/12;
+    const yrs=yearsTo(s.curr,s.mo,cn,rMo);
+    const coastAge=Math.round(s.age+yrs);
+    const hit=s.curr>=cn;
+    return `<div class="sc-card${i===1?' highlight':''}" onclick="loadScenario(${s.income},${s.curr},${s.mo},${s.spend},${s.age})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem">
+        <div>
+          <div style="font-weight:700;font-size:.88rem;margin-bottom:.2rem">${s.name}</div>
+          <div style="font-size:.72rem;color:var(--text3)">${fmtK(s.income)}/yr income · ${fmtK(s.curr)} saved · ${fmtK(s.mo)}/mo savings · Age ${s.age}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--mono);font-weight:700;color:var(--g2);font-size:1rem">${fmtK(cn)}</div>
+          <div style="font-size:.68rem;color:var(--text3)">Coast number</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:.75rem;flex-wrap:wrap">
+        <span style="font-size:.72rem;padding:.2rem .6rem;border-radius:100px;background:${hit?'var(--gdim)':'var(--surface2)'};border:1px solid ${hit?'var(--gbrd)':'var(--border2)'};color:${hit?'var(--g2)':'var(--text3)'};">${hit?'Coast FIRE Achieved':'Reach coast at Age '+coastAge}</span>
+        <span style="font-size:.72rem;padding:.2rem .6rem;border-radius:100px;background:var(--surface2);border:1px solid var(--border2);color:var(--text3)">FIRE target: ${fmtK(ft)}</span>
+        <span style="font-size:.72rem;padding:.2rem .6rem;border-radius:100px;background:var(--surface2);border:1px solid var(--border2);color:var(--text3)">Click to load</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadScenario(income,curr,mo,spend,age){
+  $('income').value=income;$('current').value=curr;$('monthly').value=mo;$('spending').value=spend;$('age').value=age;
+  calc();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── COMPARE CHART ──
+function renderCompareChart(fireTgt,swr){
+  const variants=[
+    {name:'Lean FIRE',num:30000/swr,spend:30000,color:'#4ade80'},
+    {name:'Coast FIRE',num:fireTgt,spend:fireTgt*swr,color:'#22c55e'},
+    {name:'Barista FIRE',num:Math.max(0,fireTgt*swr-20000)/swr,spend:fireTgt*swr,color:'#0d9488'},
+    {name:'Regular FIRE',num:fireTgt,spend:fireTgt*swr,color:'#16a34a'},
+    {name:'Fat FIRE',num:150000/swr,spend:150000,color:'#86efac'},
+  ];
+  dc('compare-chart');
+  if(!$('compare-chart'))return;
+  charts['compare-chart']=new Chart($('compare-chart'),{type:'bar',
+    data:{labels:variants.map(v=>v.name),datasets:[{data:variants.map(v=>v.num),backgroundColor:variants.map(v=>v.color+'cc'),borderColor:variants.map(v=>v.color),borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{backgroundColor:'rgba(10,18,12,.97)',borderColor:'rgba(22,163,74,.25)',borderWidth:1,padding:12,
+        callbacks:{label:c=>` Portfolio: ${fmtK(c.raw)}`,afterLabel:c=>` Annual Spend: ${fmtK(variants[c.dataIndex].spend)}`}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:CG},ticks:{callback:v=>fmtK(v),font:{size:10}}}}}
+  });
+}
+
+function renderCompareTable(fireTgt,swr,spend){
+  const rows=[
+    {name:'Lean FIRE',num:30000/swr,spend:'$25-35K',work:'None',for:'Extreme minimalists, nomads, very low COL areas'},
+    {name:'Coast FIRE',num:fireTgt,spend:'Current expenses',work:'Just enough to live',for:'Career-changers, parents, anyone wanting reduced stress now'},
+    {name:'Barista FIRE',num:Math.max(0,spend-20000)/swr,spend:'Current minus part-time',work:'Part-time ($15-25K/yr)',for:'People who want to leave careers but not fully stop working'},
+    {name:'Regular FIRE',num:fireTgt,spend:fmtK(spend)+'/yr',work:'None',for:'Most FIRE seekers — comfortable middle-class retirement'},
+    {name:'Fat FIRE',num:150000/swr,spend:'$100-200K/yr',work:'None',for:'High earners who want luxury without compromise'},
+  ];
+  if(!$('compare-table'))return;
+  $('compare-table').innerHTML=rows.map(r=>`<tr>
+    <td style="font-weight:700">${r.name}</td>
+    <td style="font-family:var(--mono);color:var(--g2)">${fmtK(r.num)}</td>
+    <td style="color:var(--text2);font-size:.78rem">${r.spend}</td>
+    <td style="color:var(--text2);font-size:.78rem">${r.work}</td>
+    <td style="color:var(--text3);font-size:.74rem">${r.for}</td>
+  </tr>`).join('');
+}
+
+// ── TAB SWITCHER ──
+function switchTab(name,btn){
+  btn.closest('.card').querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  btn.closest('.tab-row').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const tp=$('tp-'+name); if(tp) tp.classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── LEARN CARDS ──
+const LEARN=[
+  {t:'The Coast FIRE Formula',b:'Coast FIRE Number = FIRE Target ÷ (1 + Return Rate) ^ Years to Retirement. This is simply the present value of your future FIRE number. Every year you wait to invest, this number gets larger — which is why starting early is so powerful.',l:`The math rewards early action dramatically. At 7% real return:\n\n• Age 25 needs $87K to coast to $1M by 65 (40 years)\n• Age 35 needs $175K to coast to $1M by 65 (30 years)\n• Age 45 needs $356K to coast to $1M by 65 (20 years)\n\nNotice that every 10 years you wait roughly doubles your Coast number. This is compounding working in reverse — from your perspective as an investor, early dollars are worth dramatically more than late dollars.\n\nThe formula: C = F / (1+r)^n where C is Coast number, F is FIRE target, r is real return rate, n is years.`},
+  {t:'Real vs Nominal Returns',b:'Always use real (inflation-adjusted) returns for Coast FIRE calculations. The historical S&P 500 has returned ~10% nominal but only ~7% real. If you use 10%, you will undershoot your number.',l:`Why this matters: if you calculate a $200K Coast number using 10% nominal returns, but inflation averages 3%, your real return is only 6.8%. Your actual terminal value at 65 will be in today's purchasing power — and it will fall short of what you need.\n\nThe correct approach: discount your FIRE target at the real rate (nominal minus inflation). This gives you a Coast number that, when it reaches your FIRE target, will have the same purchasing power as your spending goal today.\n\nConservative planners use 5-6% real. Moderate planners use 7%. Aggressive planners use 8%+. The 7% figure (roughly 10% nominal minus 3% inflation) aligns with the long-run US equity market.`},
+  {t:'Coast FIRE and Healthcare',b:'The biggest challenge between hitting Coast FIRE and full retirement is healthcare. You will likely need private insurance for 10-30 years. ACA marketplace plans average $583/mo for individuals and $1,437/mo for families in 2024.',l:`Healthcare strategies for the Coast FIRE phase:\n\n1. ACA subsidies: Keep your taxable income below 400% of the Federal Poverty Line (~$58K for individuals, ~$120K for families) to qualify for premium subsidies. Roth conversions, LTCG harvesting, and 401k contributions can all help manage this.\n\n2. Spouse employer coverage: If your partner works, stay on their plan during the coast phase.\n\n3. Health-sharing ministries: Much cheaper than ACA, but far more limited coverage. Works for catastrophic insurance only.\n\n4. Geographic solution: Countries with universal healthcare (Portugal, Spain, Mexico) have excellent medical care at a fraction of US costs.`},
+  {t:'The Psychology of Coast FIRE',b:'Coast FIRE is unique because it provides immediate psychological relief. Once you\'ve hit your Coast number, the pressure to maximize income and savings disappears. Most people find this transforms their relationship with work.',l:`The mental shift that happens at Coast FIRE:\n\nBefore: "I need to maximize my income because every dollar not saved delays my retirement."\nAfter: "I need to earn enough to live comfortably. My future is already secured."\n\nThis is why Coast FIRE often leads to:\n• Career changes into more meaningful, lower-stress work\n• Starting businesses without the pressure to succeed immediately\n• Taking sabbaticals or parental leave without panic\n• Dramatically reduced financial anxiety\n\nMany Coast FIRE holders report that they stop watching their portfolio daily, stop obsessing over expense ratios, and stop feeling trapped by their salary. The money is already working — you just need to not interfere with it.`},
+  {t:'Coast FIRE with Children',b:'Kids add significant cost but don\'t make Coast FIRE impossible. The key is separating your FIRE number from your child-rearing expenses, and recognizing that child costs are temporary.',l:`How to model Coast FIRE with children:\n\n1. Your FIRE number should reflect your POST-child expenses — typically significantly lower than peak family spending. A couple spending $120K/year with two kids under 10 might spend only $70K in retirement.\n\n2. Calculate your Coast number on the lower retirement spending, not peak family spending.\n\n3. During child-rearing years, your "only earn to cover expenses" number is much higher — include childcare ($20-30K/yr per child under 5), education, activities.\n\n4. Many parents find that Coast FIRE is easier to achieve than they thought — their FIRE target is based on post-children expenses, but they started saving aggressively before having kids.`},
+  {t:'Sequence of Returns Risk in Coast Phase',b:'Once you start coasting, you are not immune to sequence of returns risk. A major market crash during your coast phase extends your time to reach FIRE — but won\'t destroy it.',l:`Why Coast FIRE is more resilient than full early retirement:\n\nIn full FIRE, you are withdrawing 4% per year. A 40% market crash combined with 4% withdrawals in year 1 is catastrophic — you're selling shares at the bottom permanently.\n\nIn Coast FIRE, you are not withdrawing. You're adding zero. A 40% crash just means it takes longer to compound to your FIRE target. You still get there.\n\nThe risk scenario: You hit your Coast number at 35, markets crash 40%, your portfolio drops back below Coast. Do you start contributing again? Probably yes — until you've rebuilt to Coast again.\n\nMitigant: Aim for 110-120% of your Coast number before declaring victory. This buffer absorbs early drawdowns without pushing you back below Coast FIRE.`},
+];
+
+function renderLearnGrid(){
+  if(!$('learn-grid'))return;
+  $('learn-grid').innerHTML=LEARN.map((item,i)=>`
+    <div class="learn-card" onclick="toggleLearn(${i})">
+      <div class="lc-title">${item.t}</div>
+      <div class="lc-body">${item.b}</div>
+      <div class="lc-long" id="ll-${i}">${item.l}</div>
+      <div class="lc-more" id="lm-${i}">Read more</div>
+    </div>`).join('');
+}
+function toggleLearn(i){
+  const el=$('ll-'+i),tog=$('lm-'+i);
+  if(!el)return;
+  const open=el.style.display!=='none'&&el.style.display!=='';
+  el.style.display=open?'none':'block';
+  if(tog) tog.textContent=open?'Read more':'Show less';
+}
+
+// REVEAL
+const ro=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('show');}),{threshold:.08});
+document.querySelectorAll('.rv').forEach(el=>{if(!el.classList.contains('rv2'))ro.observe(el);});
+
+// RANGE VAL labels use class rv2 for display
+// Fix: sync all range labels on load
+function initRangeLabels(){
+  const pairs=[['ret','ret-val','%'],['swr','swr-val','%'],['partial','partial-val',null]];
+  pairs.forEach(([id,lid])=>{
+    const inp=$(id),lbl=$(lid);
+    if(inp&&lbl){
+      if(id==='partial'){lbl.textContent=fmt(parseInt(inp.value)||0)+'/mo';}
+      else{lbl.textContent=inp.value+'%';}
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  initRangeLabels();
+  renderLearnGrid();
+  calc();
+});
+</script>
+</body>
+</html>
