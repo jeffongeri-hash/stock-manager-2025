@@ -127,12 +127,6 @@ export const pageSEO: Record<string, PageSEO> = {
     keywords: ["portfolio rebalancing", "asset allocation", "portfolio risk", "VaR", "Sharpe ratio"],
     ogType: "website",
   },
-  "/portfolio-rebalancing": {
-    title: "Portfolio Rebalancing — Profit Pathway",
-    description: "Rebalance to target allocations. Calculate trades to maintain your desired asset mix.",
-    keywords: ["portfolio rebalancing", "asset allocation", "rebalance calculator"],
-    ogType: "website",
-  },
   "/real-estate": {
     title: "Real Estate Calculator — Profit Pathway",
     description: "Analyze real estate investments with ROI, rental income, mortgage, and property comparison tools.",
