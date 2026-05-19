@@ -1,4 +1,26 @@
 (function() {
+  // --- Force autoplay on promo video (mobile + desktop) ---
+  var pv = document.getElementById('promo-video');
+  if (pv) {
+    pv.muted = true;
+    pv.defaultMuted = true;
+    pv.setAttribute('muted', '');
+    pv.setAttribute('playsinline', '');
+    var tryPlay = function() {
+      var p = pv.play();
+      if (p && typeof p.catch === 'function') p.catch(function(){});
+    };
+    tryPlay();
+    pv.addEventListener('loadedmetadata', tryPlay);
+    pv.addEventListener('canplay', tryPlay);
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) tryPlay();
+    });
+    ['touchstart','click','scroll'].forEach(function(ev) {
+      window.addEventListener(ev, tryPlay, { once: true, passive: true });
+    });
+  }
+
   // --- Hero stat counters ---
   function animateNum(el, target, suffix, prefix) {
     if (!el) return;
