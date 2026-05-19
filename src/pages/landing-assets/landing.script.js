@@ -1,25 +1,70 @@
 (function() {
-  // --- Force autoplay on promo video (mobile + desktop) ---
+  // --- Promo video: autoplay, loading state, and replay fallback ---
   var pv = document.getElementById('promo-video');
-  if (pv) {
+  var pvFrame = pv && pv.closest('.promo-video-frame');
+  var pvReplay = document.getElementById('promo-video-replay');
+  if (pv && pvFrame) {
+    var setState = function(s) { pvFrame.setAttribute('data-state', s); };
     pv.muted = true;
     pv.defaultMuted = true;
     pv.setAttribute('muted', '');
     pv.setAttribute('playsinline', '');
-    var tryPlay = function() {
-      var p = pv.play();
-      if (p && typeof p.catch === 'function') p.catch(function(){});
+
+    var hideLoader = function() {
+      if (pvFrame.getAttribute('data-state') === 'loading') setState('ready');
     };
+    var showNeedsPlay = function() { setState('needs-play'); };
+
+    var tryPlay = function() {
+      pv.muted = true;
+      var p = pv.play();
+      if (p && typeof p.then === 'function') {
+        p.then(function() { setState('playing'); })
+         .catch(function() { showNeedsPlay(); });
+      }
+    };
+
+    pv.addEventListener('loadeddata', hideLoader);
+    pv.addEventListener('canplay', function() { hideLoader(); tryPlay(); });
+    pv.addEventListener('playing', function() { setState('playing'); });
+    pv.addEventListener('waiting', function() {
+      if (pvFrame.getAttribute('data-state') !== 'needs-play') setState('loading');
+    });
+    pv.addEventListener('stalled', function() {
+      if (pvFrame.getAttribute('data-state') !== 'needs-play') setState('loading');
+    });
+    pv.addEventListener('error', function() { setState('error'); });
+
+    // Safety timeout — if nothing has loaded after 8s, surface the replay button
+    setTimeout(function() {
+      if (pv.readyState < 2 && pvFrame.getAttribute('data-state') === 'loading') {
+        showNeedsPlay();
+      }
+    }, 8000);
+
     tryPlay();
-    pv.addEventListener('loadedmetadata', tryPlay);
-    pv.addEventListener('canplay', tryPlay);
     document.addEventListener('visibilitychange', function() {
-      if (!document.hidden) tryPlay();
+      if (!document.hidden && pv.paused) tryPlay();
     });
     ['touchstart','click','scroll'].forEach(function(ev) {
       window.addEventListener(ev, tryPlay, { once: true, passive: true });
     });
+
+    if (pvReplay) {
+      pvReplay.addEventListener('click', function(e) {
+        e.preventDefault();
+        pv.muted = true;
+        pv.currentTime = 0;
+        setState('loading');
+        var p = pv.play();
+        if (p && typeof p.then === 'function') {
+          p.then(function() { setState('playing'); })
+           .catch(function() { showNeedsPlay(); });
+        }
+      });
+    }
   }
+
 
   // --- Hero stat counters ---
   function animateNum(el, target, suffix, prefix) {
