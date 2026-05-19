@@ -191,9 +191,11 @@ export function getPageSEO(path: string): PageSEO {
   const titleized = slug
     ? slug.replace(/\b\w/g, (c) => c.toUpperCase())
     : "Home";
+  // Keep fallback description well under 160 chars even with long titleized prefixes.
+  const shortDesc = `${titleized} — free trading, portfolio, options, and retirement tools on Profit Pathfinder.`;
   return {
     title: `${titleized} — Profit Pathfinder`,
-    description: `${titleized} on Profit Pathfinder — ${siteConfig.description}`,
+    description: shortDesc.length > 158 ? `${titleized} on Profit Pathfinder — trading & portfolio tools.` : shortDesc,
     keywords: siteConfig.keywords,
     ogType: "website",
   };
