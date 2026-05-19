@@ -30,7 +30,7 @@
 <!-- ══ PROMO VIDEO ══════════════════════════════════════════ -->
 <main>
 <section class="promo-video-section" aria-label="Profit Pathfinder promo video">
-  <div class="promo-video-frame">
+  <div class="promo-video-frame" data-state="loading">
     <video
       id="promo-video"
       class="promo-video"
@@ -48,6 +48,21 @@
     >
       <source src="/promo.mp4" type="video/mp4" />
     </video>
+    <div class="promo-video-spinner" aria-hidden="true">
+      <div class="promo-spinner-ring"></div>
+      <div class="promo-spinner-label">Loading promo…</div>
+    </div>
+    <button
+      id="promo-video-replay"
+      type="button"
+      class="promo-video-replay"
+      aria-label="Play promo video"
+    >
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M8 5v14l11-7z" fill="currentColor"/>
+      </svg>
+      <span>Replay video</span>
+    </button>
     <div class="promo-video-glow" aria-hidden="true"></div>
   </div>
 </section>
