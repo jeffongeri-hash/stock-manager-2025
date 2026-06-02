@@ -244,7 +244,17 @@ const PaycheckCalculator = () => {
                   {result.taxes.notes && (
                     <p className="text-xs text-muted-foreground italic">{result.taxes.notes}</p>
                   )}
-                  <PaycheckWaterfall breakdown={result.breakdown} />
+                  <PaycheckWaterfall
+                    grossPay={result.breakdown.gross}
+                    preTaxDeductions={result.breakdown.preTax}
+                    federalTax={result.breakdown.federal}
+                    stateTax={result.breakdown.state}
+                    localTax={result.breakdown.local}
+                    socialSecurity={result.breakdown.socialSecurity}
+                    medicare={result.breakdown.medicare}
+                    postTaxDeductions={result.breakdown.postTax}
+                    netPay={result.breakdown.net}
+                  />
                 </div>
               )}
             </CardContent>
