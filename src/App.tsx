@@ -98,6 +98,8 @@ const App = () => (
                 <Route path="/financial-independence-calculator" element={<FinancialIndependenceCalculator />} />
                 <Route path="/covered-call-calculator" element={<CoveredCallCalculator />} />
                 <Route path="/monthly-dividend-calculator" element={<MonthlyDividendCalculator />} />
+                <Route path="/all-tools" element={<AllTools />} />
+                <Route path="/paycheck-calculator" element={<ProtectedRoute><PaycheckCalculator /></ProtectedRoute>} />
                 
                 {/* Protected routes - allow guest mode */}
                 <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
