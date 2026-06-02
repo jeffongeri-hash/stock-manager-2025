@@ -49,8 +49,12 @@ const QuantGemini = lazy(() => import("./pages/QuantGemini"));
 // Public SEO landing pages
 const CoastFireCalculator = lazy(() => import("./pages/CoastFireCalculator"));
 const FinancialIndependenceCalculator = lazy(() => import("./pages/FinancialIndependenceCalculator"));
+const CoastFireCalculator = lazy(() => import("./pages/CoastFireCalculator"));
+const FinancialIndependenceCalculator = lazy(() => import("./pages/FinancialIndependenceCalculator"));
 const CoveredCallCalculator = lazy(() => import("./pages/CoveredCallCalculator"));
 const MonthlyDividendCalculator = lazy(() => import("./pages/MonthlyDividendCalculator"));
+const PaycheckCalculator = lazy(() => import("./pages/PaycheckCalculator"));
+const AllTools = lazy(() => import("./pages/AllTools"));
 
 
 const queryClient = new QueryClient();
