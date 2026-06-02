@@ -51,6 +51,8 @@ const CoastFireCalculator = lazy(() => import("./pages/CoastFireCalculator"));
 const FinancialIndependenceCalculator = lazy(() => import("./pages/FinancialIndependenceCalculator"));
 const CoveredCallCalculator = lazy(() => import("./pages/CoveredCallCalculator"));
 const MonthlyDividendCalculator = lazy(() => import("./pages/MonthlyDividendCalculator"));
+const PaycheckCalculator = lazy(() => import("./pages/PaycheckCalculator"));
+const AllTools = lazy(() => import("./pages/AllTools"));
 
 
 const queryClient = new QueryClient();
@@ -96,6 +98,8 @@ const App = () => (
                 <Route path="/financial-independence-calculator" element={<FinancialIndependenceCalculator />} />
                 <Route path="/covered-call-calculator" element={<CoveredCallCalculator />} />
                 <Route path="/monthly-dividend-calculator" element={<MonthlyDividendCalculator />} />
+                <Route path="/all-tools" element={<AllTools />} />
+                <Route path="/paycheck-calculator" element={<ProtectedRoute><PaycheckCalculator /></ProtectedRoute>} />
                 
                 {/* Protected routes - allow guest mode */}
                 <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
