@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { siteConfig } from '@/lib/seo-config';
+import { RelatedTools } from '@/components/seo/RelatedTools';
 
 const path = '/covered-call-calculator';
 const title = 'Covered Call Calculator — Options Income Strategy | Profit Pathfinder';
@@ -27,6 +28,9 @@ export default function CoveredCallCalculator() {
         style={{ height: '100vh' }}
         allow="clipboard-read; clipboard-write"
       />
+      <div className="max-w-4xl mx-auto px-4 py-10">
+        <RelatedTools currentPath={path} />
+      </div>
     </>
   );
 }

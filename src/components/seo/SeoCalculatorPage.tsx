@@ -5,6 +5,7 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { siteConfig } from '@/lib/seo-config';
+import { RelatedTools } from '@/components/seo/RelatedTools';
 
 export interface FaqItem {
   q: string;
@@ -98,6 +99,8 @@ export function SeoCalculatorPage({
               ))}
             </div>
           </section>
+
+          <RelatedTools currentPath={path} />
         </article>
       </PageLayout>
     </>

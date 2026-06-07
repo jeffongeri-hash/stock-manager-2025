@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { siteConfig } from '@/lib/seo-config';
+import { RelatedTools } from '@/components/seo/RelatedTools';
 
 const path = '/coast-fire-calculator';
 const title = 'Coast FIRE Calculator — Stop Saving, Start Living | Profit Pathfinder';
@@ -27,6 +28,9 @@ export default function CoastFireCalculator() {
         style={{ height: '100vh' }}
         allow="clipboard-read; clipboard-write"
       />
+      <div className="max-w-4xl mx-auto px-4 py-10">
+        <RelatedTools currentPath={path} />
+      </div>
     </>
   );
 }

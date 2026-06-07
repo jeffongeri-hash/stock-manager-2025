@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { DeductionRow } from '@/components/paycheck/DeductionRow';
 import { PaycheckWaterfall } from '@/components/paycheck/PaycheckWaterfall';
+import { RelatedTools } from '@/components/seo/RelatedTools';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Sparkles } from 'lucide-react';
@@ -260,6 +261,8 @@ const PaycheckCalculator = () => {
             </CardContent>
           </Card>
         </div>
+
+        <RelatedTools currentPath="/paycheck-calculator" />
       </div>
     </PageLayout>
   );
