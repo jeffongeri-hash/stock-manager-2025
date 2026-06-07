@@ -99,6 +99,8 @@ export function SeoCalculatorPage({
               ))}
             </div>
           </section>
+
+          <RelatedTools currentPath={path} />
         </article>
       </PageLayout>
     </>
