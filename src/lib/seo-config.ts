@@ -229,6 +229,36 @@ export const pageSEO: Record<string, PageSEO> = {
     keywords: ["monthly dividend calculator", "dividend income calculator", "DRIP calculator"],
     ogType: "website",
   },
+  "/ai-trade-journal": {
+    title: "AI Trade Journal — Pattern Analysis | Profit Pathfinder",
+    description: "Upload your brokerage CSV and get AI-powered pattern analysis of your trades. Find what's costing you money and what's working.",
+    keywords: ["AI trade journal", "trading pattern analysis", "trade review AI", "brokerage CSV analysis"],
+    ogType: "website",
+  },
+  "/ai-trade-journal-demo": {
+    title: "AI Trade Journal Live Demo — Profit Pathfinder",
+    description: "Try the AI Trade Journal live demo. See pattern analysis of sample brokerage trades in seconds.",
+    keywords: ["AI trade journal demo", "trade analysis demo", "trading AI"],
+    ogType: "website",
+  },
+  "/premarket-brief": {
+    title: "Pre-Market Brief — Daily Trading Intelligence | Profit Pathfinder",
+    description: "Curated pre-market intelligence delivered before the bell: sector leaders, signal changes, Fibonacci levels, and catalysts.",
+    keywords: ["premarket brief", "premarket trading", "daily market brief", "trading intelligence"],
+    ogType: "website",
+  },
+  "/weekly-fundamental-scan": {
+    title: "Weekly Fundamental Scan — Institutional Stock Research | Profit Pathfinder",
+    description: "Weekly deep-dive fundamental scan across AI infrastructure, semiconductor, and datacenter stocks. Know what to own and why.",
+    keywords: ["weekly stock scan", "fundamental analysis", "AI stocks research", "semiconductor stocks"],
+    ogType: "website",
+  },
+  "/fire-planning-suite": {
+    title: "FIRE Planning Suite — Coast, Barista & Monte Carlo | Profit Pathfinder",
+    description: "Complete FIRE planning: FIRE number, Coast FIRE, Barista FIRE, Monte Carlo simulation, withdrawal strategies, and PDF report.",
+    keywords: ["FIRE planning suite", "Coast FIRE", "Barista FIRE", "Monte Carlo retirement", "FIRE calculator"],
+    ogType: "website",
+  },
 };
 
 
