@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { SEOHead } from "@/hooks/useSEO";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
+import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 
 // Lazy load all page components for code splitting
 const Landing = lazy(() => import("./pages/Landing"));
@@ -91,6 +92,7 @@ const App = () => (
       <PWAUpdateNotification />
       <BrowserRouter>
         <SEOHead />
+        <SubscriptionBanner />
         <SwipeNavigation>
           <div className="pb-16 lg:pb-0">
             <Suspense fallback={<PageLoader />}>

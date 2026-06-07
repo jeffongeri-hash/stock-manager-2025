@@ -6,14 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Bell, Globe, Lock, User, Settings as SettingsIcon, Landmark } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Bell, Globe, Lock, User, Settings as SettingsIcon, Landmark, CreditCard, Sparkles, Loader2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 import { SnaptradeConnection } from '@/components/brokers/SnaptradeConnection';
+import { useSubscription } from '@/hooks/useSubscription';
+import { supabase } from '@/integrations/supabase/client';
+import { getStripeEnvironment } from '@/lib/stripe';
 
-type SettingsTab = 'account' | 'notifications' | 'security' | 'regional' | 'preferences' | 'brokers';
+type SettingsTab = 'account' | 'notifications' | 'security' | 'regional' | 'preferences' | 'brokers' | 'billing';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('account');
+  const { subscription, isActive: isProActive } = useSubscription();
+  const [portalLoading, setPortalLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: 'John',
     lastName: 'Smith',
@@ -32,6 +39,24 @@ const Settings = () => {
 
   const handleSave = () => {
     toast.success('Settings saved successfully!');
+  };
+
+  const openBillingPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-portal-session', {
+        body: {
+          environment: getStripeEnvironment(),
+          returnUrl: `${window.location.origin}/settings`,
+        },
+      });
+      if (error || !data?.url) throw new Error(error?.message || 'Portal unavailable');
+      window.open(data.url, '_blank', 'noopener,noreferrer');
+    } catch (e: any) {
+      toast.error(e.message || 'Could not open billing portal');
+    } finally {
+      setPortalLoading(false);
+    }
   };
   return (
     <PageLayout>
@@ -90,14 +115,23 @@ const Settings = () => {
                 <SettingsIcon className="mr-2 h-5 w-5" />
                 Preferences
               </Button>
-              <Button 
-                variant={activeTab === 'brokers' ? 'secondary' : 'ghost'} 
-                className="w-full justify-start" 
+              <Button
+                variant={activeTab === 'brokers' ? 'secondary' : 'ghost'}
+                className="w-full justify-start"
                 size="lg"
                 onClick={() => setActiveTab('brokers')}
               >
                 <Landmark className="mr-2 h-5 w-5" />
                 Broker Connections
+              </Button>
+              <Button
+                variant={activeTab === 'billing' ? 'secondary' : 'ghost'}
+                className="w-full justify-start"
+                size="lg"
+                onClick={() => setActiveTab('billing')}
+              >
+                <CreditCard className="mr-2 h-5 w-5" />
+                Billing & Subscription
               </Button>
             </nav>
           </div>
@@ -315,6 +349,76 @@ const Settings = () => {
                     </ul>
                   </div>
                 </div>
+              </>
+            )}
+
+            {activeTab === 'billing' && (
+              <>
+                <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                  Billing & Subscription
+                  {isProActive && (
+                    <Badge variant="secondary" className="bg-primary/15 text-primary border border-primary/30 gap-1">
+                      <Sparkles className="h-3 w-3" /> Pro
+                    </Badge>
+                  )}
+                </h2>
+
+                {subscription ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Plan</p>
+                        <p className="font-medium">
+                          {subscription.price_id === 'pro_yearly' ? 'Pro · Yearly' : 'Pro · Monthly'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Status</p>
+                        <p className="font-medium capitalize">
+                          {subscription.status.replace('_', ' ')}
+                          {subscription.cancel_at_period_end && ' (ends at period end)'}
+                        </p>
+                      </div>
+                      {subscription.current_period_end && (
+                        <div className="col-span-2">
+                          <p className="text-muted-foreground">
+                            {subscription.cancel_at_period_end || subscription.status === 'canceled'
+                              ? 'Access ends'
+                              : 'Renews on'}
+                          </p>
+                          <p className="font-medium">
+                            {new Date(subscription.current_period_end).toLocaleDateString(undefined, {
+                              year: 'numeric', month: 'long', day: 'numeric',
+                            })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="border-t pt-4 flex flex-wrap gap-2">
+                      <Button onClick={openBillingPortal} disabled={portalLoading}>
+                        {portalLoading
+                          ? <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          : <ExternalLink className="h-4 w-4 mr-2" />}
+                        Manage subscription
+                      </Button>
+                      <p className="text-xs text-muted-foreground w-full mt-2">
+                        Opens Stripe's secure portal to switch monthly/yearly, update payment method, view invoices, or cancel.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground">
+                      You're on the free plan. Upgrade to Pro to unlock the AI Trade Journal, Pre-Market Brief, Weekly Fundamental Scan, and the full FIRE Planning Suite.
+                    </p>
+                    <Button asChild>
+                      <Link to="/pricing">
+                        <Sparkles className="h-4 w-4 mr-2" /> View Pro plans
+                      </Link>
+                    </Button>
+                  </div>
+                )}
               </>
             )}
           </div>
