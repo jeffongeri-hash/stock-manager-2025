@@ -63,4 +63,14 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.ignite-fire-advice]
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.payments-webhook]
+verify_jwt = false
+
+[functions.create-portal-session]
+verify_jwt = false
+
 verify_jwt = false

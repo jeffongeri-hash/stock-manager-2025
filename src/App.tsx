@@ -53,6 +53,8 @@ const CoveredCallCalculator = lazy(() => import("./pages/CoveredCallCalculator")
 const MonthlyDividendCalculator = lazy(() => import("./pages/MonthlyDividendCalculator"));
 const PaycheckCalculator = lazy(() => import("./pages/PaycheckCalculator"));
 const AllTools = lazy(() => import("./pages/AllTools"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
 
 
 const queryClient = new QueryClient();
@@ -99,6 +101,8 @@ const App = () => (
                 <Route path="/covered-call-calculator" element={<CoveredCallCalculator />} />
                 <Route path="/monthly-dividend-calculator" element={<MonthlyDividendCalculator />} />
                 <Route path="/all-tools" element={<AllTools />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/checkout/return" element={<CheckoutReturn />} />
                 <Route path="/paycheck-calculator" element={<ProtectedRoute><PaycheckCalculator /></ProtectedRoute>} />
                 
                 {/* Protected routes - allow guest mode */}
