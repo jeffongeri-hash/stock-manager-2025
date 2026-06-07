@@ -351,6 +351,76 @@ const Settings = () => {
                 </div>
               </>
             )}
+
+            {activeTab === 'billing' && (
+              <>
+                <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                  Billing & Subscription
+                  {isProActive && (
+                    <Badge variant="secondary" className="bg-primary/15 text-primary border border-primary/30 gap-1">
+                      <Sparkles className="h-3 w-3" /> Pro
+                    </Badge>
+                  )}
+                </h2>
+
+                {subscription ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Plan</p>
+                        <p className="font-medium">
+                          {subscription.price_id === 'pro_yearly' ? 'Pro · Yearly' : 'Pro · Monthly'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Status</p>
+                        <p className="font-medium capitalize">
+                          {subscription.status.replace('_', ' ')}
+                          {subscription.cancel_at_period_end && ' (ends at period end)'}
+                        </p>
+                      </div>
+                      {subscription.current_period_end && (
+                        <div className="col-span-2">
+                          <p className="text-muted-foreground">
+                            {subscription.cancel_at_period_end || subscription.status === 'canceled'
+                              ? 'Access ends'
+                              : 'Renews on'}
+                          </p>
+                          <p className="font-medium">
+                            {new Date(subscription.current_period_end).toLocaleDateString(undefined, {
+                              year: 'numeric', month: 'long', day: 'numeric',
+                            })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="border-t pt-4 flex flex-wrap gap-2">
+                      <Button onClick={openBillingPortal} disabled={portalLoading}>
+                        {portalLoading
+                          ? <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          : <ExternalLink className="h-4 w-4 mr-2" />}
+                        Manage subscription
+                      </Button>
+                      <p className="text-xs text-muted-foreground w-full mt-2">
+                        Opens Stripe's secure portal to switch monthly/yearly, update payment method, view invoices, or cancel.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground">
+                      You're on the free plan. Upgrade to Pro to unlock the AI Trade Journal, Pre-Market Brief, Weekly Fundamental Scan, and the full FIRE Planning Suite.
+                    </p>
+                    <Button asChild>
+                      <Link to="/pricing">
+                        <Sparkles className="h-4 w-4 mr-2" /> View Pro plans
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
