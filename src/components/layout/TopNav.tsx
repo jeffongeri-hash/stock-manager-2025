@@ -1,12 +1,13 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from 'next-themes';
-import { Moon, Sun, LogOut, User, Menu, UserCircle } from 'lucide-react';
+import { Moon, Sun, LogOut, User, Menu, UserCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -36,6 +37,7 @@ const PRIMARY_NAV: NavItem[] = [
 
 export function TopNav() {
   const { user, signOut, isGuestMode } = useAuth();
+  const { isActive: isProActive } = useSubscription();
   const navigate = useNavigate();
   const { resolvedTheme, setTheme } = useTheme();
   const { pathname } = useLocation();
@@ -99,6 +101,15 @@ export function TopNav() {
 
           {user ? (
             <>
+              {isProActive && (
+                <Badge
+                  variant="secondary"
+                  className="hidden sm:inline-flex items-center gap-1 bg-primary/15 text-primary border border-primary/30 text-[10px] font-semibold tracking-wide uppercase"
+                  title="Profit Pathfinder Pro"
+                >
+                  <Sparkles className="h-3 w-3" /> Pro
+                </Badge>
+              )}
               <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="h-9 w-9">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-primary/15 text-primary text-xs">
