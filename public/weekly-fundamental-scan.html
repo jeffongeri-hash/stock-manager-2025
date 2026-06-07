@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Weekly Fundamental Scan — Institutional-Grade Stock Research | Profit Pathfinder</title>
+<meta name="description" content="A weekly deep-dive fundamental scan across AI infrastructure, semiconductor, and datacenter stocks. Delivered every Friday. Know what to own and why."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #09100a;
+    --surface: #0e160f;
+    --border: rgba(255,255,255,0.07);
+    --accent: #16a34a;
+    --accent-light: #4ade80;
+    --accent2: #86efac;
+    --gold: #fbbf24;
+    --text: #ecfdf5;
+    --muted: #6b7280;
+    --card: #0c1a0e;
+    --red: #f87171;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* Subtle noise texture */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* Vertical line grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      90deg,
+      rgba(22,163,74,0.04) 0px,
+      rgba(22,163,74,0.04) 1px,
+      transparent 1px,
+      transparent 80px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Nav */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.1rem 2.5rem;
+    background: rgba(9,16,10,0.9);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 1.2rem;
+    letter-spacing: -0.01em;
+  }
+  .nav-logo em { color: var(--accent-light); font-style: italic; }
+  .nav-cta {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent-light);
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .nav-cta:hover {
+    background: var(--accent);
+    color: #000;
+  }
+
+  /* Hero — editorial layout */
+  .hero {
+    position: relative; z-index: 1;
+    max-width: 1200px; margin: 0 auto;
+    padding: 5rem 2.5rem 3rem;
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 5rem;
+    align-items: start;
+  }
+
+  .hero-issue {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--accent-light);
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .hero-issue::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.3;
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: clamp(2.75rem, 5vw, 4.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+  }
+  .hero-title em { color: var(--accent-light); font-style: italic; }
+
+  .hero-sub {
+    font-size: 1rem;
+    color: #6b7280;
+    margin-bottom: 2.5rem;
+    font-weight: 300;
+    line-height: 1.75;
+    max-width: 420px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    padding: 1.25rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-meta-item { }
+  .hero-meta-val {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--accent-light);
+  }
+  .hero-meta-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0.9rem 2rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    box-shadow: 0 0 30px rgba(22,163,74,0.3);
+  }
+  .btn-primary:hover {
+    background: var(--accent-light);
+    transform: translateY(-2px);
+    box-shadow: 0 0 50px rgba(74,222,128,0.35);
+  }
+
+  /* Report preview */
+  .report-preview {
+    background: var(--card);
+    border: 1px solid rgba(22,163,74,0.15);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(22,163,74,0.04);
+  }
+
+  .rp-header {
+    background: rgba(22,163,74,0.07);
+    border-bottom: 1px solid rgba(22,163,74,0.12);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .rp-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--accent-light);
+  }
+  .rp-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+  }
+
+  .rp-body { padding: 1.25rem 1.5rem; }
+  .rp-section { margin-bottom: 1.25rem; }
+  .rp-section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
+  }
+
+  .scan-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1.2fr;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    align-items: center;
+  }
+  .scan-row.header { color: var(--muted); font-size: 0.58rem; }
+  .scan-row .sym { color: #fff; font-weight: 600; }
+  .up { color: var(--accent-light); }
+  .down { color: var(--red); }
+  .neutral { color: var(--muted); }
+
+  .conviction {
+    display: inline-flex;
+    gap: 2px;
+  }
+  .conviction .pip {
+    width: 6px; height: 6px;
+    border-radius: 1px;
+  }
+  .conviction .pip.filled { background: var(--accent-light); }
+  .conviction .pip.empty { background: rgba(255,255,255,0.1); }
+
+  .thesis-box {
+    background: rgba(251,191,36,0.04);
+    border: 1px solid rgba(251,191,36,0.15);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+  }
+  .thesis-ticker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+  }
+  .thesis-text {
+    font-size: 0.72rem;
+    color: #9ca3af;
+    line-height: 1.5;
+    font-style: italic;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* Coverage section */
+  .coverage-section {
+    position: relative; z-index: 1;
+    max-width: 1200px; margin: 0 auto;
+    padding: 4rem 2.5rem;
+  }
+  .coverage-header { margin-bottom: 3rem; }
+  .section-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--accent-light);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .section-title em { color: var(--accent-light); font-style: italic; }
+
+  .ticker-universe {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 3rem;
+  }
+  .ticker-chip {
+    background: var(--card);
+    border: 1px solid rgba(22,163,74,0.18);
+    border-radius: 6px;
+    padding: 0.45rem 0.85rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent-light);
+    transition: all 0.2s;
+  }
+  .ticker-chip:hover {
+    background: rgba(22,163,74,0.1);
+    border-color: rgba(22,163,74,0.4);
+  }
+  .ticker-chip.sector {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+  }
+
+  /* What's included */
+  .includes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 3rem;
+  }
+  .include-cell {
+    background: var(--card);
+    padding: 2rem 1.75rem;
+    transition: background 0.2s;
+  }
+  .include-cell:hover { background: rgba(22,163,74,0.04); }
+  .include-icon { font-size: 1.25rem; margin-bottom: 0.75rem; }
+  .include-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.5rem; }
+  .include-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.65; }
+
+  /* Why pay callout */
+  .why-section {
+    position: relative; z-index: 1;
+    max-width: 1200px; margin: 0 auto;
+    padding: 2rem 2.5rem 4rem;
+  }
+  .why-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  .why-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+  }
+  .why-card.featured {
+    border-color: rgba(22,163,74,0.3);
+    background: linear-gradient(135deg, rgba(22,163,74,0.06), rgba(22,163,74,0.02));
+  }
+  .why-card-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+  }
+  .why-card-title em { color: var(--accent-light); font-style: italic; }
+  .why-card-body { font-size: 0.88rem; color: #9ca3af; line-height: 1.75; }
+  .why-stat {
+    margin-top: 1.5rem;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 2.5rem;
+    color: var(--accent-light);
+  }
+  .why-stat-label { font-size: 0.8rem; color: var(--muted); font-family: 'DM Sans', sans-serif; margin-top: 0.25rem; }
+
+  /* Pricing */
+  .pricing-section {
+    position: relative; z-index: 1;
+    max-width: 700px; margin: 0 auto;
+    padding: 2rem 2.5rem 6rem;
+  }
+  .price-card {
+    background: var(--card);
+    border: 1px solid rgba(22,163,74,0.3);
+    border-radius: 16px;
+    padding: 3rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .price-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-light), var(--accent2), transparent);
+  }
+  .price-edition {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--accent-light);
+    font-style: italic;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .price-edition::before { content: '◆'; font-size: 0.5rem; }
+  .price-amount {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 5rem;
+    line-height: 1;
+    color: var(--accent-light);
+  }
+  .price-amount sup { font-size: 2rem; vertical-align: super; }
+  .price-per { font-size: 1rem; color: var(--muted); margin-top: 0.25rem; }
+  .price-desc { color: #9ca3af; font-size: 0.88rem; margin: 1.25rem 0 2rem; line-height: 1.7; font-style: italic; }
+  .price-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-bottom: 2.5rem;
+  }
+  .price-features li {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    color: #d1fae5;
+    align-items: flex-start;
+  }
+  .price-features li .ck { color: var(--accent-light); flex-shrink: 0; }
+  .btn-full {
+    width: 100%;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 1rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 40px rgba(22,163,74,0.3);
+  }
+  .btn-full:hover {
+    background: var(--accent-light);
+    transform: translateY(-2px);
+    box-shadow: 0 0 60px rgba(74,222,128,0.4);
+  }
+  .price-guarantee { margin-top: 1.25rem; font-size: 0.8rem; color: var(--muted); text-align: center; }
+
+  footer {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 2rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.65s ease both; }
+  .d1 { animation-delay: 0.1s; }
+  .d2 { animation-delay: 0.2s; }
+  .d3 { animation-delay: 0.3s; }
+
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; gap: 3rem; padding: 4rem 1.5rem 3rem; }
+    .includes-grid { grid-template-columns: 1fr; }
+    .why-grid { grid-template-columns: 1fr; }
+    nav { padding: 1rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Profit <em>Pathfinder</em></div>
+  <a href="#pricing" class="nav-cta">Subscribe →</a>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div>
+    <div class="hero-issue fade-up">Weekly Research · Every Friday</div>
+    <h1 class="hero-title fade-up">
+      Know what to own.<br/>
+      Know <em>why.</em>
+    </h1>
+    <p class="hero-sub fade-up d1">
+      A weekly deep-dive fundamental scan across AI infrastructure, semiconductor, and datacenter stocks — with analyst price targets, earnings revisions, and conviction ratings. Delivered every Friday before the weekend.
+    </p>
+    <div class="hero-meta fade-up d2">
+      <div class="hero-meta-item">
+        <div class="hero-meta-val">10+</div>
+        <div class="hero-meta-label">Tickers covered weekly</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="hero-meta-val">3</div>
+        <div class="hero-meta-label">Sectors analyzed</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="hero-meta-val">52×</div>
+        <div class="hero-meta-label">Issues per year</div>
+      </div>
+    </div>
+    <a href="#pricing" class="btn-primary fade-up d3">Get the Scan for $29/mo →</a>
+  </div>
+
+  <!-- Report preview -->
+  <div class="report-preview fade-up d3">
+    <div class="rp-header">
+      <div class="rp-title">◆ Weekly Fundamental Scan — Issue #23</div>
+      <div class="rp-date">FRI JUN 06 2026</div>
+    </div>
+    <div class="rp-body">
+      <div class="rp-section">
+        <div class="rp-section-label">AI Infrastructure — Conviction Ratings</div>
+        <div class="scan-row header">
+          <span>Ticker</span><span>P/E Fwd</span><span>Rev Δ</span><span>Price Tgt</span><span>Conviction</span>
+        </div>
+        <div class="scan-row">
+          <span class="sym">NBIS</span>
+          <span class="neutral">N/M</span>
+          <span class="up">+31%</span>
+          <span class="up">$18.50</span>
+          <span><div class="conviction"><div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div><div class="pip empty"></div></div></span>
+        </div>
+        <div class="scan-row">
+          <span class="sym">NVDA</span>
+          <span class="neutral">36×</span>
+          <span class="up">+18%</span>
+          <span class="up">$160</span>
+          <span><div class="conviction"><div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div></div></span>
+        </div>
+        <div class="scan-row">
+          <span class="sym">MU</span>
+          <span class="neutral">14×</span>
+          <span class="neutral">+3%</span>
+          <span class="neutral">$130</span>
+          <span><div class="conviction"><div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div><div class="pip empty"></div><div class="pip empty"></div></div></span>
+        </div>
+        <div class="scan-row">
+          <span class="sym">IREN</span>
+          <span class="neutral">N/M</span>
+          <span class="up">+44%</span>
+          <span class="up">$22</span>
+          <span><div class="conviction"><div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div><div class="pip empty"></div></div></span>
+        </div>
+        <div class="scan-row">
+          <span class="sym">TSM</span>
+          <span class="neutral">22×</span>
+          <span class="up">+11%</span>
+          <span class="up">$235</span>
+          <span><div class="conviction"><div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div></div></span>
+        </div>
+      </div>
+      <div class="rp-section">
+        <div class="rp-section-label">This Week's Featured Thesis</div>
+        <div class="thesis-box">
+          <div class="thesis-ticker">NBIS — NEBIUS GROUP</div>
+          <div class="thesis-text">"The only pure-play European GPU cloud. Revenue growing 3× YoY with $2.5B in infrastructure commitments. At current prices, you're buying a neocloud at pre-scale. High risk, asymmetric upside."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Coverage -->
+<section class="coverage-section">
+  <div class="coverage-header">
+    <div class="section-eyebrow">Coverage Universe</div>
+    <h2 class="section-title">The tickers that <em>matter</em><br/>for AI infrastructure investors.</h2>
+  </div>
+
+  <div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:0.6rem;">AI INFRASTRUCTURE & NEOCLOUD</div>
+    <div class="ticker-universe">
+      <div class="ticker-chip">NVDA</div>
+      <div class="ticker-chip">NBIS</div>
+      <div class="ticker-chip">IREN</div>
+      <div class="ticker-chip">CRWV</div>
+      <div class="ticker-chip">WULF</div>
+      <div class="ticker-chip">CLSK</div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:0.6rem;">SEMICONDUCTORS</div>
+    <div class="ticker-universe">
+      <div class="ticker-chip">MU</div>
+      <div class="ticker-chip">TSM</div>
+      <div class="ticker-chip">TSEM</div>
+      <div class="ticker-chip">SNDK</div>
+      <div class="ticker-chip">COHR</div>
+      <div class="ticker-chip">MRVL</div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:0.6rem;">FINTECH & SAAS</div>
+    <div class="ticker-universe">
+      <div class="ticker-chip">SOFI</div>
+      <div class="ticker-chip">NOW</div>
+    </div>
+  </div>
+
+  <div class="includes-grid">
+    <div class="include-cell">
+      <div class="include-icon">📊</div>
+      <div class="include-title">Forward Valuation</div>
+      <div class="include-desc">Forward P/E, PEG ratio, EV/EBITDA, and FCF yield for every ticker — so you know if you're paying growth prices for value or value prices for growth.</div>
+    </div>
+    <div class="include-cell">
+      <div class="include-icon">📈</div>
+      <div class="include-title">Revenue Revision Tracker</div>
+      <div class="include-desc">How analyst revenue estimates have moved week over week. Positive revisions precede breakouts. Negative revisions precede pain. This is the edge.</div>
+    </div>
+    <div class="include-cell">
+      <div class="include-icon">🎯</div>
+      <div class="include-title">Analyst Price Targets</div>
+      <div class="include-desc">Consensus price target, high, and low — with upside/downside to current price. Know the range institutions are modeling before you buy.</div>
+    </div>
+    <div class="include-cell">
+      <div class="include-icon">💡</div>
+      <div class="include-title">Weekly Thesis Feature</div>
+      <div class="include-desc">One ticker gets the full treatment — business model, catalysts, risks, and a conviction-rated investment case written in plain English.</div>
+    </div>
+    <div class="include-cell">
+      <div class="include-icon">⚠️</div>
+      <div class="include-title">Risk & Catalyst Calendar</div>
+      <div class="include-desc">Upcoming earnings, macro events, and sector-specific catalysts mapped to your watchlist — so you're never blindsided by a binary event.</div>
+    </div>
+    <div class="include-cell">
+      <div class="include-icon">🏆</div>
+      <div class="include-title">Conviction Ratings</div>
+      <div class="include-desc">Every ticker rated 1–5 based on fundamentals, momentum, and risk/reward. Know where to size up, where to hold, and what to avoid.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Why pay -->
+<section class="why-section">
+  <div class="section-eyebrow">Why Subscribe</div>
+  <h2 class="section-title" style="margin-bottom:2.5rem;">Research takes time.<br/>This is how you <em>buy it back.</em></h2>
+  <div class="why-grid">
+    <div class="why-card featured">
+      <div class="why-card-title">You already know <em>what</em> to watch. You need to know <em>why.</em></div>
+      <div class="why-card-body">Most retail investors hold a watchlist but don't have time to dig into forward multiples, revision trends, and analyst consensus every week. This scan does the research layer for you — so you can make conviction-based decisions, not gut-feel ones.</div>
+      <div class="why-stat">$29</div>
+      <div class="why-stat-label">Less than one lunch per week to think like an analyst</div>
+    </div>
+    <div class="why-card">
+      <div class="why-card-title">Built by a trader, not a content farm.</div>
+      <div class="why-card-body">This isn't AI-generated summary fluff or affiliate-link stock picks. It's a real fundamental scan run by an active investor who holds these names — with the same rigor as the bear market playbook and institutional-grade PDF reports I use in my own portfolio decisions. You get the work, not the watered-down version of it.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section class="pricing-section" id="pricing">
+  <div class="price-card">
+    <div class="price-edition">Weekly Fundamental Scan</div>
+    <div class="price-amount"><sup>$</sup>29</div>
+    <div class="price-per">/month · Every Friday, 52 issues/year</div>
+    <p class="price-desc">"The best investment research I've read that doesn't cost $300/month." — what we're aiming for every single issue.</p>
+    <ul class="price-features">
+      <li><span class="ck">✓</span> 10+ ticker fundamental scan — every Friday</li>
+      <li><span class="ck">✓</span> Forward P/E, PEG, EV/EBITDA, FCF yield per ticker</li>
+      <li><span class="ck">✓</span> Revenue revision tracker — week-over-week analyst estimate changes</li>
+      <li><span class="ck">✓</span> Analyst consensus price targets with upside/downside</li>
+      <li><span class="ck">✓</span> 1–5 conviction ratings with thesis summary</li>
+      <li><span class="ck">✓</span> Featured weekly deep-dive on one ticker</li>
+      <li><span class="ck">✓</span> Upcoming catalyst & earnings calendar</li>
+      <li><span class="ck">✓</span> Downloadable PDF — archive-quality, print-ready</li>
+      <li><span class="ck">✓</span> Full issue archive — all past scans included</li>
+    </ul>
+    <button class="btn-full" onclick="alert('Stripe checkout coming soon!')">Subscribe for $29/mo →</button>
+    <p class="price-guarantee">🔒 Secured by Stripe · Cancel anytime · First issue delivered Friday</p>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Profit Pathfinder · <a href="/" style="color:var(--accent-light);text-decoration:none;">profitpathfinder.online</a> · Not financial advice · Research is for informational purposes only.</p>
+</footer>
+
+</body>
+</html>
