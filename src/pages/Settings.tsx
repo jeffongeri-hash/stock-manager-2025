@@ -6,14 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Bell, Globe, Lock, User, Settings as SettingsIcon, Landmark } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Bell, Globe, Lock, User, Settings as SettingsIcon, Landmark, CreditCard, Sparkles, Loader2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 import { SnaptradeConnection } from '@/components/brokers/SnaptradeConnection';
+import { useSubscription } from '@/hooks/useSubscription';
+import { supabase } from '@/integrations/supabase/client';
+import { getStripeEnvironment } from '@/lib/stripe';
 
-type SettingsTab = 'account' | 'notifications' | 'security' | 'regional' | 'preferences' | 'brokers';
+type SettingsTab = 'account' | 'notifications' | 'security' | 'regional' | 'preferences' | 'brokers' | 'billing';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('account');
+  const { subscription, isActive: isProActive } = useSubscription();
+  const [portalLoading, setPortalLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: 'John',
     lastName: 'Smith',
@@ -32,6 +39,24 @@ const Settings = () => {
 
   const handleSave = () => {
     toast.success('Settings saved successfully!');
+  };
+
+  const openBillingPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-portal-session', {
+        body: {
+          environment: getStripeEnvironment(),
+          returnUrl: `${window.location.origin}/settings`,
+        },
+      });
+      if (error || !data?.url) throw new Error(error?.message || 'Portal unavailable');
+      window.open(data.url, '_blank', 'noopener,noreferrer');
+    } catch (e: any) {
+      toast.error(e.message || 'Could not open billing portal');
+    } finally {
+      setPortalLoading(false);
+    }
   };
   return (
     <PageLayout>
@@ -90,14 +115,23 @@ const Settings = () => {
                 <SettingsIcon className="mr-2 h-5 w-5" />
                 Preferences
               </Button>
-              <Button 
-                variant={activeTab === 'brokers' ? 'secondary' : 'ghost'} 
-                className="w-full justify-start" 
+              <Button
+                variant={activeTab === 'brokers' ? 'secondary' : 'ghost'}
+                className="w-full justify-start"
                 size="lg"
                 onClick={() => setActiveTab('brokers')}
               >
                 <Landmark className="mr-2 h-5 w-5" />
                 Broker Connections
+              </Button>
+              <Button
+                variant={activeTab === 'billing' ? 'secondary' : 'ghost'}
+                className="w-full justify-start"
+                size="lg"
+                onClick={() => setActiveTab('billing')}
+              >
+                <CreditCard className="mr-2 h-5 w-5" />
+                Billing & Subscription
               </Button>
             </nav>
           </div>
