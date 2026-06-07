@@ -181,7 +181,56 @@ export const pageSEO: Record<string, PageSEO> = {
     keywords: ["install app", "mobile app", "PWA"],
     ogType: "website",
   },
+  "/all-tools": {
+    title: "All Tools — Profit Pathfinder",
+    description: "Browse every Profit Pathfinder tool: portfolio, options, dividends, FIRE, retirement, and AI research in one directory.",
+    keywords: ["all trading tools", "investment calculators", "finance tools directory"],
+    ogType: "website",
+  },
+  "/dashboard": {
+    title: "Dashboard — Profit Pathfinder",
+    description: "Your personalized trading dashboard: portfolio snapshot, watchlists, market movers, and quick access to every tool.",
+    keywords: ["trading dashboard", "portfolio dashboard", "investor dashboard"],
+    ogType: "website",
+  },
+  "/index": {
+    title: "Profit Pathfinder — Trading & Portfolio Tools",
+    description: "Free professional trading tools for portfolio, options, dividends, and market insights. Start investing smarter today.",
+    keywords: ["trading platform", "portfolio tracker", "free investing tools"],
+    ogType: "website",
+  },
+  "/market-scanner": {
+    title: "Market Scanner — Profit Pathfinder",
+    description: "Scan stocks and options with advanced filters: LEAPS, covered call candidates, momentum, and presets.",
+    keywords: ["market scanner", "stock scanner", "options scanner", "LEAPS screener"],
+    ogType: "website",
+  },
+  "/risk-metrics": {
+    title: "Risk Metrics — Profit Pathfinder",
+    description: "Portfolio risk metrics: VaR, Sharpe, Sortino, beta, drawdown, and volatility analysis.",
+    keywords: ["risk metrics", "VaR calculator", "Sharpe ratio", "portfolio risk"],
+    ogType: "website",
+  },
+  "/paycheck-calculator": {
+    title: "Paycheck Calculator — Federal, State & Local Taxes | Profit Pathfinder",
+    description: "Estimate take-home pay with federal, state, and local taxes plus pre/post-tax deductions. Free Gemini AI paycheck calculator.",
+    keywords: ["paycheck calculator", "take home pay", "tax calculator", "salary calculator"],
+    ogType: "website",
+  },
+  "/financial-independence-calculator": {
+    title: "Financial Independence Calculator — Profit Pathfinder",
+    description: "Calculate your FI number, years to financial independence, and savings rate impact. Free FI calculator.",
+    keywords: ["financial independence calculator", "FI number", "early retirement calculator"],
+    ogType: "website",
+  },
+  "/monthly-dividend-calculator": {
+    title: "Monthly Dividend Calculator — Profit Pathfinder",
+    description: "Calculate monthly dividend income, yield on cost, and reinvestment growth. Free dividend income tool.",
+    keywords: ["monthly dividend calculator", "dividend income calculator", "DRIP calculator"],
+    ogType: "website",
+  },
 };
+
 
 // Get SEO config for a path, with fallback
 export function getPageSEO(path: string): PageSEO {
