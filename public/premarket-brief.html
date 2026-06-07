@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pre-Market Brief — Daily Trading Intelligence | Profit Pathfinder</title>
+<meta name="description" content="Get a curated pre-market intelligence brief every trading morning. Sector leaders, signal changes, Fibonacci levels, and catalyst analysis — delivered before the bell."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #06080f;
+    --surface: #0d1117;
+    --border: rgba(255,255,255,0.07);
+    --accent: #f59e0b;
+    --accent2: #ef4444;
+    --green: #22c55e;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --card: #111827;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(245,158,11,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,158,11,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Ticker tape */
+  .ticker-wrap {
+    background: rgba(245,158,11,0.08);
+    border-bottom: 1px solid rgba(245,158,11,0.2);
+    overflow: hidden;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+  }
+  .ticker-track {
+    display: flex;
+    gap: 3rem;
+    white-space: nowrap;
+    animation: ticker 30s linear infinite;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+  }
+  .ticker-track span.up { color: var(--green); }
+  .ticker-track span.down { color: var(--accent2); }
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Nav */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(6,8,15,0.9);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.05em;
+    color: var(--text);
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-cta {
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .nav-cta:hover { opacity: 0.85; }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    z-index: 1;
+    padding: 6rem 2rem 4rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    margin-bottom: 1.5rem;
+  }
+  .hero-title .highlight {
+    color: var(--accent);
+    display: block;
+  }
+
+  .hero-sub {
+    font-size: 1.05rem;
+    color: #94a3b8;
+    max-width: 440px;
+    margin-bottom: 2.5rem;
+    font-weight: 300;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #d97706);
+    color: #000;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.9rem 2rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 30px rgba(245,158,11,0.25);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 45px rgba(245,158,11,0.4);
+  }
+
+  .hero-proof {
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .hero-proof .dot { color: var(--green); }
+
+  /* Mock brief card */
+  .brief-preview {
+    background: var(--card);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 80px rgba(245,158,11,0.07), 0 20px 60px rgba(0,0,0,0.5);
+    position: relative;
+  }
+  .brief-preview::before {
+    content: 'LIVE PREVIEW';
+    position: absolute;
+    top: 12px; right: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    background: rgba(245,158,11,0.1);
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(245,158,11,0.2);
+  }
+  .brief-header {
+    background: rgba(245,158,11,0.06);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+  }
+  .brief-header-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+  .brief-header-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .brief-body { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .brief-section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+  }
+
+  .brief-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .brief-row.header { color: var(--muted); font-size: 0.62rem; border-bottom: 1px solid var(--border); }
+  .brief-row .ticker-sym { color: #fff; font-weight: 600; }
+  .brief-row .up { color: var(--green); }
+  .brief-row .down { color: var(--accent2); }
+  .badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    font-weight: 600;
+  }
+  .badge.buy { background: rgba(34,197,94,0.15); color: var(--green); }
+  .badge.hold { background: rgba(245,158,11,0.15); color: var(--accent); }
+  .badge.watch { background: rgba(100,116,139,0.15); color: var(--muted); }
+
+  .brief-catalyst {
+    background: rgba(34,197,94,0.05);
+    border: 1px solid rgba(34,197,94,0.12);
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+  }
+  .brief-catalyst strong { color: var(--green); }
+
+  /* Value props */
+  .value-section {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    line-height: 1;
+    margin-bottom: 3rem;
+  }
+
+  .value-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  .value-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.75rem;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .value-card:hover {
+    border-color: rgba(245,158,11,0.3);
+    transform: translateY(-3px);
+  }
+  .value-icon {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .value-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .value-desc { font-size: 0.875rem; color: #94a3b8; line-height: 1.6; }
+
+  /* Why pay */
+  .pay-section {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 2rem 5rem;
+  }
+  .pay-callout {
+    background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.03));
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 16px;
+    padding: 3rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+  .pay-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+  .pay-title span { color: var(--accent); }
+  .pay-body { font-size: 0.9rem; color: #94a3b8; line-height: 1.7; }
+
+  .pay-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .pay-list li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+  }
+  .pay-list li::before {
+    content: '→';
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Pricing */
+  .pricing-section {
+    position: relative;
+    z-index: 1;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 2rem 2rem 6rem;
+    text-align: center;
+  }
+  .price-card {
+    background: var(--card);
+    border: 1px solid rgba(245,158,11,0.35);
+    border-radius: 16px;
+    padding: 3rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .price-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  .price-badge {
+    display: inline-block;
+    background: rgba(245,158,11,0.12);
+    border: 1px solid rgba(245,158,11,0.3);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 1.5rem;
+  }
+  .price-amount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 5rem;
+    line-height: 1;
+    color: var(--accent);
+  }
+  .price-amount sup { font-size: 2rem; vertical-align: super; }
+  .price-amount sub { font-size: 1.25rem; color: var(--muted); }
+  .price-desc { color: #94a3b8; font-size: 0.9rem; margin: 1rem 0 2rem; }
+  .price-features {
+    list-style: none;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 2.5rem;
+  }
+  .price-features li {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+  }
+  .price-features li span.check { color: var(--green); }
+  .btn-full {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #d97706);
+    color: #000;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+    box-shadow: 0 0 40px rgba(245,158,11,0.3);
+  }
+  .btn-full:hover { opacity: 0.9; transform: translateY(-2px); }
+  .price-guarantee {
+    margin-top: 1.25rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  /* Footer */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 2rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  /* Pulse dot */
+  .pulse {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; gap: 2.5rem; padding: 3rem 1.25rem 2rem; }
+    .value-grid { grid-template-columns: 1fr; }
+    .pay-callout { grid-template-columns: 1fr; gap: 2rem; padding: 2rem; }
+    nav { padding: 1rem 1.25rem; }
+  }
+
+  /* Fade-in animation */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.6s ease both; }
+  .fade-up:nth-child(2) { animation-delay: 0.1s; }
+  .fade-up:nth-child(3) { animation-delay: 0.2s; }
+  .fade-up:nth-child(4) { animation-delay: 0.3s; }
+</style>
+</head>
+<body>
+
+<!-- Ticker tape -->
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    <span>SPY <span class="up">▲ +0.43%</span></span>
+    <span>QQQ <span class="up">▲ +0.71%</span></span>
+    <span>NVDA <span class="up">▲ +1.22%</span></span>
+    <span>NBIS <span class="up">▲ +3.4%</span></span>
+    <span>MU <span class="down">▼ -0.88%</span></span>
+    <span>IREN <span class="up">▲ +2.1%</span></span>
+    <span>SOFI <span class="up">▲ +0.65%</span></span>
+    <span>NOW <span class="up">▲ +0.32%</span></span>
+    <span>TSM <span class="down">▼ -0.19%</span></span>
+    <span>VIX <span class="down">▼ 14.2</span></span>
+    <!-- duplicate for seamless loop -->
+    <span>SPY <span class="up">▲ +0.43%</span></span>
+    <span>QQQ <span class="up">▲ +0.71%</span></span>
+    <span>NVDA <span class="up">▲ +1.22%</span></span>
+    <span>NBIS <span class="up">▲ +3.4%</span></span>
+    <span>MU <span class="down">▼ -0.88%</span></span>
+    <span>IREN <span class="up">▲ +2.1%</span></span>
+    <span>SOFI <span class="up">▲ +0.65%</span></span>
+    <span>NOW <span class="up">▲ +0.32%</span></span>
+    <span>TSM <span class="down">▼ -0.19%</span></span>
+    <span>VIX <span class="down">▼ 14.2</span></span>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-logo">Profit <span>Pathfinder</span></div>
+  <a href="#pricing" class="nav-cta">Get the Brief →</a>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div>
+    <div class="hero-eyebrow fade-up">Daily Trading Intelligence</div>
+    <h1 class="hero-title fade-up">
+      The Brief
+      <span class="highlight">Before the Bell.</span>
+    </h1>
+    <p class="hero-sub fade-up">
+      Every trading morning at 8:20 AM ET — a curated pre-market intelligence report covering sector leaders, signal changes, Fibonacci levels, and overnight catalysts. No noise. Just signal.
+    </p>
+    <div class="hero-actions fade-up">
+      <a href="#pricing" class="btn-primary">Start for $19/mo →</a>
+      <div class="hero-proof"><span class="dot pulse"></span> Delivered before market open</div>
+    </div>
+  </div>
+
+  <!-- Mock brief -->
+  <div class="brief-preview fade-up">
+    <div class="brief-header">
+      <div class="brief-header-title">⚡ PROFIT PATHFINDER — PRE-MARKET BRIEF</div>
+      <div class="brief-header-date">MON JUN 09 2026 · 08:20 ET · SPY BIAS: BULLISH · VIX: 14.2</div>
+    </div>
+    <div class="brief-body">
+      <div>
+        <div class="brief-section-label">Overnight Catalyst</div>
+        <div class="brief-catalyst"><strong>NVDA +1.2% PM</strong> — Blackwell demand guidance raised. Neocloud names leading. Watch NBIS, IREN for sympathy.</div>
+      </div>
+      <div>
+        <div class="brief-section-label">Watchlist Signal Scan</div>
+        <div class="brief-row header">
+          <span>Ticker</span><span>PM Chg</span><span>Signal</span><span>Action</span>
+        </div>
+        <div class="brief-row">
+          <span class="ticker-sym">NVDA</span>
+          <span class="up">+1.22%</span>
+          <span>RSI 68</span>
+          <span><span class="badge buy">BUY</span></span>
+        </div>
+        <div class="brief-row">
+          <span class="ticker-sym">NBIS</span>
+          <span class="up">+3.40%</span>
+          <span>Break↑</span>
+          <span><span class="badge buy">BUY</span></span>
+        </div>
+        <div class="brief-row">
+          <span class="ticker-sym">MU</span>
+          <span class="down">-0.88%</span>
+          <span>RSI 44</span>
+          <span><span class="badge hold">HOLD</span></span>
+        </div>
+        <div class="brief-row">
+          <span class="ticker-sym">SOFI</span>
+          <span class="up">+0.65%</span>
+          <span>EMA✓</span>
+          <span><span class="badge watch">WATCH</span></span>
+        </div>
+      </div>
+      <div>
+        <div class="brief-section-label">NVDA Key Levels</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;font-family:'JetBrains Mono',monospace;font-size:0.7rem;">
+          <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:5px;padding:0.4rem 0.6rem;">
+            <div style="color:var(--muted);font-size:0.58rem;">R1</div>
+            <div style="color:var(--green);">$142.80</div>
+          </div>
+          <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:5px;padding:0.4rem 0.6rem;">
+            <div style="color:var(--muted);font-size:0.58rem;">VWAP</div>
+            <div style="color:var(--accent);">$140.22</div>
+          </div>
+          <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:5px;padding:0.4rem 0.6rem;">
+            <div style="color:var(--muted);font-size:0.58rem;">S1</div>
+            <div style="color:var(--accent2);">$137.50</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Value props -->
+<section class="value-section">
+  <div class="section-label">What You Get</div>
+  <h2 class="section-title">Everything a trader needs<br/>before the open.</h2>
+  <div class="value-grid">
+    <div class="value-card">
+      <div class="value-icon">📡</div>
+      <div class="value-title">Overnight Catalyst Summary</div>
+      <div class="value-desc">Earnings, macro events, geopolitical catalysts, and sector movers — synthesized and ranked by impact on your watchlist.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-icon">⚡</div>
+      <div class="value-title">Signal Scan Across 16 Tickers</div>
+      <div class="value-desc">7 proven strategies run across your watchlist every morning. RSI, MACD, SuperTrend, EMA crossovers, Volatility Breakout — with explicit Buy/Hold/Sell actions.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-icon">📐</div>
+      <div class="value-title">Fibonacci & VWAP Levels</div>
+      <div class="value-desc">Key support, resistance, VWAP, and Fibonacci retracement levels for top movers — so you know your entry and exit before you touch the keyboard.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-icon">🏭</div>
+      <div class="value-title">Sector Leadership Map</div>
+      <div class="value-desc">Which sectors are leading and lagging pre-market. Tech, Energy, Healthcare, Financials — ranked so you trade with the tape, not against it.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-icon">🚀</div>
+      <div class="value-title">Pre-Market Gapper Scan</div>
+      <div class="value-desc">Large-caps, small-caps, low-float runners, and fresh IPOs moving more than 5% — with catalyst and volume context so you're never caught off guard.</div>
+    </div>
+    <div class="value-card">
+      <div class="value-icon">🔔</div>
+      <div class="value-title">Delivered at 8:20 AM ET</div>
+      <div class="value-desc">In your inbox before the bell, every trading day. Cancel anytime. No lock-in. Just intelligence that makes you a sharper trader.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Why pay -->
+<section class="pay-section">
+  <div class="pay-callout">
+    <div>
+      <div class="section-label">Why Pay For This?</div>
+      <h2 class="pay-title">Most traders <span>lose</span> the first 30 minutes.</h2>
+      <p class="pay-body">The open is the most dangerous and most profitable window of the trading day. Most retail traders walk in blind — no levels, no catalyst context, no signal confirmation. This brief exists to end that. For less than a single losing trade, you get institutional-grade pre-market intelligence every morning.</p>
+    </div>
+    <ul class="pay-list">
+      <li>Know your key levels before market open — no scrambling</li>
+      <li>Signal confirmation across 7 strategies means fewer impulsive entries</li>
+      <li>Catalyst context prevents holding through news you didn't know was coming</li>
+      <li>Sector leadership tells you which direction the tape is biased</li>
+      <li>Gapper scan catches the day's highest-momentum setups early</li>
+      <li>Built by an active trader — not a financial media algorithm</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section class="pricing-section" id="pricing">
+  <div class="section-label" style="text-align:center;margin-bottom:0.5rem;">Simple Pricing</div>
+  <h2 class="section-title" style="margin-bottom:2rem;">One plan. Full access.</h2>
+
+  <div class="price-card">
+    <div class="price-badge">PRO SUBSCRIBER</div>
+    <div class="price-amount"><sup>$</sup>19<sub>/mo</sub></div>
+    <p class="price-desc">Billed monthly. Cancel anytime. No BS.</p>
+    <ul class="price-features">
+      <li><span class="check">✓</span> Daily pre-market brief — 8:20 AM ET, every trading day</li>
+      <li><span class="check">✓</span> 16-ticker signal scan across 7 strategies</li>
+      <li><span class="check">✓</span> Fibonacci, VWAP, and key level alerts</li>
+      <li><span class="check">✓</span> Overnight catalyst synthesis</li>
+      <li><span class="check">✓</span> Sector leadership map</li>
+      <li><span class="check">✓</span> Pre-market gapper scan (5%+ movers)</li>
+      <li><span class="check">✓</span> Archive access — all past briefs</li>
+    </ul>
+    <button class="btn-full" onclick="alert('Stripe checkout coming soon!')">Subscribe for $19/mo →</button>
+    <p class="price-guarantee">🔒 Secured by Stripe · Cancel anytime · 7-day free trial</p>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Profit Pathfinder · <a href="/" style="color:var(--accent);text-decoration:none;">profitpathfinder.online</a> · Not financial advice.</p>
+</footer>
+
+</body>
+</html>

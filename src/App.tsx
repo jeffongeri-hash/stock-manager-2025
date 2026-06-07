@@ -56,6 +56,13 @@ const AllTools = lazy(() => import("./pages/AllTools"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
 
+// Pro (paywalled) pages — currently open as demo. TODO: wrap with <PaywallRoute> when launching paid tier.
+const AiTradeJournal = lazy(() => import("./pages/AiTradeJournal"));
+const AiTradeJournalDemo = lazy(() => import("./pages/AiTradeJournalDemo"));
+const PremarketBrief = lazy(() => import("./pages/PremarketBrief"));
+const WeeklyFundamentalScan = lazy(() => import("./pages/WeeklyFundamentalScan"));
+const FirePlanningSuite = lazy(() => import("./pages/FirePlanningSuite"));
+
 
 const queryClient = new QueryClient();
 
@@ -135,6 +142,14 @@ const App = () => (
                 <Route path="/settings" element={<ProtectedRoute requiresAuth><Settings /></ProtectedRoute>} />
                 <Route path="/ignite-fire" element={<ProtectedRoute><IgniteFire /></ProtectedRoute>} />
                 <Route path="/saved-data" element={<ProtectedRoute requiresAuth><SavedData /></ProtectedRoute>} />
+
+                {/* Pro (paywalled) pages — open for demo. TODO: swap ProtectedRoute → PaywallRoute when paid tier launches */}
+                <Route path="/ai-trade-journal" element={<ProtectedRoute><AiTradeJournal /></ProtectedRoute>} />
+                <Route path="/ai-trade-journal-demo" element={<ProtectedRoute><AiTradeJournalDemo /></ProtectedRoute>} />
+                <Route path="/premarket-brief" element={<ProtectedRoute><PremarketBrief /></ProtectedRoute>} />
+                <Route path="/weekly-fundamental-scan" element={<ProtectedRoute><WeeklyFundamentalScan /></ProtectedRoute>} />
+                <Route path="/fire-planning-suite" element={<ProtectedRoute><FirePlanningSuite /></ProtectedRoute>} />
+                
                 
                 {/* Catch-all route */}
                 <Route path="*" element={<NotFound />} />
