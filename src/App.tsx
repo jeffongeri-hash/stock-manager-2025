@@ -164,6 +164,9 @@ const App = () => (
                 <Route path="/blog/ai-trade-journal-guide" element={<BlogPage src="/blog/ai-trade-journal-guide.html" title="AI Trade Journal Guide" />} />
                 <Route path="/blog/covered-call-calculator-guide" element={<BlogPage src="/blog/covered-call-calculator-guide.html" title="Covered Call Calculator Guide" />} />
 
+                {/* Testing — IV Strike Selector (will be admin-only after approval) */}
+                <Route path="/iv-strike-selector" element={<IvStrikeSelector />} />
+
                 
                 
                 {/* Catch-all route */}
