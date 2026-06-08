@@ -18,7 +18,6 @@ const PRIMARY_NAV: NavItem[] = [
   { title: 'Assets', href: '/assets' },
   { title: 'Portfolio', href: '/portfolio' },
   { title: 'Performance', href: '/performance' },
-  { title: 'Analysis', href: '/analysis' },
   { title: 'Trading', href: '/trading-toolkit' },
   { title: 'Options', href: '/options-portfolio' },
   { title: '0DTE', href: '/zero-dte' },
@@ -26,8 +25,6 @@ const PRIMARY_NAV: NavItem[] = [
   { title: 'Dividends', href: '/dividend-tracker' },
   { title: 'Risk & Rebalance', href: '/portfolio-rebalancing' },
 
-  { title: 'SmartTrade', href: '/smarttrade-ai' },
-  { title: 'QuantGemini', href: '/quantgemini' },
   { title: 'IgniteFIRE', href: '/ignite-fire' },
   { title: 'Retirement', href: '/retirement-planning' },
   { title: 'Real Estate', href: '/real-estate' },

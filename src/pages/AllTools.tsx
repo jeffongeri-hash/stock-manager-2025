@@ -19,19 +19,15 @@ const TOOLS: Tool[] = [
   { title: 'Assets', description: 'Aggregate holdings across all your brokerages.', href: '/assets', icon: Wallet, category: 'Portfolio' },
   { title: 'Portfolio', description: 'Track positions, allocations, and risk in one place.', href: '/portfolio', icon: FolderKanban, category: 'Portfolio' },
   { title: 'Performance', description: 'Returns, P&L breakdowns, and historical performance.', href: '/performance', icon: LineChart, category: 'Portfolio' },
-  { title: 'Analysis', description: 'Technical, fundamental, and sentiment research.', href: '/analysis', icon: PieChart, category: 'Research' },
   { title: 'Trading Toolkit', description: 'Advanced trading calculators and planners.', href: '/trading-toolkit', icon: Calculator, category: 'Trading' },
   { title: 'Options Toolkit', description: 'PMCC, Wheel, Iron Condor, and ITM tools.', href: '/options-portfolio', icon: Scale, category: 'Options' },
   { title: '0DTE Calculator', description: 'Same-day options strategy planner.', href: '/zero-dte', icon: Zap, category: 'Options' },
   { title: 'Dividend Tracker', description: 'CAGR, yield-on-cost, and dividend growth.', href: '/dividend-tracker', icon: DollarSign, category: 'Income' },
   { title: 'Risk & Rebalance', description: 'Portfolio rebalancing and risk metrics.', href: '/portfolio-rebalancing', icon: Scale, category: 'Portfolio' },
-  { title: 'SmartTrade AI', description: 'Gemini-powered trade planner and simulation.', href: '/smarttrade-ai', icon: Bot, category: 'AI' },
-  { title: 'QuantGemini', description: 'Institutional-grade research scorecards.', href: '/quantgemini', icon: FlaskConical, category: 'AI' },
   { title: 'IgniteFIRE Suite', description: 'Full FIRE retirement planning suite.', href: '/ignite-fire', icon: Flame, category: 'FIRE' },
   { title: 'Retirement Planning', description: 'SS, RMD, Roth conversion, and withdrawals.', href: '/retirement-planning', icon: Target, category: 'FIRE' },
   { title: 'Real Estate', description: 'Cash flow, cap rate, and property analysis.', href: '/real-estate', icon: Building2, category: 'Real Estate' },
   { title: 'Car Finance', description: 'Loan, lease, and depreciation analysis.', href: '/car-finance', icon: Car, category: 'Lifestyle' },
-  { title: 'Paycheck Calculator', description: 'AI-powered federal, state, and local tax estimates.', href: '/paycheck-calculator', icon: Receipt, category: 'Income' },
   { title: 'Coast FIRE Calculator', description: 'When can you stop saving and still retire?', href: '/coast-fire-calculator', icon: Flame, category: 'FIRE' },
   { title: 'FIRE Calculator', description: 'Project your path to financial independence.', href: '/financial-independence-calculator', icon: TrendingUp, category: 'FIRE' },
   { title: 'Covered Call Calculator', description: 'Premium income and assignment analysis.', href: '/covered-call-calculator', icon: Sparkles, category: 'Options' },
@@ -42,7 +38,7 @@ const TOOLS: Tool[] = [
   { title: 'FIRE Guide', description: 'Beginner-friendly FIRE roadmap.', href: '/fire-guide', icon: BookOpen, category: 'Education' },
 ];
 
-const categoryOrder = ['Portfolio', 'Trading', 'Options', 'Income', 'AI', 'Research', 'FIRE', 'Real Estate', 'Lifestyle', 'Education'];
+const categoryOrder = ['Portfolio', 'Trading', 'Options', 'Income', 'FIRE', 'Real Estate', 'Lifestyle', 'Education'];
 
 const AllTools = () => {
   const grouped = categoryOrder

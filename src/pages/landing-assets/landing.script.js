@@ -142,17 +142,6 @@
     card.addEventListener('click', function() { go(path); });
   });
 
-  // Pro demo cards
-  var proRoutes = [
-    '/ai-trade-journal',
-    '/premarket-brief',
-    '/weekly-fundamental-scan',
-    '/fire-planning-suite'
-  ];
-  document.querySelectorAll('.pro-grid .pro-card').forEach(function(card, i) {
-    var path = proRoutes[i];
-    if (!path) return;
-    card.style.cursor = 'pointer';
-    card.addEventListener('click', function() { go(path); });
-  });
+  // Pro/AI demo cards removed — hidden until launch
+
 })();

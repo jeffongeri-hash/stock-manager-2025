@@ -109,11 +109,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/performance',
     },
     {
-      title: 'Analysis',
-      icon: PieChart,
-      href: '/analysis',
-    },
-    {
       title: 'Trading Toolkit',
       icon: Calculator,
       href: '/trading-toolkit',
@@ -137,16 +132,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       title: 'Risk & Rebalance',
       icon: Scale,
       href: '/portfolio-rebalancing',
-    },
-    {
-      title: 'SmartTrade AI',
-      icon: Bot,
-      href: '/smarttrade-ai',
-    },
-    {
-      title: 'QuantGemini',
-      icon: FlaskConical,
-      href: '/quantgemini',
     },
     {
       title: 'IgniteFIRE Suite',
