@@ -3,10 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <!-- Security headers -->
+    <!-- Security headers (meta-equivalent). HSTS, X-Frame-Options, and COOP/COEP must be set as real HTTP headers at the edge/CDN. -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.gpteng.co https://js.stripe.com https://*.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://uvqrdzwimiszqkmyzbvf.supabase.co wss://uvqrdzwimiszqkmyzbvf.supabase.co https://finnhub.io https://api.stripe.com https://connector-gateway.lovable.dev https://api.snaptrade.com; frame-src https://js.stripe.com https://*.stripe.com https://app.snaptrade.com; object-src 'none'; base-uri 'self'; form-action 'self';" />
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(self 'https://js.stripe.com'), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.gpteng.co https://js.stripe.com https://*.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://uvqrdzwimiszqkmyzbvf.supabase.co wss://uvqrdzwimiszqkmyzbvf.supabase.co https://finnhub.io https://api.stripe.com https://connector-gateway.lovable.dev https://api.snaptrade.com; frame-src https://js.stripe.com https://*.stripe.com https://app.snaptrade.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;" />
     <title>Profit Pathfinder — Trading & Portfolio Tools</title>
     <meta name="description" content="Free professional trading tools for portfolio, options, dividends, and market insights. Start investing smarter today." />
     <meta name="keywords" content="trading platform, portfolio management, options trading, dividend tracker, stock analysis, covered calls, wheel strategy, retirement planning" />
