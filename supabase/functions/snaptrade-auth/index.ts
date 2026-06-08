@@ -1,3 +1,5 @@
+import { createClient } from "npm:@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -9,6 +11,27 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Verify authentication (JWT)
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const supaAuth = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: userErr } = await supaAuth.auth.getUser();
+    if (userErr || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const clientId = Deno.env.get("SNAPTRADE_CLIENT_ID");
     const consumerKey = Deno.env.get("SNAPTRADE_CONSUMER_KEY");
 
@@ -16,7 +39,10 @@ Deno.serve(async (req) => {
       throw new Error("Snaptrade credentials not configured");
     }
 
-    const { action, userId, userSecret, redirectUri } = await req.json();
+    const { action, userSecret, redirectUri } = await req.json();
+    // Force userId to authenticated user — prevent impersonation
+    const userId = user.id;
+
 
     const baseUrl = "https://api.snaptrade.com/api/v1";
     
