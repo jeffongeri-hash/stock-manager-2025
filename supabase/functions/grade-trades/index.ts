@@ -32,8 +32,6 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-      );
-    }
 
     const { trades } = await req.json();
     
