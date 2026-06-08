@@ -67,6 +67,7 @@ const FirePlanningSuite = lazy(() => import("./pages/FirePlanningSuite"));
 
 // Blog / explainer pages
 const BlogPage = lazy(() => import("./pages/BlogPage"));
+const IvStrikeSelector = lazy(() => import("./pages/IvStrikeSelector"));
 
 
 const queryClient = new QueryClient();
