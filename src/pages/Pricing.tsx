@@ -13,10 +13,8 @@ import { TopNav } from "@/components/layout/TopNav";
 import { Orbs } from "@/components/layout/Orbs";
 
 const FEATURES = [
-  "SmartTrade AI & QuantGemini analysis",
   "Advanced portfolio & performance tracking",
   "Full options toolkit (PMCC, Wheel, Condor, 0DTE)",
-  "Unlimited AI fundamental analysis",
   "Dividend tracker with CAGR & YOC",
   "Real estate & car finance suites",
   "Priority data refreshes",
