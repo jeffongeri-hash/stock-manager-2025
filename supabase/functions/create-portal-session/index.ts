@@ -1,11 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { type StripeEnv, createStripeClient } from "../_shared/stripe.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { corsFor, handlePreflight, jsonResponse } from "../_shared/cors.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -13,9 +8,16 @@ const supabase = createClient(
 );
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const pre = handlePreflight(req);
+  if (pre) return pre;
+  if (!corsFor(req)) {
+    return new Response(JSON.stringify({ error: "Forbidden origin" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
   if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405, headers: corsHeaders });
+    return jsonResponse(req, { error: "Method not allowed" }, { status: 405 });
   }
 
   try {
@@ -44,14 +46,9 @@ Deno.serve(async (req) => {
       ...(returnUrl && { return_url: returnUrl }),
     });
 
-    return new Response(JSON.stringify({ url: portal.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(req, { url: portal.url });
   } catch (e) {
     console.error("create-portal-session error:", e);
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(req, { error: (e as Error).message }, { status: 400 });
   }
 });

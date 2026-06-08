@@ -1,46 +1,62 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsFor, handlePreflight, jsonResponse } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  const pre = handlePreflight(req);
+  if (pre) return pre;
+  if (!corsFor(req)) {
+    return new Response(JSON.stringify({ error: "Forbidden origin" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   try {
     const clientId = Deno.env.get("SNAPTRADE_CLIENT_ID");
     const consumerKey = Deno.env.get("SNAPTRADE_CONSUMER_KEY");
-
     if (!clientId || !consumerKey) {
       throw new Error("Snaptrade credentials not configured");
     }
 
-    // Get user from auth header
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("No authorization header");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return jsonResponse(req, { error: "Unauthorized" }, { status: 401 });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const supaAuth = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: { user }, error: userError } = await supaAuth.auth.getUser();
     if (userError || !user) {
-      throw new Error("Unauthorized");
+      return jsonResponse(req, { error: "Unauthorized" }, { status: 401 });
     }
-
-    const { action, userSecret } = await req.json();
     const userId = user.id;
 
+    // Server-side lookup of the encrypted Snaptrade user_secret.
+    const supaAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: conn } = await supaAdmin
+      .from("snaptrade_connections")
+      .select("user_secret")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const userSecret = conn?.user_secret as string | undefined;
+    if (!userSecret) {
+      return jsonResponse(
+        req,
+        { error: "No Snaptrade connection found for this user" },
+        { status: 404 },
+      );
+    }
+
+    const { action } = await req.json();
     const baseUrl = "https://api.snaptrade.com/api/v1";
 
-    // Generate signature for authentication
     const generateSignature = async (path: string, timestamp: string) => {
       const message = `${path}${timestamp}${consumerKey}`;
       const encoder = new TextEncoder();
@@ -49,16 +65,15 @@ Deno.serve(async (req) => {
         encoder.encode(consumerKey),
         { name: "HMAC", hash: "SHA-256" },
         false,
-        ["sign"]
+        ["sign"],
       );
-      const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
-      return btoa(String.fromCharCode(...new Uint8Array(signature)));
+      const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
+      return btoa(String.fromCharCode(...new Uint8Array(sig)));
     };
 
     const makeRequest = async (path: string, method = "GET") => {
       const timestamp = Math.floor(Date.now() / 1000).toString();
       const signature = await generateSignature(path, timestamp);
-
       const url = new URL(`${baseUrl}${path}`);
       url.searchParams.set("userId", userId);
       url.searchParams.set("userSecret", userSecret);
@@ -74,48 +89,26 @@ Deno.serve(async (req) => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({}));
         throw new Error(error.message || `Request failed: ${response.status}`);
       }
-
       return response.json();
     };
 
-    if (action === "getAccounts") {
-      const accounts = await makeRequest("/accounts");
-      return new Response(JSON.stringify(accounts), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const actionPath: Record<string, string> = {
+      getAccounts: "/accounts",
+      getHoldings: "/holdings",
+      getPositions: "/positions",
+      getTransactions: "/activities",
+    };
+    const path = actionPath[action];
+    if (!path) throw new Error("Invalid action");
 
-    if (action === "getHoldings") {
-      const holdings = await makeRequest("/holdings");
-      return new Response(JSON.stringify(holdings), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (action === "getPositions") {
-      const positions = await makeRequest("/positions");
-      return new Response(JSON.stringify(positions), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (action === "getTransactions") {
-      const transactions = await makeRequest("/activities");
-      return new Response(JSON.stringify(transactions), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    throw new Error("Invalid action");
+    const result = await makeRequest(path);
+    return jsonResponse(req, result);
   } catch (error: unknown) {
     console.error("Snaptrade accounts error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse(req, { error: message }, { status: 500 });
   }
 });
