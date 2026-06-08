@@ -34,4 +34,9 @@
   <url><loc>https://profitpathfinder.online/premarket-brief</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://profitpathfinder.online/weekly-fundamental-scan</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://profitpathfinder.online/fire-planning-suite</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://profitpathfinder.online/blog/weekly-scan-guide</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://profitpathfinder.online/blog/pre-market-brief-guide</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://profitpathfinder.online/blog/real-estate-car-finance-guide</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://profitpathfinder.online/blog/ai-trade-journal-guide</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://profitpathfinder.online/blog/covered-call-calculator-guide</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>
