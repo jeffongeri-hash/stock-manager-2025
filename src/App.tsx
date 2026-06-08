@@ -64,6 +64,9 @@ const PremarketBrief = lazy(() => import("./pages/PremarketBrief"));
 const WeeklyFundamentalScan = lazy(() => import("./pages/WeeklyFundamentalScan"));
 const FirePlanningSuite = lazy(() => import("./pages/FirePlanningSuite"));
 
+// Blog / explainer pages
+const BlogPage = lazy(() => import("./pages/BlogPage"));
+
 
 const queryClient = new QueryClient();
 
@@ -151,6 +154,14 @@ const App = () => (
                 <Route path="/premarket-brief" element={<ProtectedRoute><PremarketBrief /></ProtectedRoute>} />
                 <Route path="/weekly-fundamental-scan" element={<ProtectedRoute><WeeklyFundamentalScan /></ProtectedRoute>} />
                 <Route path="/fire-planning-suite" element={<ProtectedRoute><FirePlanningSuite /></ProtectedRoute>} />
+
+                {/* Blog explainer pages (public) */}
+                <Route path="/blog/weekly-scan-guide" element={<BlogPage src="/blog/weekly-scan-guide.html" title="Weekly Fundamental Scan Guide" />} />
+                <Route path="/blog/pre-market-brief-guide" element={<BlogPage src="/blog/pre-market-brief-guide.html" title="Pre-Market Brief Guide" />} />
+                <Route path="/blog/real-estate-car-finance-guide" element={<BlogPage src="/blog/real-estate-car-finance-guide.html" title="Real Estate & Car Finance Guide" />} />
+                <Route path="/blog/ai-trade-journal-guide" element={<BlogPage src="/blog/ai-trade-journal-guide.html" title="AI Trade Journal Guide" />} />
+                <Route path="/blog/covered-call-calculator-guide" element={<BlogPage src="/blog/covered-call-calculator-guide.html" title="Covered Call Calculator Guide" />} />
+
                 
                 
                 {/* Catch-all route */}
