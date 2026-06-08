@@ -1,4 +1,4 @@
-// TODO: PRO PAYWALL — wrap in <PaywallRoute> after demo period
+// TODO: requires auth — wrap in auth check after demo period
 import React from 'react';
 
 const FirePlanningSuite = () => (
