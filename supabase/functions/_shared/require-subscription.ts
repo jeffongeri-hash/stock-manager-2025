@@ -1,6 +1,5 @@
-// Shared helper: require an authenticated user with an active Pro subscription.
-// Use this to gate any edge function that consumes the Lovable AI gateway (Gemini),
-// so an authenticated free-tier user cannot directly hit the function and run up the bill.
+// Shared helper: require an authenticated user with an active Pro subscription,
+// AND enforce a per-user-per-day AI request cap to protect the Gemini bill.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 export const corsHeaders = {
@@ -9,10 +8,13 @@ export const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const DAILY_AI_LIMIT = 200;
+
 export interface SubscriptionGuardResult {
   ok: true;
   userId: string;
   supabase: ReturnType<typeof createClient>;
+  usage: { count: number; limit: number };
 }
 
 export interface SubscriptionGuardError {
@@ -21,11 +23,12 @@ export interface SubscriptionGuardError {
 }
 
 /**
- * Verifies the JWT and that the user has an active subscription.
- * Returns either { ok: true, ... } or { ok: false, response } — caller should return the response.
+ * Verifies the JWT, an active subscription, and that the user is under their
+ * daily AI request cap. Caller passes a stable function name for usage tracking.
  */
 export async function requireProSubscription(
   req: Request,
+  functionName = "unknown",
 ): Promise<SubscriptionGuardResult | SubscriptionGuardError> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
@@ -38,13 +41,14 @@ export async function requireProSubscription(
     };
   }
 
-  const supabase = createClient(
+  // User-scoped client (for identity)
+  const userClient = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_ANON_KEY")!,
     { global: { headers: { Authorization: authHeader } } },
   );
 
-  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  const { data: userData, error: userErr } = await userClient.auth.getUser();
   if (userErr || !userData?.user) {
     return {
       ok: false,
@@ -54,44 +58,71 @@ export async function requireProSubscription(
       }),
     };
   }
-
   const userId = userData.user.id;
 
-  // Server-side subscription check via SECURITY DEFINER function.
-  const { data: hasSub, error: subErr } = await supabase.rpc(
+  // Subscription check
+  const { data: hasSub, error: subErr } = await userClient.rpc(
     "has_active_subscription",
     { user_uuid: userId, check_env: "live" },
   );
-
   if (subErr) {
     console.error("Subscription check failed:", subErr);
     return {
       ok: false,
       response: new Response(
         JSON.stringify({ error: "Subscription check failed" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       ),
     };
   }
-
   if (!hasSub) {
     return {
       ok: false,
       response: new Response(
-        JSON.stringify({
-          error: "Pro subscription required",
-          code: "subscription_required",
-        }),
-        {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        JSON.stringify({ error: "Pro subscription required", code: "subscription_required" }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       ),
     };
   }
 
-  return { ok: true, userId, supabase };
+  // Service-role client for atomic rate-limit increment
+  const adminClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+  const { data: usage, error: usageErr } = await adminClient.rpc(
+    "check_and_increment_ai_usage",
+    { _user_id: userId, _function_name: functionName, _daily_limit: DAILY_AI_LIMIT },
+  );
+  if (usageErr) {
+    console.error("Rate limit check failed:", usageErr);
+    // Fail open on tracking errors (don't block paying customers on infra blips)
+  } else {
+    const row = Array.isArray(usage) ? usage[0] : usage;
+    if (row && row.allowed === false) {
+      return {
+        ok: false,
+        response: new Response(
+          JSON.stringify({
+            error: `Daily AI request limit reached (${row.daily_limit}/day). Try again tomorrow.`,
+            code: "rate_limit_exceeded",
+            current_count: row.current_count,
+            daily_limit: row.daily_limit,
+          }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        ),
+      };
+    }
+  }
+
+  const row = Array.isArray(usage) ? usage[0] : usage;
+  return {
+    ok: true,
+    userId,
+    supabase: userClient,
+    usage: {
+      count: row?.current_count ?? 0,
+      limit: row?.daily_limit ?? DAILY_AI_LIMIT,
+    },
+  };
 }
