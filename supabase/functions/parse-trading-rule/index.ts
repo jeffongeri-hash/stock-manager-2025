@@ -31,6 +31,27 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Pro subscription gate (server-side, prevents API-bill abuse)
+    {
+      const { data: _hasSub, error: _subErr } = await supabase.rpc(
+        'has_active_subscription',
+        { user_uuid: user.id, check_env: 'live' }
+      );
+      if (_subErr) {
+        console.error('Subscription check failed:', _subErr);
+        return new Response(
+          JSON.stringify({ error: 'Subscription check failed' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (!_hasSub) {
+        return new Response(
+          JSON.stringify({ error: 'Pro subscription required', code: 'subscription_required' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     const { ruleText } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     

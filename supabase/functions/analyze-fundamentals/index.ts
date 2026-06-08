@@ -33,6 +33,28 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Pro subscription gate (server-side, prevents API-bill abuse)
+    {
+      const _uid = _claimsData.claims.sub as string;
+      const { data: _hasSub, error: _subErr } = await _supaAuth.rpc(
+        'has_active_subscription',
+        { user_uuid: _uid, check_env: 'live' }
+      );
+      if (_subErr) {
+        console.error('Subscription check failed:', _subErr);
+        return new Response(
+          JSON.stringify({ error: 'Subscription check failed' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (!_hasSub) {
+        return new Response(
+          JSON.stringify({ error: 'Pro subscription required', code: 'subscription_required' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     const { fundamentals } = await req.json();
     
     // Input validation
