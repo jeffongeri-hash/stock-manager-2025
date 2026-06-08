@@ -9,6 +9,7 @@ import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
 import { SwipeNavigation } from "@/components/mobile/SwipeNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PaywallRoute } from "@/components/auth/PaywallRoute";
 import { SEOHead } from "@/hooks/useSEO";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
