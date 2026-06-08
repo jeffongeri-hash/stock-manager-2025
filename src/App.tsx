@@ -67,6 +67,7 @@ const FirePlanningSuite = lazy(() => import("./pages/FirePlanningSuite"));
 
 // Blog / explainer pages
 const BlogPage = lazy(() => import("./pages/BlogPage"));
+const IvStrikeSelector = lazy(() => import("./pages/IvStrikeSelector"));
 
 
 const queryClient = new QueryClient();
@@ -162,6 +163,9 @@ const App = () => (
                 <Route path="/blog/real-estate-car-finance-guide" element={<BlogPage src="/blog/real-estate-car-finance-guide.html" title="Real Estate & Car Finance Guide" />} />
                 <Route path="/blog/ai-trade-journal-guide" element={<BlogPage src="/blog/ai-trade-journal-guide.html" title="AI Trade Journal Guide" />} />
                 <Route path="/blog/covered-call-calculator-guide" element={<BlogPage src="/blog/covered-call-calculator-guide.html" title="Covered Call Calculator Guide" />} />
+
+                {/* Testing — IV Strike Selector (will be admin-only after approval) */}
+                <Route path="/iv-strike-selector" element={<IvStrikeSelector />} />
 
                 
                 
