@@ -9,6 +9,7 @@ import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
 import { SwipeNavigation } from "@/components/mobile/SwipeNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PaywallRoute } from "@/components/auth/PaywallRoute";
 import { SEOHead } from "@/hooks/useSEO";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
@@ -115,13 +116,13 @@ const App = () => (
                 <Route path="/all-tools" element={<AllTools />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/checkout/return" element={<CheckoutReturn />} />
-                <Route path="/paycheck-calculator" element={<ProtectedRoute><PaycheckCalculator /></ProtectedRoute>} />
+                <Route path="/paycheck-calculator" element={<PaywallRoute><PaycheckCalculator /></PaywallRoute>} />
                 
                 {/* Protected routes - allow guest mode */}
                 <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
                 <Route path="/performance" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
-                <Route path="/analysis" element={<ProtectedRoute><Analysis /></ProtectedRoute>} />
-                <Route path="/trading-toolkit" element={<ProtectedRoute><TradingToolkit /></ProtectedRoute>} />
+                <Route path="/analysis" element={<PaywallRoute><Analysis /></PaywallRoute>} />
+                <Route path="/trading-toolkit" element={<PaywallRoute><TradingToolkit /></PaywallRoute>} />
                 <Route path="/options-portfolio" element={<ProtectedRoute><OptionsPortfolio /></ProtectedRoute>} />
                 <Route path="/zero-dte" element={<ProtectedRoute><ZeroDTE /></ProtectedRoute>} />
                 <Route path="/market-scanner" element={<Navigate to="/portfolio" replace />} />
@@ -135,25 +136,25 @@ const App = () => (
                 
                 <Route path="/retirement-planning" element={<ProtectedRoute><RetirementPlanning /></ProtectedRoute>} />
                 <Route path="/fire-guide" element={<ProtectedRoute><FireGuide /></ProtectedRoute>} />
-                <Route path="/real-estate" element={<ProtectedRoute><RealEstate /></ProtectedRoute>} />
-                <Route path="/car-finance" element={<ProtectedRoute><CarFinance /></ProtectedRoute>} />
+                <Route path="/real-estate" element={<PaywallRoute><RealEstate /></PaywallRoute>} />
+                <Route path="/car-finance" element={<PaywallRoute><CarFinance /></PaywallRoute>} />
                 
-                <Route path="/smarttrade-ai" element={<ProtectedRoute><SmartTradeAI /></ProtectedRoute>} />
-                <Route path="/quantgemini" element={<ProtectedRoute><QuantGemini /></ProtectedRoute>} />
+                <Route path="/smarttrade-ai" element={<PaywallRoute><SmartTradeAI /></PaywallRoute>} />
+                <Route path="/quantgemini" element={<PaywallRoute><QuantGemini /></PaywallRoute>} />
                 
                 <Route path="/assets" element={<ProtectedRoute requiresAuth><Assets /></ProtectedRoute>} />
                 
                 {/* Routes requiring full authentication */}
                 <Route path="/settings" element={<ProtectedRoute requiresAuth><Settings /></ProtectedRoute>} />
-                <Route path="/ignite-fire" element={<ProtectedRoute><IgniteFire /></ProtectedRoute>} />
+                <Route path="/ignite-fire" element={<PaywallRoute><IgniteFire /></PaywallRoute>} />
                 <Route path="/saved-data" element={<ProtectedRoute requiresAuth><SavedData /></ProtectedRoute>} />
 
-                {/* Pro (paywalled) pages — open for demo. TODO: swap ProtectedRoute → PaywallRoute when paid tier launches */}
-                <Route path="/ai-trade-journal" element={<ProtectedRoute><AiTradeJournal /></ProtectedRoute>} />
+                {/* Pro (paywalled) pages — Gemini-powered, locked to prevent API-bill abuse */}
+                <Route path="/ai-trade-journal" element={<PaywallRoute><AiTradeJournal /></PaywallRoute>} />
                 <Route path="/ai-trade-journal-demo" element={<ProtectedRoute><AiTradeJournalDemo /></ProtectedRoute>} />
-                <Route path="/premarket-brief" element={<ProtectedRoute><PremarketBrief /></ProtectedRoute>} />
-                <Route path="/weekly-fundamental-scan" element={<ProtectedRoute><WeeklyFundamentalScan /></ProtectedRoute>} />
-                <Route path="/fire-planning-suite" element={<ProtectedRoute><FirePlanningSuite /></ProtectedRoute>} />
+                <Route path="/premarket-brief" element={<PaywallRoute><PremarketBrief /></PaywallRoute>} />
+                <Route path="/weekly-fundamental-scan" element={<PaywallRoute><WeeklyFundamentalScan /></PaywallRoute>} />
+                <Route path="/fire-planning-suite" element={<PaywallRoute><FirePlanningSuite /></PaywallRoute>} />
 
                 {/* Blog explainer pages (public) */}
                 <Route path="/blog/weekly-scan-guide" element={<BlogPage src="/blog/weekly-scan-guide.html" title="Weekly Fundamental Scan Guide" />} />
