@@ -21,7 +21,6 @@ interface SnaptradeAccount {
 
 interface SnaptradeConnectionData {
   userId: string;
-  userSecret: string;
   isConnected: boolean;
   accounts: SnaptradeAccount[];
 }
@@ -42,9 +41,10 @@ export function SnaptradeConnection() {
     if (!user) return;
 
     try {
+      // user_secret is column-revoked from `authenticated`; we never request it.
       const { data, error } = await supabase
         .from("snaptrade_connections")
-        .select("*")
+        .select("id, user_id, is_connected, accounts")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -53,40 +53,17 @@ export function SnaptradeConnection() {
       if (data) {
         const conn: SnaptradeConnectionData = {
           userId: data.user_id,
-          userSecret: data.user_secret,
           isConnected: data.is_connected,
           accounts: (data.accounts as unknown as SnaptradeAccount[]) || [],
         };
         setConnection(conn);
 
-        if (conn.isConnected && conn.userSecret) {
-          await refreshAccounts(conn.userSecret);
+        if (conn.isConnected) {
+          await refreshAccounts();
         }
       }
     } catch (error) {
       console.error("Error loading connection:", error);
-    }
-  };
-
-  const saveConnection = async (conn: SnaptradeConnectionData) => {
-    if (!user) return;
-
-    const { error } = await supabase
-      .from("snaptrade_connections")
-      .upsert(
-        {
-          user_id: user.id,
-          user_secret: conn.userSecret,
-          is_connected: conn.isConnected,
-          accounts: conn.accounts as any,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id" }
-      );
-
-    if (error) {
-      console.error("Error saving connection:", error);
-      throw error;
     }
   };
 
@@ -99,44 +76,31 @@ export function SnaptradeConnection() {
     setLoading(true);
 
     try {
+      // Backend registers (or reuses) Snaptrade user and stores user_secret server-side.
       const { data: registerData, error: registerError } = await supabase.functions.invoke(
         "snaptrade-auth",
-        { body: { action: "register", userId: user.id } }
+        { body: { action: "register" } },
       );
-
       if (registerError) throw new Error(registerError.message || "Failed to register with Snaptrade");
       if (registerData?.error) throw new Error(registerData.error);
 
-      const userSecret = registerData.userSecret;
-      if (!userSecret) throw new Error("Failed to get user credentials from Snaptrade");
-
+      // Backend looks up the stored secret to build the login link.
       const { data: loginData, error: loginError } = await supabase.functions.invoke(
         "snaptrade-auth",
         {
           body: {
             action: "getLoginLink",
-            userId: user.id,
-            userSecret,
             redirectUri: `${window.location.origin}/assets?snaptrade=success`,
           },
-        }
+        },
       );
-
       if (loginError) throw new Error(loginError.message || "Failed to get login link");
       if (loginData?.error) throw new Error(loginData.error);
 
       const loginUrl = loginData.redirectURI || loginData.loginLink;
       if (!loginUrl) throw new Error("No login URL received from Snaptrade");
 
-      const newConnection: SnaptradeConnectionData = {
-        userId: user.id,
-        userSecret,
-        isConnected: false,
-        accounts: [],
-      };
-
-      await saveConnection(newConnection);
-      setConnection(newConnection);
+      setConnection({ userId: user.id, isConnected: false, accounts: [] });
 
       const popup = window.open(loginUrl, "_blank", "width=500,height=700");
       if (!popup) {
@@ -158,33 +122,34 @@ export function SnaptradeConnection() {
     }
   };
 
-  const refreshAccounts = async (userSecret?: string) => {
-    if (!user || (!connection?.userSecret && !userSecret)) return;
+  const refreshAccounts = async () => {
+    if (!user) return;
 
     setRefreshing(true);
 
     try {
       const { data, error } = await supabase.functions.invoke("snaptrade-accounts", {
-        body: { action: "getAccounts", userSecret: userSecret || connection?.userSecret },
+        body: { action: "getAccounts" },
       });
 
       if (error) throw error;
+      const accounts: SnaptradeAccount[] = data || [];
 
-      const updatedConnection: SnaptradeConnectionData = {
-        ...connection!,
-        userSecret: userSecret || connection!.userSecret,
-        isConnected: true,
-        accounts: data || [],
-      };
+      // Persist non-secret columns only (RLS + column grants enforce this anyway).
+      await supabase
+        .from("snaptrade_connections")
+        .update({
+          is_connected: true,
+          accounts: accounts as any,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
 
-      await saveConnection(updatedConnection);
-      setConnection(updatedConnection);
+      setConnection({ userId: user.id, isConnected: true, accounts });
       toast.success("Accounts refreshed");
     } catch (error: any) {
       console.error("Refresh error:", error);
-      if (!userSecret) {
-        toast.error("Failed to refresh accounts");
-      }
+      toast.error("Failed to refresh accounts");
     } finally {
       setRefreshing(false);
     }
@@ -199,7 +164,6 @@ export function SnaptradeConnection() {
         .delete()
         .eq("user_id", user.id);
 
-      // Also clean up any legacy localStorage data
       localStorage.removeItem(`snaptrade_${user.id}`);
 
       setConnection(null);
