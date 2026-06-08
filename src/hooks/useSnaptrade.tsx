@@ -41,7 +41,6 @@ export interface SnaptradeDividend {
 
 export interface SnaptradeConnection {
   userId: string;
-  userSecret: string;
   isConnected: boolean;
   accounts: SnaptradeAccount[];
 }
@@ -77,9 +76,10 @@ export function useSnaptrade(autoSync: boolean = true) {
     }
 
     try {
+      // user_secret is column-revoked from `authenticated`; never select it.
       const { data: dbData, error } = await supabase
         .from("snaptrade_connections")
-        .select("*")
+        .select("id, user_id, is_connected, accounts")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -88,14 +88,13 @@ export function useSnaptrade(autoSync: boolean = true) {
       if (dbData) {
         const parsed: SnaptradeConnection = {
           userId: dbData.user_id,
-          userSecret: dbData.user_secret,
           isConnected: dbData.is_connected,
           accounts: (dbData.accounts as unknown as SnaptradeAccount[]) || [],
         };
         setData(prev => ({ ...prev, connection: parsed, isLoading: !parsed.isConnected }));
 
-        if (parsed.isConnected && parsed.userSecret) {
-          await fetchHoldings(parsed.userSecret);
+        if (parsed.isConnected) {
+          await fetchHoldings();
         } else {
           setData(prev => ({ ...prev, isLoading: false }));
         }
@@ -108,11 +107,11 @@ export function useSnaptrade(autoSync: boolean = true) {
     }
   }, [user]);
 
-  const fetchHoldings = async (userSecret: string) => {
+  const fetchHoldings = async () => {
     try {
       const { data: holdingsData, error: holdingsError } = await supabase.functions.invoke(
         "snaptrade-accounts",
-        { body: { action: "getHoldings", userSecret } }
+        { body: { action: "getHoldings" } },
       );
 
       if (holdingsError) throw holdingsError;
@@ -147,7 +146,7 @@ export function useSnaptrade(autoSync: boolean = true) {
         }));
       }
 
-      await fetchDividends(userSecret);
+      await fetchDividends();
     } catch (error: any) {
       console.error("Error fetching holdings:", error);
       if (isMountedRef.current) {
@@ -160,11 +159,11 @@ export function useSnaptrade(autoSync: boolean = true) {
     }
   };
 
-  const fetchDividends = async (userSecret: string) => {
+  const fetchDividends = async () => {
     try {
       const { data: transactionsData, error: transactionsError } = await supabase.functions.invoke(
         "snaptrade-accounts",
-        { body: { action: "getTransactions", userSecret } }
+        { body: { action: "getTransactions" } },
       );
 
       if (transactionsError) throw transactionsError;
@@ -191,9 +190,9 @@ export function useSnaptrade(autoSync: boolean = true) {
   };
 
   const refresh = useCallback(async () => {
-    if (!user || !data.connection?.userSecret) return;
+    if (!user || !data.connection?.isConnected) return;
     setData(prev => ({ ...prev, isLoading: true }));
-    await fetchHoldings(data.connection!.userSecret);
+    await fetchHoldings();
   }, [user, data.connection]);
 
   useEffect(() => {
@@ -201,21 +200,21 @@ export function useSnaptrade(autoSync: boolean = true) {
   }, [loadConnection]);
 
   useEffect(() => {
-    if (!autoSync || !data.connection?.isConnected || !data.connection?.userSecret) return;
+    if (!autoSync || !data.connection?.isConnected) return;
 
     if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
 
     syncIntervalRef.current = setInterval(() => {
-      if (data.connection?.userSecret && isMountedRef.current) {
+      if (isMountedRef.current) {
         console.log("[Snaptrade] Auto-sync triggered");
-        fetchHoldings(data.connection.userSecret);
+        fetchHoldings();
       }
     }, AUTO_SYNC_INTERVAL);
 
     return () => {
       if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
     };
-  }, [autoSync, data.connection?.isConnected, data.connection?.userSecret]);
+  }, [autoSync, data.connection?.isConnected]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -233,7 +232,7 @@ export function useSnaptrade(autoSync: boolean = true) {
         try {
           const { data: dbData, error } = await supabase
             .from("snaptrade_connections")
-            .select("*")
+            .select("id, user_id, is_connected, accounts")
             .eq("user_id", user.id)
             .maybeSingle();
 
@@ -247,17 +246,13 @@ export function useSnaptrade(autoSync: boolean = true) {
 
             const parsed: SnaptradeConnection = {
               userId: dbData.user_id,
-              userSecret: dbData.user_secret,
               isConnected: true,
               accounts: (dbData.accounts as unknown as SnaptradeAccount[]) || [],
             };
             setData(prev => ({ ...prev, connection: parsed }));
 
             window.history.replaceState({}, document.title, window.location.pathname);
-
-            if (parsed.userSecret) {
-              fetchHoldings(parsed.userSecret);
-            }
+            fetchHoldings();
           }
         } catch (error) {
           console.error("Error handling Snaptrade callback:", error);

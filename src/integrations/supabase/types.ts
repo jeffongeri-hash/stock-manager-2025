@@ -676,7 +676,7 @@ export type Database = {
           is_connected: boolean
           updated_at: string
           user_id: string
-          user_secret: string
+          user_secret: string | null
         }
         Insert: {
           accounts?: Json
@@ -685,7 +685,7 @@ export type Database = {
           is_connected?: boolean
           updated_at?: string
           user_id: string
-          user_secret: string
+          user_secret?: string | null
         }
         Update: {
           accounts?: Json
@@ -694,7 +694,7 @@ export type Database = {
           is_connected?: boolean
           updated_at?: string
           user_id?: string
-          user_secret?: string
+          user_secret?: string | null
         }
         Relationships: []
       }
