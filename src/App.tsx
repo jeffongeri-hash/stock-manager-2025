@@ -10,6 +10,7 @@ import { SwipeNavigation } from "@/components/mobile/SwipeNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PaywallRoute } from "@/components/auth/PaywallRoute";
+import { AdminRoute } from "@/components/auth/AdminRoute";
 import { SEOHead } from "@/hooks/useSEO";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
@@ -164,8 +165,8 @@ const App = () => (
                 <Route path="/blog/ai-trade-journal-guide" element={<BlogPage src="/blog/ai-trade-journal-guide.html" title="AI Trade Journal Guide" />} />
                 <Route path="/blog/covered-call-calculator-guide" element={<BlogPage src="/blog/covered-call-calculator-guide.html" title="Covered Call Calculator Guide" />} />
 
-                {/* Testing — IV Strike Selector (will be admin-only after approval) */}
-                <Route path="/iv-strike-selector" element={<IvStrikeSelector />} />
+                {/* Admin-only — IV Strike Selector */}
+                <Route path="/iv-strike-selector" element={<AdminRoute><IvStrikeSelector /></AdminRoute>} />
 
                 
                 
