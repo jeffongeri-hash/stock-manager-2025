@@ -12,6 +12,36 @@ export const useAuth = () => {
     const guestMode = localStorage.getItem(GUEST_MODE_KEY);
     return guestMode !== 'false'; // Default to guest mode on fresh sessions
   });
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(true);
+
+  // Check admin status whenever user changes
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        setIsAdminLoading(false);
+        return;
+      }
+      try {
+        const { data, error } = await supabase.rpc('current_user_has_role', {
+          _role: 'admin',
+        });
+        if (error) {
+          console.error('Admin check error:', error);
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(!!data);
+        }
+      } catch (e) {
+        console.error('Admin check failed:', e);
+        setIsAdmin(false);
+      } finally {
+        setIsAdminLoading(false);
+      }
+    };
+    checkAdmin();
+  }, [user]);
 
   useEffect(() => {
     // Check for guest mode preference
@@ -87,6 +117,8 @@ export const useAuth = () => {
     enableGuestMode,
     disableGuestMode,
     canAccess,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    isAdmin,
+    isAdminLoading,
   };
 };
