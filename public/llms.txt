@@ -24,7 +24,6 @@
 - [Car Finance Calculator](/car-finance): Auto loans, depreciation, and total cost of ownership.
 - [SmartTrade AI](/smarttrade-ai): Gemini-powered trade planner and strategy simulator.
 - [QuantGemini](/quantgemini): Institutional-grade investor scorecards via Gemini AI.
-- [IgniteFIRE Suite](/ignite-fire): Advanced retirement and lifestyle planning hub.
 
 ## Optional
 

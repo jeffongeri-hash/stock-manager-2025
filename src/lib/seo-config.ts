@@ -157,12 +157,6 @@ export const pageSEO: Record<string, PageSEO> = {
     keywords: ["quant research", "investor scorecard", "AI stock research"],
     ogType: "website",
   },
-  "/ignite-fire": {
-    title: "IgniteFIRE Suite — Profit Pathfinder",
-    description: "Advanced FIRE retirement suite with scenario modeling, withdrawals, and lifestyle planning.",
-    keywords: ["FIRE", "retirement suite", "financial independence"],
-    ogType: "website",
-  },
   "/auth": {
     title: "Sign In — Profit Pathfinder",
     description: "Sign in or create an account to access your personalized trading dashboard and saved data.",
@@ -247,28 +241,10 @@ export const pageSEO: Record<string, PageSEO> = {
     keywords: ["FIRE planning suite", "Coast FIRE", "Barista FIRE", "Monte Carlo retirement", "FIRE calculator"],
     ogType: "website",
   },
-  "/blog/weekly-scan-guide": {
-    title: "Weekly Fundamental Scan: What's Covered and Who It's For | Profit Pathfinder",
-    description: "What's inside every Weekly Fundamental Scan — AI infrastructure, semiconductor, and datacenter coverage, conviction ratings, and metrics.",
-    keywords: ["weekly fundamental scan", "AI infrastructure stocks", "semiconductor analysis", "stock research newsletter"],
-    ogType: "article",
-  },
-  "/blog/pre-market-brief-guide": {
-    title: "Pre-Market Brief: What You Get Before the Bell | Profit Pathfinder",
-    description: "Full breakdown of the daily Pre-Market Brief — signal scan, Fibonacci levels, sector leadership, and pre-market gapper watchlist.",
-    keywords: ["pre-market brief", "morning trading brief", "pre-market gappers", "daily stock signals"],
-    ogType: "article",
-  },
   "/blog/real-estate-car-finance-guide": {
     title: "Real Estate & Car Finance Calculators Guide | Profit Pathfinder",
     description: "Walkthrough of the Real Estate Investment and Car Finance calculators — cash flow, ROI, true loan cost, and total interest modeling.",
     keywords: ["real estate calculator guide", "car finance calculator guide", "rental cash flow", "auto loan calculator"],
-    ogType: "article",
-  },
-  "/blog/ai-trade-journal-guide": {
-    title: "AI Trade Journal: How Gemini Finds Patterns Costing You Money | Profit Pathfinder",
-    description: "How the AI Trade Journal analyzes your brokerage CSV to surface behavioral patterns — time-of-day edges, loss aversion, and strategy attribution.",
-    keywords: ["AI trade journal", "trading pattern analysis", "behavioral finance tools", "brokerage CSV analysis"],
     ogType: "article",
   },
   "/blog/covered-call-calculator-guide": {
