@@ -23,7 +23,7 @@ const TOOLS: Tool[] = [
   { title: 'Options Toolkit', description: 'PMCC, Wheel, Iron Condor, and ITM tools.', href: '/options-portfolio', icon: Scale, category: 'Options' },
   { title: '0DTE Calculator', description: 'Same-day options strategy planner.', href: '/zero-dte', icon: Zap, category: 'Options' },
   { title: 'Dividend Tracker', description: 'CAGR, yield-on-cost, and dividend growth.', href: '/dividend-tracker', icon: DollarSign, category: 'Income' },
-  { title: 'Risk & Rebalance', description: 'Portfolio rebalancing and risk metrics.', href: '/portfolio-rebalancing', icon: Scale, category: 'Portfolio' },
+  
   { title: 'IgniteFIRE Suite', description: 'Full FIRE retirement planning suite.', href: '/ignite-fire', icon: Flame, category: 'FIRE' },
   { title: 'Retirement Planning', description: 'SS, RMD, Roth conversion, and withdrawals.', href: '/retirement-planning', icon: Target, category: 'FIRE' },
   { title: 'Real Estate', description: 'Cash flow, cap rate, and property analysis.', href: '/real-estate', icon: Building2, category: 'Real Estate' },
