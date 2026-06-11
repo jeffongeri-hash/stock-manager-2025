@@ -24,7 +24,6 @@ const PRIMARY_NAV: NavItem[] = [
 
   { title: 'Dividends', href: '/dividend-tracker' },
 
-  { title: 'IgniteFIRE', href: '/ignite-fire' },
   { title: 'Retirement', href: '/retirement-planning' },
   { title: 'Real Estate', href: '/real-estate' },
   { title: 'Car Finance', href: '/car-finance' },

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card } from '@/components/ui/card';
 import {
-  PieChart, Wallet, LineChart, Calculator, Zap, BookOpen, Activity,
+  Wallet, LineChart, Calculator, Zap, BookOpen, Activity,
   DollarSign, Scale, FlaskConical, Target, Building2, Car, Bot,
   FolderKanban, BookMarked, Sparkles, Flame, TrendingUp, Receipt,
 } from 'lucide-react';
@@ -24,7 +24,6 @@ const TOOLS: Tool[] = [
   { title: '0DTE Calculator', description: 'Same-day options strategy planner.', href: '/zero-dte', icon: Zap, category: 'Options' },
   { title: 'Dividend Tracker', description: 'CAGR, yield-on-cost, and dividend growth.', href: '/dividend-tracker', icon: DollarSign, category: 'Income' },
   
-  { title: 'IgniteFIRE Suite', description: 'Full FIRE retirement planning suite.', href: '/ignite-fire', icon: Flame, category: 'FIRE' },
   { title: 'Retirement Planning', description: 'SS, RMD, Roth conversion, and withdrawals.', href: '/retirement-planning', icon: Target, category: 'FIRE' },
   { title: 'Real Estate', description: 'Cash flow, cap rate, and property analysis.', href: '/real-estate', icon: Building2, category: 'Real Estate' },
   { title: 'Car Finance', description: 'Loan, lease, and depreciation analysis.', href: '/car-finance', icon: Car, category: 'Lifestyle' },
@@ -54,7 +53,7 @@ const AllTools = () => {
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight">All Tools</h1>
           <p className="text-muted-foreground mt-2">
-            Every calculator, tracker, and AI tool on Profit Pathfinder — organized by category.
+            Every calculator, tracker, and guide on Profit Pathfinder — organized by category.
           </p>
         </div>
 
