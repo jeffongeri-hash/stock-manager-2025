@@ -34,7 +34,7 @@ const OptionsGuide = lazy(() => import("./pages/OptionsGuide"));
 
 const DividendTracker = lazy(() => import("./pages/DividendTracker"));
 
-const PortfolioRebalancing = lazy(() => import("./pages/PortfolioRebalancing"));
+
 const IgniteFire = lazy(() => import("./pages/IgniteFire"));
 const Install = lazy(() => import("./pages/Install"));
 
