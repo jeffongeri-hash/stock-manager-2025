@@ -34,7 +34,7 @@ const OptionsGuide = lazy(() => import("./pages/OptionsGuide"));
 
 const DividendTracker = lazy(() => import("./pages/DividendTracker"));
 
-const PortfolioRebalancing = lazy(() => import("./pages/PortfolioRebalancing"));
+
 const IgniteFire = lazy(() => import("./pages/IgniteFire"));
 const Install = lazy(() => import("./pages/Install"));
 
@@ -125,21 +125,22 @@ const App = () => (
                 <Route path="/performance" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
                 <Route path="/analysis" element={<AdminRoute><Analysis /></AdminRoute>} />
                 <Route path="/trading-toolkit" element={<PaywallRoute><TradingToolkit /></PaywallRoute>} />
-                <Route path="/options-portfolio" element={<ProtectedRoute><OptionsPortfolio /></ProtectedRoute>} />
-                <Route path="/zero-dte" element={<ProtectedRoute><ZeroDTE /></ProtectedRoute>} />
+                <Route path="/options-portfolio" element={<OptionsPortfolio />} />
+                <Route path="/zero-dte" element={<ZeroDTE />} />
                 <Route path="/market-scanner" element={<Navigate to="/portfolio" replace />} />
-                <Route path="/credit-options-guide" element={<ProtectedRoute><CreditOptionsGuide /></ProtectedRoute>} />
-                <Route path="/fundamental-analysis-guide" element={<ProtectedRoute><FundamentalAnalysisGuide /></ProtectedRoute>} />
-                <Route path="/options-guide" element={<ProtectedRoute><OptionsGuide /></ProtectedRoute>} />
-                <Route path="/dividend-tracker" element={<ProtectedRoute><DividendTracker /></ProtectedRoute>} />
-                
-                <Route path="/risk-metrics" element={<Navigate to="/portfolio-rebalancing" replace />} />
-                <Route path="/portfolio-rebalancing" element={<ProtectedRoute><PortfolioRebalancing /></ProtectedRoute>} />
-                
-                <Route path="/retirement-planning" element={<ProtectedRoute><RetirementPlanning /></ProtectedRoute>} />
-                <Route path="/fire-guide" element={<ProtectedRoute><FireGuide /></ProtectedRoute>} />
-                <Route path="/real-estate" element={<PaywallRoute><RealEstate /></PaywallRoute>} />
-                <Route path="/car-finance" element={<PaywallRoute><CarFinance /></PaywallRoute>} />
+                <Route path="/credit-options-guide" element={<CreditOptionsGuide />} />
+                <Route path="/fundamental-analysis-guide" element={<FundamentalAnalysisGuide />} />
+                <Route path="/options-guide" element={<OptionsGuide />} />
+                <Route path="/dividend-tracker" element={<DividendTracker />} />
+
+                {/* Risk & Rebalance pages removed */}
+                <Route path="/risk-metrics" element={<Navigate to="/portfolio" replace />} />
+                <Route path="/portfolio-rebalancing" element={<Navigate to="/portfolio" replace />} />
+
+                <Route path="/retirement-planning" element={<RetirementPlanning />} />
+                <Route path="/fire-guide" element={<FireGuide />} />
+                <Route path="/real-estate" element={<RealEstate />} />
+                <Route path="/car-finance" element={<CarFinance />} />
                 
                 {/* AI-powered routes — admin-only (Gemini-backed, hidden until launch) */}
                 <Route path="/smarttrade-ai" element={<AdminRoute><SmartTradeAI /></AdminRoute>} />

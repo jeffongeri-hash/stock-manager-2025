@@ -229,12 +229,6 @@ export default function Assets() {
                     </Link>
                   </Button>
                   <Button asChild variant="outline">
-                    <Link to="/portfolio-rebalancing">
-                      <PieChart className="h-4 w-4 mr-2" />
-                      Rebalance Portfolio
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline">
                     <Link to="/performance">
                       <TrendingUp className="h-4 w-4 mr-2" />
                       Performance Analysis

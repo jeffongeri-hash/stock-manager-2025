@@ -57,17 +57,17 @@ interface RetirementSettings {
 const defaultSettings: RetirementSettings = {
   annualSpendingPostRetirement: 60000,
   monthlyExpenses: 5000,
-  monthlyInvestment: 1500,
-  currentSavings: 50000,
+  monthlyInvestment: 0,
+  currentSavings: 0,
   expectedReturn: 7,
   withdrawalRate: 4,
   currentAge: 30,
   retirementAge: 65,
-  annualContribution: 10000,
+  annualContribution: 0,
   projCurrentAge: 30,
   projRetirementAge: 65,
-  projCurrentSavings: 50000,
-  projMonthlyContrib: 1000,
+  projCurrentSavings: 0,
+  projMonthlyContrib: 0,
   projExpectedReturn: 7,
   projInflation: 2.5,
 };
@@ -451,16 +451,75 @@ const RetirementPlanning = () => {
           </CardContent>
         </Card>
 
-        {/* FIRE Progress Bar */}
-        <FireProgressBar
-          currentSavings={projCurrentSavings}
-          fireNumber={fireNumber}
-          leanFireNumber={annualSpendingPostRetirement * 20}
-          fatFireNumber={annualSpendingPostRetirement * 33.33}
-          yearsToRetirement={projRetirementAge - projCurrentAge}
-          projectedAtRetirement={retirementMetrics.portfolioAtRetirement}
-          inflationRate={projInflation}
-        />
+        {/* Your Current Position — drives FIRE progress */}
+        <Card className="border-primary/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <PiggyBank className="h-5 w-5 text-primary" />
+              Your Current Position
+            </CardTitle>
+            <CardDescription>
+              Enter your savings, monthly contribution, and ages so we can show real progress. Without these, the tracker has nothing to compare against.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label>Current Savings ($)</Label>
+                <Input
+                  type="number"
+                  value={projCurrentSavings}
+                  onChange={(e) => updateSetting('projCurrentSavings', Number(e.target.value))}
+                  placeholder="e.g. 50000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Monthly Contribution ($)</Label>
+                <Input
+                  type="number"
+                  value={projMonthlyContrib}
+                  onChange={(e) => updateSetting('projMonthlyContrib', Number(e.target.value))}
+                  placeholder="e.g. 1000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Current Age</Label>
+                <Input
+                  type="number"
+                  value={projCurrentAge}
+                  onChange={(e) => updateSetting('projCurrentAge', Number(e.target.value))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Target Retirement Age</Label>
+                <Input
+                  type="number"
+                  value={projRetirementAge}
+                  onChange={(e) => updateSetting('projRetirementAge', Number(e.target.value))}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* FIRE Progress Bar — only show once user has entered savings */}
+        {projCurrentSavings > 0 ? (
+          <FireProgressBar
+            currentSavings={projCurrentSavings}
+            fireNumber={fireNumber}
+            leanFireNumber={annualSpendingPostRetirement * 20}
+            fatFireNumber={annualSpendingPostRetirement * 33.33}
+            yearsToRetirement={projRetirementAge - projCurrentAge}
+            projectedAtRetirement={retirementMetrics.portfolioAtRetirement}
+            inflationRate={projInflation}
+          />
+        ) : (
+          <Card className="border-dashed">
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              Enter your current savings above to see your FIRE progress.
+            </CardContent>
+          </Card>
+        )}
 
         {/* Coast FIRE Milestone Chart */}
         <CoastFireMilestoneChart

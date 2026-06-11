@@ -121,12 +121,6 @@ export const pageSEO: Record<string, PageSEO> = {
     keywords: ["market analysis", "stock analysis", "AI analysis"],
     ogType: "website",
   },
-  "/portfolio-rebalancing": {
-    title: "Risk & Rebalance — Profit Pathfinder",
-    description: "Portfolio risk metrics (VaR, Sharpe, beta), drift detection, tax-aware trades, and target allocations in one place.",
-    keywords: ["portfolio rebalancing", "asset allocation", "portfolio risk", "VaR", "Sharpe ratio"],
-    ogType: "website",
-  },
   "/real-estate": {
     title: "Real Estate Calculator — Profit Pathfinder",
     description: "Analyze real estate investments with ROI, rental income, mortgage, and property comparison tools.",
@@ -203,12 +197,6 @@ export const pageSEO: Record<string, PageSEO> = {
     title: "Market Scanner — Profit Pathfinder",
     description: "Scan stocks and options with advanced filters: LEAPS, covered call candidates, momentum, and presets.",
     keywords: ["market scanner", "stock scanner", "options scanner", "LEAPS screener"],
-    ogType: "website",
-  },
-  "/risk-metrics": {
-    title: "Risk Metrics — Profit Pathfinder",
-    description: "Portfolio risk metrics: VaR, Sharpe, Sortino, beta, drawdown, and volatility analysis.",
-    keywords: ["risk metrics", "VaR calculator", "Sharpe ratio", "portfolio risk"],
     ogType: "website",
   },
   "/paycheck-calculator": {
