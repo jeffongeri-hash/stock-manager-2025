@@ -53,7 +53,7 @@ const AllTools = () => {
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight">All Tools</h1>
           <p className="text-muted-foreground mt-2">
-            Every calculator, tracker, and AI tool on Profit Pathfinder — organized by category.
+            Every calculator, tracker, and guide on Profit Pathfinder — organized by category.
           </p>
         </div>
 

@@ -171,7 +171,7 @@ export const pageSEO: Record<string, PageSEO> = {
   },
   "/all-tools": {
     title: "All Tools — Profit Pathfinder",
-    description: "Browse every Profit Pathfinder tool: portfolio, options, dividends, FIRE, retirement, and AI research in one directory.",
+    description: "Browse every Profit Pathfinder tool: portfolio, options, dividends, FIRE, retirement, and finance guides in one directory.",
     keywords: ["all trading tools", "investment calculators", "finance tools directory"],
     ogType: "website",
   },
