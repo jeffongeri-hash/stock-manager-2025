@@ -23,7 +23,6 @@ const PRIMARY_NAV: NavItem[] = [
   { title: '0DTE', href: '/zero-dte' },
 
   { title: 'Dividends', href: '/dividend-tracker' },
-  { title: 'Risk & Rebalance', href: '/portfolio-rebalancing' },
 
   { title: 'IgniteFIRE', href: '/ignite-fire' },
   { title: 'Retirement', href: '/retirement-planning' },
