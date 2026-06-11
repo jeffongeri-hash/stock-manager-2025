@@ -129,11 +129,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/dividend-tracker',
     },
     {
-      title: 'Risk & Rebalance',
-      icon: Scale,
-      href: '/portfolio-rebalancing',
-    },
-    {
       title: 'IgniteFIRE Suite',
       icon: Zap,
       href: '/ignite-fire',
