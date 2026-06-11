@@ -9,7 +9,6 @@ import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
 import { SwipeNavigation } from "@/components/mobile/SwipeNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { PaywallRoute } from "@/components/auth/PaywallRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { SEOHead } from "@/hooks/useSEO";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
@@ -34,8 +33,6 @@ const OptionsGuide = lazy(() => import("./pages/OptionsGuide"));
 
 const DividendTracker = lazy(() => import("./pages/DividendTracker"));
 
-
-const IgniteFire = lazy(() => import("./pages/IgniteFire"));
 const Install = lazy(() => import("./pages/Install"));
 
 const RetirementPlanning = lazy(() => import("./pages/RetirementPlanning"));
@@ -124,7 +121,7 @@ const App = () => (
                 <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
                 <Route path="/performance" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
                 <Route path="/analysis" element={<AdminRoute><Analysis /></AdminRoute>} />
-                <Route path="/trading-toolkit" element={<PaywallRoute><TradingToolkit /></PaywallRoute>} />
+                <Route path="/trading-toolkit" element={<TradingToolkit />} />
                 <Route path="/options-portfolio" element={<OptionsPortfolio />} />
                 <Route path="/zero-dte" element={<ZeroDTE />} />
                 <Route path="/market-scanner" element={<Navigate to="/portfolio" replace />} />
@@ -150,7 +147,7 @@ const App = () => (
                 
                 {/* Routes requiring full authentication */}
                 <Route path="/settings" element={<ProtectedRoute requiresAuth><Settings /></ProtectedRoute>} />
-                <Route path="/ignite-fire" element={<PaywallRoute><IgniteFire /></PaywallRoute>} />
+                <Route path="/ignite-fire" element={<Navigate to="/retirement-planning" replace />} />
                 <Route path="/saved-data" element={<ProtectedRoute requiresAuth><SavedData /></ProtectedRoute>} />
 
                 {/* AI-powered demo pages — admin-only (Gemini-backed) */}
@@ -161,10 +158,7 @@ const App = () => (
                 <Route path="/fire-planning-suite" element={<AdminRoute><FirePlanningSuite /></AdminRoute>} />
 
                 {/* Blog explainer pages (public) */}
-                <Route path="/blog/weekly-scan-guide" element={<BlogPage src="/blog/weekly-scan-guide.html" title="Weekly Fundamental Scan Guide" />} />
-                <Route path="/blog/pre-market-brief-guide" element={<BlogPage src="/blog/pre-market-brief-guide.html" title="Pre-Market Brief Guide" />} />
                 <Route path="/blog/real-estate-car-finance-guide" element={<BlogPage src="/blog/real-estate-car-finance-guide.html" title="Real Estate & Car Finance Guide" />} />
-                <Route path="/blog/ai-trade-journal-guide" element={<BlogPage src="/blog/ai-trade-journal-guide.html" title="AI Trade Journal Guide" />} />
                 <Route path="/blog/covered-call-calculator-guide" element={<BlogPage src="/blog/covered-call-calculator-guide.html" title="Covered Call Calculator Guide" />} />
 
                 {/* Admin-only — IV Strike Selector */}

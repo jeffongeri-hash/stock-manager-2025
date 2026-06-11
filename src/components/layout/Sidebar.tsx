@@ -129,11 +129,6 @@ export function Sidebar({ isCollapsed, onToggle, className }: SidebarProps) {
       href: '/dividend-tracker',
     },
     {
-      title: 'IgniteFIRE Suite',
-      icon: Zap,
-      href: '/ignite-fire',
-    },
-    {
       title: 'Retirement Planning',
       icon: Target,
       href: '/retirement-planning',
