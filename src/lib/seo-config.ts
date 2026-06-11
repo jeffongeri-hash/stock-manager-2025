@@ -199,12 +199,6 @@ export const pageSEO: Record<string, PageSEO> = {
     keywords: ["market scanner", "stock scanner", "options scanner", "LEAPS screener"],
     ogType: "website",
   },
-  "/risk-metrics": {
-    title: "Risk Metrics — Profit Pathfinder",
-    description: "Portfolio risk metrics: VaR, Sharpe, Sortino, beta, drawdown, and volatility analysis.",
-    keywords: ["risk metrics", "VaR calculator", "Sharpe ratio", "portfolio risk"],
-    ogType: "website",
-  },
   "/paycheck-calculator": {
     title: "Paycheck Calculator — Federal, State & Local Taxes | Profit Pathfinder",
     description: "Estimate take-home pay with federal, state, and local taxes plus pre/post-tax deductions. Free Gemini AI paycheck calculator.",
