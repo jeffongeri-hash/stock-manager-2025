@@ -8,7 +8,7 @@ const CarFinance = () => (
     css={css}
     html={html}
     script={script}
-    externalScripts={["https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"]}
+    externalScripts={["/vendor/chart.umd.min.js"]}
   />
 );
 

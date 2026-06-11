@@ -56,7 +56,7 @@ const AllTools = lazy(() => import("./pages/AllTools"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
 
-// Pro (paywalled) pages — currently open as demo. TODO: wrap with <PaywallRoute> when launching paid tier.
+// AI-powered demo pages — admin-only while hidden from public launch.
 const AiTradeJournal = lazy(() => import("./pages/AiTradeJournal"));
 const AiTradeJournalDemo = lazy(() => import("./pages/AiTradeJournalDemo"));
 const PremarketBrief = lazy(() => import("./pages/PremarketBrief"));
