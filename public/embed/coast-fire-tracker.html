@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Coast FIRE Tracker — Embed</title>
+<meta name="robots" content="noindex,follow" />
+<link rel="canonical" href="https://profitpathfinder.online/coast-fire-tracker" />
+<style>
+  :root{
+    --bg:#0b1020; --card:#121933; --soft:#1b2447; --border:#27315b;
+    --text:#e6ecff; --muted:#9aa6c7; --primary:#7c8cff; --success:#34d399;
+    --primary-2:#5a6dff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:transparent;color:var(--text);font:14px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:14px}
+  .card{background:linear-gradient(180deg,var(--card),#0f1730);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  h1{margin:0 0 2px;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--primary)}
+  p.sub{margin:0 0 14px;color:var(--muted);font-size:12.5px}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  @media(min-width:560px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+  input{width:100%;background:#0c1430;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font:600 13px ui-monospace,SFMono-Regular,Menlo,monospace;outline:none}
+  input:focus{border-color:var(--primary)}
+  .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+  @media(min-width:560px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  .stat{background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px}
+  .stat .l{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .stat .v{font:800 16px ui-monospace,SFMono-Regular,Menlo,monospace;margin-top:2px}
+  .stat.accent{border-color:rgba(124,140,255,.5);background:rgba(124,140,255,.08)}
+  .stat.accent .v{color:var(--primary)}
+  .bar-wrap{margin-top:14px}
+  .bar-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}
+  .bar-row .pct{color:var(--primary);font-weight:700;font-family:ui-monospace,monospace}
+  .bar{height:8px;background:var(--soft);border-radius:999px;overflow:hidden}
+  .bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--success));transition:width .3s ease}
+  .chart{margin-top:14px;border:1px solid var(--border);background:rgba(255,255,255,.02);border-radius:10px;padding:6px}
+  .chart svg{display:block;width:100%;height:150px}
+  .foot{margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
+  .foot a{color:var(--primary);text-decoration:none;font-weight:700}
+  .foot a:hover{text-decoration:underline}
+  .cta{background:var(--primary);color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;font-weight:700;font-size:12px}
+  .cta:hover{background:var(--primary-2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card" role="region" aria-label="Coast FIRE Tracker">
+    <h1>Coast FIRE Tracker</h1>
+    <p class="sub">Live calculation — change any field to update your Coast FIRE number.</p>
+    <div class="grid">
+      <div><label>Current age</label><input id="age" type="number" value="32" min="10" max="90"></div>
+      <div><label>Retirement age</label><input id="retire" type="number" value="65" min="20" max="100"></div>
+      <div><label>Current invested ($)</label><input id="invested" type="number" value="75000" min="0" step="1000"></div>
+      <div><label>Monthly contribution ($)</label><input id="monthly" type="number" value="500" min="0" step="50"></div>
+      <div><label>Annual spending ($)</label><input id="spend" type="number" value="50000" min="0" step="1000"></div>
+      <div><label>Real return (%)</label><input id="rr" type="number" value="5" min="0" max="15" step="0.1"></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="l">FIRE Number</div><div class="v" id="o-fire">—</div></div>
+      <div class="stat accent"><div class="l">Coast FIRE Today</div><div class="v" id="o-coast">—</div></div>
+      <div class="stat"><div class="l">Gap to Coast</div><div class="v" id="o-gap">—</div></div>
+      <div class="stat"><div class="l">Coast Age (w/ contrib.)</div><div class="v" id="o-cage">—</div></div>
+    </div>
+    <div class="bar-wrap">
+      <div class="bar-row"><span>% of Coast FIRE reached</span><span class="pct" id="o-pct">0%</span></div>
+      <div class="bar"><span id="o-bar" style="width:0%"></span></div>
+    </div>
+    <div class="chart">
+      <svg id="svg" viewBox="0 0 600 150" preserveAspectRatio="none" aria-label="Coast FIRE projection chart">
+        <path id="p-target" fill="none" stroke="#9aa6c7" stroke-width="1.5" stroke-dasharray="6 4"/>
+        <path id="p-value" fill="none" stroke="#7c8cff" stroke-width="2.5"/>
+      </svg>
+    </div>
+    <div class="foot">
+      <span>Educational only — not financial advice.</span>
+      <a class="cta" href="https://profitpathfinder.online/coast-fire-tracker" target="_blank" rel="noopener">Open full tracker →</a>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var $ = function(id){return document.getElementById(id)};
+  var fmt = function(n){ if(!isFinite(n)) return '—'; return '$' + Math.round(n).toLocaleString('en-US'); };
+  function calc(){
+    var age=+$('age').value, ret=+$('retire').value, inv=+$('invested').value,
+        m=+$('monthly').value, spend=+$('spend').value, r=(+$('rr').value)/100;
+    var years = Math.max(0, ret-age);
+    var fire = spend/0.04;
+    var coast = fire/Math.pow(1+r,years);
+    var pct = coast>0 ? Math.min(100,(inv/coast)*100) : 0;
+    var gap = Math.max(0,coast-inv);
+    var annual = m*12, bal=inv, cAge=null, series=[];
+    for(var i=0;i<=years;i++){
+      var yl = years-i;
+      var targetNow = fire/Math.pow(1+r,yl);
+      if(bal>=targetNow && cAge===null) cAge = age+i;
+      series.push({age:age+i, value:bal, target:targetNow});
+      bal = bal*(1+r) + annual;
+    }
+    $('o-fire').textContent = fmt(fire);
+    $('o-coast').textContent = fmt(coast);
+    $('o-gap').textContent = fmt(gap);
+    $('o-cage').textContent = cAge!==null ? String(cAge) : '—';
+    $('o-pct').textContent = pct.toFixed(1)+'%';
+    $('o-bar').style.width = pct+'%';
+    // chart
+    var W=600,H=150;
+    var maxV = 1;
+    series.forEach(function(p){ if(p.value>maxV) maxV=p.value; if(p.target>maxV) maxV=p.target; });
+    var n = series.length;
+    var xs=function(i){return n<=1?0:(i/(n-1))*W;};
+    var ys=function(v){return H-(v/maxV)*(H-12)-6;};
+    var vp='', tp='';
+    series.forEach(function(p,i){
+      vp += (i?'L':'M')+xs(i).toFixed(1)+','+ys(p.value).toFixed(1)+' ';
+      tp += (i?'L':'M')+xs(i).toFixed(1)+','+ys(p.target).toFixed(1)+' ';
+    });
+    $('p-value').setAttribute('d',vp);
+    $('p-target').setAttribute('d',tp);
+  }
+  ['age','retire','invested','monthly','spend','rr'].forEach(function(id){
+    $(id).addEventListener('input',calc);
+  });
+  calc();
+})();
+</script>
+</body>
+</html>
