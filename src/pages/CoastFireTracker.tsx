@@ -168,7 +168,9 @@ Coast FIRE Today     = FIRE Number / (1 + Expected Real Return) ^ Years Until Re
             <p className="text-muted-foreground leading-relaxed">
               Update inputs monthly. Re-check assumptions (spending, retirement age, expected return)
               at least annually or after any major life change — new job, kids, home purchase, or a
-              big shift in markets.
+              big shift in markets. If you're brand new to all of this, read
+              the <Link to="/fire-for-beginners" className="text-primary underline">FIRE for beginners</Link> guide
+              or try the <Link to="/early-retirement-calculator" className="text-primary underline">early retirement calculator</Link>.
             </p>
           </section>
 
