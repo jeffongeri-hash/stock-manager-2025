@@ -47,7 +47,11 @@ const SmartTradeAI = lazy(() => import("./pages/SmartTradeAI"));
 const QuantGemini = lazy(() => import("./pages/QuantGemini"));
 
 // Public SEO landing pages
+const CoastFireTracker = lazy(() => import("./pages/CoastFireTracker"));
 const CoastFireCalculator = lazy(() => import("./pages/CoastFireCalculator"));
+const WhatIsCoastFire = lazy(() => import("./pages/WhatIsCoastFire"));
+const FireForBeginners = lazy(() => import("./pages/FireForBeginners"));
+const EarlyRetirementCalculator = lazy(() => import("./pages/EarlyRetirementCalculator"));
 const FinancialIndependenceCalculator = lazy(() => import("./pages/FinancialIndependenceCalculator"));
 const CoveredCallCalculator = lazy(() => import("./pages/CoveredCallCalculator"));
 const MonthlyDividendCalculator = lazy(() => import("./pages/MonthlyDividendCalculator"));
@@ -108,7 +112,11 @@ const App = () => (
                 <Route path="/install" element={<Install />} />
 
                 {/* Public SEO calculator landing pages */}
+                <Route path="/coast-fire-tracker" element={<CoastFireTracker />} />
                 <Route path="/coast-fire-calculator" element={<CoastFireCalculator />} />
+                <Route path="/what-is-coast-fire" element={<WhatIsCoastFire />} />
+                <Route path="/fire-for-beginners" element={<FireForBeginners />} />
+                <Route path="/early-retirement-calculator" element={<EarlyRetirementCalculator />} />
                 <Route path="/financial-independence-calculator" element={<FinancialIndependenceCalculator />} />
                 <Route path="/covered-call-calculator" element={<CoveredCallCalculator />} />
                 <Route path="/monthly-dividend-calculator" element={<MonthlyDividendCalculator />} />

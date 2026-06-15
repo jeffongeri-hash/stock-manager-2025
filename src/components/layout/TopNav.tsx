@@ -15,6 +15,7 @@ interface NavItem { title: string; href: string; }
 
 const PRIMARY_NAV: NavItem[] = [
   { title: 'Home', href: '/' },
+  { title: 'Coast FIRE', href: '/coast-fire-tracker' },
   { title: 'Assets', href: '/assets' },
   { title: 'Portfolio', href: '/portfolio' },
   { title: 'Performance', href: '/performance' },
