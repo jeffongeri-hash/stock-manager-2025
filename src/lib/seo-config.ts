@@ -235,6 +235,12 @@ export const pageSEO: Record<string, PageSEO> = {
     keywords: ["Coast FIRE calculator", "Coast FIRE number", "Coast FIRE formula"],
     ogType: "website",
   },
+  "/coast-fire-number": {
+    title: "Coast FIRE Number — How to Calculate Yours by Age",
+    description: "What your Coast FIRE number is, the formula, examples by age (25, 30, 35, 40), and how to track yours to financial independence.",
+    keywords: ["Coast FIRE number", "Coast FIRE number by age", "how to calculate Coast FIRE number"],
+    ogType: "article",
+  },
   "/monthly-dividend-calculator": {
     title: "Monthly Dividend Calculator — Profit Pathfinder",
     description: "Calculate monthly dividend income, yield on cost, and reinvestment growth. Free dividend income tool.",
