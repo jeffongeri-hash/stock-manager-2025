@@ -4,6 +4,7 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CoastFireTrackerWidget } from '@/components/coast-fire/CoastFireTrackerWidget';
+import { EmbedCodeBlock } from '@/components/coast-fire/EmbedCodeBlock';
 import { RelatedTools } from '@/components/seo/RelatedTools';
 import { siteConfig } from '@/lib/seo-config';
 
@@ -229,6 +230,15 @@ Coast FIRE Today     = FIRE Number / (1 + Expected Real Return) ^ Years Until Re
               <li>Setting an unrealistic retirement age and inflating the Coast FIRE discount.</li>
               <li>Ignoring taxes on withdrawals.</li>
             </ul>
+          </section>
+
+          <section id="embed" className="space-y-3 scroll-mt-24">
+            <h2 className="font-display text-3xl font-semibold">Embed the Coast FIRE Tracker on your site</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              Drop the interactive Coast FIRE tracker into any blog post, newsletter, or finance site.
+              Adjust the dimensions, copy the iframe snippet, and paste — no scripts, no dependencies.
+            </p>
+            <EmbedCodeBlock />
           </section>
 
           <section className="space-y-4">
