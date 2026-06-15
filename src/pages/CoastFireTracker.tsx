@@ -9,9 +9,9 @@ import { siteConfig } from '@/lib/seo-config';
 
 const path = '/coast-fire-tracker';
 const url = `${siteConfig.url}${path}`;
-const title = 'Coast FIRE Tracker — Calculate & Track Your Coast FIRE Number';
+const title = 'Coast FIRE Tracker — Calculate Your Coast FIRE Number';
 const description =
-  "Use Profit Pathfinder's free Coast FIRE tracker to calculate your Coast FIRE number, track progress, compare retirement scenarios, and see when your investments can coast to financial independence.";
+  'Free Coast FIRE Tracker: calculate your Coast FIRE number, track progress, and see when your portfolio can coast to financial independence.';
 
 const FAQS = [
   {
@@ -128,6 +128,8 @@ export default function CoastFireTracker() {
               against the amount you'd need invested today for compound growth alone to reach your
               FIRE number by your target retirement age. The tracker shows your Coast FIRE number, the
               gap left to close, your % progress, and your projected portfolio value at retirement.
+              New to the concept? Start with <Link to="/what-is-coast-fire" className="text-primary underline">what is Coast FIRE</Link>,
+              or run a one-time estimate with the <Link to="/coast-fire-calculator" className="text-primary underline">Coast FIRE calculator</Link>.
             </p>
           </section>
 
@@ -166,7 +168,9 @@ Coast FIRE Today     = FIRE Number / (1 + Expected Real Return) ^ Years Until Re
             <p className="text-muted-foreground leading-relaxed">
               Update inputs monthly. Re-check assumptions (spending, retirement age, expected return)
               at least annually or after any major life change — new job, kids, home purchase, or a
-              big shift in markets.
+              big shift in markets. If you're brand new to all of this, read
+              the <Link to="/fire-for-beginners" className="text-primary underline">FIRE for beginners</Link> guide
+              or try the <Link to="/early-retirement-calculator" className="text-primary underline">early retirement calculator</Link>.
             </p>
           </section>
 

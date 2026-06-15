@@ -34,8 +34,8 @@ export const pageSEO: Record<string, PageSEO> = {
     },
   },
   "/coast-fire-tracker": {
-    title: "Coast FIRE Tracker - Calculate & Track Your Coast FIRE Number",
-    description: "Use Profit Pathfinder's free Coast FIRE tracker to calculate your Coast FIRE number, track progress, compare retirement scenarios, and see when your investments can coast to financial independence.",
+    title: "Coast FIRE Tracker — Calculate Your Coast FIRE Number",
+    description: "Free Coast FIRE Tracker: calculate your Coast FIRE number, track progress, and see when your portfolio can coast to financial independence.",
     keywords: ["Coast FIRE tracker", "Coast FIRE number", "track Coast FIRE", "Coast FIRE progress tracker", "free Coast FIRE tracker"],
     ogType: "website",
   },
