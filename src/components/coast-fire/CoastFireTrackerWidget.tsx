@@ -26,6 +26,7 @@ export function CoastFireTrackerWidget({ heading = 'Coast FIRE Tracker' }: Props
   const [currentAge, setCurrentAge] = useState(32);
   const [retireAge, setRetireAge] = useState(65);
   const [invested, setInvested] = useState(75000);
+  const [monthly, setMonthly] = useState(500);
   const [annualSpend, setAnnualSpend] = useState(50000);
   const [swr, setSwr] = useState(4);
   const [realReturn, setRealReturn] = useState(5);
@@ -36,22 +37,40 @@ export function CoastFireTrackerWidget({ heading = 'Coast FIRE Tracker' }: Props
     const sw = swr / 100;
     const fireNumber = annualSpend / sw;
     const coastToday = fireNumber / Math.pow(1 + r, years);
-    const projected = invested * Math.pow(1 + r, years);
+    // Future value WITHOUT contributions (pure Coast)
+    const projectedNoContrib = invested * Math.pow(1 + r, years);
+    // Future value WITH ongoing monthly contributions (added end-of-year)
+    const annualContrib = monthly * 12;
+    const projectedWithContrib =
+      invested * Math.pow(1 + r, years) +
+      (r > 0 ? annualContrib * ((Math.pow(1 + r, years) - 1) / r) : annualContrib * years);
     const pct = coastToday > 0 ? Math.min(100, (invested / coastToday) * 100) : 0;
     const gap = Math.max(0, coastToday - invested);
 
-    // Build a small projection series for the sparkline (invested growth vs target).
+    // Year-by-year coast-FIRE-hit estimate WITH contributions
+    let coastAge: number | null = null;
+    let bal = invested;
+    for (let i = 0; i <= years; i++) {
+      const yearsLeft = years - i;
+      const targetNow = fireNumber / Math.pow(1 + r, yearsLeft);
+      if (bal >= targetNow && coastAge === null) coastAge = currentAge + i;
+      bal = bal * (1 + r) + annualContrib;
+    }
+
+    // Build a small projection series for the sparkline.
     const series: { age: number; value: number; target: number }[] = [];
+    let runBal = invested;
     for (let i = 0; i <= years; i++) {
       series.push({
         age: currentAge + i,
-        value: invested * Math.pow(1 + r, i),
+        value: runBal,
         target: fireNumber / Math.pow(1 + r, years - i),
       });
+      runBal = runBal * (1 + r) + annualContrib;
     }
 
-    return { years, fireNumber, coastToday, projected, pct, gap, series };
-  }, [currentAge, retireAge, invested, annualSpend, swr, realReturn]);
+    return { years, fireNumber, coastToday, projectedNoContrib, projectedWithContrib, pct, gap, coastAge, series };
+  }, [currentAge, retireAge, invested, monthly, annualSpend, swr, realReturn]);
 
   // Build SVG sparkline points
   const sparkline = useMemo(() => {
@@ -83,6 +102,7 @@ export function CoastFireTrackerWidget({ heading = 'Coast FIRE Tracker' }: Props
         <Field label="Current age" value={currentAge} setValue={setCurrentAge} min={10} max={90} />
         <Field label="Retirement age" value={retireAge} setValue={setRetireAge} min={20} max={100} />
         <Field label="Current invested ($)" value={invested} setValue={setInvested} min={0} step={1000} />
+        <Field label="Monthly contribution ($)" value={monthly} setValue={setMonthly} min={0} step={50} />
         <Field label="Annual retirement spending ($)" value={annualSpend} setValue={setAnnualSpend} min={0} step={1000} />
         <Field label="Safe withdrawal rate (%)" value={swr} setValue={setSwr} min={1} max={10} step={0.1} />
         <Field label="Expected real return (%)" value={realReturn} setValue={setRealReturn} min={0} max={15} step={0.1} />
@@ -92,8 +112,11 @@ export function CoastFireTrackerWidget({ heading = 'Coast FIRE Tracker' }: Props
         <Stat label="FIRE Number" value={fmtMoney(result.fireNumber)} />
         <Stat label="Coast FIRE Today" value={fmtMoney(result.coastToday)} accent />
         <Stat label="Gap to Coast FIRE" value={fmtMoney(result.gap)} />
-        <Stat label="Projected at retirement" value={fmtMoney(result.projected)} />
+        <Stat label="Coast FIRE age (with contributions)" value={result.coastAge ? String(result.coastAge) : '—'} />
+        <Stat label="Projected at retirement (no contributions)" value={fmtMoney(result.projectedNoContrib)} />
+        <Stat label="Projected at retirement (with contributions)" value={fmtMoney(result.projectedWithContrib)} />
       </div>
+
 
       <div className="mt-5">
         <div className="flex items-center justify-between text-sm mb-1.5">
