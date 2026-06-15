@@ -134,6 +134,19 @@ export default function CoastFireTracker() {
           </section>
 
           <section className="space-y-3">
+            <h2 className="font-display text-3xl font-semibold">Coast FIRE tracker vs Coast FIRE calculator</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              A <strong>Coast FIRE calculator</strong> answers a one-time question: "what's my number today?"
+              A <strong>Coast FIRE tracker</strong> answers an ongoing one: "am I closing the gap?" The math
+              behind both is the same — your inputs change, markets move, and your target shifts every year,
+              so most people get more value from a tracker they revisit monthly than a calculator they run
+              once and forget. If you just want a snapshot, use the{' '}
+              <Link to="/coast-fire-calculator" className="text-primary underline">Coast FIRE calculator</Link>;
+              for a number you can watch month over month, this page is the right tool.
+            </p>
+          </section>
+
+          <section className="space-y-3">
             <h2 className="font-display text-3xl font-semibold">How to calculate your Coast FIRE number</h2>
             <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
               <li>Estimate your annual retirement spending in today's dollars.</li>

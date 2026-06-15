@@ -49,6 +49,7 @@ const QuantGemini = lazy(() => import("./pages/QuantGemini"));
 // Public SEO landing pages
 const CoastFireTracker = lazy(() => import("./pages/CoastFireTracker"));
 const CoastFireCalculator = lazy(() => import("./pages/CoastFireCalculator"));
+const CoastFireNumber = lazy(() => import("./pages/CoastFireNumber"));
 const WhatIsCoastFire = lazy(() => import("./pages/WhatIsCoastFire"));
 const FireForBeginners = lazy(() => import("./pages/FireForBeginners"));
 const EarlyRetirementCalculator = lazy(() => import("./pages/EarlyRetirementCalculator"));
@@ -114,6 +115,7 @@ const App = () => (
                 {/* Public SEO calculator landing pages */}
                 <Route path="/coast-fire-tracker" element={<CoastFireTracker />} />
                 <Route path="/coast-fire-calculator" element={<CoastFireCalculator />} />
+                <Route path="/coast-fire-number" element={<CoastFireNumber />} />
                 <Route path="/what-is-coast-fire" element={<WhatIsCoastFire />} />
                 <Route path="/fire-for-beginners" element={<FireForBeginners />} />
                 <Route path="/early-retirement-calculator" element={<EarlyRetirementCalculator />} />
