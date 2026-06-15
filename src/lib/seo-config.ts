@@ -18,9 +18,9 @@ export interface PageSEO {
 
 export const pageSEO: Record<string, PageSEO> = {
   "/": {
-    title: "Profit Pathfinder — Trading & Portfolio Tools",
-    description: "Free professional trading tools for portfolio, options, dividends, and market insights. Start investing smarter today.",
-    keywords: ["trading platform", "portfolio tracker", "stock analysis", "free trading tools"],
+    title: "Profit Pathfinder — Coast FIRE Tracker and Early Retirement Calculators",
+    description: "Profit Pathfinder helps you track Coast FIRE, calculate your FIRE number, plan early retirement, and model long-term investment growth.",
+    keywords: ["Coast FIRE tracker", "Coast FIRE calculator", "early retirement calculator", "FIRE for beginners", "financial independence tracker"],
     ogType: "website",
     jsonLd: {
       "@context": "https://schema.org",
@@ -29,9 +29,33 @@ export const pageSEO: Record<string, PageSEO> = {
       "applicationCategory": "FinanceApplication",
       "operatingSystem": "Web",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-      "description": "Professional trading platform for portfolio management and options analysis",
-      "featureList": ["Portfolio Tracking", "Options Analysis", "Dividend Tracking", "Market Scanner", "Retirement Planning"],
+      "description": "Coast FIRE tracker, early retirement calculator, dividend tracking, and long-term investment planning tools.",
+      "featureList": ["Coast FIRE Tracker", "Early Retirement Calculator", "Dividend Tracking", "Portfolio Tracking", "Retirement Planning"],
     },
+  },
+  "/coast-fire-tracker": {
+    title: "Coast FIRE Tracker - Calculate & Track Your Coast FIRE Number",
+    description: "Use Profit Pathfinder's free Coast FIRE tracker to calculate your Coast FIRE number, track progress, compare retirement scenarios, and see when your investments can coast to financial independence.",
+    keywords: ["Coast FIRE tracker", "Coast FIRE number", "track Coast FIRE", "Coast FIRE progress tracker", "free Coast FIRE tracker"],
+    ogType: "website",
+  },
+  "/what-is-coast-fire": {
+    title: "What Is Coast FIRE? Coast FIRE Explained for Beginners",
+    description: "Learn what Coast FIRE means, how it works, how to calculate your Coast FIRE number, and how it compares to traditional FIRE.",
+    keywords: ["what is Coast FIRE", "Coast FIRE explained", "Coast FIRE meaning", "Coast FIRE vs FIRE"],
+    ogType: "article",
+  },
+  "/fire-for-beginners": {
+    title: "FIRE for Beginners - Financial Independence and Early Retirement Guide",
+    description: "A beginner-friendly guide to FIRE, including Coast FIRE, traditional FIRE, savings rate, withdrawal rates, investing, and early retirement planning.",
+    keywords: ["FIRE for beginners", "financial independence guide", "early retirement guide", "FIRE basics"],
+    ogType: "article",
+  },
+  "/early-retirement-calculator": {
+    title: "Early Retirement Calculator - Track Your Path to Financial Independence",
+    description: "Use Profit Pathfinder's early retirement calculator to estimate your FIRE number, retirement timeline, savings rate, and investment growth.",
+    keywords: ["early retirement calculator", "early retirement tracker", "FIRE timeline", "years to FIRE"],
+    ogType: "website",
   },
   "/portfolio": {
     title: "Portfolio Tracker — Profit Pathfinder",
@@ -200,9 +224,15 @@ export const pageSEO: Record<string, PageSEO> = {
     ogType: "website",
   },
   "/financial-independence-calculator": {
-    title: "Financial Independence Calculator — Profit Pathfinder",
-    description: "Calculate your FI number, years to financial independence, and savings rate impact. Free FI calculator.",
-    keywords: ["financial independence calculator", "FI number", "early retirement calculator"],
+    title: "Financial Independence Calculator — Years to FI | Profit Pathfinder",
+    description: "Calculate your FI number, years to financial independence, and the impact of your savings rate. Free FI calculator with no signup.",
+    keywords: ["financial independence calculator", "FI number", "financial independence tracker"],
+    ogType: "website",
+  },
+  "/coast-fire-calculator": {
+    title: "Coast FIRE Calculator - Find Your Coast FIRE Number",
+    description: "Calculate your Coast FIRE number and see how much you need invested today for your portfolio to grow into your retirement goal.",
+    keywords: ["Coast FIRE calculator", "Coast FIRE number", "Coast FIRE formula"],
     ogType: "website",
   },
   "/monthly-dividend-calculator": {

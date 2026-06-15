@@ -1,11 +1,29 @@
 User-agent: *
 Allow: /
 
-# Sitemap
-Sitemap: https://profitpathfinder.online/sitemap.xml
-
-# Disallow admin/private pages from indexing
+# Private / personal-data routes
 Disallow: /settings
 Disallow: /saved-data
 Disallow: /assets
 Disallow: /auth
+Disallow: /checkout/
+
+# Admin-gated demo pages (Gemini-powered, not public)
+Disallow: /ai-trade-journal
+Disallow: /ai-trade-journal-demo
+Disallow: /premarket-brief
+Disallow: /weekly-fundamental-scan
+Disallow: /fire-planning-suite
+Disallow: /smarttrade-ai
+Disallow: /quantgemini
+Disallow: /paycheck-calculator
+Disallow: /analysis
+Disallow: /iv-strike-selector
+
+# Removed / redirecting routes
+Disallow: /risk-metrics
+Disallow: /portfolio-rebalancing
+Disallow: /ignite-fire
+Disallow: /market-scanner
+
+Sitemap: https://profitpathfinder.online/sitemap.xml
