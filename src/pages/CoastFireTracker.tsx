@@ -128,6 +128,8 @@ export default function CoastFireTracker() {
               against the amount you'd need invested today for compound growth alone to reach your
               FIRE number by your target retirement age. The tracker shows your Coast FIRE number, the
               gap left to close, your % progress, and your projected portfolio value at retirement.
+              New to the concept? Start with <Link to="/what-is-coast-fire" className="text-primary underline">what is Coast FIRE</Link>,
+              or run a one-time estimate with the <Link to="/coast-fire-calculator" className="text-primary underline">Coast FIRE calculator</Link>.
             </p>
           </section>
 
