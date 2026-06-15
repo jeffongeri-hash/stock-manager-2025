@@ -9,9 +9,9 @@ import { siteConfig } from '@/lib/seo-config';
 
 const path = '/coast-fire-tracker';
 const url = `${siteConfig.url}${path}`;
-const title = 'Coast FIRE Tracker — Calculate & Track Your Coast FIRE Number';
+const title = 'Coast FIRE Tracker — Calculate Your Coast FIRE Number';
 const description =
-  "Use Profit Pathfinder's free Coast FIRE tracker to calculate your Coast FIRE number, track progress, compare retirement scenarios, and see when your investments can coast to financial independence.";
+  'Free Coast FIRE Tracker: calculate your Coast FIRE number, track progress, and see when your portfolio can coast to financial independence.';
 
 const FAQS = [
   {
