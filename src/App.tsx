@@ -115,6 +115,7 @@ const App = () => (
                 {/* Public SEO calculator landing pages */}
                 <Route path="/coast-fire-tracker" element={<CoastFireTracker />} />
                 <Route path="/coast-fire-calculator" element={<CoastFireCalculator />} />
+                <Route path="/coast-fire-number" element={<CoastFireNumber />} />
                 <Route path="/what-is-coast-fire" element={<WhatIsCoastFire />} />
                 <Route path="/fire-for-beginners" element={<FireForBeginners />} />
                 <Route path="/early-retirement-calculator" element={<EarlyRetirementCalculator />} />
