@@ -1,30 +1,39 @@
 # Profit Pathfinder
 
-> Free professional trading and personal-finance platform: portfolio tracking, options analysis, dividend income, retirement (FIRE) planning, real estate and auto-loan calculators, and AI-powered market research.
+> Free Coast FIRE tracker, early retirement calculators, dividend tracking, and investing tools — plan financial independence in your browser.
 
-## Pages
+Profit Pathfinder is a free web platform for people pursuing financial independence and early retirement (FIRE). The flagship tool is the Coast FIRE Tracker — find the amount you need invested today for compound growth alone to reach your full FIRE number by retirement.
 
-- [Home](/): Overview of all Profit Pathfinder tools.
-- [Dashboard](/dashboard): Personal trading dashboard with watchlists and market overview.
-- [Portfolio](/portfolio): Track stock holdings, positions, and gains/losses in real time.
-- [Performance](/performance): Investment returns, benchmarking, and unrealized P&L breakdown.
-- [Analysis](/analysis): AI-powered stock analysis with technicals, fundamentals, catalysts, and analyst ratings.
-- [Trading Toolkit](/trading-toolkit): Position sizing, risk calculators, journals, and trade utilities.
+## FIRE Tools
+
+- [Coast FIRE Tracker](/coast-fire-tracker): Flagship tool. Calculate your Coast FIRE number, track gap and % progress, compare scenarios.
+- [Coast FIRE Calculator](/coast-fire-calculator): One-time calculation of your Coast FIRE number using current age, retirement age, spending, SWR, and real return.
+- [What Is Coast FIRE?](/what-is-coast-fire): Beginner explanation of Coast FIRE, formula, and how it differs from traditional FIRE.
+- [FIRE for Beginners](/fire-for-beginners): Beginner guide to FIRE, savings rate, withdrawal rates, and early retirement planning.
+- [Early Retirement Calculator](/early-retirement-calculator): FIRE number, years to FI, and savings-rate impact.
+- [Financial Independence Calculator](/financial-independence-calculator): Years to FI using the 4% rule, savings rate, and returns.
+- [FIRE Guide](/fire-guide): Lean, Fat, Barista, and Coast FIRE explained with inflation-adjusted numbers.
+- [Retirement Planning](/retirement-planning): FIRE, Roth conversion, Social Security, and withdrawal strategies.
+
+## Investing Tools
+
+- [Dividend Tracker](/dividend-tracker): Yield on cost, CAGR, and dividend income projections.
+- [Monthly Dividend Calculator](/monthly-dividend-calculator): DRIP compounding and monthly passive income from dividends.
 - [Options Toolkit](/options-portfolio): Covered calls, the Wheel, PMCC, iron condors, and Greeks.
-- [0DTE Scanner](/zero-dte): Same-day options chains for SPY, QQQ, and major indices.
-- [Market Scanner](/market-scanner): LEAPS and covered-call screeners with advanced filters.
+- [Covered Call Calculator](/covered-call-calculator): Premium income, breakeven, and annualized return.
 - [Options Guide](/options-guide): Educational guide to options strategies, basic to advanced.
 - [Credit Options Guide](/credit-options-guide): Credit spreads, cash-secured puts, and risk-defined income trades.
 - [Fundamental Analysis Guide](/fundamental-analysis-guide): CAN SLIM methodology and ratio appropriateness matrix.
-- [Dividend Tracker](/dividend-tracker): Yield-on-cost, CAGR, and dividend income projections.
-- [Risk Metrics](/risk-metrics): Portfolio VaR, Sharpe, beta, and Monte Carlo simulations.
-- [Portfolio Rebalancing](/portfolio-rebalancing): Calculate trades to hit target allocations.
-- [Retirement Planning](/retirement-planning): FIRE, Roth conversion, Social Security, and withdrawal strategies.
+- [0DTE Scanner](/zero-dte): Same-day options chains for SPY, QQQ, and major indices.
+- [Trading Toolkit](/trading-toolkit): Position sizing, risk calculators, and trade utilities.
+- [All Tools](/all-tools): Directory of every Profit Pathfinder tool.
+
+## Lifestyle Calculators
+
 - [Real Estate Calculator](/real-estate): Rental income, ROI, and mortgage analysis.
 - [Car Finance Calculator](/car-finance): Auto loans, depreciation, and total cost of ownership.
-- [SmartTrade AI](/smarttrade-ai): Gemini-powered trade planner and strategy simulator.
-- [QuantGemini](/quantgemini): Institutional-grade investor scorecards via Gemini AI.
 
 ## Optional
 
-- [Install](/install): Install Profit Pathfinder as a mobile/desktop app.
+- [Install](/install): Install Profit Pathfinder as a mobile or desktop app.
+- [Pricing](/pricing): Free and Pro tier details.
