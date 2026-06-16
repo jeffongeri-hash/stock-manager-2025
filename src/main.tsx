@@ -25,6 +25,13 @@ function extractChunkUrl(msg: string, reason: any): string | null {
   return null;
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 function renderBootFailure(message: string) {
   const root = document.getElementById('root');
   if (!root) return;
@@ -33,7 +40,7 @@ function renderBootFailure(message: string) {
       <section style="max-width:680px;border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.82);padding:24px;border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.35);">
         <h1 style="margin:0 0 10px;font-size:22px;line-height:1.2;">Profit Pathfinder could not load the app bundle.</h1>
         <p style="margin:0;color:#cbd5e1;line-height:1.6;">A cached or interrupted module request failed. Refresh once; if it persists, check the console for <code>[chunk-debug]</code> diagnostics.</p>
-        <pre style="margin:16px 0 0;white-space:pre-wrap;color:#93c5fd;font-size:12px;line-height:1.5;">${message.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c] || c)}</pre>
+        <pre style="margin:16px 0 0;white-space:pre-wrap;color:#93c5fd;font-size:12px;line-height:1.5;">${escapeHtml(message)}</pre>
       </section>
     </main>`;
 }
