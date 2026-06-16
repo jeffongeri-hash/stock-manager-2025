@@ -18,12 +18,67 @@ import { ThemeProvider } from './components/ThemeProvider'
 // caused repeated window.location.replace() calls and a visible flicker/loop
 // in the preview whenever an asset request was intercepted (e.g. auth bridge
 // 302 on the Lovable preview iframe). Now: try once, then give up silently.
-function handleChunkLoadFailure(reason: unknown) {
-  const msg = String((reason as any)?.message || reason || '');
-  if (!/Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module/i.test(msg)) {
+// Capture EVERY failed dynamic import / script-load event with full diagnostics
+// so we can see which chunk URL is failing, whether the response was an auth
+// redirect (302 → HTML), and the surrounding navigation context. Logs are
+// emitted to the console with the `[chunk-debug]` tag.
+async function probeChunkUrl(url: string) {
+  try {
+    const res = await fetch(url, { method: 'GET', redirect: 'manual', credentials: 'include' });
+    const ct = res.headers.get('content-type') || '';
+    const loc = res.headers.get('location') || '';
+    const bodySnippet = ct.includes('text/html') || ct.includes('application/json')
+      ? (await res.clone().text()).slice(0, 240)
+      : '';
+    return { status: res.status, type: res.type, contentType: ct, location: loc, bodySnippet };
+  } catch (err) {
+    return { status: 'fetch-threw', error: String((err as any)?.message || err) };
+  }
+}
+
+function extractChunkUrl(msg: string, reason: any): string | null {
+  // Vite/browser error messages often include the failing URL.
+  const m = msg.match(/https?:\/\/[^\s"')]+\.m?js[^\s"')]*/);
+  if (m) return m[0];
+  if (reason?.target?.src) return String(reason.target.src);
+  return null;
+}
+
+function handleChunkLoadFailure(source: 'error' | 'unhandledrejection', reason: unknown) {
+  const err: any = reason;
+  const msg = String(err?.message || err || '');
+  const isChunkErr = /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|Loading chunk \d+ failed|ChunkLoadError/i.test(msg);
+
+  if (!isChunkErr) return;
+
+  const chunkUrl = extractChunkUrl(msg, err);
+  const diag = {
+    source,
+    message: msg,
+    name: err?.name,
+    stack: typeof err?.stack === 'string' ? err.stack.split('\n').slice(0, 8).join('\n') : undefined,
+    chunkUrl,
+    currentUrl: window.location.href,
+    referrer: document.referrer,
+    online: navigator.onLine,
+    timestamp: new Date().toISOString(),
+    reloadedThisSession: sessionStorage.getItem('pp_chunk_reloaded_once') === '1',
+  };
+  // eslint-disable-next-line no-console
+  console.error('[chunk-debug] dynamic import failed', diag);
+
+  if (chunkUrl) {
+    probeChunkUrl(chunkUrl).then((probe) => {
+      // eslint-disable-next-line no-console
+      console.error('[chunk-debug] probe result for', chunkUrl, probe);
+    });
+  }
+
+  if (sessionStorage.getItem('pp_chunk_reloaded_once') === '1') {
+    // eslint-disable-next-line no-console
+    console.warn('[chunk-debug] already attempted recovery this session — not reloading again');
     return;
   }
-  if (sessionStorage.getItem('pp_chunk_reloaded_once') === '1') return;
   sessionStorage.setItem('pp_chunk_reloaded_once', '1');
   (async () => {
     try {
@@ -38,12 +93,29 @@ function handleChunkLoadFailure(reason: unknown) {
     } finally {
       const url = new URL(window.location.href);
       url.searchParams.set('chunk-reload', Date.now().toString());
+      // eslint-disable-next-line no-console
+      console.warn('[chunk-debug] reloading once to recover →', url.toString());
       window.location.replace(url.toString());
     }
   })();
 }
-window.addEventListener('error', (e) => handleChunkLoadFailure(e.error || e.message));
-window.addEventListener('unhandledrejection', (e) => handleChunkLoadFailure(e.reason));
+
+window.addEventListener('error', (e) => {
+  // Also catch <script> load failures, which fire as ErrorEvent with target set.
+  if ((e as any).target && (e as any).target !== window) {
+    const tgt = (e as any).target as HTMLScriptElement;
+    if (tgt.tagName === 'SCRIPT' && tgt.src) {
+      // eslint-disable-next-line no-console
+      console.error('[chunk-debug] <script> failed to load', { src: tgt.src, type: tgt.type });
+      probeChunkUrl(tgt.src).then((p) =>
+        // eslint-disable-next-line no-console
+        console.error('[chunk-debug] probe result for', tgt.src, p),
+      );
+    }
+  }
+  handleChunkLoadFailure('error', (e as any).error || (e as any).message);
+}, true);
+window.addEventListener('unhandledrejection', (e) => handleChunkLoadFailure('unhandledrejection', e.reason));
 
 (async () => {
   try {
