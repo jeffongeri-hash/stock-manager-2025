@@ -1,27 +1,7 @@
-import { createRoot } from 'react-dom/client'
-import { HelmetProvider } from 'react-helmet-async'
-import App from './App.tsx'
-import './index.css'
-import { ThemeProvider } from './components/ThemeProvider'
-
-// Force-replace any previously installed vite-plugin-pwa service worker
-// with the kill-switch worker at /sw.js. That worker clears all caches,
-// navigates open clients to a cache-busted URL, then unregisters itself.
-// One-time hard reload guard ensures the cleanup runs exactly once.
-// Recover from stale lazy-chunk references left over from a previous deploy.
-// When the browser has a cached index.html that points to a JS chunk that no
-// longer exists, dynamic import() throws "Importing a module script failed"
-// and the app renders a blank screen. Detect that once, wipe caches, and
-// hard-reload bypassing the SW.
-// Recover from stale lazy-chunk references at most ONCE per browser session.
-// Previously this fired on every chunk error with only a 10s cooldown, which
-// caused repeated window.location.replace() calls and a visible flicker/loop
-// in the preview whenever an asset request was intercepted (e.g. auth bridge
-// 302 on the Lovable preview iframe). Now: try once, then give up silently.
-// Capture EVERY failed dynamic import / script-load event with full diagnostics
-// so we can see which chunk URL is failing, whether the response was an auth
-// redirect (302 → HTML), and the surrounding navigation context. Logs are
-// emitted to the console with the `[chunk-debug]` tag.
+// Keep the entry file dependency-free so it can run even when React/Vite
+// dependency chunks fail to import. This lets us clear stale service workers,
+// log the exact failed module URL, and avoid blank-screen reload loops before
+// loading the real app bundle from ./bootstrap.
 async function probeChunkUrl(url: string) {
   try {
     const res = await fetch(url, { method: 'GET', redirect: 'manual', credentials: 'include' });
@@ -40,11 +20,25 @@ function extractChunkUrl(msg: string, reason: any): string | null {
   // Vite/browser error messages often include the failing URL.
   const m = msg.match(/https?:\/\/[^\s"')]+\.m?js[^\s"')]*/);
   if (m) return m[0];
+  if (reason?.filename) return String(reason.filename);
   if (reason?.target?.src) return String(reason.target.src);
   return null;
 }
 
-function handleChunkLoadFailure(source: 'error' | 'unhandledrejection', reason: unknown) {
+function renderBootFailure(message: string) {
+  const root = document.getElementById('root');
+  if (!root) return;
+  root.innerHTML = `
+    <main style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#080b12;color:#f8fafc;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+      <section style="max-width:680px;border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.82);padding:24px;border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.35);">
+        <h1 style="margin:0 0 10px;font-size:22px;line-height:1.2;">Profit Pathfinder could not load the app bundle.</h1>
+        <p style="margin:0;color:#cbd5e1;line-height:1.6;">A cached or interrupted module request failed. Refresh once; if it persists, check the console for <code>[chunk-debug]</code> diagnostics.</p>
+        <pre style="margin:16px 0 0;white-space:pre-wrap;color:#93c5fd;font-size:12px;line-height:1.5;">${message.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c] || c)}</pre>
+      </section>
+    </main>`;
+}
+
+function handleChunkLoadFailure(source: 'error' | 'unhandledrejection' | 'bootstrap-import', reason: unknown) {
   const err: any = reason;
   const msg = String(err?.message || err || '');
   const isChunkErr = /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|Loading chunk \d+ failed|ChunkLoadError/i.test(msg);
@@ -77,6 +71,7 @@ function handleChunkLoadFailure(source: 'error' | 'unhandledrejection', reason: 
   if (sessionStorage.getItem('pp_chunk_reloaded_once') === '1') {
     // eslint-disable-next-line no-console
     console.warn('[chunk-debug] already attempted recovery this session — not reloading again');
+    renderBootFailure(msg);
     return;
   }
   sessionStorage.setItem('pp_chunk_reloaded_once', '1');
@@ -113,49 +108,64 @@ window.addEventListener('error', (e) => {
       );
     }
   }
-  handleChunkLoadFailure('error', (e as any).error || (e as any).message);
+  handleChunkLoadFailure('error', (e as any).error || e);
 }, true);
 window.addEventListener('unhandledrejection', (e) => handleChunkLoadFailure('unhandledrejection', e.reason));
 
-(async () => {
+async function clearServiceWorkersAndCaches() {
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => caches.delete(k)));
+  }
+  if ('serviceWorker' in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map((r) => r.unregister().catch(() => {})));
+  }
+}
+
+async function preflightBeforeReact() {
+  if (!('serviceWorker' in navigator)) return true;
+
   try {
-    if ('serviceWorker' in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      const hadOldSw = regs.some((r) => {
-        const url = r.active?.scriptURL || r.installing?.scriptURL || r.waiting?.scriptURL || '';
-        return !!url && !/\/sw\.js(\?|$)/.test(url);
-      });
+    const regs = await navigator.serviceWorker.getRegistrations();
+    const controlledBySw = Boolean(navigator.serviceWorker.controller);
+    const hasRegistrations = regs.length > 0;
 
-      // Always (re)register the kill-switch worker.
-      try {
-        await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-      } catch {}
+    if (!controlledBySw && !hasRegistrations) return true;
 
-      // If an old PWA worker was present and we haven't already cleaned up,
-      // wipe caches and force a hard reload that bypasses the SW cache.
-      const cleaned = sessionStorage.getItem('pp_sw_cleaned');
-      if (hadOldSw && !cleaned) {
-        sessionStorage.setItem('pp_sw_cleaned', '1');
-        if ('caches' in window) {
-          const keys = await caches.keys();
-          await Promise.all(keys.map((k) => caches.delete(k)));
-        }
-        const url = new URL(window.location.href);
-        url.searchParams.set('sw-cleanup', Date.now().toString());
-        window.location.replace(url.toString());
-        return;
-      }
+    console.warn('[chunk-debug] clearing service workers before app boot', {
+      controlledBySw,
+      registrations: regs.map((r) => ({ scope: r.scope, scriptURL: r.active?.scriptURL || r.waiting?.scriptURL || r.installing?.scriptURL })),
+      currentUrl: window.location.href,
+    });
+
+    await clearServiceWorkersAndCaches();
+
+    if (controlledBySw && sessionStorage.getItem('pp_sw_preflight_reloaded_once') !== '1') {
+      sessionStorage.setItem('pp_sw_preflight_reloaded_once', '1');
+      const url = new URL(window.location.href);
+      url.searchParams.set('sw-preflight-cleanup', Date.now().toString());
+      window.location.replace(url.toString());
+      return false;
     }
   } catch (e) {
-    console.warn('sw cleanup failed', e);
+    console.warn('[chunk-debug] service worker preflight cleanup failed', e);
   }
 
-  createRoot(document.getElementById('root')!).render(
-    <HelmetProvider>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-        <App />
-      </ThemeProvider>
-    </HelmetProvider>
-  );
-  // App mounted successfully — no further reload recovery needed this session.
+  return true;
+}
+
+(async () => {
+  const shouldBoot = await preflightBeforeReact();
+  if (!shouldBoot) return;
+
+  try {
+    const { mountApp } = await import('./bootstrap');
+    mountApp();
+  } catch (e) {
+    handleChunkLoadFailure('bootstrap-import', e);
+    if (sessionStorage.getItem('pp_chunk_reloaded_once') === '1') {
+      renderBootFailure(String((e as any)?.message || e || 'Unknown module import failure'));
+    }
+  }
 })();
