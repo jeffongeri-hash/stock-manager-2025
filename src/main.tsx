@@ -13,15 +13,18 @@ import { ThemeProvider } from './components/ThemeProvider'
 // longer exists, dynamic import() throws "Importing a module script failed"
 // and the app renders a blank screen. Detect that once, wipe caches, and
 // hard-reload bypassing the SW.
+// Recover from stale lazy-chunk references at most ONCE per browser session.
+// Previously this fired on every chunk error with only a 10s cooldown, which
+// caused repeated window.location.replace() calls and a visible flicker/loop
+// in the preview whenever an asset request was intercepted (e.g. auth bridge
+// 302 on the Lovable preview iframe). Now: try once, then give up silently.
 function handleChunkLoadFailure(reason: unknown) {
   const msg = String((reason as any)?.message || reason || '');
   if (!/Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module/i.test(msg)) {
     return;
   }
-  // Cooldown: avoid reload loops, but allow recovery from new stale chunks later in session.
-  const last = Number(sessionStorage.getItem('pp_chunk_reloaded_at') || '0');
-  if (Date.now() - last < 10_000) return;
-  sessionStorage.setItem('pp_chunk_reloaded_at', String(Date.now()));
+  if (sessionStorage.getItem('pp_chunk_reloaded_once') === '1') return;
+  sessionStorage.setItem('pp_chunk_reloaded_once', '1');
   (async () => {
     try {
       if ('caches' in window) {
