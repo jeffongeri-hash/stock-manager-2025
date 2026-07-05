@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "profit-pathfinder-mcp",
+      "version": "0.1.0",
+      "title": "Profit Pathfinder MCP"
+    },
+    "tools": [
+      {
+        "name": "calculate_coast_fire",
+        "title": "Calculate Coast FIRE number",
+        "description": "Calculate the Coast FIRE number: the invested amount today that, left to grow untouched, funds retirement at the target age. Returns coast number, projected value at retirement, and annual withdrawal at the safe withdrawal rate.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "currentAge": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Current age of the user."
+            },
+            "retirementAge": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Age at which the user plans to retire."
+            },
+            "annualExpenses": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Expected annual expenses in retirement (today's dollars)."
+            },
+            "realReturnRate": {
+              "default": 0.05,
+              "type": "number",
+              "description": "Expected annual real (inflation-adjusted) return, e.g. 0.05 for 5%. Defaults to 0.05."
+            },
+            "withdrawalRate": {
+              "default": 0.04,
+              "type": "number",
+              "description": "Safe withdrawal rate, e.g. 0.04 for the 4% rule. Defaults to 0.04."
+            }
+          },
+          "required": [
+            "currentAge",
+            "retirementAge",
+            "annualExpenses"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "compound_growth",
+        "title": "Project compound investment growth",
+        "description": "Project the future value of an investment given a starting balance, monthly contributions, annual return rate, and number of years.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "startingBalance": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Current invested balance."
+            },
+            "monthlyContribution": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Amount contributed each month."
+            },
+            "annualReturnRate": {
+              "type": "number",
+              "description": "Expected annual return, e.g. 0.07 for 7%."
+            },
+            "years": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Number of years to project."
+            }
+          },
+          "required": [
+            "startingBalance",
+            "monthlyContribution",
+            "annualReturnRate",
+            "years"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_calculators",
+        "title": "List Profit Pathfinder calculators",
+        "description": "List the financial calculators and tools available on Profit Pathfinder, with their URLs and descriptions.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
