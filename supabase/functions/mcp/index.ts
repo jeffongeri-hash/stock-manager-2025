@@ -3,10 +3,10 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.1";
 
 // src/lib/mcp/tools/calculate-coast-fire.ts
-import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.1";
 import { z } from "npm:zod@^4.4.3";
 var calculate_coast_fire_default = defineTool({
   name: "calculate_coast_fire",
@@ -48,7 +48,7 @@ Assumptions: ${(realReturnRate * 100).toFixed(1)}% real return, ${(withdrawalRat
 });
 
 // src/lib/mcp/tools/compound-growth.ts
-import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.1";
 import { z as z2 } from "npm:zod@^4.4.3";
 var compound_growth_default = defineTool2({
   name: "compound_growth",
@@ -85,7 +85,7 @@ Investment growth: $${growth.toLocaleString(void 0, { maximumFractionDigits: 0 }
 });
 
 // src/lib/mcp/tools/list-calculators.ts
-import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.20.1";
 var CALCULATORS = [
   { name: "Coast FIRE Tracker", path: "/coast-fire-tracker", description: "Track progress toward Coast FIRE with milestone chart." },
   { name: "Coast FIRE Calculator", path: "/coast-fire-calculator", description: "Calculate your Coast FIRE number by age." },
@@ -123,5 +123,5 @@ var mcp_default = defineMcp({
 });
 
 // lovable-mcp-supabase-entry.ts
-import { createSupabaseHandler } from "npm:@lovable.dev/mcp-js@0.20.0/stacks/supabase";
+import { createSupabaseHandler } from "npm:@lovable.dev/mcp-js@0.20.1/stacks/supabase";
 Deno.serve(createSupabaseHandler(mcp_default, { functionName: "mcp" }));
