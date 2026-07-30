@@ -448,8 +448,7 @@ footer {
 .promo-video-frame {
   position: relative;
   width: 100%;
-  max-width: 940px;
-  max-height: 52vh;
+  max-width: 780px;
   border-radius: 24px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,0.08);
