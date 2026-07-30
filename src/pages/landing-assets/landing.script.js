@@ -27,17 +27,12 @@
     pv.addEventListener('loadeddata', hideLoader);
     pv.addEventListener('canplay', function() { hideLoader(); tryPlay(); });
     pv.addEventListener('playing', function() { setState('playing'); });
-    pv.addEventListener('waiting', function() {
-      if (pvFrame.getAttribute('data-state') !== 'needs-play') setState('loading');
-    });
-    pv.addEventListener('stalled', function() {
-      if (pvFrame.getAttribute('data-state') !== 'needs-play') setState('loading');
-    });
+    // Never re-show a blocking spinner over the poster while buffering.
     pv.addEventListener('error', function() { setState('error'); });
 
     // Safety timeout — if nothing has loaded after 8s, surface the replay button
     setTimeout(function() {
-      if (pv.readyState < 2 && pvFrame.getAttribute('data-state') === 'loading') {
+      if (pv.readyState < 2 && pvFrame.getAttribute('data-state') !== 'playing') {
         showNeedsPlay();
       }
     }, 8000);
