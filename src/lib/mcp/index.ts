@@ -1,4 +1,4 @@
-import { defineMcp } from "@lovable.dev/mcp-js";
+import { auth, defineMcp } from "@lovable.dev/mcp-js";
 import calculateCoastFireTool from "./tools/calculate-coast-fire";
 import compoundGrowthTool from "./tools/compound-growth";
 import listCalculatorsTool from "./tools/list-calculators";
