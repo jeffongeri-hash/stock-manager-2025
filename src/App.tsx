@@ -25,6 +25,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const OptionsPortfolio = lazy(() => import("./pages/OptionsPortfolio"));
 const ZeroDTE = lazy(() => import("./pages/ZeroDTE"));
 const Auth = lazy(() => import("./pages/Auth"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const TradingToolkit = lazy(() => import("./pages/TradingToolkit"));
 
 const CreditOptionsGuide = lazy(() => import("./pages/CreditOptionsGuide"));
@@ -110,6 +111,7 @@ const App = () => (
                 <Route path="/index" element={<Landing />} />
                 <Route path="/dashboard" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                 <Route path="/install" element={<Install />} />
 
                 {/* Public SEO calculator landing pages */}

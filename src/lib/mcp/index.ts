@@ -4,11 +4,11 @@ import compoundGrowthTool from "./tools/compound-growth";
 import listCalculatorsTool from "./tools/list-calculators";
 
 export default defineMcp({
-  name: "profit-pathfinder-mcp",
-  title: "Profit Pathfinder MCP",
+  name: "stock-manager-2025",
+  title: "stock-manager-2025",
   version: "0.1.0",
   auth: auth.oauth.issuer({
-    issuer: "https://uvqrdzwimiszqkmyzbvf.supabase.co/auth/v1",
+    issuer: `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unset"}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
   instructions:

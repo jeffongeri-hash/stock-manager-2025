@@ -8,8 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
+const safeNext = () => {
+  const n = new URLSearchParams(window.location.search).get('next') || '/';
+  return n.startsWith('/') && !n.startsWith('//') ? n : '/';
+};
+
 const Auth = () => {
   const navigate = useNavigate();
+  const goNext = () => { const n = safeNext(); if (n.startsWith('/.lovable/')) window.location.href = n; else navigate(n); };
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,13 +24,13 @@ const Auth = () => {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate('/');
+        goNext();
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate('/');
+        goNext();
       }
     });
 
@@ -39,7 +45,7 @@ const Auth = () => {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`
+        emailRedirectTo: `${window.location.origin}${safeNext()}`
       }
     });
 
@@ -64,7 +70,7 @@ const Auth = () => {
       toast.error(error.message);
     } else {
       toast.success('Signed in successfully!');
-      navigate('/');
+      goNext();
     }
     setLoading(false);
   };

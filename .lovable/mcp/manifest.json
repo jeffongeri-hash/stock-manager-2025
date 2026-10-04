@@ -3,13 +3,17 @@
   "sdk_version": "0.20.1",
   "path": "/functions/v1/mcp",
   "auth": {
-    "type": "none"
+    "type": "oauth",
+    "issuer": "https://uvqrdzwimiszqkmyzbvf.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
   },
   "mcp": {
     "server": {
-      "name": "profit-pathfinder-mcp",
+      "name": "stock-manager-2025",
       "version": "0.1.0",
-      "title": "Profit Pathfinder MCP"
+      "title": "stock-manager-2025"
     },
     "tools": [
       {
