@@ -3,7 +3,7 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.1";
+import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.1";
 
 // src/lib/mcp/tools/calculate-coast-fire.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.1";
@@ -118,6 +118,10 @@ var mcp_default = defineMcp({
   name: "profit-pathfinder-mcp",
   title: "Profit Pathfinder MCP",
   version: "0.1.0",
+  auth: auth.oauth.issuer({
+    issuer: "https://uvqrdzwimiszqkmyzbvf.supabase.co/auth/v1",
+    acceptedAudiences: "authenticated"
+  }),
   instructions: "Tools for Profit Pathfinder, a personal-finance and FIRE planning app. Use `list_calculators` to discover available in-app tools, `calculate_coast_fire` to compute a Coast FIRE number, and `compound_growth` to project long-term investment growth.",
   tools: [calculate_coast_fire_default, compound_growth_default, list_calculators_default]
 });
