@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
 const links = [
+  { to: '/blog/covered-call-calculator-guide', label: 'Blog' },
   { to: '/about', label: 'About' },
   { to: '/contact', label: 'Contact' },
   { to: '/privacy-policy', label: 'Privacy Policy' },
