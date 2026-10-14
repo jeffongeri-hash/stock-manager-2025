@@ -21,6 +21,7 @@ export default function CoveredCallCalculator() {
         <meta property="og:url" content={canonical} />
         <meta property="og:type" content="website" />
       </Helmet>
+      <h1 className="sr-only">Covered Call Calculator</h1>
       <iframe
         src="/covered-call-calculator-app.html"
         title="Covered Call Calculator"
