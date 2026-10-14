@@ -69,13 +69,13 @@ export const pageSEO: Record<string, PageSEO> = {
     ogType: "website",
   },
   "/options-portfolio": {
-    title: "Options Toolkit — Profit Pathfinder",
+    title: "Options Calculators & Trading Tools | Profit Pathfinder",
     description: "Options trading toolkit: covered call analyzer, wheel tracker, PMCC calculator, iron condors, and Greeks.",
     keywords: ["options trading", "covered calls", "wheel strategy", "PMCC calculator"],
     ogType: "website",
   },
   "/options-guide": {
-    title: "Options Strategy Guide — Profit Pathfinder",
+    title: "Options Trading Strategies Guide | Profit Pathfinder",
     description: "Guide to options strategies: covered calls, cash-secured puts, spreads, iron condors, and the wheel.",
     keywords: ["options guide", "options strategies", "learn options trading"],
     ogType: "article",
@@ -88,7 +88,7 @@ export const pageSEO: Record<string, PageSEO> = {
     },
   },
   "/credit-options-guide": {
-    title: "Credit Options Guide — Profit Pathfinder",
+    title: "Credit Spreads & Options Income Guide | Profit Pathfinder",
     description: "Learn credit spreads, cash-secured puts, and risk-defined income trades with worked examples.",
     keywords: ["credit spreads", "cash secured puts", "credit options", "income options"],
     ogType: "article",
@@ -114,7 +114,7 @@ export const pageSEO: Record<string, PageSEO> = {
     },
   },
   "/dividend-tracker": {
-    title: "Dividend Tracker — Profit Pathfinder",
+    title: "Free Dividend Tracker & Income Calculator | Profit Pathfinder",
     description: "Track dividend income, yield on cost, and build passive income streams. Free dividend tool.",
     keywords: ["dividend tracker", "dividend income", "yield on cost", "passive income"],
     ogType: "website",
@@ -133,13 +133,13 @@ export const pageSEO: Record<string, PageSEO> = {
     },
   },
   "/retirement-planning": {
-    title: "Retirement Planning — Profit Pathfinder",
+    title: "Retirement Planning & FIRE Calculators | Profit Pathfinder",
     description: "FIRE calculators, Roth conversion, Social Security estimator, withdrawal strategies, and healthcare costs.",
     keywords: ["retirement calculator", "FIRE calculator", "Roth conversion", "401k planning"],
     ogType: "website",
   },
   "/zero-dte": {
-    title: "0DTE Options Scanner — Profit Pathfinder",
+    title: "0DTE Options Scanner & Calculator | Profit Pathfinder",
     description: "Scan zero days to expiration (0DTE) options for SPY, QQQ, and major indices with live chains.",
     keywords: ["0DTE options", "zero DTE", "same day options", "SPY options"],
     ogType: "website",
@@ -151,19 +151,19 @@ export const pageSEO: Record<string, PageSEO> = {
     ogType: "website",
   },
   "/real-estate": {
-    title: "Real Estate Calculator — Profit Pathfinder",
+    title: "Rental Property ROI & Mortgage Calculator | Profit Pathfinder",
     description: "Analyze real estate investments with ROI, rental income, mortgage, and property comparison tools.",
     keywords: ["real estate calculator", "investment property", "rental income", "property ROI"],
     ogType: "website",
   },
   "/car-finance": {
-    title: "Car Finance Calculator — Profit Pathfinder",
+    title: "Car Loan & Total Ownership Cost Calculator | Profit Pathfinder",
     description: "Calculate car payments, compare financing, analyze depreciation, and total cost of ownership.",
     keywords: ["car loan calculator", "auto finance", "car depreciation"],
     ogType: "website",
   },
   "/trading-toolkit": {
-    title: "Trading Toolkit — Profit Pathfinder",
+    title: "Position Sizing & Trading Risk Calculators | Profit Pathfinder",
     description: "Trading tools: position sizing, risk calculators, trade journal, and performance analytics.",
     keywords: ["trading tools", "position sizing", "trade journal"],
     ogType: "website",
@@ -199,7 +199,7 @@ export const pageSEO: Record<string, PageSEO> = {
     ogType: "website",
   },
   "/all-tools": {
-    title: "All Tools — Profit Pathfinder",
+    title: "Free FIRE & Investment Calculators | Profit Pathfinder",
     description: "Browse every Profit Pathfinder tool: portfolio, options, dividends, FIRE, retirement, and finance guides in one directory.",
     keywords: ["all trading tools", "investment calculators", "finance tools directory"],
     ogType: "website",
@@ -247,7 +247,7 @@ export const pageSEO: Record<string, PageSEO> = {
     ogType: "article",
   },
   "/monthly-dividend-calculator": {
-    title: "Monthly Dividend Calculator — Profit Pathfinder",
+    title: "Monthly Dividend Income & DRIP Calculator | Profit Pathfinder",
     description: "Calculate monthly dividend income, yield on cost, and reinvestment growth. Free dividend income tool.",
     keywords: ["monthly dividend calculator", "dividend income calculator", "DRIP calculator"],
     ogType: "website",

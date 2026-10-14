@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
-import { getPageSEO, siteConfig } from '@/lib/seo-config';
+import { getPageSEO, siteConfig, pageSEO as configuredPages } from '@/lib/seo-config';
 
 interface CustomMeta {
   title?: string;
@@ -28,6 +28,12 @@ export function SEOHead({ customMeta }: { customMeta?: CustomMeta } = {}) {
   const cleanPath =
     location.pathname.length > 1 ? location.pathname.replace(/\/+$/, '') || '/' : location.pathname;
   const canonicalUrl = `${siteConfig.url}${cleanPath}`;
+  // Unmapped URLs are 404s, except these existing private/redirect routes.
+  const hasCanonical = cleanPath in configuredPages || [
+    '/assets', '/settings', '/saved-data', '/checkout/return',
+    '/.lovable/oauth/consent', '/iv-strike-selector', '/ignite-fire',
+    '/risk-metrics', '/portfolio-rebalancing',
+  ].includes(cleanPath);
   const ogImage = `${siteConfig.url}${siteConfig.ogImage}`;
 
   return (
@@ -35,7 +41,7 @@ export function SEOHead({ customMeta }: { customMeta?: CustomMeta } = {}) {
       <title>{title}</title>
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords.join(', ')} />
-      <link rel="canonical" href={canonicalUrl} />
+      {hasCanonical && <link rel="canonical" href={canonicalUrl} />}
 
       {/* Open Graph */}
       <meta property="og:title" content={title} />
