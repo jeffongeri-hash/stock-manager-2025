@@ -28,7 +28,7 @@ export function prerenderPlugin(): Plugin {
           mode: config.mode,
           logLevel: "warn",
           build: { ssr: path.resolve(root, "src/entry-server.tsx"), outDir: ssrOut, emptyOutDir: true, copyPublicDir: false },
-          ssr: { noExternal: true },
+          ssr: { noExternal: [/\.css$/] },
         });
         installServerShims();
         const entry = fs.readdirSync(ssrOut).find((f) => /^entry-server\.(m?js)$/.test(f))!;
