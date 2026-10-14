@@ -6,6 +6,8 @@ Disallow: /settings
 Disallow: /saved-data
 Disallow: /auth
 Disallow: /checkout/
+Disallow: /portfolio
+Disallow: /performance
 
 # Admin-gated demo pages (Gemini-powered, not public)
 Disallow: /ai-trade-journal

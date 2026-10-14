@@ -96,13 +96,12 @@ const PageLoader = () => (
 
 /** Everything inside the router. Shared by the browser app and the build-time prerender. */
 export const AppShell = () => (
-  <>
-        <TrailingSlashRedirect />
+  <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <PWAUpdateNotification />
-      <BrowserRouter>
+        <TrailingSlashRedirect />
         <SEOHead />
         <SubscriptionBanner />
         <SwipeNavigation>
@@ -189,9 +188,14 @@ export const AppShell = () => (
         </SwipeNavigation>
         <FloatingActionButton />
         <BottomNavigation />
-      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+);
+
+const App = () => (
+  <BrowserRouter>
+    <AppShell />
+  </BrowserRouter>
 );
 
 export default App;
