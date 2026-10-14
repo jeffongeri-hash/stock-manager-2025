@@ -4,13 +4,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { TrailingSlashRedirect } from "@/components/seo/TrailingSlashRedirect";
 import { BottomNavigation } from "@/components/mobile/BottomNavigation";
 import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
 import { SwipeNavigation } from "@/components/mobile/SwipeNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
-import { SEOHead } from "@/hooks/useSEO";
+import { SEOHead, NoIndex } from "@/hooks/useSEO";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 
@@ -93,13 +94,14 @@ const PageLoader = () => (
   </div>
 );
 
-const App = () => (
+/** Everything inside the router. Shared by the browser app and the build-time prerender. */
+export const AppShell = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <PWAUpdateNotification />
-      <BrowserRouter>
+        <TrailingSlashRedirect />
         <SEOHead />
         <SubscriptionBanner />
         <SwipeNavigation>
@@ -108,8 +110,8 @@ const App = () => (
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Landing />} />
-                <Route path="/index" element={<Landing />} />
-                <Route path="/dashboard" element={<Landing />} />
+                <Route path="/index" element={<Navigate to="/" replace />} />
+                <Route path="/dashboard" element={<Navigate to="/" replace />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                 <Route path="/install" element={<Install />} />
@@ -130,8 +132,8 @@ const App = () => (
                 <Route path="/paycheck-calculator" element={<AdminRoute><PaycheckCalculator /></AdminRoute>} />
                 
                 {/* Protected routes - allow guest mode */}
-                <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
-                <Route path="/performance" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
+                <Route path="/portfolio" element={<><NoIndex /><ProtectedRoute><Portfolio /></ProtectedRoute></>} />
+                <Route path="/performance" element={<><NoIndex /><ProtectedRoute><Performance /></ProtectedRoute></>} />
                 <Route path="/analysis" element={<AdminRoute><Analysis /></AdminRoute>} />
                 <Route path="/trading-toolkit" element={<TradingToolkit />} />
                 <Route path="/options-portfolio" element={<OptionsPortfolio />} />
@@ -155,12 +157,12 @@ const App = () => (
                 <Route path="/smarttrade-ai" element={<AdminRoute><SmartTradeAI /></AdminRoute>} />
                 <Route path="/quantgemini" element={<AdminRoute><QuantGemini /></AdminRoute>} />
                 
-                <Route path="/assets" element={<ProtectedRoute requiresAuth><Assets /></ProtectedRoute>} />
+                <Route path="/assets" element={<><NoIndex /><ProtectedRoute requiresAuth><Assets /></ProtectedRoute></>} />
                 
                 {/* Routes requiring full authentication */}
-                <Route path="/settings" element={<ProtectedRoute requiresAuth><Settings /></ProtectedRoute>} />
+                <Route path="/settings" element={<><NoIndex /><ProtectedRoute requiresAuth><Settings /></ProtectedRoute></>} />
                 <Route path="/ignite-fire" element={<Navigate to="/retirement-planning" replace />} />
-                <Route path="/saved-data" element={<ProtectedRoute requiresAuth><SavedData /></ProtectedRoute>} />
+                <Route path="/saved-data" element={<><NoIndex /><ProtectedRoute requiresAuth><SavedData /></ProtectedRoute></>} />
 
                 {/* AI-powered demo pages — admin-only (Gemini-backed) */}
                 <Route path="/ai-trade-journal" element={<AdminRoute><AiTradeJournal /></AdminRoute>} />
@@ -186,9 +188,14 @@ const App = () => (
         </SwipeNavigation>
         <FloatingActionButton />
         <BottomNavigation />
-      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+);
+
+const App = () => (
+  <BrowserRouter>
+    <AppShell />
+  </BrowserRouter>
 );
 
 export default App;

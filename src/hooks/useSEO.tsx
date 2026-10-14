@@ -25,7 +25,9 @@ export function SEOHead({ customMeta }: { customMeta?: CustomMeta } = {}) {
   const description = customMeta?.description || pageSEO.description;
   const keywords = customMeta?.keywords || pageSEO.keywords || siteConfig.keywords;
   const jsonLd = customMeta?.jsonLd || pageSEO.jsonLd;
-  const canonicalUrl = `${siteConfig.url}${location.pathname}`;
+  const cleanPath =
+    location.pathname.length > 1 ? location.pathname.replace(/\/+$/, '') || '/' : location.pathname;
+  const canonicalUrl = `${siteConfig.url}${cleanPath}`;
   const ogImage = `${siteConfig.url}${siteConfig.ogImage}`;
 
   return (
@@ -70,4 +72,13 @@ export function useSEO(_customMeta?: CustomMeta) {
  */
 export function PageSEO(customMeta: CustomMeta) {
   return <SEOHead customMeta={customMeta} />;
+}
+
+/** Marks the current page as not indexable (private / auth-only / 404 pages). */
+export function NoIndex() {
+  return (
+    <Helmet>
+      <meta name="robots" content="noindex" />
+    </Helmet>
+  );
 }

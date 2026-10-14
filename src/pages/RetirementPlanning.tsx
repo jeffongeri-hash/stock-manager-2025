@@ -295,10 +295,10 @@ const RetirementPlanning = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <Target className="h-8 w-8 text-primary" />
               Retirement Planning
-            </h1>
+            </h2>
             <p className="text-muted-foreground">
               Calculate your crossover point, use the wealth multiplier, and project your retirement portfolio
             </p>
