@@ -1,3 +1,4 @@
+import { AdSlot } from '@/components/AdSlot';
 import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHero } from "@/components/layout/PageHero";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -699,6 +700,7 @@ const OptionsGuide = () => {
             </Table>
           </CardContent>
         </Card>
+        <AdSlot slot="options-guide-end" />
       </div>
     </PageLayout>
   );

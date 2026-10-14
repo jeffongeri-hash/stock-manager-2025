@@ -1,3 +1,4 @@
+import { AdSlot } from '@/components/AdSlot';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
@@ -115,6 +116,8 @@ export default function FireForBeginners() {
               <Link to="/coast-fire-tracker">Calculate your Coast FIRE number</Link>
             </Button>
           </Card>
+
+          <AdSlot slot="fire-for-beginners-end" />
 
           <RelatedTools currentPath={path} />
         </article>

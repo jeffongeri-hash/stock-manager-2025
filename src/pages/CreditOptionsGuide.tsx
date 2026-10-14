@@ -1,3 +1,4 @@
+import { AdSlot } from '@/components/AdSlot';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -504,6 +505,7 @@ export default function CreditOptionsGuide() {
             </ul>
           </CardContent>
         </Card>
+        <AdSlot slot="credit-options-guide-end" />
       </div>
     </PageLayout>
   );
