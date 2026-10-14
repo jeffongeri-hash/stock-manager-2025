@@ -26,4 +26,9 @@
   <url><loc>https://profitpathfinder.online/install</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
   <url><loc>https://profitpathfinder.online/blog/real-estate-car-finance-guide</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>https://profitpathfinder.online/blog/covered-call-calculator-guide</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://profitpathfinder.online/privacy-policy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://profitpathfinder.online/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://profitpathfinder.online/disclaimer</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://profitpathfinder.online/about</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://profitpathfinder.online/contact</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
 </urlset>

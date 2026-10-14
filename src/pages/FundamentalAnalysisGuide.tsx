@@ -1,3 +1,4 @@
+import { AdSlot } from '@/components/AdSlot';
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -1095,6 +1096,7 @@ const FundamentalAnalysisGuide = () => {
             </Table>
           </CardContent>
         </Card>
+        <AdSlot slot="fundamental-analysis-guide-end" />
       </div>
     </PageLayout>
   );

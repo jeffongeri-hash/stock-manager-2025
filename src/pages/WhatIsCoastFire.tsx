@@ -1,3 +1,4 @@
+import { AdSlot } from '@/components/AdSlot';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
@@ -115,6 +116,8 @@ export default function WhatIsCoastFire() {
               <Link to="/coast-fire-tracker">Track your Coast FIRE number</Link>
             </Button>
           </Card>
+
+          <AdSlot slot="what-is-coast-fire-end" />
 
           <RelatedTools currentPath={path} />
         </article>

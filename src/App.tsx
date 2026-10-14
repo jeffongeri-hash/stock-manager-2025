@@ -14,6 +14,7 @@ import { AdminRoute } from "@/components/auth/AdminRoute";
 import { SEOHead, NoIndex } from "@/hooks/useSEO";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 // Lazy load all page components for code splitting
 const Landing = lazy(() => import("./pages/Landing"));
@@ -73,6 +74,11 @@ const FirePlanningSuite = lazy(() => import("./pages/FirePlanningSuite"));
 // Blog / explainer pages
 const BlogPage = lazy(() => import("./pages/BlogPage"));
 const IvStrikeSelector = lazy(() => import("./pages/IvStrikeSelector"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Disclaimer = lazy(() => import("./pages/Disclaimer"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
 
 
 const queryClient = new QueryClient();
@@ -180,10 +186,18 @@ export const AppShell = () => (
 
                 
                 
+                {/* Legal / info pages */}
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/disclaimer" element={<Disclaimer />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+
                 {/* Catch-all route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            <SiteFooter />
           </div>
         </SwipeNavigation>
         <FloatingActionButton />

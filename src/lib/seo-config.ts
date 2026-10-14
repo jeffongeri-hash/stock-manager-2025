@@ -17,6 +17,11 @@ export interface PageSEO {
 }
 
 export const pageSEO: Record<string, PageSEO> = {
+  "/privacy-policy": { title: "Privacy Policy — Profit Pathfinder", description: "How Profit Pathfinder collects, uses, and protects your data, including cookies, Google AdSense, Analytics, Stripe, and your privacy rights.", ogType: "website" },
+  "/terms": { title: "Terms of Service — Profit Pathfinder", description: "Terms for using Profit Pathfinder, including accounts, Stripe subscriptions, warranties, and limitation of liability.", ogType: "website" },
+  "/disclaimer": { title: "Financial Disclaimer — Profit Pathfinder", description: "Profit Pathfinder calculators and guides are educational only, not investment, tax, or legal advice. Read our advertising disclosure.", ogType: "website" },
+  "/about": { title: "About Profit Pathfinder — Free FIRE and Investing Calculators", description: "Profit Pathfinder offers free FIRE, Coast FIRE, dividend, options, real estate, and car finance calculators and guides.", ogType: "website" },
+  "/contact": { title: "Contact Profit Pathfinder", description: "Send Profit Pathfinder a question, feedback, or privacy request using our contact form.", ogType: "website" },
   "/": {
     title: "Profit Pathfinder — Coast FIRE Tracker and Early Retirement Calculators",
     description: "Profit Pathfinder helps you track Coast FIRE, calculate your FIRE number, plan early retirement, and model long-term investment growth.",
