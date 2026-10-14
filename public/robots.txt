@@ -4,7 +4,6 @@ Allow: /
 # Private / personal-data routes
 Disallow: /settings
 Disallow: /saved-data
-Disallow: /assets
 Disallow: /auth
 Disallow: /checkout/
 
