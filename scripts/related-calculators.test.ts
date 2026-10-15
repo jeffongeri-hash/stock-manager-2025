@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { calculatorTools, getRelatedCalculators } from './related-calculators';
+import { calculatorTools, getRelatedCalculators } from '../src/lib/related-calculators';
 
 describe('public related calculator destinations', () => {
   test('never links routes blocked by robots.txt', () => {
