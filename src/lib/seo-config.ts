@@ -114,7 +114,7 @@ export const pageSEO: Record<string, PageSEO> = {
     },
   },
   "/dividend-tracker": {
-    title: "Free Dividend Tracker & Income Calculator | ProfitPathfinder",
+    title: "Dividend Tracker & Income Calculator | Profit Pathfinder",
     description: "Track dividend income, yield on cost, and build passive income streams. Free dividend tool.",
     keywords: ["dividend tracker", "dividend income", "yield on cost", "passive income"],
     ogType: "website",
