@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { siteConfig } from '@/lib/seo-config';
 import { RelatedTools } from '@/components/seo/RelatedTools';
+import { RecommendedTools } from '@/components/seo/RecommendedTools';
 
 export interface FaqItem {
   q: string;
@@ -73,6 +74,8 @@ export function SeoCalculatorPage({
           </header>
 
           {children}
+
+          <RecommendedTools currentPath={path} />
 
           <Card className="p-6 bg-primary/5 border-primary/20">
             <h2 className="font-display text-2xl font-semibold mb-2">Get the full toolkit</h2>
