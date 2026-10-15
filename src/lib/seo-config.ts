@@ -297,6 +297,13 @@ export const pageSEO: Record<string, PageSEO> = {
 };
 
 
+// Existing private/redirect routes that are real pages but not in pageSEO.
+export const extraKnownRoutes = [
+  '/assets', '/settings', '/saved-data', '/checkout/return',
+  '/.lovable/oauth/consent', '/iv-strike-selector', '/ignite-fire',
+  '/risk-metrics', '/portfolio-rebalancing', '/pricing',
+];
+
 // Get SEO config for a path, with fallback
 export function getPageSEO(path: string): PageSEO {
   if (pageSEO[path]) return pageSEO[path];

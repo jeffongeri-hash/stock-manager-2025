@@ -48,6 +48,7 @@ export function prerenderPlugin(): Plugin {
               const { html, helmet } = await mod.render(route);
               page = injectHead(template, helmet).replace('<div id="root"></div>', `<div id="root">${html}</div>`);
             }
+            if (route === "/") page = toFallbackShell(page, mod.knownRoutes || []);
             const file = route === "/" ? path.join(outDir, "index.html") : path.join(outDir, route.slice(1), "index.html");
             fs.mkdirSync(path.dirname(file), { recursive: true });
             fs.writeFileSync(file, page);
@@ -77,6 +78,20 @@ function injectHead(template: string, helmet: any): string {
     .replace(/<link\s+rel="canonical"[^>]*>\s*/g, "");
   const head = [helmet.title, helmet.meta, helmet.link, helmet.script].map((h: any) => h?.toString() || "").join("\n");
   return out.replace("</head>", `${head}\n</head>`);
+}
+
+/**
+ * dist/index.html doubles as the hosting fallback for unknown paths (Lovable
+ * hosting cannot return a real 404). Drop the static homepage canonical/og:url
+ * (Helmet re-adds the canonical on "/" client-side) and noindex any path that
+ * isn't a known route before the app boots.
+ */
+function toFallbackShell(page: string, known: string[]): string {
+  const out = page
+    .replace(/<link\s+rel="canonical"[^>]*>\s*/g, "")
+    .replace(/<meta\s+property="og:url"[^>]*>\s*/g, "");
+  const guard = `<script>(function(){var k=${JSON.stringify(known)};var p=location.pathname.replace(/\\/+$/,"")||"/";if(k.indexOf(p)<0){var m=document.createElement("meta");m.name="robots";m.content="noindex";document.head.appendChild(m);}})();</script>`;
+  return out.replace("<head>", `<head>\n${guard}`);
 }
 
 function installServerShims() {

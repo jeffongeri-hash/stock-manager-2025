@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
-import { getPageSEO, siteConfig, pageSEO as configuredPages } from '@/lib/seo-config';
+import { getPageSEO, siteConfig, pageSEO as configuredPages, extraKnownRoutes } from '@/lib/seo-config';
 
 interface CustomMeta {
   title?: string;
@@ -29,11 +29,7 @@ export function SEOHead({ customMeta }: { customMeta?: CustomMeta } = {}) {
     location.pathname.length > 1 ? location.pathname.replace(/\/+$/, '') || '/' : location.pathname;
   const canonicalUrl = `${siteConfig.url}${cleanPath}`;
   // Unmapped URLs are 404s, except these existing private/redirect routes.
-  const hasCanonical = cleanPath in configuredPages || [
-    '/assets', '/settings', '/saved-data', '/checkout/return',
-    '/.lovable/oauth/consent', '/iv-strike-selector', '/ignite-fire',
-    '/risk-metrics', '/portfolio-rebalancing',
-  ].includes(cleanPath);
+  const hasCanonical = cleanPath in configuredPages || extraKnownRoutes.filter((r) => r !== '/pricing').includes(cleanPath);
   const ogImage = `${siteConfig.url}${siteConfig.ogImage}`;
 
   return (
