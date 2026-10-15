@@ -114,7 +114,7 @@ export const pageSEO: Record<string, PageSEO> = {
     },
   },
   "/dividend-tracker": {
-    title: "Free Dividend Tracker & Income Calculator | Profit Pathfinder",
+    title: "Free Dividend Tracker & Income Calculator | ProfitPathfinder",
     description: "Track dividend income, yield on cost, and build passive income streams. Free dividend tool.",
     keywords: ["dividend tracker", "dividend income", "yield on cost", "passive income"],
     ogType: "website",
@@ -151,19 +151,19 @@ export const pageSEO: Record<string, PageSEO> = {
     ogType: "website",
   },
   "/real-estate": {
-    title: "Rental Property ROI & Mortgage Calculator | Profit Pathfinder",
+    title: "Rental Property ROI Calculator | Profit Pathfinder",
     description: "Analyze real estate investments with ROI, rental income, mortgage, and property comparison tools.",
     keywords: ["real estate calculator", "investment property", "rental income", "property ROI"],
     ogType: "website",
   },
   "/car-finance": {
-    title: "Car Loan & Total Ownership Cost Calculator | Profit Pathfinder",
+    title: "Car Loan & Ownership Cost Calculator | Profit Pathfinder",
     description: "Calculate car payments, compare financing, analyze depreciation, and total cost of ownership.",
     keywords: ["car loan calculator", "auto finance", "car depreciation"],
     ogType: "website",
   },
   "/trading-toolkit": {
-    title: "Position Sizing & Trading Risk Calculators | Profit Pathfinder",
+    title: "Position Sizing & Risk Calculators | Profit Pathfinder",
     description: "Trading tools: position sizing, risk calculators, trade journal, and performance analytics.",
     keywords: ["trading tools", "position sizing", "trade journal"],
     ogType: "website",
@@ -283,7 +283,7 @@ export const pageSEO: Record<string, PageSEO> = {
     ogType: "website",
   },
   "/blog/real-estate-car-finance-guide": {
-    title: "Real Estate & Car Finance Calculator Guide | Profit Pathfinder",
+    title: "Real Estate & Car Loan Calculator Guide | Profit Pathfinder",
     description: "Walkthrough of the Real Estate Investment and Car Finance calculators — cash flow, ROI, true loan cost, and total interest modeling.",
     keywords: ["real estate calculator guide", "car finance calculator guide", "rental cash flow", "auto loan calculator"],
     ogType: "article",
