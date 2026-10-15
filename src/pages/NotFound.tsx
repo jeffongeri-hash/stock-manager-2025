@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
+import { NoIndex } from "@/hooks/useSEO";
 
 const NotFound = () => {
   const location = useLocation();
@@ -14,9 +15,9 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
+      <NoIndex />
       <Helmet>
         <title>Page not found | Profit Pathfinder</title>
-        <meta name="robots" content="noindex" />
       </Helmet>
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4">Page not found</h1>
