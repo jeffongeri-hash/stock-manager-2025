@@ -5,6 +5,9 @@ import { StaticRouter } from "react-router-dom";
 import { HelmetProvider, type HelmetServerState } from "react-helmet-async";
 import { AppShell } from "./App";
 import { ThemeProvider } from "./components/ThemeProvider";
+import { pageSEO, extraKnownRoutes } from "./lib/seo-config";
+
+export const knownRoutes = [...Object.keys(pageSEO), ...extraKnownRoutes, '/covered-call-calculator'];
 
 export function render(url: string): Promise<{ html: string; helmet: HelmetServerState | undefined }> {
   const helmetContext: { helmet?: HelmetServerState } = {};
