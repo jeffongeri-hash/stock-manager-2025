@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CoastFireTrackerWidget } from '@/components/coast-fire/CoastFireTrackerWidget';
 import { RelatedTools } from '@/components/seo/RelatedTools';
-import { siteConfig } from '@/lib/seo-config';
+import { pageSEO, siteConfig } from '@/lib/seo-config';
 
 const path = '/coast-fire-calculator';
 const url = `${siteConfig.url}${path}`;
-const title = 'Coast FIRE Calculator — Find Your Coast FIRE Number';
+const title = pageSEO[path].title;
 const description =
   'Calculate your Coast FIRE number and see how much you need invested today for your portfolio to grow into your retirement goal.';
 

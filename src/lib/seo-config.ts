@@ -252,6 +252,11 @@ export const pageSEO: Record<string, PageSEO> = {
     keywords: ["monthly dividend calculator", "dividend income calculator", "DRIP calculator"],
     ogType: "website",
   },
+  "/covered-call-calculator": {
+    title: "Covered Call Calculator: Options Income | Profit Pathfinder",
+    description: "The most complete free covered call calculator. Calculate premium income, annualized yield, breakeven, Greeks, rolling strategies, and compare covered calls vs cash-secured puts.",
+    ogType: "website",
+  },
   "/ai-trade-journal": {
     title: "AI Trade Journal: Pattern Analysis | Profit Pathfinder",
     description: "Upload your brokerage CSV and get AI-powered pattern analysis of your trades. Find what's costing you money and what's working.",

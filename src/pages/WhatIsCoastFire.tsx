@@ -5,11 +5,11 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { RelatedTools } from '@/components/seo/RelatedTools';
-import { siteConfig } from '@/lib/seo-config';
+import { pageSEO, siteConfig } from '@/lib/seo-config';
 
 const path = '/what-is-coast-fire';
 const url = `${siteConfig.url}${path}`;
-const title = 'What Is Coast FIRE? Coast FIRE Explained for Beginners';
+const title = pageSEO[path].title;
 const description =
   'Learn what Coast FIRE means, how it works, how to calculate your Coast FIRE number, and how it compares to traditional FIRE.';
 
