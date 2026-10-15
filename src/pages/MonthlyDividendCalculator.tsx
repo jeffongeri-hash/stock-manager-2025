@@ -3,6 +3,7 @@ import { SeoCalculatorPage } from '@/components/seo/SeoCalculatorPage';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { pageSEO } from '@/lib/seo-config';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
@@ -55,7 +56,7 @@ export default function MonthlyDividendCalculator() {
   return (
     <SeoCalculatorPage
       path="/monthly-dividend-calculator"
-      title="Monthly Dividend Calculator — Free Passive Income Tracker"
+      title={pageSEO['/monthly-dividend-calculator'].title}
       h1="Monthly Dividend Calculator & Tracker"
       description="Calculate monthly dividend income, project DRIP compounding, and track passive income from monthly dividend stocks and REITs. Free, no signup."
       keywords={['monthly dividend calculator', 'monthly dividend tracker', 'dividend income tracker', 'passive income tracker', 'dividend reinvestment calculator', 'drip calculator', 'monthly dividend stocks']}

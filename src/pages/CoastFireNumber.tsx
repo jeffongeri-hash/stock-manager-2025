@@ -5,11 +5,11 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CoastFireTrackerWidget } from '@/components/coast-fire/CoastFireTrackerWidget';
 import { RelatedTools } from '@/components/seo/RelatedTools';
-import { siteConfig } from '@/lib/seo-config';
+import { pageSEO, siteConfig } from '@/lib/seo-config';
 
 const path = '/coast-fire-number';
 const url = `${siteConfig.url}${path}`;
-const title = 'Coast FIRE Number — How to Calculate Yours by Age';
+const title = pageSEO[path].title;
 const description =
   'What your Coast FIRE number is, the formula, examples by age (25, 30, 35, 40), and how to track yours to financial independence.';
 

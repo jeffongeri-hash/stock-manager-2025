@@ -1,9 +1,9 @@
 import { Helmet } from 'react-helmet-async';
-import { siteConfig } from '@/lib/seo-config';
+import { pageSEO, siteConfig } from '@/lib/seo-config';
 import { RelatedTools } from '@/components/seo/RelatedTools';
 
 const path = '/covered-call-calculator';
-const title = 'Covered Call Calculator — Options Income Strategy | Profit Pathfinder';
+const title = pageSEO[path].title;
 const description = 'The most complete free covered call calculator. Calculate premium income, annualized yield, breakeven, Greeks, rolling strategies, and compare covered calls vs cash-secured puts.';
 const keywords = 'covered call calculator, covered call strategy, how to sell covered calls, covered call income, options income strategy, covered call vs cash secured put, wheel strategy options, call option premium calculator, annualized yield covered call';
 
@@ -17,6 +17,7 @@ export default function CoveredCallCalculator() {
         <meta name="keywords" content={keywords} />
         <link rel="canonical" href={canonical} />
         <meta property="og:title" content={title} />
+        <meta name="twitter:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:url" content={canonical} />
         <meta property="og:type" content="website" />

@@ -6,11 +6,11 @@ import { Card } from '@/components/ui/card';
 import { CoastFireTrackerWidget } from '@/components/coast-fire/CoastFireTrackerWidget';
 import { EmbedCodeBlock } from '@/components/coast-fire/EmbedCodeBlock';
 import { RelatedTools } from '@/components/seo/RelatedTools';
-import { siteConfig } from '@/lib/seo-config';
+import { pageSEO, siteConfig } from '@/lib/seo-config';
 
 const path = '/coast-fire-tracker';
 const url = `${siteConfig.url}${path}`;
-const title = 'Coast FIRE Tracker — Calculate Your Coast FIRE Number';
+const title = pageSEO[path].title;
 const description =
   'Free Coast FIRE Tracker: calculate your Coast FIRE number, track progress, and see when your portfolio can coast to financial independence.';
 
