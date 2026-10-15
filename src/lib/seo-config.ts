@@ -21,6 +21,7 @@ export const pageSEO: Record<string, PageSEO> = {
   "/terms": { title: "Terms of Service — Profit Pathfinder", description: "Terms for using Profit Pathfinder, including accounts, Stripe subscriptions, warranties, and limitation of liability.", ogType: "website" },
   "/disclaimer": { title: "Financial Disclaimer — Profit Pathfinder", description: "Profit Pathfinder calculators and guides are educational only, not investment, tax, or legal advice. Read our advertising disclosure.", ogType: "website" },
   "/about": { title: "About Profit Pathfinder: Free FIRE & Investing Calculators", description: "Profit Pathfinder offers free FIRE, Coast FIRE, dividend, options, real estate, and car finance calculators and guides.", ogType: "website" },
+  "/blog": { title: "Blog: FIRE, Dividend & Options Guides | Profit Pathfinder", description: "Guides to Profit Pathfinder's covered call, real estate and car finance calculators, with step-by-step walkthroughs and examples.", ogType: "website" },
   "/contact": { title: "Contact Profit Pathfinder", description: "Send Profit Pathfinder a question, feedback, or privacy request using our contact form.", ogType: "website" },
   "/": {
     title: "Coast FIRE Tracker & FIRE Calculators | Profit Pathfinder",
