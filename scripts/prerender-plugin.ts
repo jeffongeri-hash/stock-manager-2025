@@ -88,8 +88,8 @@ function injectHead(template: string, helmet: any): string {
  */
 function toFallbackShell(page: string, known: string[]): string {
   const out = page
-    .replace(/<link\s+rel="canonical"[^>]*>\s*/g, "")
-    .replace(/<meta\s+property="og:url"[^>]*>\s*/g, "");
+    .replace(/<link\b[^>]*rel="canonical"[^>]*>\s*/g, "")
+    .replace(/<meta\b[^>]*property="og:url"[^>]*>\s*/g, "");
   const guard = `<script>(function(){var k=${JSON.stringify(known)};var p=location.pathname.replace(/\\/+$/,"")||"/";if(k.indexOf(p)<0){var m=document.createElement("meta");m.name="robots";m.content="noindex";document.head.appendChild(m);}})();</script>`;
   return out.replace("<head>", `<head>\n${guard}`);
 }
