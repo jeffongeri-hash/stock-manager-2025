@@ -15,6 +15,7 @@ import { SEOHead, NoIndex } from "@/hooks/useSEO";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { SupplementalCalculatorLinks } from "@/components/seo/RelatedTools";
 
 // Lazy load all page components for code splitting
 const Landing = lazy(() => import("./pages/Landing"));
@@ -197,6 +198,7 @@ export const AppShell = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            <SupplementalCalculatorLinks />
             <SiteFooter />
           </div>
         </SwipeNavigation>
