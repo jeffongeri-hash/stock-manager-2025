@@ -74,6 +74,7 @@ const WeeklyFundamentalScan = lazy(() => import("./pages/WeeklyFundamentalScan")
 const FirePlanningSuite = lazy(() => import("./pages/FirePlanningSuite"));
 
 // Blog / explainer pages
+const BlogIndex = lazy(() => import("./pages/BlogIndex"));
 const BlogPage = lazy(() => import("./pages/BlogPage"));
 const IvStrikeSelector = lazy(() => import("./pages/IvStrikeSelector"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
@@ -181,6 +182,7 @@ export const AppShell = () => (
                 <Route path="/fire-planning-suite" element={<AdminRoute><FirePlanningSuite /></AdminRoute>} />
 
                 {/* Blog explainer pages (public) */}
+                <Route path="/blog" element={<BlogIndex />} />
                 <Route path="/blog/real-estate-car-finance-guide" element={<BlogPage src="/blog/real-estate-car-finance-guide.html" title="Real Estate & Car Finance Guide" />} />
                 <Route path="/blog/covered-call-calculator-guide" element={<BlogPage src="/blog/covered-call-calculator-guide.html" title="Covered Call Calculator Guide" />} />
 
