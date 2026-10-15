@@ -28,6 +28,7 @@ const TOOLS: Tool[] = [
   { title: 'Real Estate', description: 'Cash flow, cap rate, and property analysis.', href: '/real-estate', icon: Building2, category: 'Real Estate' },
   { title: 'Car Finance', description: 'Loan, lease, and depreciation analysis.', href: '/car-finance', icon: Car, category: 'Lifestyle' },
   { title: 'Coast FIRE Calculator', description: 'When can you stop saving and still retire?', href: '/coast-fire-calculator', icon: Flame, category: 'FIRE' },
+  { title: 'Coast FIRE for Healthcare Workers', description: 'Part-time and per diem Coast FIRE for PAs, NPs, and nurses.', href: '/coast-fire-healthcare', icon: Flame, category: 'FIRE' },
   { title: 'FIRE Calculator', description: 'Project your path to financial independence.', href: '/financial-independence-calculator', icon: TrendingUp, category: 'FIRE' },
   { title: 'Covered Call Calculator', description: 'Premium income and assignment analysis.', href: '/covered-call-calculator', icon: Sparkles, category: 'Options' },
   { title: 'Monthly Dividend Calculator', description: 'Plan monthly dividend income.', href: '/monthly-dividend-calculator', icon: DollarSign, category: 'Income' },

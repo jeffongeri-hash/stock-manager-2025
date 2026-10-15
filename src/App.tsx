@@ -54,6 +54,7 @@ const QuantGemini = lazy(() => import("./pages/QuantGemini"));
 const CoastFireTracker = lazy(() => import("./pages/CoastFireTracker"));
 const CoastFireCalculator = lazy(() => import("./pages/CoastFireCalculator"));
 const CoastFireNumber = lazy(() => import("./pages/CoastFireNumber"));
+const CoastFireHealthcare = lazy(() => import("./pages/CoastFireHealthcare"));
 const WhatIsCoastFire = lazy(() => import("./pages/WhatIsCoastFire"));
 const FireForBeginners = lazy(() => import("./pages/FireForBeginners"));
 const EarlyRetirementCalculator = lazy(() => import("./pages/EarlyRetirementCalculator"));
@@ -127,6 +128,7 @@ export const AppShell = () => (
                 <Route path="/coast-fire-tracker" element={<CoastFireTracker />} />
                 <Route path="/coast-fire-calculator" element={<CoastFireCalculator />} />
                 <Route path="/coast-fire-number" element={<CoastFireNumber />} />
+                <Route path="/coast-fire-healthcare" element={<CoastFireHealthcare />} />
                 <Route path="/what-is-coast-fire" element={<WhatIsCoastFire />} />
                 <Route path="/fire-for-beginners" element={<FireForBeginners />} />
                 <Route path="/early-retirement-calculator" element={<EarlyRetirementCalculator />} />
