@@ -1,5 +1,8 @@
 # SEO-only changes
 
+- [x] Add opt-in affiliate configuration and compact recommendations below SeoCalculatorPage content.
+- [x] Verify affiliate filtering rules, default invisibility, and existing disclaimer route without deploying.
+
 - [x] Render NoIndex on 404 pages without a canonical.
 - [x] Allow viewport zoom in index.html.
 - [x] Improve generic SEO titles without changing descriptions.
