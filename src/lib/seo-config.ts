@@ -240,6 +240,12 @@ export const pageSEO: Record<string, PageSEO> = {
     keywords: ["Coast FIRE calculator", "Coast FIRE number", "Coast FIRE formula"],
     ogType: "website",
   },
+  "/coast-fire-healthcare": {
+    title: "Coast FIRE Calculator for PAs, NPs & Nurses",
+    description: "Free Coast and Barista FIRE calculator for PAs, NPs and nurses going part-time or per diem. Includes the true cost of lost benefits.",
+    keywords: ["Coast FIRE healthcare", "Coast FIRE for PAs", "Barista FIRE nurse", "per diem PA FIRE"],
+    ogType: "website",
+  },
   "/coast-fire-number": {
     title: "Coast FIRE Number by Age: How to Calculate It",
     description: "What your Coast FIRE number is, the formula, examples by age (25, 30, 35, 40), and how to track yours to financial independence.",
