@@ -313,7 +313,7 @@ export const pageSEO: Record<string, PageSEO> = {
 export const extraKnownRoutes = [
   '/assets', '/settings', '/saved-data', '/checkout/return',
   '/.lovable/oauth/consent', '/iv-strike-selector', '/ignite-fire',
-  '/risk-metrics', '/portfolio-rebalancing', '/pricing',
+  '/risk-metrics', '/portfolio-rebalancing',
 ];
 
 // Get SEO config for a path, with fallback

@@ -36,4 +36,3 @@ Profit Pathfinder is a free web platform for people pursuing financial independe
 ## Optional
 
 - [Install](/install): Install Profit Pathfinder as a mobile or desktop app.
-- [Pricing](/pricing): Free and Pro tier details.

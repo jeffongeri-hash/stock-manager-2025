@@ -63,7 +63,6 @@ const CoveredCallCalculator = lazy(() => import("./pages/CoveredCallCalculator")
 const MonthlyDividendCalculator = lazy(() => import("./pages/MonthlyDividendCalculator"));
 const PaycheckCalculator = lazy(() => import("./pages/PaycheckCalculator"));
 const AllTools = lazy(() => import("./pages/AllTools"));
-const Pricing = lazy(() => import("./pages/Pricing"));
 const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
 
 // AI-powered demo pages — admin-only while hidden from public launch.
@@ -137,7 +136,7 @@ export const AppShell = () => (
                 <Route path="/covered-call-calculator" element={<CoveredCallCalculator />} />
                 <Route path="/monthly-dividend-calculator" element={<MonthlyDividendCalculator />} />
                 <Route path="/all-tools" element={<AllTools />} />
-                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/pricing" element={<Navigate to="/" replace />} />
                 <Route path="/checkout/return" element={<CheckoutReturn />} />
                 <Route path="/paycheck-calculator" element={<AdminRoute><PaycheckCalculator /></AdminRoute>} />
                 
