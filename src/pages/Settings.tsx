@@ -410,13 +410,8 @@ const Settings = () => {
                 ) : (
                   <div className="space-y-4">
                     <p className="text-muted-foreground">
-                      You're on the free plan. Upgrade to Pro to unlock the AI Trade Journal, Pre-Market Brief, Weekly Fundamental Scan, and the full FIRE Planning Suite.
+                      You're on the free plan.
                     </p>
-                    <Button asChild>
-                      <Link to="/pricing">
-                        <Sparkles className="h-4 w-4 mr-2" /> View Pro plans
-                      </Link>
-                    </Button>
                   </div>
                 )}
               </>

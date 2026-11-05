@@ -13,7 +13,6 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { SEOHead, NoIndex } from "@/hooks/useSEO";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
-import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SupplementalCalculatorLinks } from "@/components/seo/RelatedTools";
 
@@ -111,7 +110,6 @@ export const AppShell = () => (
       <PWAUpdateNotification />
         <TrailingSlashRedirect />
         <SEOHead />
-        <SubscriptionBanner />
         <SwipeNavigation>
           <div className="pb-16 lg:pb-0">
             <Suspense fallback={<PageLoader />}>

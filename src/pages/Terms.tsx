@@ -13,7 +13,7 @@ export default function Terms() {
       <p>You are responsible for keeping your login credentials secure and for activity under your account. Provide accurate information and notify us of any unauthorized use. We may suspend accounts that violate these Terms.</p>
 
       <h2>Subscriptions and payments</h2>
-      <p>Paid plans are billed through Stripe on a recurring basis until cancelled. Prices are shown on the <Link to="/pricing">pricing page</Link>. You can cancel at any time; access continues until the end of the current billing period. Payments are subject to the <Ext href="https://stripe.com/legal/ssa">Stripe terms</Ext>. Except where required by law, fees are non-refundable.</p>
+      <p>Paid plans are billed through Stripe on a recurring basis until cancelled. Prices are shown on the pricing page. You can cancel at any time; access continues until the end of the current billing period. Payments are subject to the <Ext href="https://stripe.com/legal/ssa">Stripe terms</Ext>. Except where required by law, fees are non-refundable.</p>
 
       <h2>Not financial advice</h2>
       <p>All content and tools are for educational purposes only. See our <Link to="/disclaimer">Disclaimer</Link>.</p>
