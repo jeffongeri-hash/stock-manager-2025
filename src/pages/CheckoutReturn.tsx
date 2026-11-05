@@ -72,7 +72,7 @@ export default function CheckoutReturn() {
                 We couldn't find a checkout session. Try again from the pricing page.
               </p>
               <Button asChild>
-                <Link to="/pricing">Back to pricing</Link>
+                <Link to="/">Back to home</Link>
               </Button>
             </>
           )}
