@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { LegalPage, Ext } from '@/components/layout/LegalPage';
+import { LegalPage } from '@/components/layout/LegalPage';
 
 export default function Terms() {
   return (
-    <LegalPage title="Terms of Service">
+    <LegalPage title="Terms of Service" updated="November 6, 2026">
       <p>By accessing or using Profit Pathfinder (the "Site"), you agree to these Terms. If you do not agree, do not use the Site.</p>
 
       <h2>Use of the site</h2>
