@@ -12,8 +12,8 @@ export default function Terms() {
       <h2>Accounts</h2>
       <p>You are responsible for keeping your login credentials secure and for activity under your account. Provide accurate information and notify us of any unauthorized use. We may suspend accounts that violate these Terms.</p>
 
-      <h2>Subscriptions and payments</h2>
-      <p>Paid plans are billed through Stripe on a recurring basis until cancelled. Prices are shown on the pricing page. You can cancel at any time; access continues until the end of the current billing period. Payments are subject to the <Ext href="https://stripe.com/legal/ssa">Stripe terms</Ext>. Except where required by law, fees are non-refundable.</p>
+      <h2>Pricing</h2>
+      <p>The Site is currently free to use. We don't charge for any tools or features. If we ever introduce paid features, we will update these Terms and show the price clearly before you are asked to pay.</p>
 
       <h2>Not financial advice</h2>
       <p>All content and tools are for educational purposes only. See our <Link to="/disclaimer">Disclaimer</Link>.</p>
@@ -22,7 +22,7 @@ export default function Terms() {
       <p>The Site is provided "as is" and "as available" without warranties of any kind, express or implied, including accuracy, fitness for a particular purpose, and non-infringement. Market data and calculations may be delayed, incomplete, or wrong.</p>
 
       <h2>Limitation of liability</h2>
-      <p>To the fullest extent permitted by law, Profit Pathfinder is not liable for any indirect, incidental, special, consequential, or punitive damages, or for any losses (including investment losses) arising from your use of the Site. Our total liability is limited to the amount you paid us in the 12 months before the claim.</p>
+      <p>To the fullest extent permitted by law, Profit Pathfinder is not liable for any indirect, incidental, special, consequential, or punitive damages, or for any losses (including investment losses) arising from your use of the Site. Because the Site is free, our total liability is limited to $0, or the minimum amount allowed by law.</p>
 
       <h2>Changes</h2>
       <p>We may update these Terms. Continued use after changes means you accept the updated Terms.</p>

@@ -15,7 +15,18 @@ export default function About() {
       </ul>
 
       <h2>Our approach</h2>
-      <p>We build tools that are clear, fast, and work on any device. Most tools are free and need no account. Everything here is educational — see our <Link to="/disclaimer">Disclaimer</Link>.</p>
+      <p>We build tools that are clear, fast, and work on any device. Every tool is free and needs no account. Everything here is educational — see our <Link to="/disclaimer">Disclaimer</Link>.</p>
+
+      <h2>How the calculators work</h2>
+      <p>Our calculators use standard, published formulas. You can change every input.</p>
+      <ul>
+        <li>FIRE number = annual retirement spending ÷ safe withdrawal rate.</li>
+        <li>Coast FIRE number = FIRE number ÷ (1 + real return) ^ years until retirement. This is the amount you'd need invested today for compound growth alone to reach your FIRE number.</li>
+        <li>Real returns: projections use real (inflation-adjusted) returns, so results are in today's dollars.</li>
+        <li>Your data stays on your device: tools run in your browser, and guest data is saved locally on this device.</li>
+        <li>Market data: dividend prices come from Finnhub and may be delayed, incomplete, or wrong.</li>
+      </ul>
+      <p>Results are estimates, not predictions. Educational tools only — not financial advice.</p>
 
       <p>Have feedback or ideas? <Link to="/contact">Get in touch</Link>.</p>
     </LegalPage>
